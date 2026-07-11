@@ -1,13 +1,14 @@
 name: ccl
 source_type: retailer
 base_url: https://www.cclonline.com
-search_url: https://www.cclonline.com/search/{query}
+search_url: https://www.cclonline.com/Search/Autocomplete?query={query}
+use_flare_solverr: true
 selectors:
-  card: article, .product, .product-item, .search-result
-  title: a[href] h3, a[href] .title, h3, .product-title
-  price: .price, .product-price, [data-testid="price"]
-  url: a[href]
+  card: div.card.text-center, .card
+  title: p.card-link, a[href] h3, a[href] .title, h3, .product-title
+  price: p.fw-bold.mt-auto, .price, .product-price, [data-testid="price"]
+  url: a.stretched-link, a[href]
   stock: .stock, .availability, .product-stock, [data-testid="stock"]
   image: img
-  id: a[href]
+  id: a.stretched-link, a[href]
 category: gpu
