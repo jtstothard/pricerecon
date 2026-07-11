@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  pricerecon:
+    build: .
+    container_name: pricerecon
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./pricerecon.db:/app/pricerecon.db
+      - ./config.yml:/app/config.yml
+    restart: unless-stopped
+    environment:
+      - PRICERECON_DATABASE_PATH=/app/pricerecon.db
+      - PRICERECON_HOST=0.0.0.0
+      - PRICERECON_PORT=8000

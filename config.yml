@@ -1,0 +1,22 @@
+# PriceRecon configuration
+
+database_path: pricerecon.db
+host: 0.0.0.0
+port: 8000
+log_level: info
+
+# FlareSolverr endpoint (optional, for Cloudflare-protected retailers)
+flaresolverr_url: null  # e.g., "http://192.168.10.251:8191/v1"
+
+# Connector-specific settings (optional)
+connectors:
+  ebay:
+    app_id: null  # Your eBay App ID
+    # OAuth token will be stored in database
+  amazon_uk:
+    enabled: true
+  cex:
+    enabled: true
+  fb_marketplace:
+    enabled: false  # Requires Facebook cookies
+  # Add more connector configs here
