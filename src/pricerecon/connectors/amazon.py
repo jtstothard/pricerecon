@@ -2,7 +2,7 @@
 
 import logging
 import re
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Any, Optional
 
 from pricerecon.connectors.base import BaseConnector
@@ -134,9 +134,12 @@ class AmazonConnector(BaseConnector):
             price = Decimal("0.00")
             if i < len(prices):
                 try:
-                    price_str = prices[i].replace("£", "").replace(",", "").strip()
+                    # Strip prefixes like "Was:", "RRP:" and extract just the price
+                    raw = prices[i].replace("£", "").replace(",", "").strip()
+                    # Take only the numeric portion (last token after spaces)
+                    price_str = raw.split()[-1] if raw.split() else raw
                     price = Decimal(price_str)
-                except (ValueError, IndexError):
+                except (ValueError, IndexError, InvalidOperation):
                     pass
             
             # Determine condition from filters or default to new
