@@ -14,3 +14,39 @@ services:
       - PRICERECON_DATABASE_PATH=/app/pricerecon.db
       - PRICERECON_HOST=0.0.0.0
       - PRICERECON_PORT=8000
+      - PRICERECON_API_KEY=${PRICERECON_API_KEY:-}
+      - FLARESOLVERR_URL=${FLARESOLVERR_URL:-}
+
+  postgres:
+    image: postgres:16-alpine
+    profiles: ["postgres"]
+    environment:
+      POSTGRES_DB: pricerecon
+      POSTGRES_USER: pricerecon
+      POSTGRES_PASSWORD: pricerecon
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  playwright:
+    image: mcr.microsoft.com/playwright/python:v1.55.0-jammy
+    profiles: ["playwright"]
+    shm_size: 1gb
+    environment:
+      - FB_C_USER=${FB_C_USER:-}
+      - FB_XS=${FB_XS:-}
+      - FB_DATR=${FB_DATR:-}
+      - FB_FR=${FB_FR:-}
+      - FB_SB=${FB_SB:-}
+
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    profiles: ["flaresolverr"]
+    ports:
+      - "8191:8191"
+    environment:
+      - LOG_LEVEL=info
+
+volumes:
+  postgres-data:

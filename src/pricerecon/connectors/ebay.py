@@ -55,13 +55,13 @@ class eBayTokenStore:
 
         try:
             import json
+
             config = json.loads(row[0])
             token_data = config.get("oauth_token")
             if not token_data:
                 return None
 
             token = eBayOAuthToken(**token_data)
-            # Add 5 minute buffer for expiry
             if token.expires_at > datetime.utcnow() + timedelta(minutes=5):
                 return token
         except Exception as e:
@@ -76,14 +76,29 @@ class eBayTokenStore:
         from pathlib import Path
 
         db = Path(self.db_path)
+
         if not db.exists():
-            logger.error(f"Database not found at {self.db_path}")
-            return
+            db.parent.mkdir(parents=True, exist_ok=True)
+            conn = sqlite3.connect(db)
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS connector_configs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    connector_id TEXT NOT NULL UNIQUE,
+                    config_json TEXT NOT NULL,
+                    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+            """
+            )
+            conn.commit()
+            conn.close()
+            logger.info(f"Created database at {self.db_path}")
 
         conn = sqlite3.connect(db)
         cursor = conn.cursor()
 
-        config_json = json.dumps({"oauth_token": token.model_dump()})
+        config_json = json.dumps({"oauth_token": token.model_dump(mode='json')})
 
         cursor.execute(
             """
@@ -100,11 +115,9 @@ class eBayTokenStore:
 
 
 class eBayConnector(BaseConnector):
-    """eBay Browse API connector.
+    """eBay Browse API connector."""
 
-    Uses OAuth client credentials grant for application access token.
-    Tokens last ~2 hours and are auto-refreshed on expiry.
-    """
+    CONNECTOR_ID = "ebay"
 
     def __init__(self, app_id: str, cert_id: Optional[str] = None, db_path: str = "pricerecon.db"):
         self.app_id = app_id
@@ -118,30 +131,24 @@ class eBayConnector(BaseConnector):
         return SourceType.MARKETPLACE
 
     async def initialize(self) -> None:
-        """Initialize HTTP client and OAuth token."""
         self._client = httpx.AsyncClient(timeout=30.0)
         await self.ensure_token()
 
     async def cleanup(self) -> None:
-        """Cleanup HTTP client."""
         if self._client:
             await self._client.aclose()
 
     async def ensure_token(self) -> str:
-        """Ensure we have a valid OAuth token, refreshing if needed."""
         token = self.token_store.get_token()
         if token:
             return token.access_token
 
-        # Fetch new token via client credentials grant
         logger.info("Fetching new eBay OAuth token")
         token = await self._fetch_token()
         self.token_store.save_token(token)
         return token.access_token
 
     async def _fetch_token(self) -> eBayOAuthToken:
-        """Fetch OAuth token using client credentials grant."""
-        # eBay OAuth endpoint
         url = "https://api.ebay.com/identity/v1/oauth2/token"
 
         headers = {
@@ -165,32 +172,20 @@ class eBayConnector(BaseConnector):
 
         return eBayOAuthToken(
             access_token=token_data["access_token"],
-            token_type=token_data["token_type"],
+            token_type=token_data.get("token_type", "Bearer"),
             expires_in=token_data["expires_in"],
             refresh_token=token_data.get("refresh_token"),
             expires_at=expires_at,
         )
 
     def _get_basic_auth(self) -> str:
-        """Generate Basic auth header from app_id:cert_id."""
         import base64
-        import os
 
-        # If cert_id not provided, use app_id for both
         secret = self.cert_id or self.app_id
         credentials = f"{self.app_id}:{secret}"
         return base64.b64encode(credentials.encode()).decode()
 
     async def search(self, query: str, filters: Optional[dict[str, Any]] = None) -> list[NormalizedListing]:
-        """Search eBay Browse API for listings.
-
-        Args:
-            query: Search query (e.g., "RTX 3090")
-            filters: Optional filters (price_max, condition, category, etc.)
-
-        Returns:
-            List of normalized listings
-        """
         filters = filters or {}
         await self.ensure_token()
 
@@ -198,23 +193,20 @@ class eBayConnector(BaseConnector):
         if not token:
             raise RuntimeError("Failed to obtain OAuth token")
 
-        # Build Browse API request
         url = "https://api.ebay.com/buy/browse/v1/item_summary/search"
 
         headers = {
             "Authorization": f"Bearer {token.access_token}",
             "Content-Type": "application/json",
-            "X-EBAY-C-MARKETPLACE-ID": "EBAY_GB",  # UK marketplace
+            "X-EBAY-C-MARKETPLACE-ID": "EBAY_GB",
         }
 
         params = {"q": query, "limit": 50}
 
-        # Apply filters
         if "price_max" in filters:
             params["filter"] = f"price:[0..{filters['price_max']}]"
 
         if "condition" in filters:
-            # Map condition enum to eBay filter values
             condition_map = {
                 "new": "New",
                 "refurbished": "Refurbished",
@@ -237,68 +229,29 @@ class eBayConnector(BaseConnector):
         return self._parse_listings(data.get("itemSummaries", []))
 
     def _parse_listings(self, items: list[dict]) -> list[NormalizedListing]:
-        """Parse eBay itemSummaries into NormalizedListing objects."""
         listings = []
 
         for item in items:
             try:
-                # Extract price
-                price_value = item.get("price", {}).get("value", "0")
-                currency = item.get("price", {}).get("currency", "GBP")
-
-                # Map condition
-                condition = self._map_condition(item.get("condition"))
-
-                # Extract seller info
-                seller = item.get("seller", {})
-                seller_name = seller.get("username")
-                seller_feedback = seller.get("feedbackScore")
-                seller_feedback_pct = seller.get("feedbackPercentage")
-
+                price = item.get("price", {})
                 listing = NormalizedListing(
                     source="ebay",
-                    source_type=SourceType.MARKETPLACE,
-                    source_listing_id=item["itemId"],
-                    title_raw=item["title"],
-                    price=float(price_value),
-                    currency=currency,
+                    source_type=self.source_role,
+                    source_listing_id=str(item.get("itemId", "")),
+                    title_raw=item.get("title", ""),
+                    price=Decimal(str(price.get("value", 0))),
+                    currency=price.get("currency", "GBP"),
                     url=item.get("itemWebUrl", ""),
-                    condition=condition,
-                    condition_raw=item.get("condition"),
-                    seller_or_store=seller_name,
-                    seller_feedback_score=seller_feedback,
-                    seller_feedback_pct=float(seller_feedback_pct) if seller_feedback_pct else None,
-                    image_url=item.get("image", {}).get("imageUrl"),
-                    category="unknown",  # Could be derived from category hints
+                    timestamp_seen=datetime.utcnow(),
+                    seller_or_store=item.get("seller", {}).get("username"),
+                    seller_feedback_score=item.get("seller", {}).get("feedbackScore"),
+                    seller_feedback_pct=float(item.get("seller", {}).get("feedbackPercentage"))
+                    if item.get("seller", {}).get("feedbackPercentage")
+                    else None,
+                    in_stock=item.get("availability", {}).get("shipToLocationAvailability", {}).get("quantity", 1) > 0,
                 )
                 listings.append(listing)
-            except Exception as e:
-                logger.warning(f"Failed to parse eBay item {item.get('itemId')}: {e}")
-                continue
+            except Exception as exc:
+                logger.warning("Failed to parse eBay listing: %s", exc)
 
         return listings
-
-    def _map_condition(self, ebay_condition: Optional[str]) -> Optional[Condition]:
-        """Map eBay condition strings to NormalizedListing Condition enum."""
-        if not ebay_condition:
-            return None
-
-        condition_map = {
-            "New": Condition.NEW,
-            "New with tags": Condition.NEW,
-            "New without tags": Condition.NEW_OPEN_BOX,
-            "New with defects": Condition.NEW_OPEN_BOX,
-            "Open box": Condition.NEW_OPEN_BOX,
-            "Certified refurbished": Condition.REFURBISHED,
-            "Excellent - Refurbished": Condition.REFURBISHED,
-            "Very Good - Refurbished": Condition.REFURBISHED,
-            "Good - Refurbished": Condition.REFURBISHED,
-            "Refurbished": Condition.REFURBISHED,
-            "Like New": Condition.USED_LIKE_NEW,
-            "Very Good": Condition.USED_GOOD,
-            "Good": Condition.USED_GOOD,
-            "Acceptable": Condition.USED_FAIR,
-            "For parts or not working": Condition.FOR_PARTS,
-        }
-
-        return condition_map.get(ebay_condition)

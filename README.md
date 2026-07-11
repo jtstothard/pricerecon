@@ -89,11 +89,15 @@ Examples:
 ### Config connectors
 YAML files declaring endpoint, access method, request template, and field mapping. Used for simple sources.
 
-Examples:
+### Config connectors
 - Reddit RSS feeds
 - HotUKDeals RSS
 - Generic Shopify stores
 - Simple HTML scrapers (CSS selectors)
+
+## Facebook Marketplace caveat
+
+The FB Marketplace connector uses Playwright plus browser fingerprinting and requires valid session cookies. Make sure your use complies with Facebook's terms and local policy. The connector is intended for self-hosted, low-rate, manual monitoring only.
 
 ## Database
 

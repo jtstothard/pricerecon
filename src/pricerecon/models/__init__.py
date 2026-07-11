@@ -8,6 +8,23 @@ from pricerecon.models.listings import (
     StockState,
     VariantMatchConfidence,
 )
+from pricerecon.models.watches import (
+    Event,
+    EventType,
+    PriceHistory,
+    Severity,
+    Watch,
+    WatchCheckResponse,
+    WatchCreate,
+    WatchFilters,
+    WatchGrouping,
+    WatchNotification,
+    WatchSchedule,
+    WatchUpdate,
+    SourceConfig,
+    SourceInfo,
+    ErrorResponse,
+)
 
 __all__ = [
     "Condition",
@@ -16,4 +33,19 @@ __all__ = [
     "SourceType",
     "StockState",
     "VariantMatchConfidence",
+    "Event",
+    "EventType",
+    "PriceHistory",
+    "Severity",
+    "Watch",
+    "WatchCheckResponse",
+    "WatchCreate",
+    "WatchFilters",
+    "WatchGrouping",
+    "WatchNotification",
+    "WatchSchedule",
+    "WatchUpdate",
+    "SourceConfig",
+    "SourceInfo",
+    "ErrorResponse",
 ]

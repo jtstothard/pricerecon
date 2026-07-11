@@ -64,7 +64,7 @@ class NormalizedListing(BaseModel):
     price: Decimal = Field(..., description="Current price in source currency")
     currency: str = Field(..., description="ISO 4217 currency code")
     url: str = Field(..., description="Direct link to listing")
-    timestamp_seen: datetime = Field(default_factory=datetime.utcnow)
+    timestamp_seen: Optional[datetime] = Field(default_factory=datetime.utcnow)
 
     # Optional enrichment fields
     product_normalized: Optional[str] = Field(None, description="Normalized product name")
@@ -107,3 +107,4 @@ class HealthResponse(BaseModel):
     """Health check response."""
 
     status: str = "ok"
+    connector_states: dict[str, Any] = Field(default_factory=dict)

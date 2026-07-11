@@ -1,0 +1,13 @@
+name: generic_shopify
+source_type: retailer
+base_url: https://example.myshopify.com
+search_url: https://example.myshopify.com/search?q={query}
+selectors:
+  card: .grid__item, .product-card, .product-grid-item, .card
+  title: a[href] .card__heading, a[href] h3, h3, .product-title
+  price: .price, .product-price, [data-product-price]
+  url: a[href]
+  stock: .availability, .stock, .product-form__inventory
+  image: img
+  id: a[href]
+category: gpu
