@@ -20,6 +20,7 @@ dependencies = [
     "playwright>=1.41.0",
     "pyyaml>=6.0.1",
     "aiosqlite>=0.19.0",
+    "pytz>=2024.1",
 ]
 
 [project.optional-dependencies]
@@ -70,3 +71,6 @@ novatech = "pricerecon.connectors.novatech:NovatechConnector"
 aria = "pricerecon.connectors.aria:AriaConnector"
 shopify = "pricerecon.connectors.shopify:ShopifyConnector"
 facebook_marketplace = "pricerecon.connectors.fb_marketplace:FacebookMarketplaceConnector"
+hotukdeals = "pricerecon.connectors.reddit:HotUKDealsConnector"
+reddit_hardwareswapuk = "pricerecon.connectors.reddit:RedditHardwareSwapUKConnector"
+reddit_bapcsalesuk = "pricerecon.connectors.reddit:RedditBapcSalesUKConnector"
