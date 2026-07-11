@@ -21,6 +21,16 @@ class Settings(BaseSettings):
     # FlareSolverr configuration
     flaresolverr_url: str | None = None
 
+    # Telegram notification configuration
+    telegram_bot_token: str | None = None
+    telegram_chat_id: str | None = None
+
+    # Discord webhook configuration
+    discord_webhook_url: str | None = None
+
+    # Webhook configuration
+    webhook_url: str | None = None
+
     class Config:
         env_file = ".env"
         env_prefix = "PRICERECON_"

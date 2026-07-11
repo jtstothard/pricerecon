@@ -300,7 +300,7 @@ def store_events(watch_id: int, diff_result: DiffResult) -> list[int]:
 def run_check(
     watch_id: int,
     listings: list[NormalizedListing],
-) -> tuple[bool, DiffResult]:
+) -> tuple[bool, DiffResult, list[int]]:
     """Run a complete check cycle for a watch.
 
     1. Check if first run (silent baseline)
@@ -313,7 +313,7 @@ def run_check(
         listings: Current listings from connectors
 
     Returns:
-        Tuple of (is_first_run, DiffResult)
+        Tuple of (is_first_run, DiffResult, event_ids)
     """
     first_run = is_first_run(watch_id)
     diff_result = compute_diff(watch_id, listings)
@@ -322,7 +322,8 @@ def run_check(
     store_listings(watch_id, listings)
 
     # Store events only if not first run
+    event_ids = []
     if not first_run and diff_result.has_events:
-        store_events(watch_id, diff_result)
+        event_ids = store_events(watch_id, diff_result)
 
-    return first_run, diff_result
+    return first_run, diff_result, event_ids
