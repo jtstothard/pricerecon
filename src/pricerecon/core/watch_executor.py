@@ -5,7 +5,6 @@ Orchestrates connector calls, diff engine, and event emission.
 
 from __future__ import annotations
 
-import importlib
 import json
 import sqlite3
 from datetime import datetime
@@ -18,6 +17,7 @@ from pricerecon.core.notifications import dispatch_for_event
 from pricerecon.db.schema import DB_PATH, get_db_path
 from pricerecon.models import EventType, NormalizedListing, Watch
 from pricerecon.connectors.status import ConnectorDegradedError
+from pricerecon.connectors import discover_connectors
 
 
 def get_db():
@@ -54,6 +54,7 @@ def get_watch(watch_id: int) -> Optional[Watch]:
 
 
 def apply_post_normalization_filters(listings: list[NormalizedListing], filters: Any) -> list[NormalizedListing]:
+    import re
     filtered = listings
     filter_dict = filters.model_dump() if hasattr(filters, "model_dump") else filters
     price_max = filter_dict.get("price_max")
@@ -66,14 +67,12 @@ def apply_post_normalization_filters(listings: list[NormalizedListing], filters:
     if condition_filter.get("dedup_enabled", False):
         dedup_keys = {}
         for lst in filtered:
-            import re
             title_norm = re.sub(r"\s*-\s*(Fair|Good|Excellent|Premium|Pristine)\s*$", "", lst.title_raw, flags=re.IGNORECASE)
             if title_norm not in dedup_keys:
                 dedup_keys[title_norm] = lst
         filtered = list(dedup_keys.values())
     exclude_patterns = filter_dict.get("exclude_patterns", [])
     if exclude_patterns:
-        import re
         for lst in filtered[:]:
             title_lower = lst.title_raw.lower()
             if any(re.search(pattern.lower(), title_lower) for pattern in exclude_patterns):
@@ -86,6 +85,7 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
     if not watch:
         return {"success": False, "error": f"Watch {watch_id} not found"}
 
+    connectors = discover_connectors()
     all_listings = []
     for source in watch.sources:
         if not source.enabled:
@@ -95,18 +95,11 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
             continue
         connector = None
         try:
-            module = importlib.import_module(f"pricerecon.connectors.{connector_id}")
-            candidates = [
-                f"{connector_id.capitalize()}Connector",
-                f"{connector_id.title().replace('_', '')}Connector",
-                "eBayConnector",
-                "ShopifyConnector",
-                "FacebookMarketplaceConnector",
-                "ConfigConnector",
-            ]
-            connector_class = next((getattr(module, name) for name in candidates if hasattr(module, name)), None)
-            if connector_class is None:
-                raise AttributeError(f"No connector class found in {module.__name__}")
+            if connector_id not in connectors:
+                raise ValueError(
+                    f"Connector '{connector_id}' not registered. Available connectors: {list(connectors.keys())}"
+                )
+            connector_class = connectors[connector_id]
             try:
                 connector = connector_class(**(source.config or {}))
             except TypeError:
