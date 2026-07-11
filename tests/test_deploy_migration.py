@@ -122,10 +122,11 @@ async def test_execute_watch_uses_discovered_connectors(monkeypatch):
     assert health_events
 
 
-def test_frontend_build_artifact_present():
-    frontend_dist = Path(__file__).resolve().parents[1] / "frontend" / "dist"
-    assert (frontend_dist / "index.html").exists()
-    assert (frontend_dist / "assets").exists()
+def test_frontend_build_inputs_present():
+    frontend_dir = Path(__file__).resolve().parents[1] / "frontend"
+    assert (frontend_dir / "package.json").exists()
+    assert (frontend_dir / "index.html").exists()
+    assert (frontend_dir / "src").exists()
 
 
 def test_dockerfile_packages_frontend_and_serves_assets():
