@@ -159,7 +159,7 @@ async def create_watch(watch_create: WatchCreate) -> Watch:
             "filters": watch_create.filters.model_dump(),
             "schedule": watch_create.schedule.model_dump(),
             "grouping": watch_create.grouping.model_dump(),
-            "notifications": watch_create.notifications.model_dump(),
+            "notifications": watch_create.notifications.model_dump(mode="json"),
             "enabled": watch_create.enabled,
             "status": "active",
         }
@@ -248,7 +248,7 @@ async def update_watch(watch_id: int, watch_update: WatchUpdate) -> Watch:
             "filters": watch_update.filters.model_dump(),
             "schedule": watch_update.schedule.model_dump(),
             "grouping": watch_update.grouping.model_dump(),
-            "notifications": watch_update.notifications.model_dump(),
+            "notifications": watch_update.notifications.model_dump(mode="json"),
             "enabled": watch_update.enabled,
             "status": json.loads(row["config_json"]).get("status", "active"),  # Preserve existing status
         }

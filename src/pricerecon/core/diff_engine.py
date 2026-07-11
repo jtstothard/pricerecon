@@ -236,6 +236,10 @@ def store_events(watch_id: int, diff_result: DiffResult) -> list[int]:
     event_ids = []
 
     for event in diff_result.new_listings:
+        listing_data = event["listing"]
+        if hasattr(listing_data, "model_dump"):
+            listing_data = listing_data.model_dump(mode="json")
+        event["listing"] = listing_data
         cursor.execute(
             """INSERT INTO events (watch_id, event_type, listing_key, severity, event_json)
                VALUES (?, ?, ?, ?, ?)""",
@@ -244,12 +248,16 @@ def store_events(watch_id: int, diff_result: DiffResult) -> list[int]:
                 event["event_type"],
                 f"{event['listing']['source']}|{event['listing']['source_listing_id']}",
                 "info",
-                json.dumps(event),
+                json.dumps(event, default=str),
             )
         )
         event_ids.append(cursor.lastrowid)
 
     for event in diff_result.price_drops:
+        listing_data = event["listing"]
+        if hasattr(listing_data, "model_dump"):
+            listing_data = listing_data.model_dump(mode="json")
+        event["listing"] = listing_data
         cursor.execute(
             """INSERT INTO events (watch_id, event_type, listing_key, severity, event_json)
                VALUES (?, ?, ?, ?, ?)""",
@@ -258,12 +266,16 @@ def store_events(watch_id: int, diff_result: DiffResult) -> list[int]:
                 event["event_type"],
                 f"{event['listing']['source']}|{event['listing']['source_listing_id']}",
                 "info",
-                json.dumps(event),
+                json.dumps(event, default=str),
             )
         )
         event_ids.append(cursor.lastrowid)
 
     for event in diff_result.stock_changes:
+        listing_data = event["listing"]
+        if hasattr(listing_data, "model_dump"):
+            listing_data = listing_data.model_dump(mode="json")
+        event["listing"] = listing_data
         cursor.execute(
             """INSERT INTO events (watch_id, event_type, listing_key, severity, event_json)
                VALUES (?, ?, ?, ?, ?)""",
@@ -272,7 +284,7 @@ def store_events(watch_id: int, diff_result: DiffResult) -> list[int]:
                 event["event_type"],
                 f"{event['listing']['source']}|{event['listing']['source_listing_id']}",
                 "info",
-                json.dumps(event),
+                json.dumps(event, default=str),
             )
         )
         event_ids.append(cursor.lastrowid)
@@ -286,7 +298,7 @@ def store_events(watch_id: int, diff_result: DiffResult) -> list[int]:
                 event["event_type"],
                 f"{event['source']}|{event['source_listing_id']}",
                 "info",
-                json.dumps(event),
+                json.dumps(event, default=str),
             )
         )
         event_ids.append(cursor.lastrowid)

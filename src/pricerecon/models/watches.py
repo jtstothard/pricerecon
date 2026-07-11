@@ -37,6 +37,7 @@ class SourceConfig(BaseModel):
     """Per-source connector configuration."""
     connector: str = Field(..., description="Connector identifier (e.g., 'ebay', 'cex')")
     enabled: bool = Field(default=True, description="Whether this source is enabled")
+    config: dict[str, Any] = Field(default_factory=dict, description="Connector-specific configuration")
 
 
 # ============================================================================
@@ -99,6 +100,10 @@ class WatchNotification(BaseModel):
         default_factory=lambda: ["webhook"],
         description="Notification channels (webhook, telegram, discord)"
     )
+    webhook_url: Optional[str] = Field(None, description="Webhook URL for webhook notifications")
+    telegram_bot_token: Optional[str] = Field(None, description="Telegram bot token override")
+    telegram_chat_id: Optional[str] = Field(None, description="Telegram chat ID override")
+    discord_webhook_url: Optional[str] = Field(None, description="Discord webhook URL override")
 
 
 # ============================================================================
