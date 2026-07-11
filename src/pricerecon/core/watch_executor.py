@@ -14,6 +14,7 @@ from typing import Any, Optional
 
 from pricerecon.core.connector_health import upsert_connector_health
 from pricerecon.core.diff_engine import DiffResult, run_check
+from pricerecon.core.notifications import dispatch_for_event
 from pricerecon.db.schema import DB_PATH, get_db_path
 from pricerecon.models import EventType, NormalizedListing, Watch
 from pricerecon.connectors.status import ConnectorDegradedError
@@ -131,7 +132,7 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
                     pass
 
     filtered_listings = apply_post_normalization_filters(all_listings, watch.filters)
-    first_run, diff_result = run_check(watch_id, filtered_listings)
+    first_run, diff_result, event_ids = run_check(watch_id, filtered_listings)
 
     conn = get_db()
     cursor = conn.cursor()
@@ -141,6 +142,66 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
     )
     conn.commit()
     conn.close()
+
+    # Dispatch notifications for events
+    notifications_dispatched = []
+    if not first_run and diff_result.has_events:
+        # Get events from database to get their IDs and full data
+        for event_data in diff_result.new_listings:
+            if event_ids:
+                event_id = event_ids.pop(0)
+                event_type = EventType.NEW_LISTING
+                listing = event_data["listing"]
+                channels = await dispatch_for_event(
+                    watch_id=watch_id,
+                    event_id=event_id,
+                    event_type=event_type,
+                    watch_name=watch.name,
+                    watch_notifications=watch.notifications.model_dump(),
+                    listing=listing,
+                )
+                if channels:
+                    notifications_dispatched.append({"event_id": event_id, "channels": channels})
+
+        for event_data in diff_result.price_drops:
+            if event_ids:
+                event_id = event_ids.pop(0)
+                event_type = EventType.PRICE_DROP
+                listing = event_data["listing"]
+                listing["previous_price"] = event_data["previous_price"]
+                channels = await dispatch_for_event(
+                    watch_id=watch_id,
+                    event_id=event_id,
+                    event_type=event_type,
+                    watch_name=watch.name,
+                    watch_notifications=watch.notifications.model_dump(),
+                    listing=listing,
+                )
+                if channels:
+                    notifications_dispatched.append({"event_id": event_id, "channels": channels})
+
+        for event_data in diff_result.stock_changes:
+            if event_ids:
+                event_id = event_ids.pop(0)
+                event_type = EventType.STOCK_CHANGE
+                listing = event_data["listing"]
+                listing["previous_in_stock"] = event_data["previous_in_stock"]
+                listing["current_in_stock"] = event_data["current_in_stock"]
+                channels = await dispatch_for_event(
+                    watch_id=watch_id,
+                    event_id=event_id,
+                    event_type=event_type,
+                    watch_name=watch.name,
+                    watch_notifications=watch.notifications.model_dump(),
+                    listing=listing,
+                )
+                if channels:
+                    notifications_dispatched.append({"event_id": event_id, "channels": channels})
+
+        # listings_gone events (lower priority, usually not notified)
+        for _ in diff_result.listings_gone:
+            if event_ids:
+                event_ids.pop(0)
 
     result = {
         "success": True,
@@ -152,6 +213,7 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
         "stock_changes": len(diff_result.stock_changes),
         "listings_gone": len(diff_result.listings_gone),
         "events": [],
+        "notifications_sent": len(notifications_dispatched),
     }
 
     if not first_run and diff_result.has_events:
