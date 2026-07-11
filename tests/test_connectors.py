@@ -8,6 +8,7 @@ from httpx import ASGITransport, AsyncClient, Request, Response
 
 from pricerecon.connectors.flaresolverr import FlareSolverrClient
 from pricerecon.connectors.html import SelectorConfig, parse_listings_from_html
+from pricerecon.connectors.reddit import RedditBapcSalesUKConnector, RedditHardwareSwapUKConnector
 from pricerecon.connectors.shopify import ShopifyConnector
 from pricerecon.connectors.specs import extract_specs
 from pricerecon.models import SourceType
@@ -71,6 +72,90 @@ def test_html_parser_normalizes_cards():
     assert listing.in_stock is True
     assert listing.variant_normalized is not None
     assert listing.variant_normalized['gpu_model'] == 'RTX 4070'
+
+
+@pytest.mark.asyncio
+async def test_reddit_oauth_search_maps_json_payload_to_listings():
+    calls: list[str] = []
+
+    async def handler(request: Request) -> Response:
+        calls.append(str(request.url))
+        assert request.headers["Authorization"] == "Bearer test-token"
+        assert request.headers["User-Agent"] == "PriceRecon/0.1"
+        if str(request.url).endswith('/r/hardwareswapuk/search?q=RTX+4070&sort=new&limit=2&restrict_sr=1'):
+            return Response(
+                200,
+                json={
+                    'data': {
+                        'children': [
+                            {
+                                'data': {
+                                    'id': 'abc123',
+                                    'title': '[H] RTX 4070 [W] £450',
+                                    'selftext': 'Condition: used good | Location: London',
+                                    'author': 'seller1',
+                                    'permalink': '/r/hardwareswapuk/comments/abc123/rtx_4070/',
+                                    'created_utc': 1710000000,
+                                }
+                            }
+                        ]
+                    }
+                },
+            )
+        raise AssertionError(f'unexpected url {request.url}')
+
+    transport = httpx.MockTransport(handler)
+    connector = RedditHardwareSwapUKConnector(access_token='test-token')
+    connector._client = httpx.AsyncClient(transport=transport, timeout=30.0)
+    listings = await connector.search('RTX 4070', {'limit': 2})
+    await connector.cleanup()
+    assert len(calls) == 1
+    assert len(listings) == 1
+    listing = listings[0]
+    assert listing.source == 'reddit_hardwareswapuk'
+    assert listing.source_type == SourceType.MARKETPLACE
+    assert listing.price == Decimal('450')
+    assert listing.currency == 'GBP'
+    assert listing.url.endswith('/comments/abc123/rtx_4070/')
+    assert listing.seller_or_store == 'seller1'
+    assert listing.location == 'London'
+    assert listing.source_listing_id == 'abc123'
+
+
+@pytest.mark.asyncio
+async def test_reddit_rss_fallback_search_uses_feed_entries():
+    calls: list[str] = []
+
+    async def handler(request: Request) -> Response:
+        calls.append(str(request.url))
+        if str(request.url).endswith('/r/bapcsalesuk/search.rss?q=RTX+4070&sort=new&limit=2&restrict_sr=1'):
+            return Response(
+                200,
+                text='''
+                <rss><channel>
+                  <item>
+                    <title>RTX 4070 at £399</title>
+                    <link>https://www.reddit.com/r/bapcsalesuk/comments/xyz789/</link>
+                    <author>dealsbot</author>
+                    <description>Deal alert</description>
+                    <guid>xyz789</guid>
+                  </item>
+                </channel></rss>
+                ''',
+            )
+        raise AssertionError(f'unexpected url {request.url}')
+
+    transport = httpx.MockTransport(handler)
+    connector = RedditBapcSalesUKConnector()
+    connector._client = httpx.AsyncClient(transport=transport, timeout=30.0)
+    listings = await connector.search('RTX 4070', {'limit': 2})
+    await connector.cleanup()
+    assert len(calls) == 1
+    assert len(listings) == 1
+    assert listings[0].source == 'reddit_bapcsalesuk'
+    assert listings[0].source_type == SourceType.SIGNAL
+    assert listings[0].in_stock is None
+    assert listings[0].price == Decimal('399')
 
 
 @pytest.mark.asyncio
