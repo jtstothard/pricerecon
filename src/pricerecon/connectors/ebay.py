@@ -1,6 +1,7 @@
 """eBay Browse API connector with OAuth token management."""
 
 import logging
+from decimal import Decimal
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
