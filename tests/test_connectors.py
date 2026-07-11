@@ -74,6 +74,72 @@ def test_html_parser_normalizes_cards():
 
 
 @pytest.mark.asyncio
+async def test_ebuyer_connector_parses_live_search_markup():
+    html = """
+    <div class='card text-center rounded-0 h-100 bg-vdarkgrey'>
+      <div class='card-body d-flex flex-column'>
+        <a href='/asus-dual-geforce-rtx-5070-12gb-gddr7-oc-edition-705967#colcode=70596799' class='stretched-link'></a>
+        <img src='https://example.test/img.jpg' alt='ASUS - Dual GeForce RTX 5070 12GB GDDR7 OC Edition'>
+        <p class='card-link fw-bold mb-2'>ASUS - Dual GeForce RTX 5070 12GB GDDR7 OC Edition</p>
+        <p class='fw-bold mb-0 mt-auto'>£560.00</p>
+      </div>
+    </div>
+    """
+    listings = parse_listings_from_html(
+        html,
+        base_url='https://www.ebuyer.com',
+        source='ebuyer',
+        source_type=SourceType.RETAILER,
+        selector=SelectorConfig(
+            card='div.card.text-center',
+            title='p.card-link',
+            price='p.fw-bold.mt-auto',
+            url='a.stretched-link',
+            image='img',
+            id='a.stretched-link',
+        ),
+        category='gpu',
+    )
+    assert len(listings) == 1
+    assert listings[0].url.endswith('/asus-dual-geforce-rtx-5070-12gb-gddr7-oc-edition-705967#colcode=70596799')
+    assert listings[0].price == Decimal('560.00')
+    assert listings[0].title_raw == 'ASUS - Dual GeForce RTX 5070 12GB GDDR7 OC Edition'
+
+
+@pytest.mark.asyncio
+async def test_ccl_connector_parses_live_autocomplete_markup():
+    html = """
+    <div class='card text-center rounded-0 h-100 bg-vdarkgrey'>
+      <div class='card-body d-flex flex-column'>
+        <a href='/rtx-4070-ventus-2x-12g-oc-msi-geforce-rtx-4070-ventus-2x-oc-12gb-graphics-card-486350/' class='stretched-link'></a>
+        <img src='https://static.cclonline.com/images/avante/4070Ventus2Xgpu1.JPG?width=300&height=300&scale=canvas' alt='MSI GeForce RTX 4070 Ventus 2X 12G OC Graphics Card'>
+        <p class='card-link fw-bold mb-2'>MSI GeForce RTX 4070 Ventus 2X 12G OC Graphics Card</p>
+        <p class='fw-bold mb-0 mt-auto'>£599.99</p>
+      </div>
+    </div>
+    """
+    listings = parse_listings_from_html(
+        html,
+        base_url='https://www.cclonline.com',
+        source='ccl',
+        source_type=SourceType.RETAILER,
+        selector=SelectorConfig(
+            card='div.card.text-center',
+            title='p.card-link',
+            price='p.fw-bold.mt-auto',
+            url='a.stretched-link',
+            image='img',
+            id='a.stretched-link',
+        ),
+        category='gpu',
+    )
+    assert len(listings) == 1
+    assert listings[0].url.endswith('/rtx-4070-ventus-2x-12g-oc-msi-geforce-rtx-4070-ventus-2x-oc-12gb-graphics-card-486350/')
+    assert listings[0].price == Decimal('599.99')
+    assert listings[0].source == 'ccl'
+
+
+@pytest.mark.asyncio
 async def test_shopify_connector_fetches_products_and_variants():
     calls: list[str] = []
 

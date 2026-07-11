@@ -73,7 +73,7 @@ class HotUKDealsConnector(TemplateConnector):
                 source=self.CONNECTOR_ID,
                 display_name="HotUKDeals",
                 source_role=SourceType.SIGNAL,
-                endpoint_url="https://www.hotukdeals.com/rss",
+                endpoint_url="https://www.hotukdeals.com/rss/new",
                 request_method="GET",
                 request_headers={"User-Agent": "PriceRecon/0.1"},
             )
