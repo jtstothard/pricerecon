@@ -401,7 +401,8 @@ def _strip_ns(tag: str) -> str:
     return tag.rsplit("}", 1)[-1] if "}" in tag else tag
 
 
-def _extract_price(text: str) -> Optional[Decimal]:
+def _extract_price(*texts: str) -> Optional[Decimal]:
+    text = " ".join(part for part in texts if part)
     match = re.search(r"(?:£|gbp\s*)?(\d+(?:\.\d{1,2})?)", text, flags=re.IGNORECASE)
     if not match:
         return None
