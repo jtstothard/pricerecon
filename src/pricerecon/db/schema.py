@@ -33,6 +33,7 @@ def init_db(path: Path | None = None) -> None:
             query TEXT NOT NULL,
             category TEXT,
             config_json TEXT NOT NULL,
+            last_check_at TEXT,
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
@@ -134,6 +135,17 @@ def init_db(path: Path | None = None) -> None:
         );
 
         CREATE INDEX IF NOT EXISTS idx_deal_signals_source ON deal_signals(source);
+
+        -- Connector health: structured degraded states for each connector
+        CREATE TABLE IF NOT EXISTS connector_health (
+            connector_id TEXT PRIMARY KEY,
+            status TEXT NOT NULL,
+            last_error TEXT,
+            details_json TEXT NOT NULL DEFAULT '{}',
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_connector_health_status ON connector_health(status);
 
         -- Schema migrations: schema version tracking
         CREATE TABLE IF NOT EXISTS schema_migrations (

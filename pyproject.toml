@@ -52,7 +52,20 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
 [tool.entry-points."pricerecon.connectors"]
 # Entry points for connector auto-discovery
-# Example:
-# ebay = "pricerecon.connectors.ebay:EBayConnector"
+ebay = "pricerecon.connectors.ebay:eBayConnector"
+cex = "pricerecon.connectors.cex:CexConnector"
+scan = "pricerecon.connectors.scan:ScanConnector"
+overclockers = "pricerecon.connectors.overclockers:OverclockersConnector"
+box = "pricerecon.connectors.box:BoxConnector"
+currys = "pricerecon.connectors.currys:CurrysConnector"
+ebuyer = "pricerecon.connectors.ebuyer:EbuyerConnector"
+ccl = "pricerecon.connectors.ccl:CclConnector"
+novatech = "pricerecon.connectors.novatech:NovatechConnector"
+aria = "pricerecon.connectors.aria:AriaConnector"
+shopify = "pricerecon.connectors.shopify:ShopifyConnector"
+facebook_marketplace = "pricerecon.connectors.fb_marketplace:FacebookMarketplaceConnector"

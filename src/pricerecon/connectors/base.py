@@ -21,6 +21,9 @@ class BaseConnector(ABC):
     @property
     def connector_id(self) -> str:
         """Return the connector identifier (e.g., 'ebay', 'cex')."""
+        explicit = getattr(self, "CONNECTOR_ID", None)
+        if explicit:
+            return str(explicit)
         return self.__class__.__name__.lower().replace("connector", "")
 
     @abstractmethod

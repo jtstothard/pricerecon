@@ -1,4 +1,4 @@
-"""Configuration management."""
+"""Application configuration."""
 
 from pathlib import Path
 
@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     reload: bool = False
     log_level: str = "info"
 
+    # Optional API auth
+    api_key: str | None = None
+
     # FlareSolverr configuration
     flaresolverr_url: str | None = None
 
@@ -24,19 +27,11 @@ class Settings(BaseSettings):
 
 
 def load_config(path: Path | str | None = None) -> dict:
-    """Load YAML config file.
-
-    Args:
-        path: Path to config file (default: config.yml)
-
-    Returns:
-        Config dictionary
-    """
+    """Load YAML config file."""
     if path is None:
         path = Path("config.yml")
 
     config_path = Path(path)
-
     if not config_path.exists():
         return {}
 

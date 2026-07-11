@@ -1,0 +1,14 @@
+name: scan
+source_type: retailer
+base_url: https://www.scan.co.uk
+search_url: https://www.scan.co.uk/search?q={query}
+use_flare_solverr: true
+selectors:
+  card: article, .product, .product-card, .search-result
+  title: a[href] h3, a[href] .title, h3, .product-title
+  price: .price, .product-price, [data-testid="price"]
+  url: a[href]
+  stock: .stock, .availability, .product-stock, [data-testid="stock"]
+  image: img
+  id: a[href]
+category: gpu

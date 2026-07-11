@@ -1,5 +1,5 @@
-"""API package."""
+"""API routers package."""
 
-from pricerecon.api.health import router
+from pricerecon.api import health, watches, listings, history, events, sources
 
-__all__ = ["router"]
+__all__ = ["health", "watches", "listings", "history", "events", "sources"]
