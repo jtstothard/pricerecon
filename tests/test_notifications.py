@@ -1,12 +1,15 @@
 """Unit tests for notification dispatcher."""
 
+import asyncio
 import json
 from unittest.mock import AsyncMock, Mock, patch
 
+import httpx
 import pytest
 import respx
 from httpx import Response
 
+import pricerecon.core.notifications as notifications_module
 from pricerecon.core.notifications import (
     dispatch_for_event,
     dispatch_notifications,
@@ -65,18 +68,53 @@ async def test_send_telegram_success():
 
 
 @pytest.mark.asyncio
-async def test_send_telegram_failure():
-    """Test Telegram send failure."""
-    with respx.mock:
-        route = respx.post("https://api.telegram.org/bot123:ABC/sendMessage").mock(
-            return_value=Response(400)
-        )
+async def test_send_telegram_respects_rate_limit_and_retries_429(monkeypatch):
+    """Telegram sends should pace and retry once on 429."""
+    notifications_module._TELEGRAM_LAST_SEND_AT = 99.8
+    current_time = {"value": 100.0}
+    sleep_calls: list[float] = []
 
-        result = await send_telegram("123:ABC", "123456", "Test message")
+    async def fake_sleep(seconds: float) -> None:
+        sleep_calls.append(seconds)
+        current_time["value"] += seconds
 
-        assert result is False
+    class FakeResponse:
+        def __init__(self, status_code: int, headers: dict[str, str] | None = None):
+            self.status_code = status_code
+            self.headers = headers or {}
 
+        def raise_for_status(self) -> None:
+            if self.status_code >= 400:
+                request = httpx.Request(
+                    "POST",
+                    "https://api.telegram.org/bot123:ABC/sendMessage",
+                )
+                raise httpx.HTTPStatusError(
+                    "rate limited",
+                    request=request,
+                    response=httpx.Response(self.status_code, headers=self.headers, request=request),
+                )
 
+    responses = [
+        FakeResponse(429, {"Retry-After": "2"}),
+        FakeResponse(200),
+    ]
+
+    async def fake_send_once(bot_token: str, chat_id: str, message: str):
+        response = responses.pop(0)
+        response.raise_for_status()
+        return response
+
+    monkeypatch.setattr(notifications_module.asyncio, "sleep", fake_sleep)
+    monkeypatch.setattr(notifications_module, "_send_telegram_once", fake_send_once)
+    monkeypatch.setattr(notifications_module.time, "monotonic", lambda: current_time["value"])
+
+    result = await send_telegram("123:ABC", "123456", "Test message")
+
+    assert result is True
+    assert sleep_calls[0] == pytest.approx(0.3)
+    assert sleep_calls[1] == pytest.approx(2.0)
+    assert notifications_module._TELEGRAM_LAST_SEND_AT == pytest.approx(102.3)
 @pytest.mark.asyncio
 async def test_send_discord_success():
     """Test successful Discord send."""
