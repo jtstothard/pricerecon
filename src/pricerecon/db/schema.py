@@ -196,4 +196,5 @@ def init_db(path: Path | None = None) -> None:
 
     conn.commit()
     _seed_sources(conn)
+    conn.commit()
     conn.close()
