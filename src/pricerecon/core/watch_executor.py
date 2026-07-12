@@ -102,18 +102,15 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
             continue
         connector = None
         try:
-            module = importlib.import_module(f"pricerecon.connectors.{connector_id}")
-            candidates = [
-                f"{connector_id.capitalize()}Connector",
-                f"{connector_id.title().replace('_', '')}Connector",
-                "eBayConnector",
-                "ShopifyConnector",
-                "FacebookMarketplaceConnector",
-                "ConfigConnector",
-            ]
-            connector_class = next((getattr(module, name) for name in candidates if hasattr(module, name)), None)
+            # Use entry-point registry to resolve connector_id -> class
+            from pricerecon.connectors import discover_connectors
+            all_connectors = discover_connectors()
+            connector_class = all_connectors.get(connector_id)
             if connector_class is None:
-                raise AttributeError(f"No connector class found in {module.__name__}")
+                raise AttributeError(
+                    f"Connector '{connector_id}' not found in registry. "
+                    f"Available: {sorted(all_connectors.keys())}"
+                )
             # Build connector kwargs: merge env-level credentials with per-watch config
             # Per-watch config takes precedence over env defaults
             connector_kwargs = dict(source.config or {})
