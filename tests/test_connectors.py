@@ -11,7 +11,13 @@ from pricerecon.connectors.fb_marketplace import FacebookMarketplaceConnector
 from pricerecon.connectors.flaresolverr import FlareSolverrClient
 from pricerecon.connectors.html import SelectorConfig, parse_listings_from_html
 from pricerecon.connectors.overclockers import OverclockersConnector
-from pricerecon.connectors.rss import load_template_configs, parse_hardwareswapuk_post
+from returns.result import Failure
+
+from pricerecon.connectors.rss import (
+    load_template_configs,
+    load_template_configs_result,
+    parse_hardwareswapuk_post,
+)
 from pricerecon.connectors.shopify import ShopifyConnector
 from pricerecon.connectors.aliexpress import AliExpressConnector
 from pricerecon.connectors.dell_uk import DellUKConnector
@@ -413,6 +419,18 @@ def test_rss_template_loader_skips_non_rss_html_templates(tmp_path):
 
     configs = load_template_configs(tmp_path)
     assert set(configs) == {'reddit_hardwareswapuk'}
+
+
+def test_rss_template_loader_returns_failure_for_invalid_yaml(tmp_path):
+    bad_template = tmp_path / "reddit_hardwareswapuk.yml"
+    bad_template.write_text(
+        """source: reddit_hardwareswapuk\nsource_role: marketplace\nendpoint_url: [oops\n"""
+    )
+
+    result = load_template_configs_result(tmp_path)
+
+    assert isinstance(result, Failure)
+    assert "invalid YAML" in result.failure()
 
 
 @pytest.mark.asyncio
