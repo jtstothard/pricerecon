@@ -17,7 +17,7 @@ RUN playwright install chromium
 RUN playwright install-deps chromium
 
 # Copy project files
-COPY pyproject.toml ./
+COPY pyproject.toml README.md ./
 COPY src/ ./src/
 
 # Install Python dependencies
