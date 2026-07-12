@@ -4,7 +4,7 @@ interface Event {
   id: number
   event_type: string
   severity: string
-  data: any
+  data: Record<string, unknown>
   created_at: string
 }
 
@@ -39,7 +39,7 @@ export default function EventLog({ watchId }: { watchId: number }) {
     }
   }
 
-  const formatEventData = (data: any) => {
+  const formatEventData = (data: Record<string, unknown>) => {
     if (typeof data === 'string') return data
     return JSON.stringify(data, null, 2)
   }

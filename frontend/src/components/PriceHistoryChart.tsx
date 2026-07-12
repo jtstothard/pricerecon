@@ -7,6 +7,12 @@ interface PriceDataPoint {
   source: string
 }
 
+interface HistoryApiResponse {
+  timestamp: string
+  price: number
+  source: string
+}
+
 export default function PriceHistoryChart({ watchId }: { watchId: number }) {
   const [data, setData] = useState<PriceDataPoint[]>([])
   const [loading, setLoading] = useState(true)
@@ -23,7 +29,7 @@ export default function PriceHistoryChart({ watchId }: { watchId: number }) {
       const historyData = await response.json()
       
       // Transform data for Recharts
-      const chartData = historyData.map((point: any) => ({
+      const chartData = historyData.map((point: HistoryApiResponse) => ({
         timestamp: new Date(point.timestamp).toLocaleDateString(),
         price: point.price,
         source: point.source,

@@ -312,18 +312,71 @@ Optional enrichment fields:
 # Install dev dependencies
 pip install -e ".[dev]"
 
+# Install frontend dependencies (if working on frontend)
+cd frontend && npm install && cd ..
+
 # Run the canonical deterministic quality gate
+# This checks both backend (Python) and frontend (TypeScript) code
 python -m pricerecon.quality_gate
 
-# Run all tests
+# Run all backend tests
 pytest
 
-# Run specific test file
+# Run specific backend test file
 pytest tests/test_mystore.py
 
 # Run with coverage
 pytest --cov=pricerecon --cov-report=html
 ```
+
+## Frontend Development
+
+The PriceRecon frontend is built with React + TypeScript and follows the same strictness philosophy as the backend.
+
+### Frontend Quality Standards
+
+- **TypeScript strict mode enabled** - No implicit `any`, all code is typed
+- **No `any` escapes** - Use `unknown` or proper typed interfaces instead
+- **ESLint with `@typescript-eslint/recommended-requiring-type-checking`**
+- **`no-explicit-any` is an error** - The linter will fail on `any` usage
+
+### Frontend Workflows
+
+```bash
+# Install frontend dependencies
+cd frontend && npm install
+
+# Run frontend lint check (no `any` escapes allowed)
+npm run lint
+
+# Build frontend (TypeScript compilation + Vite build)
+npm run build
+
+# Run dev server
+npm run dev
+```
+
+### Frontend Types
+
+All API responses must have explicit TypeScript interfaces. Example:
+
+```typescript
+// Correct: explicit interface for API response
+interface Event {
+  id: number
+  event_type: string
+  severity: string
+  data: Record<string, unknown>  // Use Record instead of any
+  created_at: string
+}
+
+// Wrong: any escape (will fail ESLint)
+interface Event {
+  data: any  // ESLint error: no-explicit-any
+}
+```
+
+The quality gate runs `npm run lint` and `npm run build` for all frontend changes, catching type errors and enforcing the same standard as backend code.
 
 ## PR Checklist
 

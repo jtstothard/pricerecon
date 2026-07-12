@@ -196,6 +196,9 @@ def build_quality_checks(repo_root: Path = REPO_ROOT) -> list[QualityCheck]:
     ]
 
     if frontend_build_needed:
+        checks.append(
+            QualityCheck("Frontend ESLint check", ["npm", "run", "lint"], cwd=FRONTEND_ROOT)
+        )
         checks.append(QualityCheck("Frontend build", ["npm", "run", "build"], cwd=FRONTEND_ROOT))
     return checks
 
