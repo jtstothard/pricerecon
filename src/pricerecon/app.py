@@ -63,7 +63,10 @@ async def load_watches_from_db():
 
 
 async def check_watch(watch_id: int):
-    print(f"Executing watch {watch_id}")
+    """Scheduler callback: execute a watch and record results."""
+    print(f"[scheduler] Executing watch {watch_id}")
+    from pricerecon.core.watch_executor import execute_watch
+
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     try:
@@ -74,6 +77,19 @@ async def check_watch(watch_id: int):
         conn.commit()
     finally:
         conn.close()
+
+    try:
+        result = await execute_watch(watch_id)
+        events = result.get("events", [])
+        notifications = result.get("notifications_sent", 0)
+        listings = result.get("listings_found", 0)
+        print(
+            f"[scheduler] Watch {watch_id} done: "
+            f"{listings} listings, {len(events)} events, "
+            f"{notifications} notifications"
+        )
+    except Exception as exc:
+        print(f"[scheduler] Watch {watch_id} failed: {exc}")
 
 
 @asynccontextmanager
