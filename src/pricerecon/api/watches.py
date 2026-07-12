@@ -38,17 +38,19 @@ def get_schedule_config(watch: Watch) -> dict[str, Any]:
 def sync_watch_scheduler(watch: Watch) -> None:
     """Add, update, or remove a watch in the live scheduler.
 
-    Best-effort: if the scheduler is not running yet, this is a no-op.
+    If the global scheduler singleton has not been initialized yet, create it
+    so API-created watches are still queued immediately and picked up once the
+    app lifespan starts the scheduler.
     """
     try:
-        from pricerecon.core.scheduler import get_scheduler
+        from pricerecon.core.scheduler import get_scheduler, init_scheduler
     except Exception:
         return
 
     try:
         scheduler = get_scheduler()
     except RuntimeError:
-        return
+        scheduler = init_scheduler()
 
     if not watch.enabled:
         scheduler.remove_watch(watch.id)
