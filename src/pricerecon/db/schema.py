@@ -1,5 +1,6 @@
 """Database schema and initialization."""
 
+import json
 import sqlite3
 from pathlib import Path
 
@@ -9,6 +10,48 @@ DB_PATH = Path("pricerecon.db")
 def get_db_path() -> Path:
     """Get the database file path."""
     return DB_PATH
+
+
+def _seed_sources(conn: sqlite3.Connection) -> None:
+    """Seed the sources table with discovered connectors if empty."""
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM sources")
+    if cursor.fetchone()[0] > 0:
+        return
+
+    try:
+        from pricerecon.connectors import discover_connectors
+        from pricerecon.connectors.rss import register_template_connectors
+
+        # Entry-point-based connectors
+        connectors = discover_connectors()
+
+        # Template-based connectors (Reddit, HUKD, etc.)
+        templates = register_template_connectors()
+
+        for cid, cls in connectors.items():
+            # Instantiate to read source_role
+            try:
+                instance = cls()
+                role = instance.source_role.value if hasattr(instance.source_role, 'value') else str(instance.source_role)
+                name = getattr(instance, 'display_name', cid)
+            except Exception:
+                role = "retailer"
+                name = cid
+            cursor.execute(
+                "INSERT OR IGNORE INTO sources (connector_id, source_type, config_json, enabled) VALUES (?, ?, ?, 1)",
+                (cid, role, json.dumps({"name": name})),
+            )
+
+        for cid, tmpl in templates.items():
+            role = tmpl.source_role.value if hasattr(tmpl.source_role, 'value') else str(tmpl.source_role)
+            cursor.execute(
+                "INSERT OR IGNORE INTO sources (connector_id, source_type, config_json, enabled) VALUES (?, ?, ?, 1)",
+                (cid, role, json.dumps({"name": tmpl.display_name})),
+            )
+    except Exception as e:
+        # Don't crash init if connector discovery fails
+        print(f"Warning: failed to seed sources: {e}")
 
 
 def init_db(path: Path | None = None) -> None:
@@ -162,4 +205,5 @@ def init_db(path: Path | None = None) -> None:
     )
 
     conn.commit()
+    _seed_sources(conn)
     conn.close()
