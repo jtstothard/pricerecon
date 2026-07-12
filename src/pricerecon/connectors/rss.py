@@ -217,7 +217,11 @@ TEMPLATE_CONNECTORS: dict[str, ConnectorTemplateConfig] = {}
 
 
 def load_template_configs(template_dir: Path | str | None = None) -> dict[str, ConnectorTemplateConfig]:
-    """Load and validate connector templates from YAML files."""
+    """Load and validate RSS connector templates from YAML files.
+
+    The template directory also contains HTML connector definitions, so we only
+    validate files that declare the RSS connector contract.
+    """
 
     if template_dir is None:
         template_dir = Path(__file__).resolve().parent / "templates"
@@ -226,8 +230,11 @@ def load_template_configs(template_dir: Path | str | None = None) -> dict[str, C
     if not template_path.exists():
         return configs
 
+    required_keys = {"source", "source_role", "endpoint_url"}
     for file_path in sorted(template_path.glob("*.y*ml")):
         raw = yaml.safe_load(file_path.read_text()) or {}
+        if not isinstance(raw, dict) or not required_keys.issubset(raw):
+            continue
         config = ConnectorTemplateConfig.model_validate(raw)
         configs[config.source] = config
     return configs
