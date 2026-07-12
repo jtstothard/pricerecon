@@ -312,6 +312,9 @@ Optional enrichment fields:
 # Install dev dependencies
 pip install -e ".[dev]"
 
+# Run the canonical deterministic quality gate
+python -m pricerecon.quality_gate
+
 # Run all tests
 pytest
 
