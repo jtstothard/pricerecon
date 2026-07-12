@@ -380,10 +380,11 @@ async def test_watch_executor_records_non_empty_timeout_health(monkeypatch):
     monkeypatch.setattr(watch_executor, 'get_watch', lambda watch_id: watch)
     monkeypatch.setattr(watch_executor, 'run_check', lambda *_args, **_kwargs: (True, FakeDiffResult(), []))
     monkeypatch.setattr(watch_executor, 'get_db', lambda: FakeConn())
+
+    # Mock discover_connectors to return our fake connector class
     monkeypatch.setattr(
-        watch_executor.importlib,
-        'import_module',
-        lambda name: type('M', (), {'OverclockersConnector': FakeConnector})(),
+        'pricerecon.connectors.discover_connectors',
+        lambda: {'overclockers': FakeConnector},
     )
     monkeypatch.setattr(
         watch_executor,
