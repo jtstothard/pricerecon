@@ -83,11 +83,13 @@ class WatchScheduler:
             self.remove_watch(watch_id)
 
         # Add job to scheduler
+        import datetime as _dt
         self.scheduler.add_job(
             func=self._execute_watch,
             trigger=IntervalTrigger(
                 seconds=schedule.interval_seconds,
-                timezone=schedule.timezone
+                timezone=schedule.timezone,
+                start_date=_dt.datetime.now(_dt.timezone.utc),
             ),
             id=job_id,
             args=[watch_id, schedule],
