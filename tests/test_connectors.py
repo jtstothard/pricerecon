@@ -266,8 +266,13 @@ async def test_aliexpress_connector_surfaces_ds_auth_failure():
             if 'affiliate/product/query' in url:
                 class Resp:
                     status_code = 200
-                    def raise_for_status(self): return None
-                    def json(self): return {'items': [{'productId': '1005008557811111', 'title': 'Ali CPU', 'displayPrice': '199.99'}]}
+
+                    def raise_for_status(self):
+                        return None
+
+                    def json(self):
+                        return {'items': [{'productId': '1005008557811111', 'title': 'Ali CPU', 'displayPrice': '199.99'}]}
+
                 return Resp()
             if 'ds/product/get' in url:
                 raise httpx.HTTPStatusError('401', request=httpx.Request('POST', url), response=httpx.Response(401))
@@ -283,6 +288,124 @@ async def test_aliexpress_connector_surfaces_ds_auth_failure():
         await connector.search('1005008557811111', {'enrich_with_ds': True})
     assert excinfo.value.status == ConnectorStatus.auth_failed
     assert 'DS' in excinfo.value.message
+
+
+@pytest.mark.asyncio
+async def test_aliexpress_brave_discovery_routes_into_ds_enrichment_and_keeps_manual_flow(monkeypatch):
+    calls: list[tuple[str, str]] = []
+
+    class DummyResponse:
+        def __init__(self, payload: dict[str, object], status_code: int = 200):
+            self._payload = payload
+            self.status_code = status_code
+
+        def raise_for_status(self):
+            if self.status_code >= 400:
+                raise httpx.HTTPStatusError('boom', request=httpx.Request('POST', 'https://example.test'), response=httpx.Response(self.status_code))
+
+        def json(self):
+            return self._payload
+
+    class DummyGetResponse:
+        text = '''
+        <html><body>
+          <a href="https://www.aliexpress.com/item/1005001111111111.html">one</a>
+          <a href="https://www.aliexpress.com/item/1005002222222222.html">two</a>
+          <a href="https://www.aliexpress.com/item/1005001111111111.html">dup</a>
+        </body></html>
+        '''
+
+        def raise_for_status(self):
+            return None
+
+    class DummyClient:
+        async def get(self, url, headers=None, timeout=None):
+            calls.append((url, 'GET'))
+            return DummyGetResponse()
+
+        async def post(self, url, json=None, headers=None):
+            calls.append((url, 'POST'))
+            if 'ds/product/get' in url:
+                pid = str(json['productId'])
+                return DummyResponse({'data': {'title': f'DS {pid}', 'displayPrice': '149.99', 'shippingCost': '4.99', 'shopName': 'DS Shop', 'rating': '4.9', 'sales': '123', 'inStock': True, 'coupons': [{'text': '£5 off'}]}})
+            raise AssertionError(url)
+
+        async def aclose(self):
+            return None
+
+    async def noop_rate_limit():
+        return None
+
+    connector = AliExpressConnector(
+        {
+            'manual_pids': ['1005003333333333'],
+            'ds_access_token': 'fresh-token',
+            'ds_expires_at': '2030-01-01T00:00:00+00:00',
+        },
+        http_client=cast(Any, DummyClient()),
+    )
+    connector._rate_limit_brave = noop_rate_limit  # type: ignore[method-assign]
+
+    listings = await connector.search('RTX 4080', {'affiliate_only': False, 'brave_discovery': True, 'enrich_with_ds': True})
+    await connector.cleanup()
+
+    assert any(kind == 'GET' and 'search.brave.com/search' in url for url, kind in calls)
+    assert {listing.source_listing_id for listing in listings} == {'1005001111111111', '1005002222222222', '1005003333333333'}
+    brave = next(l for l in listings if l.source_listing_id == '1005001111111111')
+    manual = next(l for l in listings if l.source_listing_id == '1005003333333333')
+    assert brave.variant_normalized is not None
+    assert brave.variant_normalized['aliexpress_watch_mode'] == 'brave_discovery'
+    assert brave.variant_normalized['aliexpress_source_lane'] == 'ds'
+    assert brave.price == Decimal('149.99')
+    assert manual.variant_normalized is not None
+    assert manual.variant_normalized['aliexpress_watch_mode'] == 'manual_pid'
+    assert manual.variant_normalized['aliexpress_source_lane'] == 'ds'
+    assert manual.variant_normalized['aliexpress_coupon_layers'] == [{'text': '£5 off'}]
+
+
+@pytest.mark.asyncio
+async def test_aliexpress_brave_discovery_toggle_and_max_pids(monkeypatch):
+    calls: list[str] = []
+
+    class DummyGetResponse:
+        text = '''
+        <html><body>
+          <a href="https://www.aliexpress.com/item/1005004444444444.html">one</a>
+          <a href="https://www.aliexpress.com/item/1005005555555555.html">two</a>
+          <a href="https://www.aliexpress.com/item/1005006666666666.html">three</a>
+        </body></html>
+        '''
+
+        def raise_for_status(self):
+            return None
+
+    class DummyClient:
+        async def get(self, url, headers=None, timeout=None):
+            calls.append(str(url))
+            return DummyGetResponse()
+
+        async def post(self, url, json=None, headers=None):
+            raise AssertionError(url)
+
+        async def aclose(self):
+            return None
+
+    async def noop_rate_limit():
+        return None
+
+    connector = AliExpressConnector({'brave_discovery': False, 'brave_max_pids': 1}, http_client=cast(Any, DummyClient()))
+    connector._rate_limit_brave = noop_rate_limit  # type: ignore[method-assign]
+
+    disabled = await connector.search('RTX 4090', {'affiliate_only': False})
+    enabled = await connector.search('RTX 4090', {'affiliate_only': False, 'brave_discovery': True})
+    await connector.cleanup()
+
+    assert disabled == []
+    assert len(enabled) == 1
+    assert enabled[0].source_listing_id == '1005004444444444'
+    assert enabled[0].variant_normalized is not None
+    assert enabled[0].variant_normalized['aliexpress_watch_mode'] == 'brave_discovery'
+    assert any('search.brave.com/search' in url for url in calls)
 
 
 @pytest.mark.asyncio

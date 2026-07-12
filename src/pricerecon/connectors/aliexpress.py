@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import logging
 import re
+import time
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from typing import Any
@@ -55,6 +57,8 @@ class AliExpressConnector(BaseConnector):
         self._manual_links = list(self.config.get("manual_links", []))
         self._browser_enrich_default = bool(self.config.get("browser_enrich", False))
         self._enrich_with_ds_default = bool(self.config.get("enrich_with_ds", False))
+        self._brave_discovery_default = bool(self.config.get("brave_discovery", True))
+        self._brave_max_pids = int(self.config.get("brave_max_pids", 25))
 
     @property
     def source_role(self) -> SourceType:
@@ -71,6 +75,10 @@ class AliExpressConnector(BaseConnector):
         affiliate_query = self._is_affiliate_search_enabled(filters)
         if affiliate_query:
             listings.extend(await self._affiliate_search(query, filters))
+
+        brave_query = self._is_brave_search_enabled(filters)
+        if brave_query:
+            listings.extend(await self._brave_search(query, filters))
 
         manual_targets = self._resolve_manual_targets(query, filters)
         if manual_targets:
@@ -90,6 +98,11 @@ class AliExpressConnector(BaseConnector):
         if filters.get("affiliate_only") is False:
             return False
         return True
+
+    def _is_brave_search_enabled(self, filters: dict[str, Any]) -> bool:
+        if filters.get("brave_discovery") is not None:
+            return bool(filters.get("brave_discovery"))
+        return self._brave_discovery_default
 
     def _should_enrich_with_ds(self, filters: dict[str, Any]) -> bool:
         if filters.get("enrich_with_ds") is not None:
@@ -246,6 +259,67 @@ class AliExpressConnector(BaseConnector):
         data = self._extract_response_list(response.json())
         return [self._listing_from_affiliate_item(item, query) for item in data]
 
+    async def _brave_search(self, query: str, filters: dict[str, Any]) -> list[NormalizedListing]:
+        """Discover PIDs via Brave Search for non-enrolled listings."""
+        from urllib.parse import quote
+
+        max_pids = int(filters.get("brave_max_pids", self._brave_max_pids))
+        listings: list[NormalizedListing] = []
+
+        # Rate limiting before Brave request
+        await self._rate_limit_brave()
+
+        # Query Brave Search for AliExpress product pages
+        brave_query = f'site:aliexpress.com/item/ "{query}"'
+        url = f"https://search.brave.com/search?q={quote(brave_query)}"
+
+        try:
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+                "Accept": "text/html",
+            }
+            response = await self._client.get(url, headers=headers, timeout=30.0)
+            response.raise_for_status()
+            html = response.text
+        except Exception as exc:
+            logger.warning(f"Brave Search failed: {exc}")
+            return listings
+
+        # Extract unique PIDs
+        pids = list(dict.fromkeys(re.findall(r'aliexpress\.com/item/(\d{10,})', html)))
+        pids = pids[:max_pids]
+
+        if not pids:
+            return listings
+
+        # Create minimal listings for each PID (enrichment happens downstream)
+        currency = filters.get("currency", self._affiliate_currency)
+        for pid in pids:
+            listing = NormalizedListing.model_validate(
+                {
+                    "source": self.connector_id,
+                    "source_type": self.source_role,
+                    "source_listing_id": pid,
+                    "title_raw": f"AliExpress {pid}",
+                    "price": Decimal("0"),
+                    "currency": currency,
+                    "url": f"https://www.aliexpress.com/item/{pid}.html",
+                    "in_stock": None,
+                    "variant_normalized": {
+                        "aliexpress_product_id": pid,
+                        "aliexpress_watch_mode": "brave_discovery",
+                    },
+                }
+            )
+            listings.append(listing)
+
+        return listings
+
+    async def _rate_limit_brave(self) -> None:
+        """Rate limit Brave Search requests to avoid hitting limits."""
+        delay = 1.5
+        await asyncio.sleep(delay)
+
     async def _manual_pid_search(self, pids: list[str], filters: dict[str, Any]) -> list[NormalizedListing]:
         listings: list[NormalizedListing] = []
         for pid in pids:
@@ -395,7 +469,11 @@ class AliExpressConnector(BaseConnector):
     async def _fetch_ds_detail(self, pid: str) -> dict[str, Any]:
         token = await self._ensure_ds_access_token()
         headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-        payload = {"productId": pid}
+        payload = {
+            "productId": pid,
+            "ship_to_country": self.config.get("ds_ship_to_country", "GB"),
+            "target_currency": self._affiliate_currency,
+        }
         try:
             response = await self._client.post(self._ds_product_endpoint, json=payload, headers=headers)
             if response.status_code in {401, 403}:
