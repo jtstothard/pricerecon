@@ -18,8 +18,10 @@ from pricerecon.connectors.specs import extract_specs
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 from pricerecon.core import watch_executor
 from pricerecon.models import (
+    NormalizedListing,
     SourceConfig,
     SourceType,
+    SpecMatch,
     Watch,
     WatchFilters,
     WatchGrouping,
@@ -86,6 +88,153 @@ def test_html_parser_normalizes_cards():
     assert listing.in_stock is True
     assert listing.variant_normalized is not None
     assert listing.variant_normalized['gpu_model'] == 'RTX 4070'
+
+
+@pytest.mark.asyncio
+async def test_watch_executor_filters_by_spec_match_ram(monkeypatch):
+    now = watch_executor.datetime.utcnow()
+    watch = Watch(
+        id=99,
+        name='RAM floor watch',
+        query='laptop',
+        category='laptop',
+        sources=[SourceConfig(connector='aliexpress', config={})],
+        filters=WatchFilters(
+            price_max=None,
+            spec_match=SpecMatch(ram_gb=32),
+            min_seller_feedback=None,
+            min_seller_feedback_pct=None,
+        ),
+        schedule=WatchSchedule(time_window=None),
+        grouping=WatchGrouping(product_key=None),
+        notifications=WatchNotification(
+            webhook_url=None,
+            telegram_bot_token=None,
+            telegram_chat_id=None,
+            discord_webhook_url=None,
+        ),
+        enabled=True,
+        created_at=now,
+        updated_at=now,
+        last_check_at=None,
+        status='active',
+    )
+
+    listings = [
+        NormalizedListing(
+            source='aliexpress',
+            source_type=SourceType.MARKETPLACE,
+            source_listing_id='1',
+            title_raw='Lenovo ThinkPad T14 16GB RAM 512GB SSD',
+            price=Decimal('499.99'),
+            currency='GBP',
+            url='https://example.com/1',
+            timestamp_seen=now,
+            product_normalized=None,
+            variant_normalized=extract_specs('Lenovo ThinkPad T14 16GB RAM 512GB SSD', 'laptop'),
+            condition=None,
+            condition_raw=None,
+            shipping_cost=None,
+            total_landed_cost=None,
+            seller_or_store=None,
+            seller_feedback_score=None,
+            seller_feedback_pct=None,
+            location=None,
+            in_stock=None,
+            stock_state=None,
+            image_url=None,
+            exact_variant_confirmed=None,
+            variant_match_confidence=None,
+            mismatch_flags=None,
+            risk_flags=None,
+            category='laptop',
+        ),
+        NormalizedListing(
+            source='aliexpress',
+            source_type=SourceType.MARKETPLACE,
+            source_listing_id='2',
+            title_raw='Lenovo ThinkPad T14 32GB RAM 1TB SSD',
+            price=Decimal('699.99'),
+            currency='GBP',
+            url='https://example.com/2',
+            timestamp_seen=now,
+            product_normalized=None,
+            variant_normalized=extract_specs('Lenovo ThinkPad T14 32GB RAM 1TB SSD', 'laptop'),
+            condition=None,
+            condition_raw=None,
+            shipping_cost=None,
+            total_landed_cost=None,
+            seller_or_store=None,
+            seller_feedback_score=None,
+            seller_feedback_pct=None,
+            location=None,
+            in_stock=None,
+            stock_state=None,
+            image_url=None,
+            exact_variant_confirmed=None,
+            variant_match_confidence=None,
+            mismatch_flags=None,
+            risk_flags=None,
+            category='laptop',
+        ),
+    ]
+
+    recorded: list[tuple[str, str, str | None, dict[str, object] | None]] = []
+
+    class FakeConnector:
+        async def initialize(self):
+            return None
+
+        async def search(self, query, connector_filters):
+            assert connector_filters == {}
+            return listings
+
+        async def cleanup(self):
+            return None
+
+    class FakeCursor:
+        def execute(self, *args, **kwargs):
+            return None
+
+        def fetchone(self):
+            return None
+
+    class FakeConn:
+        def cursor(self):
+            return FakeCursor()
+
+        def commit(self):
+            return None
+
+        def close(self):
+            return None
+
+    class FakeDiffResult:
+        has_events = False
+        new_listings = []
+        price_drops = []
+        stock_changes = []
+        listings_gone = []
+
+    monkeypatch.setattr(watch_executor, 'get_watch', lambda watch_id: watch)
+    monkeypatch.setattr(watch_executor, 'run_check', lambda *_args, **_kwargs: (True, FakeDiffResult(), []))
+    monkeypatch.setattr(watch_executor, 'get_db', lambda: FakeConn())
+    monkeypatch.setattr(
+        'pricerecon.connectors.discover_connectors',
+        lambda: {'aliexpress': FakeConnector},
+    )
+    monkeypatch.setattr(
+        watch_executor,
+        'upsert_connector_health',
+        lambda connector_id, status, last_error=None, details=None: recorded.append((connector_id, status, last_error, details)),
+    )
+
+    result = await watch_executor.execute_watch(99)
+
+    assert result['success'] is True
+    assert result['listings_found'] == 1
+    assert recorded[0][0] == 'aliexpress'
+    assert recorded[0][1] == 'ok'
 
 
 def test_reddit_hardwareswapuk_price_parser_uses_visible_gbp_amount():
@@ -312,6 +461,15 @@ async def test_aliexpress_connector_uses_manual_pid_and_ds_and_browser(monkeypat
 @pytest.mark.asyncio
 async def test_aliexpress_connector_surfaces_ds_auth_failure():
     class FailingClient:
+        async def get(self, url, headers=None, timeout=None):
+            class Resp:
+                text = '<html></html>'
+
+                def raise_for_status(self):
+                    return None
+
+            return Resp()
+
         async def post(self, url, json=None, headers=None):
             if 'affiliate/product/query' in url:
                 class Resp:
