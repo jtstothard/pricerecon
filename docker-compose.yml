@@ -29,14 +29,6 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
 
-  flaresolverr:
-    image: ghcr.io/flaresolverr/flaresolverr:latest
-    profiles: ["flaresolverr"]
-    ports:
-      - "8192:8191"
-    environment:
-      - LOG_LEVEL=info
-
   playwright:
     image: mcr.microsoft.com/playwright/python:v1.55.0-jammy
     profiles: ["playwright"]
