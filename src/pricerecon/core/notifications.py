@@ -4,8 +4,10 @@ Sends notifications via webhook, Telegram, and Discord channels.
 Logs all sent notifications in the notifications table.
 """
 
+import asyncio
 import httpx
 import sqlite3
+import time
 from datetime import datetime
 from typing import Any, Optional
 
@@ -45,6 +47,25 @@ async def send_webhook(url: str, payload: dict[str, Any]) -> bool:
         return False
 
 
+_TELEGRAM_SEND_LOCK = asyncio.Lock()
+_TELEGRAM_MIN_INTERVAL_SECONDS = 0.5
+_TELEGRAM_RETRY_BACKOFF_SECONDS = 1.0
+_TELEGRAM_LAST_SEND_AT = 0.0
+
+
+async def _send_telegram_once(bot_token: str, chat_id: str, message: str) -> httpx.Response:
+    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": message,
+        "parse_mode": "HTML",
+    }
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        response = await client.post(url, json=payload)
+        response.raise_for_status()
+        return response
+
+
 async def send_telegram(
     bot_token: str, chat_id: str, message: str
 ) -> bool:
@@ -58,20 +79,38 @@ async def send_telegram(
     Returns:
         True if successful, False otherwise
     """
-    try:
-        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-        payload = {
-            "chat_id": chat_id,
-            "text": message,
-            "parse_mode": "HTML",
-        }
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.post(url, json=payload)
-            response.raise_for_status()
-            return True
-    except Exception as e:
-        print(f"Telegram send failed: {e}")
-        return False
+    global _TELEGRAM_LAST_SEND_AT
+
+    async with _TELEGRAM_SEND_LOCK:
+        now = time.monotonic()
+        elapsed = now - _TELEGRAM_LAST_SEND_AT
+        if _TELEGRAM_LAST_SEND_AT and elapsed < _TELEGRAM_MIN_INTERVAL_SECONDS:
+            await asyncio.sleep(_TELEGRAM_MIN_INTERVAL_SECONDS - elapsed)
+
+        for attempt in range(2):
+            try:
+                await _send_telegram_once(bot_token, chat_id, message)
+                _TELEGRAM_LAST_SEND_AT = time.monotonic()
+                return True
+            except httpx.HTTPStatusError as e:
+                status_code = e.response.status_code if e.response is not None else None
+                if status_code == 429 and attempt == 0:
+                    retry_after = e.response.headers.get("Retry-After") if e.response is not None else None
+                    delay = _TELEGRAM_RETRY_BACKOFF_SECONDS
+                    if retry_after:
+                        try:
+                            delay = max(delay, float(retry_after))
+                        except ValueError:
+                            pass
+                    await asyncio.sleep(delay)
+                    continue
+                print(f"Telegram send failed: {e}")
+                return False
+            except Exception as e:
+                print(f"Telegram send failed: {e}")
+                return False
+
+    return False
 
 
 async def send_discord(webhook_url: str, message: str) -> bool:
