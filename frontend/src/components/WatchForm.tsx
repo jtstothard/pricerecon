@@ -1,19 +1,9 @@
 import { useState } from 'react'
-
-interface Watch {
-  id: number
-  name: string
-  query: string
-  category: string
-  interval: string
-  enabled: boolean
-  last_check_at: string | null
-  next_check_at: string | null
-}
+import type { WatchSummary } from './watchTypes'
 
 interface WatchFormProps {
   onClose: () => void
-  onCreated: (watch: Watch) => void
+  onCreated: (watch: WatchSummary) => void
 }
 
 export default function WatchForm({ onClose, onCreated }: WatchFormProps) {
@@ -57,7 +47,7 @@ export default function WatchForm({ onClose, onCreated }: WatchFormProps) {
         throw new Error(errorData.detail || 'Failed to create watch')
       }
 
-      const newWatch = await response.json()
+      const newWatch: WatchSummary = await response.json()
       onCreated(newWatch)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create watch')
@@ -91,7 +81,7 @@ export default function WatchForm({ onClose, onCreated }: WatchFormProps) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>Create Watch</h3>
+          <h3>Create watch</h3>
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
 
