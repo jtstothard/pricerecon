@@ -74,6 +74,39 @@ async def test_create_watch(client: AsyncClient):
     assert "id" in data
 
 
+async def test_create_watch_initializes_scheduler_when_missing(client: AsyncClient, monkeypatch):
+    """Test API-created watches initialize the live scheduler singleton if needed."""
+    from pricerecon.core import scheduler as scheduler_module
+
+    calls: list[tuple] = []
+
+    class DummyScheduler:
+        def add_watch(self, watch_id, interval, timezone, time_window):
+            calls.append((watch_id, interval, timezone, time_window))
+
+        def remove_watch(self, watch_id):
+            calls.append(("remove", watch_id))
+
+    monkeypatch.setattr(scheduler_module, "get_scheduler", lambda: (_ for _ in ()).throw(RuntimeError("no scheduler")))
+    monkeypatch.setattr(scheduler_module, "init_scheduler", lambda: DummyScheduler())
+
+    watch_data = {
+        "name": "Immediate Watch",
+        "query": "rtx 4070",
+        "category": "gpu",
+        "sources": [{"connector": "ebay"}],
+        "schedule": {"interval": "1h", "timezone": "UTC"},
+        "filters": {},
+        "grouping": {},
+        "notifications": {},
+        "enabled": True,
+    }
+    response = await client.post("/api/watches", json=watch_data)
+    assert response.status_code == 201
+    assert calls and calls[0][0] == response.json()["id"]
+    assert calls[0][1:] == ("1h", "UTC", None)
+
+
 async def test_get_watch(client: AsyncClient):
     """Test getting a watch by ID."""
     # First create a watch
