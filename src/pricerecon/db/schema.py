@@ -21,13 +21,10 @@ def _seed_sources(conn: sqlite3.Connection) -> None:
 
     try:
         from pricerecon.connectors import discover_connectors
-        from pricerecon.connectors.rss import register_template_connectors
 
-        # Entry-point-based connectors
+        # Entry-point-based connectors (covers all connector classes including
+        # Reddit, HUKD, retailers, AliExpress, etc.)
         connectors = discover_connectors()
-
-        # Template-based connectors (Reddit, HUKD, etc.)
-        templates = register_template_connectors()
 
         for cid, cls in connectors.items():
             # Instantiate to read source_role
@@ -41,13 +38,6 @@ def _seed_sources(conn: sqlite3.Connection) -> None:
             cursor.execute(
                 "INSERT OR IGNORE INTO sources (connector_id, source_type, config_json, enabled) VALUES (?, ?, ?, 1)",
                 (cid, role, json.dumps({"name": name})),
-            )
-
-        for cid, tmpl in templates.items():
-            role = tmpl.source_role.value if hasattr(tmpl.source_role, 'value') else str(tmpl.source_role)
-            cursor.execute(
-                "INSERT OR IGNORE INTO sources (connector_id, source_type, config_json, enabled) VALUES (?, ?, ?, 1)",
-                (cid, role, json.dumps({"name": tmpl.display_name})),
             )
     except Exception as e:
         # Don't crash init if connector discovery fails
