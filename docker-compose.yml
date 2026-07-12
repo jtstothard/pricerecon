@@ -15,7 +15,14 @@ services:
       - PRICERECON_HOST=0.0.0.0
       - PRICERECON_PORT=8000
       - PRICERECON_API_KEY=${PRICERECON_API_KEY:-}
-      - PRICERECON_FLARESOLVERR_URL=${PRICERECON_FLARESOLVERR_URL:-http://flaresolverr:8191/v1}
+      - PRICERECON_FLARESOLVERR_URL=${PRICERECON_FLARESOLVERR_URL:-http://byparr:8191/v1}
+      - EBAY_APP_ID=${EBAY_APP_ID:-}
+      - EBAY_CERT_ID=${EBAY_CERT_ID:-}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
+    networks:
+      - default
+      - media_back
 
   postgres:
     image: postgres:16-alpine
@@ -42,3 +49,7 @@ services:
 
 volumes:
   postgres-data:
+
+networks:
+  media_back:
+    external: true
