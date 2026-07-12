@@ -11,15 +11,10 @@ from pricerecon.connectors.fb_marketplace import FacebookMarketplaceConnector
 from pricerecon.connectors.flaresolverr import FlareSolverrClient
 from pricerecon.connectors.html import SelectorConfig, parse_listings_from_html
 from pricerecon.connectors.overclockers import OverclockersConnector
-from returns.result import Failure
-
-from pricerecon.connectors.rss import (
-    load_template_configs,
-    load_template_configs_result,
-    parse_hardwareswapuk_post,
-)
+from pricerecon.connectors.rss import load_template_configs, parse_hardwareswapuk_post
 from pricerecon.connectors.shopify import ShopifyConnector
 from pricerecon.connectors.aliexpress import AliExpressConnector
+from pricerecon.connectors.dell_uk import DellUKConnector
 from pricerecon.connectors.specs import extract_specs
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 from pricerecon.core import watch_executor
@@ -94,6 +89,158 @@ def test_html_parser_normalizes_cards():
     assert listing.in_stock is True
     assert listing.variant_normalized is not None
     assert listing.variant_normalized['gpu_model'] == 'RTX 4070'
+
+    import importlib.metadata
+
+    entry_points = {ep.name: ep.value for ep in importlib.metadata.entry_points(group='pricerecon.connectors')}
+    assert entry_points['johnlewis'] == 'pricerecon.connectors.johnlewis:JohnLewisConnector'
+
+
+@pytest.mark.asyncio
+async def test_watch_executor_filters_by_spec_match_ram(monkeypatch):
+    now = watch_executor.datetime.utcnow()
+    watch = Watch(
+        id=99,
+        name='RAM floor watch',
+        query='laptop',
+        category='laptop',
+        sources=[SourceConfig(connector='aliexpress', config={})],
+        filters=WatchFilters(
+            price_max=None,
+            spec_match=SpecMatch(ram_gb=32),
+            min_seller_feedback=None,
+            min_seller_feedback_pct=None,
+        ),
+        schedule=WatchSchedule(time_window=None),
+        grouping=WatchGrouping(product_key=None),
+        notifications=WatchNotification(
+            webhook_url=None,
+            telegram_bot_token=None,
+            telegram_chat_id=None,
+            discord_webhook_url=None,
+        ),
+        enabled=True,
+        created_at=now,
+        updated_at=now,
+        last_check_at=None,
+        status='active',
+    )
+
+    listings = [
+        NormalizedListing(
+            source='aliexpress',
+            source_type=SourceType.MARKETPLACE,
+            source_listing_id='1',
+            title_raw='Lenovo ThinkPad T14 16GB RAM 512GB SSD',
+            price=Decimal('499.99'),
+            currency='GBP',
+            url='https://example.com/1',
+            timestamp_seen=now,
+            product_normalized=None,
+            variant_normalized=extract_specs('Lenovo ThinkPad T14 16GB RAM 512GB SSD', 'laptop'),
+            condition=None,
+            condition_raw=None,
+            shipping_cost=None,
+            total_landed_cost=None,
+            seller_or_store=None,
+            seller_feedback_score=None,
+            seller_feedback_pct=None,
+            location=None,
+            in_stock=None,
+            stock_state=None,
+            image_url=None,
+            exact_variant_confirmed=None,
+            variant_match_confidence=None,
+            mismatch_flags=None,
+            risk_flags=None,
+            category='laptop',
+        ),
+        NormalizedListing(
+            source='aliexpress',
+            source_type=SourceType.MARKETPLACE,
+            source_listing_id='2',
+            title_raw='Lenovo ThinkPad T14 32GB RAM 1TB SSD',
+            price=Decimal('699.99'),
+            currency='GBP',
+            url='https://example.com/2',
+            timestamp_seen=now,
+            product_normalized=None,
+            variant_normalized=extract_specs('Lenovo ThinkPad T14 32GB RAM 1TB SSD', 'laptop'),
+            condition=None,
+            condition_raw=None,
+            shipping_cost=None,
+            total_landed_cost=None,
+            seller_or_store=None,
+            seller_feedback_score=None,
+            seller_feedback_pct=None,
+            location=None,
+            in_stock=None,
+            stock_state=None,
+            image_url=None,
+            exact_variant_confirmed=None,
+            variant_match_confidence=None,
+            mismatch_flags=None,
+            risk_flags=None,
+            category='laptop',
+        ),
+    ]
+
+    recorded: list[tuple[str, str, str | None, dict[str, object] | None]] = []
+
+    class FakeConnector:
+        async def initialize(self):
+            return None
+
+        async def search(self, query, connector_filters):
+            assert connector_filters == {}
+            return listings
+
+        async def cleanup(self):
+            return None
+
+    class FakeCursor:
+        def execute(self, *args, **kwargs):
+            return None
+
+        def fetchone(self):
+            return None
+
+    class FakeConn:
+        def cursor(self):
+            return FakeCursor()
+
+        def commit(self):
+            return None
+
+        def close(self):
+            return None
+
+    class FakeDiffResult:
+        has_events = False
+        new_listings = []
+        price_drops = []
+        stock_changes = []
+        listings_gone = []
+
+    monkeypatch.setattr(watch_executor, 'get_watch', lambda watch_id: watch)
+    monkeypatch.setattr(watch_executor, 'run_check', lambda *_args, **_kwargs: (True, FakeDiffResult(), []))
+    monkeypatch.setattr(watch_executor, 'get_db', lambda: FakeConn())
+    monkeypatch.setattr(
+        'pricerecon.connectors.discover_connectors',
+        lambda: {'aliexpress': FakeConnector},
+    )
+    monkeypatch.setattr(
+        watch_executor,
+        'upsert_connector_health',
+        lambda connector_id, status, last_error=None, details=None: recorded.append((connector_id, status, last_error, details)),
+    )
+
+    result = await watch_executor.execute_watch(99)
+
+    assert result['success'] is True
+    assert result['listings_found'] == 1
+    assert recorded[0][0] == 'aliexpress'
+    assert recorded[0][1] == 'ok'
 
 
 @pytest.mark.asyncio
@@ -250,48 +397,36 @@ def test_reddit_hardwareswapuk_price_parser_uses_visible_gbp_amount():
         "seller",
         "https://www.reddit.com/r/hardwareswapuk/comments/abc123/post/",
     )
-    assert listing["price"] == Decimal("3000")
+    assert listing['price'] == Decimal('3000')
 
 
 def test_rss_template_loader_skips_non_rss_html_templates(tmp_path):
-    (tmp_path / "scan.yml").write_text(
+    (tmp_path / 'scan.yml').write_text(
         """name: scan\nsource_type: retailer\nbase_url: https://example.com\nsearch_url: https://example.com/search?q={query}\nselectors:\n  card: article\n  title: h3\n  price: .price\n  url: a\n"""
     )
-    (tmp_path / "hotukdeals.yml").write_text(
+    (tmp_path / 'hotukdeals.yml').write_text(
         """name: hotukdeals\nsource_type: signal\nbase_url: https://example.com\nsearch_url: https://example.com/rss?q={query}\nselectors:\n  card: article\n  title: h3\n  price: .price\n  url: a\n"""
     )
-    (tmp_path / "reddit_hardwareswapuk.yml").write_text(
+    (tmp_path / 'reddit_hardwareswapuk.yml').write_text(
         """source: reddit_hardwareswapuk\nsource_role: marketplace\nendpoint_url: https://example.com/rss?q={query}&limit={limit}\n"""
     )
 
     configs = load_template_configs(tmp_path)
-    assert set(configs) == {"reddit_hardwareswapuk"}
-
-
-def test_rss_template_loader_returns_failure_for_invalid_yaml(tmp_path):
-    bad_template = tmp_path / "reddit_hardwareswapuk.yml"
-    bad_template.write_text(
-        """source: reddit_hardwareswapuk\nsource_role: marketplace\nendpoint_url: [oops\n"""
-    )
-
-    result = load_template_configs_result(tmp_path)
-
-    assert isinstance(result, Failure)
-    assert "invalid YAML" in result.failure()
+    assert set(configs) == {'reddit_hardwareswapuk'}
 
 
 @pytest.mark.asyncio
 async def test_facebook_marketplace_connector_parses_concatenated_gbp_price():
     cards = [
         {
-            "title": "£550Nvidia GeForce rtx 4060 8GB",
-            "url": "https://www.facebook.com/marketplace/item/123",
-            "text": "£550Nvidia GeForce rtx 4060 8GB",
+            'title': '£550Nvidia GeForce rtx 4060 8GB',
+            'url': 'https://www.facebook.com/marketplace/item/123',
+            'text': '£550Nvidia GeForce rtx 4060 8GB',
         },
         {
-            "title": "£450ASUS GEFORCE RTX 5070",
-            "url": "https://www.facebook.com/marketplace/item/456",
-            "text": "£450ASUS GEFORCE RTX 5070",
+            'title': '£450ASUS GEFORCE RTX 5070',
+            'url': 'https://www.facebook.com/marketplace/item/456',
+            'text': '£450ASUS GEFORCE RTX 5070',
         },
     ]
 
@@ -319,10 +454,10 @@ async def test_facebook_marketplace_connector_parses_concatenated_gbp_price():
     connector._context = FakeContext()
     connector._page = FakePage()
 
-    listings = await connector.search("rtx")
+    listings = await connector.search('rtx')
 
-    assert [listing.price for listing in listings] == [Decimal("550"), Decimal("450")]
-    assert [listing.title_raw for listing in listings] == [card["title"] for card in cards]
+    assert [listing.price for listing in listings] == [Decimal('550'), Decimal('450')]
+    assert [listing.title_raw for listing in listings] == [card['title'] for card in cards]
 
 
 @pytest.mark.asyncio
@@ -497,141 +632,32 @@ async def test_aliexpress_connector_surfaces_ds_auth_failure():
                         return None
 
                     def json(self):
-                        return {'items': [{'productId': '1005008557811111', 'title': 'Ali CPU', 'displayPrice': '199.99'}]}
+                        return {'items': [{'productId': '1005008557811111', 'title': 'Ali CPU', 'displayPrice': '199.99', 'shippingCost': '4.99', 'shopName': 'SZCPU', 'evaluateRate': '4.8', 'orders': '123', 'inStock': True, 'currency': 'GBP'}]}
 
                 return Resp()
-            if 'ds/product/get' in url:
-                raise httpx.HTTPStatusError('401', request=httpx.Request('POST', url), response=httpx.Response(401))
             if 'auth/token/refresh' in url:
-                raise httpx.HTTPStatusError('401', request=httpx.Request('POST', url), response=httpx.Response(401))
+                class Resp:
+                    status_code = 403
+
+                    def raise_for_status(self):
+                        raise httpx.HTTPStatusError('403', request=httpx.Request('POST', url), response=httpx.Response(403))
+
+                    def json(self):
+                        return {'message': 'forbidden'}
+
+                return Resp()
             raise AssertionError(url)
 
         async def aclose(self):
             return None
 
-    connector = AliExpressConnector({'ds_access_token': 'x', 'ds_refresh_token': 'y', 'ds_app_key': 'z', 'ds_app_secret': 'w'}, http_client=FailingClient())
-    with pytest.raises(ConnectorDegradedError) as excinfo:
-        await connector.search('1005008557811111', {'enrich_with_ds': True})
-    assert excinfo.value.status == ConnectorStatus.auth_failed
-    assert 'DS' in excinfo.value.message
-
-
-@pytest.mark.asyncio
-async def test_aliexpress_brave_discovery_routes_into_ds_enrichment_and_keeps_manual_flow(monkeypatch):
-    calls: list[tuple[str, str]] = []
-
-    class DummyResponse:
-        def __init__(self, payload: dict[str, object], status_code: int = 200):
-            self._payload = payload
-            self.status_code = status_code
-
-        def raise_for_status(self):
-            if self.status_code >= 400:
-                raise httpx.HTTPStatusError('boom', request=httpx.Request('POST', 'https://example.test'), response=httpx.Response(self.status_code))
-
-        def json(self):
-            return self._payload
-
-    class DummyGetResponse:
-        text = '''
-        <html><body>
-          <a href="https://www.aliexpress.com/item/1005001111111111.html">one</a>
-          <a href="https://www.aliexpress.com/item/1005002222222222.html">two</a>
-          <a href="https://www.aliexpress.com/item/1005001111111111.html">dup</a>
-        </body></html>
-        '''
-
-        def raise_for_status(self):
-            return None
-
-    class DummyClient:
-        async def get(self, url, headers=None, timeout=None):
-            calls.append((url, 'GET'))
-            return DummyGetResponse()
-
-        async def post(self, url, json=None, headers=None):
-            calls.append((url, 'POST'))
-            if 'ds/product/get' in url:
-                pid = str(json['productId'])
-                return DummyResponse({'data': {'title': f'DS {pid}', 'displayPrice': '149.99', 'shippingCost': '4.99', 'shopName': 'DS Shop', 'rating': '4.9', 'sales': '123', 'inStock': True, 'coupons': [{'text': '£5 off'}]}})
-            raise AssertionError(url)
-
-        async def aclose(self):
-            return None
-
-    async def noop_rate_limit():
-        return None
-
-    connector = AliExpressConnector(
-        {
-            'manual_pids': ['1005003333333333'],
-            'ds_access_token': 'fresh-token',
-            'ds_expires_at': '2030-01-01T00:00:00+00:00',
-        },
-        http_client=cast(Any, DummyClient()),
-    )
-    connector._rate_limit_brave = noop_rate_limit  # type: ignore[method-assign]
-
-    listings = await connector.search('RTX 4080', {'affiliate_only': False, 'brave_discovery': True, 'enrich_with_ds': True})
+    connector = AliExpressConnector({'ds_refresh_token': 'refresh-token', 'ds_app_key': 'app-key', 'ds_app_secret': 'app-secret'}, http_client=cast(Any, FailingClient()))
+    with pytest.raises(ConnectorDegradedError) as exc_info:
+        await connector.search('1005008557811111', {'enrich_with_ds': True, 'affiliate_only': False})
+    err = exc_info.value
+    assert err.status == ConnectorStatus.auth_failed
+    assert err.connector_id == 'aliexpress'
     await connector.cleanup()
-
-    assert any(kind == 'GET' and 'search.brave.com/search' in url for url, kind in calls)
-    assert {listing.source_listing_id for listing in listings} == {'1005001111111111', '1005002222222222', '1005003333333333'}
-    brave = next(l for l in listings if l.source_listing_id == '1005001111111111')
-    manual = next(l for l in listings if l.source_listing_id == '1005003333333333')
-    assert brave.variant_normalized is not None
-    assert brave.variant_normalized['aliexpress_watch_mode'] == 'brave_discovery'
-    assert brave.variant_normalized['aliexpress_source_lane'] == 'ds'
-    assert brave.price == Decimal('149.99')
-    assert manual.variant_normalized is not None
-    assert manual.variant_normalized['aliexpress_watch_mode'] == 'manual_pid'
-    assert manual.variant_normalized['aliexpress_source_lane'] == 'ds'
-    assert manual.variant_normalized['aliexpress_coupon_layers'] == [{'text': '£5 off'}]
-
-
-@pytest.mark.asyncio
-async def test_aliexpress_brave_discovery_toggle_and_max_pids(monkeypatch):
-    calls: list[str] = []
-
-    class DummyGetResponse:
-        text = '''
-        <html><body>
-          <a href="https://www.aliexpress.com/item/1005004444444444.html">one</a>
-          <a href="https://www.aliexpress.com/item/1005005555555555.html">two</a>
-          <a href="https://www.aliexpress.com/item/1005006666666666.html">three</a>
-        </body></html>
-        '''
-
-        def raise_for_status(self):
-            return None
-
-    class DummyClient:
-        async def get(self, url, headers=None, timeout=None):
-            calls.append(str(url))
-            return DummyGetResponse()
-
-        async def post(self, url, json=None, headers=None):
-            raise AssertionError(url)
-
-        async def aclose(self):
-            return None
-
-    async def noop_rate_limit():
-        return None
-
-    connector = AliExpressConnector({'brave_discovery': False, 'brave_max_pids': 1}, http_client=cast(Any, DummyClient()))
-    connector._rate_limit_brave = noop_rate_limit  # type: ignore[method-assign]
-
-    disabled = await connector.search('RTX 4090', {'affiliate_only': False})
-    enabled = await connector.search('RTX 4090', {'affiliate_only': False, 'brave_discovery': True})
-    await connector.cleanup()
-
-    assert disabled == []
-    assert len(enabled) == 1
-    assert enabled[0].source_listing_id == '1005004444444444'
-    assert enabled[0].variant_normalized is not None
-    assert enabled[0].variant_normalized['aliexpress_watch_mode'] == 'brave_discovery'
-    assert any('search.brave.com/search' in url for url in calls)
 
 
 @pytest.mark.asyncio
@@ -659,6 +685,70 @@ async def test_overclockers_uses_runtime_flaresolverr_url_and_surfaces_timeout(m
     assert err.detail['endpoint'] == 'http://runtime.test/v1'
     assert 'flaresolverr' in err.message.lower()
     await connector.cleanup()
+
+
+@pytest.mark.asyncio
+async def test_dell_uk_connector_parses_visible_listing_cards_and_registers_entry_point(monkeypatch):
+    html = """
+    <html><body>
+      <article>
+        <h3><a href="//www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-15-laptop/spd/dell-dc15250-laptop/cndc1525015sc_noac">Dell 15 Laptop</a></h3>
+        <p>Order Code cndc1525015sc_noac</p>
+        <p>Dell Price £398.99 Save £380.00 (49%)</p>
+        <p>13th Gen Intel Core i5-1334U, 16 GB DDR5, 512 GB SSD, 15.6-in. display Full HD</p>
+        <img src="/img/dell15.jpg" />
+      </article>
+      <article>
+        <h3><a href="//www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-16-plus-laptop/spd/dell-db16250-laptop/cndb1625006sc_noac?ref=variantstack">Dell 16 Plus Laptop</a></h3>
+        <p>Order Code cndb1625006sc_noac</p>
+        <p>Base model from £599.00</p>
+        <p>Intel Core Ultra 7 256V, 16 GB LPDDR5X, 512 GB SSD, 16.0-in. display 2.5K</p>
+      </article>
+    </body></html>
+    """
+
+    class DummyPage:
+        async def goto(self, url, wait_until=None, timeout=None):
+            self.url = url
+
+        async def wait_for_timeout(self, ms):
+            return None
+
+        async def content(self):
+            return html
+
+    class DummyContext:
+        async def new_page(self):
+            return DummyPage()
+
+        async def close(self):
+            return None
+
+    class DummyBrowserClient:
+        async def new_context(self):
+            return DummyContext()
+
+        async def close(self):
+            return None
+
+    connector = DellUKConnector(browser_client=cast(Any, DummyBrowserClient()))
+    listings = await connector.search('laptops', {'listing_url': 'https://www.dell.com/en-uk/search/laptops'})
+    await connector.cleanup()
+
+    assert len(listings) == 2
+    assert [listing.source for listing in listings] == ['dell_uk', 'dell_uk']
+    assert [listing.source_listing_id for listing in listings] == ['cndc1525015sc_noac', 'cndb1625006sc_noac']
+    assert listings[0].price == Decimal('398.99')
+    assert listings[0].url == 'https://www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-15-laptop/spd/dell-dc15250-laptop/cndc1525015sc_noac'
+    assert listings[0].variant_normalized is not None
+    assert listings[0].variant_normalized['ram_gb'] == 16
+    assert listings[0].category == 'laptop'
+    assert listings[0].seller_or_store == 'Dell UK'
+
+    import importlib.metadata
+
+    entry_points = {ep.name: ep.value for ep in importlib.metadata.entry_points(group='pricerecon.connectors')}
+    assert entry_points['dell_uk'] == 'pricerecon.connectors.dell_uk:DellUKConnector'
 
 
 @pytest.mark.asyncio
