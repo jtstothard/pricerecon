@@ -16,8 +16,8 @@ from pricerecon.models import NormalizedListing, SourceType
 
 class ShopifyConnector(BaseConnector):
 
-    def __init__(self, base_url: str | None = None) -> None:
-        self.base_url = (base_url or "").rstrip("/")
+    def __init__(self, base_url: str | None = None, store_url: str | None = None) -> None:
+        self.base_url = (base_url or store_url or "").rstrip("/")
         self._client = httpx.AsyncClient(timeout=30.0)
 
     @property
