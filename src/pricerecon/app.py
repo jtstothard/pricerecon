@@ -25,7 +25,7 @@ from pricerecon.core.scheduler import scheduler_lifespan
 from pricerecon.db.schema import DB_PATH, init_db
 
 settings = get_settings()
-frontend_dist = Path(__file__).parent.parent.parent / "frontend" / "dist"
+frontend_dist = Path(__file__).parent.parent.parent.parent / "frontend" / "dist"
 APP_VERSION = "0.1.0"
 _app_start_time = datetime.utcnow()
 
