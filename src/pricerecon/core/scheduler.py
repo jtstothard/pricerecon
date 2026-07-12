@@ -84,20 +84,25 @@ class WatchScheduler:
 
         # Add job to scheduler
         import datetime as _dt
+        now = _dt.datetime.now(_dt.timezone.utc)
         self.scheduler.add_job(
             func=self._execute_watch,
             trigger=IntervalTrigger(
                 seconds=schedule.interval_seconds,
                 timezone=schedule.timezone,
-                start_date=_dt.datetime.now(_dt.timezone.utc),
+                start_date=now,
             ),
             id=job_id,
             args=[watch_id, schedule],
             name=f"Watch {watch_id}",
             replace_existing=True,
-            max_instances=1,  # Prevent overlapping executions
-            coalesce=True,  # Merge missed runs if scheduler was down
+            max_instances=1,
+            coalesce=True,
+            misfire_grace_time=300,
         )
+
+        # Fire the first run immediately in a background task
+        asyncio.create_task(self._execute_watch(watch_id, schedule))
 
         self._watch_jobs[watch_id] = job_id
         logger.info(
