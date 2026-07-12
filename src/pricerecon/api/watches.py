@@ -31,7 +31,7 @@ def get_schedule_config(watch: Watch) -> dict[str, Any]:
     """Extract the schedule config from a watch model."""
     schedule = watch.schedule
     if hasattr(schedule, "model_dump"):
-        return schedule.model_dump()
+        return schedule.model_dump(mode="json")
     return dict(schedule)
 
 
@@ -155,10 +155,10 @@ async def create_watch(watch_create: WatchCreate) -> Watch:
     try:
         # Build config JSON
         config = {
-            "sources": [s.model_dump() for s in watch_create.sources],
-            "filters": watch_create.filters.model_dump(),
-            "schedule": watch_create.schedule.model_dump(),
-            "grouping": watch_create.grouping.model_dump(),
+            "sources": [s.model_dump(mode="json") for s in watch_create.sources],
+            "filters": watch_create.filters.model_dump(mode="json"),
+            "schedule": watch_create.schedule.model_dump(mode="json"),
+            "grouping": watch_create.grouping.model_dump(mode="json"),
             "notifications": watch_create.notifications.model_dump(mode="json"),
             "enabled": watch_create.enabled,
             "status": "active",
@@ -244,10 +244,10 @@ async def update_watch(watch_id: int, watch_update: WatchUpdate) -> Watch:
     try:
         # Build config JSON
         config = {
-            "sources": [s.model_dump() for s in watch_update.sources],
-            "filters": watch_update.filters.model_dump(),
-            "schedule": watch_update.schedule.model_dump(),
-            "grouping": watch_update.grouping.model_dump(),
+            "sources": [s.model_dump(mode="json") for s in watch_update.sources],
+            "filters": watch_update.filters.model_dump(mode="json"),
+            "schedule": watch_update.schedule.model_dump(mode="json"),
+            "grouping": watch_update.grouping.model_dump(mode="json"),
             "notifications": watch_update.notifications.model_dump(mode="json"),
             "enabled": watch_update.enabled,
             "status": json.loads(row["config_json"]).get("status", "active"),  # Preserve existing status
