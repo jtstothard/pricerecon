@@ -114,8 +114,15 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
             connector_class = next((getattr(module, name) for name in candidates if hasattr(module, name)), None)
             if connector_class is None:
                 raise AttributeError(f"No connector class found in {module.__name__}")
+            # Build connector kwargs: merge env-level credentials with per-watch config
+            # Per-watch config takes precedence over env defaults
+            connector_kwargs = dict(source.config or {})
+            if connector_id == "ebay":
+                import os
+                connector_kwargs.setdefault("app_id", os.environ.get("EBAY_APP_ID", ""))
+                connector_kwargs.setdefault("cert_id", os.environ.get("EBAY_CERT_ID"))
             try:
-                connector = connector_class(**(source.config or {}))
+                connector = connector_class(**connector_kwargs)
             except TypeError:
                 connector = connector_class()
             await connector.initialize()
