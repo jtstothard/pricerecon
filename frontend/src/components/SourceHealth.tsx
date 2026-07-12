@@ -1,6 +1,6 @@
 interface Source {
   name: string
-  status: 'healthy' | 'error' | 'disabled'
+  status: string
   last_error: string | null
 }
 

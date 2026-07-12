@@ -21,7 +21,8 @@ export default function EventLog({ watchId }: { watchId: number }) {
       const response = await fetch(`/api/watches/${watchId}/events`)
       if (!response.ok) throw new Error('Failed to fetch events')
       const data = await response.json()
-      setEvents(data.slice(0, 50)) // Show last 50 events
+      const items = Array.isArray(data) ? data : data.items || []
+      setEvents(items.slice(0, 50)) // Show last 50 events
     } catch (err) {
       console.error('Failed to load events:', err)
     } finally {

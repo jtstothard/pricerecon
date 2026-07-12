@@ -7,23 +7,31 @@ interface Watch {
   id: number
   name: string
   query: string
-  category: string
-  interval: string
+  category: string | null
   enabled: boolean
   last_check_at: string | null
+  schedule?: {
+    interval?: string
+  }
 }
 
 interface Listing {
-  id: number
   source: string
   source_listing_id: string
-  title: string
-  price: number
+  title_raw: string
+  price: number | string
   currency: string
   condition: string | null
   url: string
   timestamp_seen: string
-  in_stock: boolean
+  in_stock: boolean | null
+}
+
+interface PaginatedResponse<T> {
+  items: T[]
+  total: number
+  page: number
+  page_size: number
 }
 
 export default function WatchDetail() {
@@ -52,11 +60,11 @@ export default function WatchDetail() {
         throw new Error('Failed to fetch watch data')
       }
 
-      const watchData = await watchRes.json()
-      const listingsData = await listingsRes.json()
+      const watchData: Watch = await watchRes.json()
+      const listingsData: PaginatedResponse<Listing> = await listingsRes.json()
 
       setWatch(watchData)
-      setListings(listingsData)
+      setListings(listingsData.items)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load watch')
     } finally {
@@ -95,8 +103,8 @@ export default function WatchDetail() {
 
       <div className="watch-info">
         <p><strong>Query:</strong> {watch.query}</p>
-        <p><strong>Category:</strong> {watch.category}</p>
-        <p><strong>Interval:</strong> {watch.interval}</p>
+        <p><strong>Category:</strong> {watch.category || '—'}</p>
+        <p><strong>Interval:</strong> {watch.schedule?.interval || '—'}</p>
         <p><strong>Status:</strong> {watch.enabled ? 'Active' : 'Paused'}</p>
         {watch.last_check_at && (
           <p><strong>Last check:</strong> {new Date(watch.last_check_at).toLocaleString()}</p>
@@ -124,10 +132,10 @@ export default function WatchDetail() {
                 </thead>
                 <tbody>
                   {listings.map(listing => (
-                    <tr key={listing.id}>
+                    <tr key={listing.source_listing_id}>
                       <td>{listing.source}</td>
-                      <td>{listing.title}</td>
-                      <td>{listing.currency} {listing.price.toFixed(2)}</td>
+                      <td>{listing.title_raw}</td>
+                      <td>{listing.currency} {Number(listing.price).toFixed(2)}</td>
                       <td>{listing.condition || 'N/A'}</td>
                       <td>
                         <span className={`stock-badge ${listing.in_stock ? 'in-stock' : 'out-of-stock'}`}>
