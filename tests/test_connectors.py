@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from typing import Any, cast
 
 import httpx
 import pytest
@@ -9,7 +10,9 @@ from httpx import ASGITransport, AsyncClient, Request, Response
 from pricerecon.connectors.flaresolverr import FlareSolverrClient
 from pricerecon.connectors.html import SelectorConfig, parse_listings_from_html
 from pricerecon.connectors.shopify import ShopifyConnector
+from pricerecon.connectors.aliexpress import AliExpressConnector
 from pricerecon.connectors.specs import extract_specs
+from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 from pricerecon.models import SourceType
 
 
@@ -108,3 +111,108 @@ async def test_shopify_connector_fetches_products_and_variants():
     assert len(listings) == 1
     assert listings[0].price == Decimal('599.99')
     assert listings[0].source == 'shopify'
+
+
+@pytest.mark.asyncio
+async def test_aliexpress_connector_uses_manual_pid_and_ds_and_browser(monkeypatch):
+    calls: list[tuple[str, str]] = []
+
+    class DummyResponse:
+        def __init__(self, payload: dict[str, object], status_code: int = 200):
+            self._payload = payload
+            self.status_code = status_code
+
+        def raise_for_status(self):
+            if self.status_code >= 400:
+                raise httpx.HTTPStatusError('boom', request=httpx.Request('POST', 'https://example.test'), response=httpx.Response(self.status_code))
+
+        def json(self):
+            return self._payload
+
+    class DummyClient:
+        async def post(self, url, json=None, headers=None):
+            calls.append((url, 'POST'))
+            if 'affiliate/product/query' in url:
+                return DummyResponse({'items': [{'productId': '1005008557811111', 'title': 'Ali CPU', 'displayPrice': '199.99', 'originalPrice': '249.99', 'shippingCost': '4.99', 'shopName': 'SZCPU', 'evaluateRate': '4.8', 'orders': '123', 'inStock': True, 'currency': 'GBP'}]})
+            if 'auth/token/refresh' in url:
+                return DummyResponse({'access_token': 'fresh-token', 'refresh_token': 'fresh-refresh', 'expires_in': 7200})
+            if 'ds/product/get' in url:
+                return DummyResponse({'data': {'title': 'Ali CPU DS', 'displayPrice': '189.99', 'originalPrice': '239.99', 'shippingCost': '3.99', 'shopName': 'SZCPU DS', 'rating': '4.9', 'sales': '456', 'inStock': True, 'coupons': [{'text': '£10 off'}]}})
+            raise AssertionError(url)
+
+        async def aclose(self):
+            return None
+
+    class DummyBrowserPage:
+        async def goto(self, url, wait_until=None, timeout=None):
+            calls.append((url, 'goto'))
+
+        async def content(self):
+            return '<html><body><h1>Ali CPU Browser</h1><script>priceCurrency:"GBP",price:"179.99"</script><div>Extra 10% off with coins</div><div>1,234 sold</div></body></html>'
+
+    class DummyBrowserContext:
+        async def new_page(self):
+            return DummyBrowserPage()
+
+        async def close(self):
+            return None
+
+    class DummyBrowserClient:
+        async def new_context(self):
+            return DummyBrowserContext()
+
+    connector = AliExpressConnector(
+        {
+            'manual_pids': ['1005012248779870'],
+            'ds_access_token': 'stale-token',
+            'ds_refresh_token': 'refresh-token',
+            'ds_app_key': 'app-key',
+            'ds_app_secret': 'app-secret',
+            'ds_expires_at': '2026-01-01T00:00:00+00:00',
+        },
+        browser_client=cast(Any, DummyBrowserClient()),
+        http_client=cast(Any, DummyClient()),
+    )
+    listings = await connector.search('1005008557811111', {'browser_enrich': True, 'enrich_with_ds': True})
+    await connector.cleanup()
+
+    assert any('affiliate/product/query' in url for url, _ in calls)
+    assert any('ds/product/get' in url for url, _ in calls)
+    assert any('goto' == kind for _, kind in calls)
+    assert any(l.source_listing_id == '1005008557811111' for l in listings)
+    manual = next(l for l in listings if l.source_listing_id == '1005012248779870')
+    assert manual.variant_normalized is not None
+    assert manual.variant_normalized['aliexpress_watch_mode'] == 'manual_pid'
+    assert manual.price == Decimal('189.99')
+    assert manual.variant_normalized['aliexpress_source_lane'] in {'ds', 'browser'}
+    affiliate = next(l for l in listings if l.source_listing_id == '1005008557811111')
+    assert affiliate.price == Decimal('189.99')
+    assert affiliate.variant_normalized is not None
+    assert affiliate.variant_normalized['aliexpress_source_lane'] in {'ds', 'browser'}
+    assert affiliate.variant_normalized['aliexpress_coupon_layers']
+
+
+@pytest.mark.asyncio
+async def test_aliexpress_connector_surfaces_ds_auth_failure():
+    class FailingClient:
+        async def post(self, url, json=None, headers=None):
+            if 'affiliate/product/query' in url:
+                class Resp:
+                    status_code = 200
+                    def raise_for_status(self): return None
+                    def json(self): return {'items': [{'productId': '1005008557811111', 'title': 'Ali CPU', 'displayPrice': '199.99'}]}
+                return Resp()
+            if 'ds/product/get' in url:
+                raise httpx.HTTPStatusError('401', request=httpx.Request('POST', url), response=httpx.Response(401))
+            if 'auth/token/refresh' in url:
+                raise httpx.HTTPStatusError('401', request=httpx.Request('POST', url), response=httpx.Response(401))
+            raise AssertionError(url)
+
+        async def aclose(self):
+            return None
+
+    connector = AliExpressConnector({'ds_access_token': 'x', 'ds_refresh_token': 'y', 'ds_app_key': 'z', 'ds_app_secret': 'w'}, http_client=FailingClient())
+    with pytest.raises(ConnectorDegradedError) as excinfo:
+        await connector.search('1005008557811111', {'enrich_with_ds': True})
+    assert excinfo.value.status == ConnectorStatus.auth_failed
+    assert 'DS' in excinfo.value.message

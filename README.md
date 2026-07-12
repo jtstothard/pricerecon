@@ -79,6 +79,13 @@ FB_DATR=your-datr-cookie
 FB_FR=your-fr-cookie
 FB_SB=your-sb-cookie
 
+# AliExpress DS credentials (optional; enables DS enrichment)
+ALIEXPRESS_DS_APP_KEY=your-ds-app-key
+ALIEXPRESS_DS_APP_SECRET=your-ds-app-secret
+ALIEXPRESS_DS_ACCESS_TOKEN=your-ds-access-token
+ALIEXPRESS_DS_REFRESH_TOKEN=your-ds-refresh-token
+ALIEXPRESS_DS_EXPIRES_AT=2026-07-12T00:00:00Z
+
 # Messaging integrations
 TELEGRAM_BOT_TOKEN=your-telegram-bot-token
 DISCORD_WEBHOOK_URL=your-discord-webhook-url
@@ -97,8 +104,9 @@ See [`.env.example`](.env.example) for all available options.
 | **Amazon** | Retailer | curl_cffi | TLS fingerprint impersonation |
 | **CeX** | Marketplace | None | Algolia proxy API |
 | **Facebook Marketplace** | Marketplace | Session cookies | Playwright + stealth (see caveat below) |
+| **AliExpress** | Marketplace | API + optional DS/browser | Affiliate search, DS detail, manual PID/browser fallback |
 | **Reddit** | Signal | None | RSS feeds |
-| **HotUKDeals** | Signal | None | RSS feeds |
+
 | **Box** | Retailer | FlareSolverr | Anti-bot bypass |
 | **Currys** | Retailer | FlareSolverr | Anti-bot bypass |
 | **Ebuyer** | Retailer | FlareSolverr | Anti-bot bypass |
