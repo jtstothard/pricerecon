@@ -12,7 +12,8 @@ import xml.etree.ElementTree as ET
 
 import httpx
 import yaml
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
+from returns.result import Failure, Result, Success
 
 from pricerecon.connectors.base import BaseConnector
 from pricerecon.connectors.price import extract_visible_gbp_price
@@ -216,7 +217,9 @@ class ParsedHardwareSwapPost:
 TEMPLATE_CONNECTORS: dict[str, ConnectorTemplateConfig] = {}
 
 
-def load_template_configs(template_dir: Path | str | None = None) -> dict[str, ConnectorTemplateConfig]:
+def load_template_configs_result(
+    template_dir: Path | str | None = None,
+) -> Result[dict[str, ConnectorTemplateConfig], str]:
     """Load and validate RSS connector templates from YAML files.
 
     The template directory also contains HTML connector definitions, so we only
@@ -228,16 +231,31 @@ def load_template_configs(template_dir: Path | str | None = None) -> dict[str, C
     template_path = Path(template_dir)
     configs: dict[str, ConnectorTemplateConfig] = {}
     if not template_path.exists():
-        return configs
+        return Success(configs)
 
     required_keys = {"source", "source_role", "endpoint_url"}
     for file_path in sorted(template_path.glob("*.y*ml")):
-        raw = yaml.safe_load(file_path.read_text()) or {}
+        try:
+            raw = yaml.safe_load(file_path.read_text()) or {}
+        except OSError as exc:
+            return Failure(f"failed to read connector template {file_path}: {exc}")
+        except yaml.YAMLError as exc:
+            return Failure(f"invalid YAML in connector template {file_path}: {exc}")
         if not isinstance(raw, dict) or not required_keys.issubset(raw):
             continue
-        config = ConnectorTemplateConfig.model_validate(raw)
+        try:
+            config = ConnectorTemplateConfig.model_validate(raw)
+        except ValidationError as exc:
+            return Failure(f"invalid connector template {file_path}: {exc}")
         configs[config.source] = config
-    return configs
+    return Success(configs)
+
+
+def load_template_configs(template_dir: Path | str | None = None) -> dict[str, ConnectorTemplateConfig]:
+    """Load validated RSS connector templates or return an empty mapping on failure."""
+
+    result = load_template_configs_result(template_dir)
+    return result.unwrap() if isinstance(result, Success) else {}
 
 
 def register_template_connectors(template_dir: Path | str | None = None) -> dict[str, ConnectorTemplateConfig]:

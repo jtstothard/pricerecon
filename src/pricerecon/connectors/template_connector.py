@@ -10,7 +10,6 @@ from urllib.parse import quote_plus
 
 import httpx
 import yaml
-
 from pricerecon.config import load_config
 from pricerecon.connectors.base import BaseConnector
 from pricerecon.connectors.flaresolverr import FlareSolverrClient
