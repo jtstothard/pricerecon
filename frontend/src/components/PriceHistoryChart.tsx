@@ -21,9 +21,10 @@ export default function PriceHistoryChart({ watchId }: { watchId: number }) {
       const response = await fetch(`/api/watches/${watchId}/history`)
       if (!response.ok) throw new Error('Failed to fetch history')
       const historyData = await response.json()
+      const items = Array.isArray(historyData) ? historyData : historyData.items || []
       
       // Transform data for Recharts
-      const chartData = historyData.map((point: any) => ({
+      const chartData = items.map((point: any) => ({ 
         timestamp: new Date(point.timestamp).toLocaleDateString(),
         price: point.price,
         source: point.source,

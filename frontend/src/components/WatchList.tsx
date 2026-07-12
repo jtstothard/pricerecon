@@ -7,17 +7,27 @@ interface Watch {
   id: number
   name: string
   query: string
-  category: string
-  interval: string
+  category: string | null
   enabled: boolean
   last_check_at: string | null
-  next_check_at: string | null
+  schedule?: {
+    interval?: string
+    timezone?: string
+    time_window?: string | null
+  }
 }
 
 interface Source {
   name: string
-  status: 'healthy' | 'error' | 'disabled'
+  status: string
   last_error: string | null
+}
+
+interface PaginatedResponse<T> {
+  items: T[]
+  total: number
+  page: number
+  page_size: number
 }
 
 export default function WatchList() {
@@ -36,8 +46,8 @@ export default function WatchList() {
     try {
       const response = await fetch('/api/watches')
       if (!response.ok) throw new Error('Failed to fetch watches')
-      const data = await response.json()
-      setWatches(data)
+      const data: PaginatedResponse<Watch> = await response.json()
+      setWatches(data.items)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load watches')
     } finally {
@@ -49,7 +59,7 @@ export default function WatchList() {
     try {
       const response = await fetch('/api/sources')
       if (!response.ok) throw new Error('Failed to fetch sources')
-      const data = await response.json()
+      const data: Source[] = await response.json()
       setSources(data)
     } catch (err) {
       console.error('Failed to load sources:', err)
@@ -121,13 +131,10 @@ export default function WatchList() {
               </div>
               <div className="watch-card-body">
                 <p><strong>Query:</strong> {watch.query}</p>
-                <p><strong>Category:</strong> {watch.category}</p>
-                <p><strong>Interval:</strong> {watch.interval}</p>
+                <p><strong>Category:</strong> {watch.category || '—'}</p>
+                <p><strong>Interval:</strong> {watch.schedule?.interval || '—'}</p>
                 {watch.last_check_at && (
                   <p><strong>Last check:</strong> {new Date(watch.last_check_at).toLocaleString()}</p>
-                )}
-                {watch.next_check_at && (
-                  <p><strong>Next check:</strong> {new Date(watch.next_check_at).toLocaleString()}</p>
                 )}
               </div>
               <div className="watch-card-actions">
