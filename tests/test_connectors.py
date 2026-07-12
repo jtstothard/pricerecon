@@ -181,6 +181,41 @@ async def test_shopify_connector_fetches_products_and_variants():
 
 
 @pytest.mark.asyncio
+async def test_shopify_connector_accepts_store_url_alias():
+    calls: list[str] = []
+
+    async def handler(request: Request) -> Response:
+        calls.append(str(request.url))
+        if str(request.url).endswith('/search?q=RTX+4070&type=product'):
+            return Response(200, text='<html><body>Shopify</body></html>', headers={'X-ShopId': '123'})
+        if str(request.url).endswith('/products.json?limit=250'):
+            return Response(
+                200,
+                json={
+                    'products': [
+                        {
+                            'handle': 'rtx-4070',
+                            'title': 'RTX 4070 Ti',
+                            'product_type': 'gpu',
+                            'variants': [{'id': 1, 'title': 'Base', 'price': '599.99', 'available': True}],
+                        }
+                    ]
+                },
+            )
+        raise AssertionError(f'unexpected url {request.url}')
+
+    transport = httpx.MockTransport(handler)
+    connector = ShopifyConnector(store_url='https://shop.example')
+    connector._client = httpx.AsyncClient(transport=transport, timeout=30.0)
+    listings = await connector.search('RTX 4070')
+    await connector.cleanup()
+    assert calls[0].endswith('/search?q=RTX+4070&type=product')
+    assert calls[1].endswith('/products.json?limit=250')
+    assert len(listings) == 1
+    assert listings[0].source_listing_id == '1'
+
+
+@pytest.mark.asyncio
 async def test_aliexpress_connector_uses_manual_pid_and_ds_and_browser(monkeypatch):
     calls: list[tuple[str, str]] = []
 
