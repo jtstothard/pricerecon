@@ -12,6 +12,7 @@ from urllib.parse import quote_plus
 
 from pricerecon.connectors.base import BaseConnector
 from pricerecon.connectors.browser_client import BrowserClient
+from pricerecon.connectors.price import extract_visible_gbp_price
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 from pricerecon.models import NormalizedListing, SourceType
 
@@ -130,14 +131,7 @@ class FacebookMarketplaceConnector(BaseConnector):
                 if not title:
                     continue
                 text = card.get("text") or ""
-                price = Decimal("0")
-                for token in text.replace("\n", " ").split():
-                    if token.startswith("£"):
-                        try:
-                            price = Decimal(token.replace("£", "").replace(",", ""))
-                            break
-                        except Exception:
-                            pass
+                price = extract_visible_gbp_price(f"{title} {text}") or Decimal("0")
                 listings.append(
                     NormalizedListing(
                         source=self.connector_id,

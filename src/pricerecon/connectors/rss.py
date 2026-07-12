@@ -15,6 +15,7 @@ import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from pricerecon.connectors.base import BaseConnector
+from pricerecon.connectors.price import extract_visible_gbp_price
 from pricerecon.models import NormalizedListing, SourceType
 
 ATOM_NS = {
@@ -287,7 +288,7 @@ def parse_hardwareswapuk_post(
         item_description = _clean_swap_item_description(buying_match.group("item").strip())
         condition_raw = "buying"
     else:
-        fallback_price = _extract_price(full_text)
+        fallback_price = extract_visible_gbp_price(full_text)
         if fallback_price is not None:
             price = fallback_price
 
@@ -401,15 +402,8 @@ def _strip_ns(tag: str) -> str:
     return tag.rsplit("}", 1)[-1] if "}" in tag else tag
 
 
-def _extract_price(text: str) -> Optional[Decimal]:
-    match = re.search(r"(?:£|gbp\s*)?(\d+(?:\.\d{1,2})?)", text, flags=re.IGNORECASE)
-    if not match:
-        return None
-    return Decimal(match.group(1))
-
-
 def _parse_price_text(value: str) -> Decimal:
-    price = _extract_price(value)
+    price = extract_visible_gbp_price(value)
     return price if price is not None else Decimal("0")
 
 

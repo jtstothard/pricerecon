@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -10,9 +11,11 @@ from urllib.parse import quote_plus
 import httpx
 import yaml
 
+from pricerecon.config import load_config
 from pricerecon.connectors.base import BaseConnector
 from pricerecon.connectors.flaresolverr import FlareSolverrClient
 from pricerecon.connectors.html import SelectorConfig, parse_listings_from_html
+from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 from pricerecon.models import NormalizedListing, SourceType
 
 TEMPLATE_DIR = Path(__file__).resolve().parent / "templates"
@@ -36,17 +39,23 @@ class TemplateConnector(BaseConnector):
     connector_id_override: str | None = None
 
     def __init__(self, *, flaresolverr_url: str | None = None, base_url: str | None = None) -> None:
-        config = self._load_yaml(self.template_name)
+        template_config = self._load_yaml(self.template_name)
+        runtime_config = load_config()
         self.template = TemplateDefinition(
-            name=config.get("name", self.template_name),
-            source_type=SourceType(config.get("source_type", "retailer")),
-            base_url=(base_url or config["base_url"]).rstrip("/"),
-            search_url=config["search_url"],
-            selectors=SelectorConfig(**config["selectors"]),
-            pagination_next=config.get("pagination_next"),
-            use_flare_solverr=bool(config.get("use_flare_solverr", False)),
-            flaresolverr_url=flaresolverr_url or config.get("flaresolverr_url"),
-            category=config.get("category"),
+            name=template_config.get("name", self.template_name),
+            source_type=SourceType(template_config.get("source_type", "retailer")),
+            base_url=(base_url or template_config["base_url"]).rstrip("/"),
+            search_url=template_config["search_url"],
+            selectors=SelectorConfig(**template_config["selectors"]),
+            pagination_next=template_config.get("pagination_next"),
+            use_flare_solverr=bool(template_config.get("use_flare_solverr", False)),
+            flaresolverr_url=(
+                flaresolverr_url
+                or os.getenv("PRICERECON_FLARESOLVERR_URL")
+                or runtime_config.get("flaresolverr_url")
+                or template_config.get("flaresolverr_url")
+            ),
+            category=template_config.get("category"),
         )
         self._client = httpx.AsyncClient(timeout=30.0)
 
@@ -72,11 +81,41 @@ class TemplateConnector(BaseConnector):
         if self.template.use_flare_solverr:
             endpoint = self.template.flaresolverr_url
             if not endpoint:
-                raise ValueError(f"{self.template_name} requires flaresolverr_url")
+                raise ConnectorDegradedError(
+                    status=ConnectorStatus.auth_failed,
+                    message=f"{self.template_name} requires flaresolverr_url",
+                    connector_id=self.connector_id,
+                    detail={"missing": ["flaresolverr_url"]},
+                )
             client = FlareSolverrClient(endpoint)
-            return await client.request_html(url)
+            try:
+                return await client.request_html(url)
+            except httpx.ConnectTimeout as exc:
+                raise ConnectorDegradedError(
+                    status=ConnectorStatus.timeout,
+                    message=f"{self.template_name} FlareSolverr connection timed out",
+                    connector_id=self.connector_id,
+                    detail={"endpoint": endpoint, "url": url, "error": str(exc)},
+                ) from exc
+            except httpx.ReadTimeout as exc:
+                raise ConnectorDegradedError(
+                    status=ConnectorStatus.timeout,
+                    message=f"{self.template_name} FlareSolverr response timed out",
+                    connector_id=self.connector_id,
+                    detail={"endpoint": endpoint, "url": url, "error": str(exc)},
+                ) from exc
+            except httpx.HTTPError as exc:
+                raise ConnectorDegradedError(
+                    status=ConnectorStatus.unknown_error,
+                    message=f"{self.template_name} FlareSolverr request failed",
+                    connector_id=self.connector_id,
+                    detail={"endpoint": endpoint, "url": url, "error": str(exc)},
+                ) from exc
 
-        response = await self._client.get(url, headers={"User-Agent": "Mozilla/5.0 (compatible; PriceRecon/1.0)"})
+        response = await self._client.get(
+            url,
+            headers={"User-Agent": "Mozilla/5.0 (compatible; PriceRecon/1.0)"},
+        )
         response.raise_for_status()
         return response.text
 
