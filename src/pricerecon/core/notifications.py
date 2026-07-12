@@ -240,8 +240,17 @@ async def dispatch_notifications(
                     error_message = "No webhook URL configured"
 
             elif channel == "telegram":
-                bot_token = watch_notifications.get("telegram_bot_token") or global_config.get("telegram_bot_token")
-                chat_id = watch_notifications.get("telegram_chat_id") or global_config.get("telegram_chat_id")
+                import os
+                bot_token = (
+                    watch_notifications.get("telegram_bot_token")
+                    or global_config.get("telegram_bot_token")
+                    or os.environ.get("TELEGRAM_BOT_TOKEN")
+                )
+                chat_id = (
+                    watch_notifications.get("telegram_chat_id")
+                    or global_config.get("telegram_chat_id")
+                    or os.environ.get("TELEGRAM_CHAT_ID")
+                )
                 if bot_token and chat_id:
                     success = await send_telegram(bot_token, chat_id, message)
                 else:
