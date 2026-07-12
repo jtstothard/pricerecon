@@ -11,7 +11,7 @@ from pricerecon.connectors.fb_marketplace import FacebookMarketplaceConnector
 from pricerecon.connectors.flaresolverr import FlareSolverrClient
 from pricerecon.connectors.html import SelectorConfig, parse_listings_from_html
 from pricerecon.connectors.overclockers import OverclockersConnector
-from pricerecon.connectors.rss import parse_hardwareswapuk_post
+from pricerecon.connectors.rss import load_template_configs, parse_hardwareswapuk_post
 from pricerecon.connectors.shopify import ShopifyConnector
 from pricerecon.connectors.aliexpress import AliExpressConnector
 from pricerecon.connectors.specs import extract_specs
@@ -96,6 +96,21 @@ def test_reddit_hardwareswapuk_price_parser_uses_visible_gbp_amount():
         "https://www.reddit.com/r/hardwareswapuk/comments/abc123/post/",
     )
     assert listing["price"] == Decimal("3000")
+
+
+def test_rss_template_loader_skips_non_rss_html_templates(tmp_path):
+    (tmp_path / "scan.yml").write_text(
+        """name: scan\nsource_type: retailer\nbase_url: https://example.com\nsearch_url: https://example.com/search?q={query}\nselectors:\n  card: article\n  title: h3\n  price: .price\n  url: a\n"""
+    )
+    (tmp_path / "hotukdeals.yml").write_text(
+        """name: hotukdeals\nsource_type: signal\nbase_url: https://example.com\nsearch_url: https://example.com/rss?q={query}\nselectors:\n  card: article\n  title: h3\n  price: .price\n  url: a\n"""
+    )
+    (tmp_path / "reddit_hardwareswapuk.yml").write_text(
+        """source: reddit_hardwareswapuk\nsource_role: marketplace\nendpoint_url: https://example.com/rss?q={query}&limit={limit}\n"""
+    )
+
+    configs = load_template_configs(tmp_path)
+    assert set(configs) == {"reddit_hardwareswapuk"}
 
 
 @pytest.mark.asyncio
