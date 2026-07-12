@@ -2,6 +2,8 @@
 
 Thank you for your interest in contributing to PriceRecon! This guide covers how to add new connectors, run tests, and submit pull requests.
 
+For the repo-native engineering standard, start with [docs/engineering-standard.md](docs/engineering-standard.md). It explains the PriceRecon-specific bar: explicit validation boundaries, zero unchecked escape hatches, deterministic plus live proof, shrinking baseline, and no untestable feature work.
+
 ## Quick Start
 
 1. Fork the repository
@@ -9,6 +11,22 @@ Thank you for your interest in contributing to PriceRecon! This guide covers how
 3. Make your changes
 4. Add tests
 5. Submit a pull request
+
+## Engineering standard
+
+PriceRecon changes should be built to prove correctness, not just to satisfy a compiler or linter.
+
+- validate raw source data at the boundary
+- avoid new unchecked casts or `type: ignore` shortcuts
+- back behavior changes with deterministic tests and, where the source is real, live proof
+- preserve the baseline-first diff contract
+- do not ship features that cannot be verified
+
+Canonical quality entrypoints live in [docs/engineering-standard.md](docs/engineering-standard.md):
+
+- `python -m pytest`
+- `python -m ruff check .`
+- `python -m mypy src/pricerecon`
 
 ## Adding a Connector
 
@@ -312,9 +330,6 @@ Optional enrichment fields:
 # Install dev dependencies
 pip install -e ".[dev]"
 
-# Run the canonical deterministic quality gate
-python -m pricerecon.quality_gate
-
 # Run all tests
 pytest
 
@@ -331,11 +346,13 @@ Before submitting a PR, ensure:
 
 - [ ] Code follows the existing style (use `black` and `ruff`)
 - [ ] Tests added for new functionality
-- [ ] All tests pass (`pytest`)
+- [ ] All relevant checks passed from the canonical entrypoints
 - [ ] Connector handles errors gracefully
 - [ ] NormalizedListing includes all required fields
 - [ ] Source type is correctly declared
 - [ ] Documentation updated (README.md, docs/)
+- [ ] Validation boundaries are explicit and unchecked escape hatches are avoided
+- [ ] Live proof was captured when the change touches a real source or browser flow
 - [ ] No API keys or secrets committed
 
 ## Optional Dependencies
@@ -361,6 +378,7 @@ async def test_fb_marketplace():
 
 ## Questions?
 
+- Read [docs/engineering-standard.md](docs/engineering-standard.md) first for the repo-wide standard
 - See [Connector Development Guide](docs/connector-development.md) for detailed implementation guidance
 - Open an issue for bugs or questions
 - Check existing connectors for patterns (e.g., `ebay.py`, `cex.py`)
