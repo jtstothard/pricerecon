@@ -12,6 +12,8 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any, Optional
 
+import httpx
+
 from pricerecon.core.connector_health import upsert_connector_health
 from pricerecon.core.diff_engine import DiffResult, run_check
 from pricerecon.core.notifications import dispatch_for_event
@@ -81,6 +83,11 @@ def apply_post_normalization_filters(listings: list[NormalizedListing], filters:
     return filtered
 
 
+def _non_empty_error_message(exc: Exception) -> str:
+    message = str(exc).strip()
+    return message or exc.__class__.__name__
+
+
 async def execute_watch(watch_id: int) -> dict[str, Any]:
     watch = get_watch(watch_id)
     if not watch:
@@ -119,10 +126,26 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
             all_listings.extend(listings)
             upsert_connector_health(connector_id, "ok", details={"listing_count": len(listings)})
         except ConnectorDegradedError as exc:
-            upsert_connector_health(connector_id, exc.status.value, last_error=exc.message, details=exc.detail)
+            last_error = exc.message.strip() if exc.message else exc.status.value
+            upsert_connector_health(connector_id, exc.status.value, last_error=last_error, details=exc.detail)
+            continue
+        except httpx.TimeoutException as exc:
+            message = _non_empty_error_message(exc)
+            upsert_connector_health(
+                connector_id,
+                "timeout",
+                last_error=message,
+                details={"error": message, "error_type": exc.__class__.__name__},
+            )
             continue
         except Exception as exc:
-            upsert_connector_health(connector_id, "unknown_error", last_error=str(exc), details={"error": str(exc)})
+            message = _non_empty_error_message(exc)
+            upsert_connector_health(
+                connector_id,
+                "unknown_error",
+                last_error=message,
+                details={"error": message, "error_type": exc.__class__.__name__},
+            )
             print(f"Error running connector {connector_id}: {exc}")
         finally:
             if connector is not None:

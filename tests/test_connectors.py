@@ -5,15 +5,27 @@ from typing import Any, cast
 
 import httpx
 import pytest
-from httpx import ASGITransport, AsyncClient, Request, Response
+from httpx import Request, Response
 
+from pricerecon.connectors.fb_marketplace import FacebookMarketplaceConnector
 from pricerecon.connectors.flaresolverr import FlareSolverrClient
 from pricerecon.connectors.html import SelectorConfig, parse_listings_from_html
+from pricerecon.connectors.overclockers import OverclockersConnector
+from pricerecon.connectors.rss import parse_hardwareswapuk_post
 from pricerecon.connectors.shopify import ShopifyConnector
 from pricerecon.connectors.aliexpress import AliExpressConnector
 from pricerecon.connectors.specs import extract_specs
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
-from pricerecon.models import SourceType
+from pricerecon.core import watch_executor
+from pricerecon.models import (
+    SourceConfig,
+    SourceType,
+    Watch,
+    WatchFilters,
+    WatchGrouping,
+    WatchNotification,
+    WatchSchedule,
+)
 
 
 @pytest.mark.asyncio
@@ -74,6 +86,61 @@ def test_html_parser_normalizes_cards():
     assert listing.in_stock is True
     assert listing.variant_normalized is not None
     assert listing.variant_normalized['gpu_model'] == 'RTX 4070'
+
+
+def test_reddit_hardwareswapuk_price_parser_uses_visible_gbp_amount():
+    listing = parse_hardwareswapuk_post(
+        "[SG] Sealed ASUS GeForce RTX 5090 OC Edition 32GB GPU [W] £3,000",
+        "",
+        "seller",
+        "https://www.reddit.com/r/hardwareswapuk/comments/abc123/post/",
+    )
+    assert listing["price"] == Decimal("3000")
+
+
+@pytest.mark.asyncio
+async def test_facebook_marketplace_connector_parses_concatenated_gbp_price():
+    cards = [
+        {
+            "title": "£550Nvidia GeForce rtx 4060 8GB",
+            "url": "https://www.facebook.com/marketplace/item/123",
+            "text": "£550Nvidia GeForce rtx 4060 8GB",
+        },
+        {
+            "title": "£450ASUS GEFORCE RTX 5070",
+            "url": "https://www.facebook.com/marketplace/item/456",
+            "text": "£450ASUS GEFORCE RTX 5070",
+        },
+    ]
+
+    class FakeLocator:
+        def __init__(self, payload):
+            self.payload = payload
+
+        async def evaluate_all(self, _script):
+            return self.payload
+
+    class FakePage:
+        async def goto(self, *_args, **_kwargs):
+            return None
+
+        async def wait_for_timeout(self, *_args, **_kwargs):
+            return None
+
+        def locator(self, _selector):
+            return FakeLocator(cards)
+
+    class FakeContext:
+        pass
+
+    connector = FacebookMarketplaceConnector(browser_client=None)
+    connector._context = FakeContext()
+    connector._page = FakePage()
+
+    listings = await connector.search("rtx")
+
+    assert [listing.price for listing in listings] == [Decimal("550"), Decimal("450")]
+    assert [listing.title_raw for listing in listings] == [card["title"] for card in cards]
 
 
 @pytest.mark.asyncio
@@ -216,3 +283,120 @@ async def test_aliexpress_connector_surfaces_ds_auth_failure():
         await connector.search('1005008557811111', {'enrich_with_ds': True})
     assert excinfo.value.status == ConnectorStatus.auth_failed
     assert 'DS' in excinfo.value.message
+
+
+@pytest.mark.asyncio
+async def test_overclockers_uses_runtime_flaresolverr_url_and_surfaces_timeout(monkeypatch):
+    monkeypatch.setenv('PRICERECON_FLARESOLVERR_URL', 'http://runtime.test/v1')
+
+    captured: dict[str, str] = {}
+
+    class DummyFlareSolverrClient:
+        def __init__(self, endpoint: str, timeout: float = 90.0) -> None:
+            captured['endpoint'] = endpoint
+            self.endpoint = endpoint
+
+        async def request_html(self, url: str, *, max_timeout: int = 60000) -> str:
+            raise httpx.ConnectTimeout('connect timed out', request=httpx.Request('POST', self.endpoint))
+
+    monkeypatch.setattr('pricerecon.connectors.template_connector.FlareSolverrClient', DummyFlareSolverrClient)
+    connector = OverclockersConnector()
+    with pytest.raises(ConnectorDegradedError) as exc_info:
+        await connector.search('RTX 5070')
+    err = exc_info.value
+    assert err.status == ConnectorStatus.timeout
+    assert err.connector_id == 'overclockers'
+    assert captured['endpoint'] == 'http://runtime.test/v1'
+    assert err.detail['endpoint'] == 'http://runtime.test/v1'
+    assert 'flaresolverr' in err.message.lower()
+    await connector.cleanup()
+
+
+@pytest.mark.asyncio
+async def test_watch_executor_records_non_empty_timeout_health(monkeypatch):
+    now = watch_executor.datetime.utcnow()
+    watch = Watch(
+        id=42,
+        name='Overclockers GPU watch',
+        query='RTX 5070',
+        category='gpu',
+        sources=[SourceConfig(connector='overclockers', config={})],
+        filters=WatchFilters(
+            price_max=None,
+            min_seller_feedback=None,
+            min_seller_feedback_pct=None,
+        ),
+        schedule=WatchSchedule(time_window=None),
+        grouping=WatchGrouping(product_key=None),
+        notifications=WatchNotification(
+            webhook_url=None,
+            telegram_bot_token=None,
+            telegram_chat_id=None,
+            discord_webhook_url=None,
+        ),
+        enabled=True,
+        created_at=now,
+        updated_at=now,
+        last_check_at=None,
+        status='active',
+    )
+
+    recorded: list[tuple[str, str, str | None, dict[str, object] | None]] = []
+
+    class FakeConnector:
+        async def initialize(self):
+            return None
+
+        async def search(self, query, connector_filters):
+            raise httpx.ConnectTimeout('', request=httpx.Request('POST', 'http://example.test/v1'))
+
+        async def cleanup(self):
+            return None
+
+    class FakeCursor:
+        def execute(self, *args, **kwargs):
+            return None
+
+        def fetchone(self):
+            return None
+
+    class FakeConn:
+        def cursor(self):
+            return FakeCursor()
+
+        def commit(self):
+            return None
+
+        def close(self):
+            return None
+
+    class FakeDiffResult:
+        has_events = False
+        new_listings = []
+        price_drops = []
+        stock_changes = []
+        listings_gone = []
+
+    monkeypatch.setattr(watch_executor, 'get_watch', lambda watch_id: watch)
+    monkeypatch.setattr(watch_executor, 'run_check', lambda *_args, **_kwargs: (True, FakeDiffResult(), []))
+    monkeypatch.setattr(watch_executor, 'get_db', lambda: FakeConn())
+    monkeypatch.setattr(
+        watch_executor.importlib,
+        'import_module',
+        lambda name: type('M', (), {'OverclockersConnector': FakeConnector})(),
+    )
+    monkeypatch.setattr(
+        watch_executor,
+        'upsert_connector_health',
+        lambda connector_id, status, last_error=None, details=None: recorded.append((connector_id, status, last_error, details)),
+    )
+
+    result = await watch_executor.execute_watch(42)
+
+    assert result['success'] is True
+    assert recorded[0][0] == 'overclockers'
+    assert recorded[0][1] == 'timeout'
+    assert recorded[0][2]
+    assert recorded[0][2] != ''
+    assert recorded[0][3] is not None
+    assert recorded[0][3]['error_type'] == 'ConnectTimeout'
