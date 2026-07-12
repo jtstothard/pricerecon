@@ -17,9 +17,10 @@ import httpx
 from pricerecon.core.connector_health import upsert_connector_health
 from pricerecon.core.diff_engine import DiffResult, run_check
 from pricerecon.core.notifications import dispatch_for_event
+from pricerecon.connectors.specs import extract_specs
+from pricerecon.connectors.status import ConnectorDegradedError
 from pricerecon.db.schema import DB_PATH, get_db_path
 from pricerecon.models import EventType, NormalizedListing, Watch
-from pricerecon.connectors.status import ConnectorDegradedError
 
 
 def get_db():
@@ -55,6 +56,63 @@ def get_watch(watch_id: int) -> Optional[Watch]:
     )
 
 
+def _normalized_listing_specs(listing: NormalizedListing) -> dict[str, Any]:
+    specs: dict[str, Any] = {}
+    if listing.variant_normalized:
+        specs.update(listing.variant_normalized)
+    specs.update(extract_specs(listing.title_raw, listing.category))
+    return specs
+
+
+def _storage_gb_from_specs(specs: dict[str, Any]) -> int | None:
+    storage_size = specs.get("storage_size")
+    if storage_size is None:
+        return None
+    try:
+        storage_value = int(storage_size)
+    except (TypeError, ValueError):
+        return None
+    unit = str(specs.get("storage_unit") or "GB").upper()
+    if unit == "TB":
+        return storage_value * 1000
+    return storage_value
+
+
+def _spec_matches_listing(listing: NormalizedListing, spec_match: Any) -> bool:
+    match_dict = spec_match.model_dump() if hasattr(spec_match, "model_dump") else (spec_match or {})
+    if not match_dict:
+        return True
+
+    specs = _normalized_listing_specs(listing)
+    title_lower = listing.title_raw.lower()
+
+    ram_gb = match_dict.get("ram_gb")
+    if ram_gb is not None:
+        listing_ram_gb = specs.get("ram_gb")
+        if listing_ram_gb is None or int(listing_ram_gb) < int(ram_gb):
+            return False
+
+    storage_gb = match_dict.get("storage_gb")
+    if storage_gb is not None:
+        listing_storage_gb = _storage_gb_from_specs(specs)
+        if listing_storage_gb is None or listing_storage_gb < int(storage_gb):
+            return False
+
+    cpu_model = match_dict.get("cpu_model")
+    if cpu_model:
+        cpu_text = str(specs.get("cpu_model") or "").lower()
+        if str(cpu_model).lower() not in cpu_text and str(cpu_model).lower() not in title_lower:
+            return False
+
+    gpu_model = match_dict.get("gpu_model")
+    if gpu_model:
+        gpu_text = str(specs.get("gpu_model") or "").lower()
+        if str(gpu_model).lower() not in gpu_text and str(gpu_model).lower() not in title_lower:
+            return False
+
+    return True
+
+
 def apply_post_normalization_filters(listings: list[NormalizedListing], filters: Any) -> list[NormalizedListing]:
     filtered = listings
     filter_dict = filters.model_dump() if hasattr(filters, "model_dump") else filters
@@ -65,6 +123,9 @@ def apply_post_normalization_filters(listings: list[NormalizedListing], filters:
     conditions = condition_filter.get("conditions")
     if conditions:
         filtered = [lst for lst in filtered if lst.condition and lst.condition in conditions]
+    spec_match = filter_dict.get("spec_match", {})
+    if spec_match:
+        filtered = [lst for lst in filtered if _spec_matches_listing(lst, spec_match)]
     if condition_filter.get("dedup_enabled", False):
         dedup_keys = {}
         for lst in filtered:
