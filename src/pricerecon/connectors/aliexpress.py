@@ -324,9 +324,16 @@ class AliExpressConnector(BaseConnector):
         for pid in pids:
             listing = self._manual_listing(pid, filters)
             listings.append(listing)
-        return listings
+
+        # Enrich manual PID listings to get real prices
+        listings = await self._enrich_manual_listings(listings, filters)
+
+        # Filter out listings that couldn't be enriched (price still None)
+        # This avoids emitting price=0 listings that would trigger "listing_gone" events
+        return [lst for lst in listings if lst.price is not None]
 
     def _manual_listing(self, pid: str, filters: dict[str, Any]) -> NormalizedListing:
+        """Create a placeholder listing for a manual PID. Price is None and will be filled by enrichment."""
         url = f"https://www.aliexpress.com/item/{pid}.html"
         listing = NormalizedListing.model_validate(
             {
@@ -334,7 +341,7 @@ class AliExpressConnector(BaseConnector):
                 "source_type": self.source_role,
                 "source_listing_id": pid,
                 "title_raw": filters.get("manual_title") or pid,
-                "price": Decimal(str(filters.get("manual_price", "0"))),
+                "price": None,  # Placeholder; will be filled by enrichment
                 "currency": filters.get("currency", self._affiliate_currency),
                 "url": url,
                 "in_stock": None,
@@ -345,6 +352,163 @@ class AliExpressConnector(BaseConnector):
             }
         )
         return listing
+
+    async def _enrich_manual_listings(self, listings: list[NormalizedListing], filters: dict[str, Any]) -> list[NormalizedListing]:
+        """Enrich manual PID listings to get real prices. Tries DS, affiliate API, browser, then simple HTTP."""
+        if not listings:
+            return listings
+
+        enriched_listings: list[NormalizedListing] = []
+        has_ds_creds = self._has_ds_credentials()
+
+        for listing in listings:
+            pid = listing.source_listing_id
+            enriched = listing
+            success = False
+
+            # Try DS enrichment first if configured
+            if has_ds_creds and self._should_enrich_with_ds(filters):
+                try:
+                    detail = await self._fetch_ds_detail(pid)
+                    enriched = self._merge_listing_with_detail(listing, detail, pid)
+                    success = True
+                    logger.debug(f"Manual PID {pid} enriched via DS API")
+                except Exception as exc:
+                    logger.debug(f"DS enrichment failed for manual PID {pid}: {exc}")
+
+            # Try affiliate API lookup if DS didn't work
+            if not success:
+                try:
+                    affiliate_detail = await self._fetch_affiliate_detail(pid)
+                    if affiliate_detail:
+                        enriched = self._merge_listing_with_affiliate_detail(listing, affiliate_detail, pid)
+                        success = True
+                        logger.debug(f"Manual PID {pid} enriched via affiliate API")
+                except Exception as exc:
+                    logger.debug(f"Affiliate lookup failed for manual PID {pid}: {exc}")
+
+            # Try browser enrichment if available
+            if not success and self._should_enrich_with_browser(filters) and self._browser_client:
+                try:
+                    browser_detail = await self._fetch_browser_detail(pid)
+                    enriched = self._merge_listing_with_browser_detail(listing, browser_detail, pid)
+                    success = True
+                    logger.debug(f"Manual PID {pid} enriched via browser")
+                except Exception as exc:
+                    logger.debug(f"Browser enrichment failed for manual PID {pid}: {exc}")
+
+            # Fallback: simple HTTP fetch with regex extraction
+            if not success:
+                try:
+                    price = await self._fetch_price_from_html(pid)
+                    if price is not None:
+                        enriched = listing.model_copy(
+                            update={
+                                "price": price,
+                                "in_stock": None,  # Unknown stock from simple fetch
+                            }
+                        )
+                        success = True
+                        logger.debug(f"Manual PID {pid} enriched via simple HTTP fetch")
+                except Exception as exc:
+                    logger.debug(f"Simple HTTP fetch failed for manual PID {pid}: {exc}")
+
+            if not success:
+                logger.warning(f"Manual PID {pid} could not be enriched; will be filtered out")
+
+            enriched_listings.append(enriched)
+
+        return enriched_listings
+
+    async def _fetch_affiliate_detail(self, pid: str) -> dict[str, Any] | None:
+        """Fetch product details from AliExpress affiliate API using product ID."""
+        # The affiliate API supports looking up specific products by product_ids
+        # This method is similar to _affiliate_search but for specific PIDs
+        payload = {
+            "product_ids": pid,
+            "currency": self._affiliate_currency,
+        }
+
+        try:
+            response = await self._top_post("aliexpress.affiliate.product.query", payload)
+            self._raise_for_top_response(response, f"AliExpress affiliate lookup failed for PID {pid}")
+        except Exception:
+            # Silently fail; caller will try other enrichment methods
+            return None
+
+        data = self._extract_response_list(self._extract_top_response_payload(response.json()))
+        if not data:
+            return None
+
+        # Return the first matching item (should be the requested PID)
+        for item in data:
+            item_pid = self._first_text(item, "productId", "product_id", "itemId", "item_id", "id")
+            if item_pid == pid:
+                return item
+
+        return None
+
+    async def _fetch_price_from_html(self, pid: str) -> Decimal | None:
+        """Fetch product page HTML and extract price using regex. Fallback when no API creds available."""
+        url = f"https://www.aliexpress.com/item/{pid}.html"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-GB,en;q=0.9",
+        }
+
+        try:
+            response = await self._client.get(url, headers=headers, timeout=30.0, follow_redirects=True)
+            response.raise_for_status()
+            html = response.text
+        except Exception as exc:
+            logger.debug(f"HTTP fetch failed for PID {pid}: {exc}")
+            return None
+
+        # Use the existing _extract_price regex helper
+        return self._extract_price(html)
+
+    def _merge_listing_with_affiliate_detail(self, listing: NormalizedListing, item: dict[str, Any], pid: str) -> NormalizedListing:
+        """Merge a listing with affiliate API detail data."""
+        display_price = self._first_decimal(item, "displayPrice", "display_price", "salePrice", "sale_price", "price")
+        original_price = self._first_decimal(item, "originalPrice", "original_price", "msrpPrice", "old_price")
+        shipping_cost = self._first_decimal(item, "shippingCost", "shipping_cost")
+        seller = self._first_text(item, "shopName", "storeName", "sellerName", "shop_name")
+        rating = self._first_decimal(item, "evaluateRate", "rating", "storeRating", "score")
+        sales = self._first_text(item, "orders", "sales", "salesCount", "sold")
+        stock = self._first_bool(item, "inStock", "in_stock", "available")
+        title = self._first_text(item, "title", "productTitle", "product_title", "itemTitle") or listing.title_raw
+        currency = self._first_text(item, "currency", "priceCurrency") or listing.currency
+
+        enrichment = dict(listing.variant_normalized or {})
+        enrichment.update(
+            self._build_enrichment_payload(
+                pid=pid,
+                title=title,
+                display_price=display_price,
+                original_price=original_price,
+                shipping_cost=shipping_cost,
+                seller=seller,
+                rating=rating,
+                sales=sales,
+                stock=stock,
+                source="affiliate",
+            )
+        )
+
+        return listing.model_copy(
+            update={
+                "title_raw": title,
+                "price": display_price or listing.price,
+                "currency": currency,
+                "seller_or_store": seller or listing.seller_or_store,
+                "shipping_cost": shipping_cost if shipping_cost is not None else listing.shipping_cost,
+                "total_landed_cost": (display_price + shipping_cost) if display_price and shipping_cost else (display_price or listing.total_landed_cost),
+                "in_stock": stock if stock is not None else listing.in_stock,
+                "variant_normalized": enrichment,
+                "image_url": self._first_text(item, "imageUrl", "image_url", "image") or listing.image_url,
+            }
+        )
 
     def _extract_response_list(self, payload: Any) -> list[dict[str, Any]]:
         if isinstance(payload, dict):

@@ -1,9 +1,6 @@
 @import url('./styles/tokens.css');
 @import "tw-animate-css";
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 @layer base {
   :root {

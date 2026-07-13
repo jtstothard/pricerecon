@@ -213,6 +213,21 @@
   transition: transform 150ms ease;
 }
 
+.mobile-nav-brand {
+  display: none;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-left: 4px;
+}
+
+@media (max-width: 1024px) {
+  .mobile-nav-brand {
+    display: block;
+  }
+}
+
 .mobile-nav-toggle:hover {
   background: rgba(255, 255, 255, 0.05);
   border-color: var(--border-strong);
@@ -226,8 +241,8 @@
 .mobile-nav-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1100;
   backdrop-filter: blur(4px);
   opacity: 0;
   visibility: hidden;
@@ -324,6 +339,11 @@
 
   .mobile-nav-panel {
     display: flex;
+  }
+
+  .app-shell__topbar {
+    min-height: 56px;
+    padding: 8px 0;
   }
 
   .app-shell__footer {
