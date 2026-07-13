@@ -6,6 +6,7 @@ import SourceHealth from './SourceHealth'
 import SectionCard from './ui/SectionCard'
 import StatusBadge from './ui/StatusBadge'
 import EmptyState from './ui/EmptyState'
+import Toast, { ToastVariant } from './ui/toast'
 import type { SourceSummary, WatchSummary } from './watchTypes'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { formatSourceName } from '../lib/sourceNames'
@@ -89,7 +90,7 @@ export default function WatchList() {
   const [watchFilter, setWatchFilter] = useState<WatchFilter>('all')
   const [healthFilter, setHealthFilter] = useState<HealthFilter>('all')
   const [pageInfo, setPageInfo] = useState({ page: 1, pageSize: 0, total: 0 })
-  const [checkSuccessMsg, setCheckSuccessMsg] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ message: string; variant: ToastVariant } | null>(null)
 
   usePageTitle('Dashboard')
 
@@ -271,10 +272,9 @@ export default function WatchList() {
       const response = await fetch(`/api/watches/${watchId}/check`, { method: "POST" })
       if (!response.ok) throw new Error("Failed to trigger watch check")
       await fetchDashboardData()
-      setCheckSuccessMsg("Check triggered successfully")
-      setTimeout(() => setCheckSuccessMsg(null), 3000)
+      setToast({ message: "Check triggered successfully", variant: "success" })
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to trigger watch check")
+      setToast({ message: err instanceof Error ? err.message : "Failed to trigger watch check", variant: "error" })
     }
   }
 
@@ -319,12 +319,6 @@ export default function WatchList() {
         )}
       />
 
-      {checkSuccessMsg && (
-        <div className="state-panel" style={{ background: 'rgba(52, 211, 153, 0.08)', borderColor: 'rgba(52, 211, 153, 0.2)', color: '#a7f3d0' }}>
-          {checkSuccessMsg}
-        </div>
-      )}
-
       <div className="kpi-grid">
         <SectionCard title="Active watches" subtitle="Currently checking on schedule">
           <div className="kpi-card__value" aria-live="polite">{kpis.activeWatches}</div>
@@ -348,32 +342,34 @@ export default function WatchList() {
         <input
           className="toolbar__search"
           type="search"
-          placeholder="Search watches, queries, categories, or connectors…"
+          placeholder="Search watches…"
           value={search}
           onChange={e => setSearch(e.target.value)}
           aria-label="Search watches"
         />
         <div className="watch-filter-group" role="group" aria-label="Watch status filter">
-          <button type="button" className={`toolbar__filter ${watchFilter === 'all' ? 'is-active' : ''}`} onClick={() => setWatchFilter('all')} aria-pressed={watchFilter === 'all'}>
-            All watches
-          </button>
-          <button type="button" className={`toolbar__filter ${watchFilter === 'active' ? 'is-active' : ''}`} onClick={() => setWatchFilter('active')} aria-pressed={watchFilter === 'active'}>
-            Active
-          </button>
-          <button type="button" className={`toolbar__filter ${watchFilter === 'paused' ? 'is-active' : ''}`} onClick={() => setWatchFilter('paused')} aria-pressed={watchFilter === 'paused'}>
-            Paused
-          </button>
+          <select
+            value={watchFilter}
+            onChange={e => setWatchFilter(e.target.value as WatchFilter)}
+            aria-label="Filter by watch status"
+            className="toolbar__filter-select"
+          >
+            <option value="all">All watches</option>
+            <option value="active">Active only</option>
+            <option value="paused">Paused only</option>
+          </select>
         </div>
         <div className="watch-filter-group" role="group" aria-label="Source health filter">
-          <button type="button" className={`toolbar__filter ${healthFilter === 'all' ? 'is-active' : ''}`} onClick={() => setHealthFilter('all')} aria-pressed={healthFilter === 'all'}>
-            Any source state
-          </button>
-          <button type="button" className={`toolbar__filter ${healthFilter === 'healthy' ? 'is-active' : ''}`} onClick={() => setHealthFilter('healthy')} aria-pressed={healthFilter === 'healthy'}>
-            Healthy only
-          </button>
-          <button type="button" className={`toolbar__filter ${healthFilter === 'issues' ? 'is-active' : ''}`} onClick={() => setHealthFilter('issues')} aria-pressed={healthFilter === 'issues'}>
-            Needs attention
-          </button>
+          <select
+            value={healthFilter}
+            onChange={e => setHealthFilter(e.target.value as HealthFilter)}
+            aria-label="Filter by source health"
+            className="toolbar__filter-select"
+          >
+            <option value="all">Any source state</option>
+            <option value="healthy">Healthy only</option>
+            <option value="issues">Needs attention</option>
+          </select>
         </div>
       </div>
 
@@ -456,14 +452,35 @@ export default function WatchList() {
                       </td>
                       <td data-label="Primary action">
                         <div className="watch-row__actions">
-                          <button type="button" className="btn btn-secondary" onClick={() => toggleWatch(watch.id, watch.enabled)} aria-label={watch.enabled ? `Pause watch ${displayName}` : `Resume watch ${displayName}`}>
-                            {watch.enabled ? 'Pause' : 'Resume'}
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn--icon"
+                            onClick={() => toggleWatch(watch.id, watch.enabled)}
+                            aria-label={watch.enabled ? `Pause watch ${displayName}` : `Resume watch ${displayName}`}
+                            title={watch.enabled ? 'Pause' : 'Resume'}
+                          >
+                            {watch.enabled ? '⏸' : '▶'}
                           </button>
-                          <button type="button" className="btn btn-secondary" onClick={() => void handleCheckNow(watch.id).catch(err => alert(err instanceof Error ? err.message : 'Failed to trigger watch check'))} aria-label={`Check watch ${displayName} now`}>
-                            Check now
+                          <button
+                            type="button"
+                            className="btn btn-primary btn--icon"
+                            onClick={() => void handleCheckNow(watch.id).catch(err => setToast({
+                              message: err instanceof Error ? err.message : 'Failed to trigger watch check',
+                              variant: 'error'
+                            }))}
+                            aria-label={`Check watch ${displayName} now`}
+                            title="Check now"
+                          >
+                            ↻
                           </button>
-                          <button type="button" className="btn btn-danger" onClick={() => deleteWatch(watch.id)} aria-label={`Delete watch ${displayName}`}>
-                            Delete
+                          <button
+                            type="button"
+                            className="btn btn-danger btn--icon"
+                            onClick={() => deleteWatch(watch.id)}
+                            aria-label={`Delete watch ${displayName}`}
+                            title="Delete"
+                          >
+                            🗑
                           </button>
                         </div>
                       </td>
@@ -483,6 +500,23 @@ export default function WatchList() {
           <SourceHealth sources={sources} />
         </SectionCard>
       </div>
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          variant={toast.variant}
+          onClose={() => setToast(null)}
+        />
+      )}
+
+      <button
+        className="mobile-fab"
+        onClick={() => setShowForm(true)}
+        aria-label="Create new watch"
+        title="Create new watch"
+      >
+        <span style={{ fontSize: '24px', fontWeight: 'bold' }}>+</span>
+      </button>
 
       <WatchForm
         open={showForm}

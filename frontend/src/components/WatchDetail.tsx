@@ -5,6 +5,7 @@ import EventLog from './EventLog'
 import SectionCard from './ui/SectionCard'
 import StatusBadge from './ui/StatusBadge'
 import EmptyState from './ui/EmptyState'
+import Toast, { ToastVariant } from './ui/toast'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { formatSourceName } from '../lib/sourceNames'
 
@@ -61,7 +62,7 @@ export default function WatchDetail() {
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [checking, setChecking] = useState(false)
-  const [checkSuccessMsg, setCheckSuccessMsg] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ message: string; variant: ToastVariant } | null>(null)
 
   usePageTitle(watch ? `Watch: ${watch.name}` : 'Watch detail')
 
@@ -108,10 +109,9 @@ export default function WatchDetail() {
       const response = await fetch(`/api/watches/${id}/check`, { method: 'POST' })
       if (!response.ok) throw new Error('Failed to trigger check')
       await fetchWatchData()
-      setCheckSuccessMsg('Check triggered successfully')
-      setTimeout(() => setCheckSuccessMsg(null), 3000)
+      setToast({ message: 'Check triggered successfully', variant: 'success' })
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to trigger check')
+      setToast({ message: err instanceof Error ? err.message : 'Failed to trigger check', variant: 'error' })
     } finally {
       setChecking(false)
     }
@@ -172,11 +172,6 @@ export default function WatchDetail() {
           </div>
         )}
       >
-        {checkSuccessMsg && (
-          <div className="alert alert--success" role="status" aria-live="polite">
-            {checkSuccessMsg}
-          </div>
-        )}
         <div className="detail-hero">
           <div className="detail-header__name">
             <StatusBadge variant={watch.enabled ? 'active' : 'paused'}>
@@ -209,12 +204,6 @@ export default function WatchDetail() {
         </div>
       </SectionCard>
 
-
-      {checkSuccessMsg && (
-        <div className="state-panel" style={{ background: 'rgba(52, 211, 153, 0.08)', borderColor: 'rgba(52, 211, 153, 0.2)', color: '#a7f3d0' }}>
-          {checkSuccessMsg}
-        </div>
-      )}
       <div className="detail-layout detail-layout--dense">
         <div className="detail-stack">
           <SectionCard
@@ -301,6 +290,14 @@ export default function WatchDetail() {
           </SectionCard>
         </div>
       </div>
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          variant={toast.variant}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   )
 }

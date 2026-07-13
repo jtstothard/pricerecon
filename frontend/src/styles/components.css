@@ -125,6 +125,22 @@ a:focus-visible {
   color: #fecaca;
 }
 
+.btn--icon {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+  font-size: 1rem;
+  line-height: 1;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.btn--icon:hover {
+  transform: translateY(-1px);
+}
+
 .btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
@@ -288,6 +304,7 @@ a:focus-visible {
 
 .toolbar__search,
 .toolbar__filter,
+.toolbar__filter-select,
 .form-control,
 .modal input,
 .modal select,
@@ -302,6 +319,26 @@ a:focus-visible {
   flex: 1 1 320px;
   min-width: 220px;
   padding: 12px 14px;
+  height: 42px;
+}
+
+.toolbar__filter-select {
+  padding: 11px 12px;
+  color: var(--text-secondary);
+  min-width: 160px;
+  height: 42px;
+  cursor: pointer;
+}
+
+.toolbar__filter-select:hover {
+  border-color: var(--border-strong);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.toolbar__filter-select:focus {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-color: rgba(109, 125, 255, 0.28);
 }
 
 .toolbar__search::placeholder,
@@ -374,6 +411,7 @@ a:focus-visible {
 .listings-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .watch-table th,
@@ -420,6 +458,26 @@ a:focus-visible {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
   }
 }
 
@@ -594,6 +652,7 @@ a:focus-visible {
   gap: 16px;
   align-items: start;
   max-width: 100%;
+  width: 100%;
 }
 
 @media (max-width: 1024px) {
@@ -843,8 +902,9 @@ a:focus-visible {
 .event-log {
   display: grid;
   gap: 10px;
-  max-height: 520px;
-  overflow: auto;
+  max-height: 400px;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding-right: 4px;
 }
 
@@ -893,7 +953,8 @@ a:focus-visible {
 }
 
 .chart-card {
-  min-height: 340px;
+  min-height: 300px;
+  max-height: 400px;
 }
 
 .chart-card__wrap {
@@ -1059,6 +1120,15 @@ a:focus-visible {
 
   .searchable-multiselect__content {
     max-height: 280px;
+  }
+
+  .event-log {
+    max-height: 300px;
+  }
+
+  .chart-card {
+    min-height: 250px;
+    max-height: 300px;
   }
 }
 
