@@ -905,6 +905,54 @@ async def test_aliexpress_connector_surfaces_ds_auth_failure() -> None:
 
 
 @pytest.mark.asyncio
+async def test_aliexpress_connector_continues_when_affiliate_lane_fails(
+    monkeypatch: Any,
+) -> None:
+    connector = AliExpressConnector({})
+
+    async def failing_affiliate(query: str, filters: Any) -> Any:
+        raise ConnectorDegradedError(
+            status=ConnectorStatus.auth_failed,
+            message="AliExpress affiliate search failed",
+            connector_id="aliexpress",
+            detail={"error": "missing credentials"},
+        )
+
+    async def brave_results(query: str, filters: Any) -> list[NormalizedListing]:
+        return [
+            NormalizedListing.model_validate(
+                {
+                    "source": "aliexpress",
+                    "source_type": SourceType.RETAILER,
+                    "source_listing_id": "1005008557811111",
+                    "title_raw": "RTX 4070 Ti AliExpress",
+                    "price": Decimal("599.99"),
+                    "currency": "GBP",
+                    "url": "https://www.aliexpress.com/item/1005008557811111.html",
+                    "category": "gpu",
+                    "variant_normalized": {"aliexpress_product_id": "1005008557811111"},
+                }
+            )
+        ]
+
+    async def no_manual(pids: list[str], filters: Any) -> list[NormalizedListing]:
+        return []
+
+    monkeypatch.setattr(connector, "_affiliate_search", failing_affiliate)
+    monkeypatch.setattr(connector, "_brave_search", brave_results)
+    monkeypatch.setattr(connector, "_manual_pid_search", no_manual)
+
+    listings = await connector.search("RTX 4070 Ti")
+    await connector.cleanup()
+
+    assert len(listings) == 1
+    assert listings[0].source_listing_id == "1005008557811111"
+    assert listings[0].price == Decimal("599.99")
+    assert listings[0].variant_normalized is not None
+    assert listings[0].variant_normalized["aliexpress_product_id"] == "1005008557811111"
+
+
+@pytest.mark.asyncio
 async def test_overclockers_uses_runtime_flaresolverr_url_and_surfaces_timeout(
     monkeypatch: Any,
 ) -> None:

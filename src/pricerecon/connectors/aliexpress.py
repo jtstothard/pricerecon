@@ -76,10 +76,18 @@ class AliExpressConnector(BaseConnector):
     ) -> list[NormalizedListing]:
         filters = filters or {}
         listings: list[NormalizedListing] = []
+        affiliate_failed: ConnectorDegradedError | None = None
 
         affiliate_query = self._is_affiliate_search_enabled(filters)
         if affiliate_query:
-            listings.extend(await self._affiliate_search(query, filters))
+            try:
+                listings.extend(await self._affiliate_search(query, filters))
+            except ConnectorDegradedError as exc:
+                affiliate_failed = exc
+                logger.warning(
+                    "AliExpress affiliate search failed; continuing with fallback lanes: %s",
+                    exc.message,
+                )
 
         brave_query = self._is_brave_search_enabled(filters)
         if brave_query:
@@ -99,6 +107,12 @@ class AliExpressConnector(BaseConnector):
 
         listings = [self._annotate_query_match(listing, query) for listing in listings]
         listings = [listing for listing in listings if self._listing_matches_query(listing)]
+
+        if not listings and affiliate_failed is not None:
+            logger.debug(
+                "AliExpress affiliate lane failed with no fallback results: %s",
+                affiliate_failed.message,
+            )
 
         # Do not emit unresolved placeholder rows for Brave/manual discovery.
         listings = [listing for listing in listings if listing.price is not None]
