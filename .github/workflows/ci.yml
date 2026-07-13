@@ -45,17 +45,11 @@ jobs:
   live-verification:
     runs-on: ubuntu-latest
     # Only run live tests if:
-    # 1. Secrets are available (not on PRs from forks)
-    # 2. PR is labeled with "run-live-tests"
-    # 3. Explicitly enabled via environment variable
+    # 1. Push to main branch
+    # 2. PR labeled with "run-live-tests"
     if: |
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-      (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-live-tests')) ||
-      (github.event_name == 'pull_request' && (
-        secrets.EBAY_APP_ID != '' ||
-        secrets.FB_C_USER != '' ||
-        secrets.ALIEXPRESS_DS_APP_KEY != ''
-      ))
+      (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-live-tests'))
 
     strategy:
       matrix:
