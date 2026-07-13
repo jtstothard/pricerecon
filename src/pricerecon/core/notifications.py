@@ -15,7 +15,7 @@ from pricerecon.db.schema import DB_PATH
 from pricerecon.models import EventType
 
 
-def get_db():
+def get_db() -> sqlite3.Connection:
     """Get database connection."""
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -363,7 +363,7 @@ def get_global_notification_config() -> dict[str, Any]:
     from pricerecon.config import load_config
 
     config = load_config()
-    return config.get("notifications", {})
+    return config.get("notifications", {})  # type: ignore[no-any-return]
 
 
 async def dispatch_for_event(

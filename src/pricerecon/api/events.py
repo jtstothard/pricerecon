@@ -32,7 +32,7 @@ class EventsResponse(BaseModel):
 # ============================================================================
 
 
-def get_db():
+def get_db() -> sqlite3.Connection:
     """Get database connection."""
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -47,7 +47,7 @@ def event_row_to_model(row: sqlite3.Row) -> Event:
         watch_id=row["watch_id"],
         event_type=EventType(row["event_type"]),
         severity=Severity(row["severity"]),
-        listing_id=row["listing_key"],
+        listing_id=str(row["listing_key"]) if row["listing_key"] else None,
         data=event_json,
         timestamp=datetime.fromisoformat(row["created_at"]),
     )

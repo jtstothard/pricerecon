@@ -306,7 +306,8 @@ class OAuthTokenStore:
 
             if not should_refresh:
                 logger.debug(f"Token refresh in progress for {connector_id}, waiting...")
-                await refresh_event.wait()
+                if refresh_event is not None:
+                    await refresh_event.wait()
                 continue
 
             try:
@@ -320,7 +321,8 @@ class OAuthTokenStore:
             finally:
                 # Signal that refresh is complete
                 async with self._lock:
-                    refresh_event.set()
+                    if refresh_event is not None:
+                        refresh_event.set()
                     self._refresh_in_progress.pop(connector_id, None)
 
     async def delete_token(self, connector_id: str) -> None:

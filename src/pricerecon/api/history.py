@@ -32,7 +32,7 @@ class HistoryResponse(BaseModel):
 # ============================================================================
 
 
-def get_db():
+def get_db() -> sqlite3.Connection:
     """Get database connection."""
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row

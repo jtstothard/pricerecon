@@ -71,11 +71,11 @@ class WatchFilters(BaseModel):
 
     price_max: Optional[Decimal] = Field(None, ge=0, description="Maximum price")
     currency: str = Field(default="GBP", description="Currency for price_max")
-    condition_filter: ConditionFilter = Field(default_factory=ConditionFilter)
+    condition_filter: ConditionFilter = Field(default_factory=lambda: ConditionFilter())
     exclude_patterns: list[str] = Field(
         default_factory=list, description="Title exclusion patterns"
     )
-    spec_match: SpecMatch = Field(default_factory=SpecMatch)
+    spec_match: SpecMatch = Field(default_factory=lambda: SpecMatch())
     min_seller_feedback: Optional[int] = Field(
         None, ge=0, description="Minimum seller feedback score"
     )
@@ -152,10 +152,10 @@ class WatchBase(BaseModel):
         default_factory=lambda: [SourceConfig(connector="ebay")],
         description="Source configurations",
     )
-    filters: WatchFilters = Field(default_factory=WatchFilters)
-    schedule: WatchSchedule = Field(default_factory=WatchSchedule)
-    grouping: WatchGrouping = Field(default_factory=WatchGrouping)
-    notifications: WatchNotification = Field(default_factory=WatchNotification)
+    filters: WatchFilters = Field(default_factory=WatchFilters.model_construct)
+    schedule: WatchSchedule = Field(default_factory=WatchSchedule.model_construct)
+    grouping: WatchGrouping = Field(default_factory=WatchGrouping.model_construct)
+    notifications: WatchNotification = Field(default_factory=WatchNotification.model_construct)
     enabled: bool = Field(default=True, description="Whether this watch is active")
 
 

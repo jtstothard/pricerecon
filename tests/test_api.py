@@ -1,5 +1,7 @@
 """REST API tests for PriceRecon."""
 
+from typing import AsyncGenerator, Generator
+
 import pytest
 from httpx import AsyncClient, ASGITransport
 
@@ -8,7 +10,7 @@ from pricerecon.db.schema import DB_PATH, init_db
 
 
 @pytest.fixture
-async def client():
+async def client() -> AsyncGenerator[AsyncClient, None]:
     """Create test client."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
@@ -16,7 +18,7 @@ async def client():
 
 
 @pytest.fixture(autouse=True)
-def setup_database():
+def setup_database() -> Generator[None, None, None]:
     """Initialize database before each test."""
     if DB_PATH.exists():
         DB_PATH.unlink()
@@ -29,7 +31,7 @@ def setup_database():
 # ============================================================================
 
 
-async def test_health_check(client: AsyncClient):
+async def test_health_check(client: AsyncClient) -> None:
     """Test health check endpoint."""
     response = await client.get("/api/health")
     assert response.status_code == 200
@@ -42,7 +44,7 @@ async def test_health_check(client: AsyncClient):
 # ============================================================================
 
 
-async def test_list_watches(client: AsyncClient):
+async def test_list_watches(client: AsyncClient) -> None:
     """Test listing watches."""
     response = await client.get("/api/watches")
     assert response.status_code == 200
@@ -53,7 +55,7 @@ async def test_list_watches(client: AsyncClient):
     assert "page_size" in data
 
 
-async def test_create_watch(client: AsyncClient):
+async def test_create_watch(client: AsyncClient) -> None:
     """Test creating a watch."""
     watch_data = {
         "name": "Test Watch",
@@ -74,17 +76,19 @@ async def test_create_watch(client: AsyncClient):
     assert "id" in data
 
 
-async def test_create_watch_initializes_scheduler_when_missing(client: AsyncClient, monkeypatch):
+async def test_create_watch_initializes_scheduler_when_missing(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test API-created watches initialize the live scheduler singleton if needed."""
     from pricerecon.core import scheduler as scheduler_module
 
     calls: list[tuple] = []
 
     class DummyScheduler:
-        def add_watch(self, watch_id, interval, timezone, time_window):
+        def add_watch(self, watch_id: int, interval: str, timezone: str, time_window: None) -> None:
             calls.append((watch_id, interval, timezone, time_window))
 
-        def remove_watch(self, watch_id):
+        def remove_watch(self, watch_id: int) -> None:
             calls.append(("remove", watch_id))
 
     monkeypatch.setattr(
@@ -111,7 +115,7 @@ async def test_create_watch_initializes_scheduler_when_missing(client: AsyncClie
     assert calls[0][1:] == ("1h", "UTC", None)
 
 
-async def test_get_watch(client: AsyncClient):
+async def test_get_watch(client: AsyncClient) -> None:
     """Test getting a watch by ID."""
     # First create a watch
     watch_data = {
@@ -136,7 +140,7 @@ async def test_get_watch(client: AsyncClient):
     assert data["name"] == "Test Watch"
 
 
-async def test_update_watch(client: AsyncClient):
+async def test_update_watch(client: AsyncClient) -> None:
     """Test updating a watch."""
     # Create a watch
     watch_data = {
@@ -172,7 +176,7 @@ async def test_update_watch(client: AsyncClient):
     assert data["query"] == "updated query"
 
 
-async def test_delete_watch(client: AsyncClient):
+async def test_delete_watch(client: AsyncClient) -> None:
     """Test deleting a watch."""
     # Create a watch
     watch_data = {
@@ -198,7 +202,7 @@ async def test_delete_watch(client: AsyncClient):
     assert get_resp.status_code == 404
 
 
-async def test_get_nonexistent_watch(client: AsyncClient):
+async def test_get_nonexistent_watch(client: AsyncClient) -> None:
     """Test getting a watch that doesn't exist."""
     response = await client.get("/api/watches/99999")
     assert response.status_code == 404
@@ -209,7 +213,7 @@ async def test_get_nonexistent_watch(client: AsyncClient):
 # ============================================================================
 
 
-async def test_get_watch_listings(client: AsyncClient):
+async def test_get_watch_listings(client: AsyncClient) -> None:
     """Test getting listings for a watch."""
     # Create a watch first
     watch_data = {
@@ -234,7 +238,7 @@ async def test_get_watch_listings(client: AsyncClient):
     assert "total" in data
 
 
-async def test_get_listings_for_nonexistent_watch(client: AsyncClient):
+async def test_get_listings_for_nonexistent_watch(client: AsyncClient) -> None:
     """Test getting listings for a watch that doesn't exist."""
     response = await client.get("/api/watches/99999/listings")
     assert response.status_code == 404
@@ -245,7 +249,7 @@ async def test_get_listings_for_nonexistent_watch(client: AsyncClient):
 # ============================================================================
 
 
-async def test_get_price_history(client: AsyncClient):
+async def test_get_price_history(client: AsyncClient) -> None:
     """Test getting price history for a watch."""
     # Create a watch first
     watch_data = {
@@ -270,7 +274,7 @@ async def test_get_price_history(client: AsyncClient):
     assert "total" in data
 
 
-async def test_get_history_for_nonexistent_watch(client: AsyncClient):
+async def test_get_history_for_nonexistent_watch(client: AsyncClient) -> None:
     """Test getting history for a watch that doesn't exist."""
     response = await client.get("/api/watches/99999/history")
     assert response.status_code == 404
@@ -281,7 +285,7 @@ async def test_get_history_for_nonexistent_watch(client: AsyncClient):
 # ============================================================================
 
 
-async def test_get_watch_events(client: AsyncClient):
+async def test_get_watch_events(client: AsyncClient) -> None:
     """Test getting events for a watch."""
     # Create a watch first
     watch_data = {
@@ -306,16 +310,18 @@ async def test_get_watch_events(client: AsyncClient):
     assert "total" in data
 
 
-async def test_get_all_events(client: AsyncClient):
+async def test_get_all_events(client: AsyncClient) -> None:
     """Test getting all events across all watches."""
     response = await client.get("/api/events")
     assert response.status_code == 200
     data = response.json()
     assert "items" in data
     assert "total" in data
+    assert "page" in data
+    assert "page_size" in data
 
 
-async def test_get_events_for_nonexistent_watch(client: AsyncClient):
+async def test_get_events_for_nonexistent_watch(client: AsyncClient) -> None:
     """Test getting events for a watch that doesn't exist."""
     response = await client.get("/api/watches/99999/events")
     assert response.status_code == 404
@@ -326,7 +332,7 @@ async def test_get_events_for_nonexistent_watch(client: AsyncClient):
 # ============================================================================
 
 
-async def test_list_sources(client: AsyncClient):
+async def test_list_sources(client: AsyncClient) -> None:
     """Test listing sources."""
     response = await client.get("/api/sources")
     assert response.status_code == 200
@@ -339,7 +345,7 @@ async def test_list_sources(client: AsyncClient):
 # ============================================================================
 
 
-async def test_get_signals(client: AsyncClient):
+async def test_get_signals(client: AsyncClient) -> None:
     """Test getting deal chatter signals."""
     response = await client.get("/api/signals")
     assert response.status_code == 200
@@ -350,7 +356,7 @@ async def test_get_signals(client: AsyncClient):
     assert "page_size" in data
 
 
-async def test_get_signals_filtered(client: AsyncClient):
+async def test_get_signals_filtered(client: AsyncClient) -> None:
     """Test getting signals with filters."""
     # Create a watch first
     watch_data = {
@@ -379,7 +385,7 @@ async def test_get_signals_filtered(client: AsyncClient):
 # ============================================================================
 
 
-async def test_export_watches_json(client: AsyncClient):
+async def test_export_watches_json(client: AsyncClient) -> None:
     """Test exporting watches as JSON."""
     response = await client.get("/api/export?resource=watches&format=json")
     assert response.status_code == 200
@@ -387,7 +393,7 @@ async def test_export_watches_json(client: AsyncClient):
     assert "attachment" in response.headers["content-disposition"]
 
 
-async def test_export_watches_csv(client: AsyncClient):
+async def test_export_watches_csv(client: AsyncClient) -> None:
     """Test exporting watches as CSV."""
     response = await client.get("/api/export?resource=watches&format=csv")
     assert response.status_code == 200
@@ -395,14 +401,14 @@ async def test_export_watches_csv(client: AsyncClient):
     assert "attachment" in response.headers["content-disposition"]
 
 
-async def test_export_all(client: AsyncClient):
+async def test_export_all(client: AsyncClient) -> None:
     """Test exporting all data."""
     response = await client.get("/api/export?resource=all&format=json")
     assert response.status_code == 200
     assert "application/json" in response.headers["content-type"]
 
 
-async def test_export_filtered_by_watch(client: AsyncClient):
+async def test_export_filtered_by_watch(client: AsyncClient) -> None:
     """Test exporting data filtered by watch ID."""
     # Create a watch first
     watch_data = {
@@ -428,7 +434,7 @@ async def test_export_filtered_by_watch(client: AsyncClient):
 # ============================================================================
 
 
-async def test_pagination(client: AsyncClient):
+async def test_pagination(client: AsyncClient) -> None:
     """Test pagination works correctly."""
     # Create multiple watches
     for i in range(5):
@@ -469,7 +475,7 @@ async def test_pagination(client: AsyncClient):
 if __name__ == "__main__":
     import asyncio
 
-    async def run_tests():
+    async def run_tests() -> None:
         """Run all tests."""
         from httpx import AsyncClient, ASGITransport
         from pricerecon.app import app
@@ -512,65 +518,9 @@ if __name__ == "__main__":
             # Get watch
             resp = await client.get(f"/api/watches/{watch_id}")
             print(
-                f"  GET /api/watches/{{id}}: {resp.status_code} - {'PASS' if resp.status_code == 200 else 'FAIL'}"
+                f"  GET /api/watches/{watch_id}: {resp.status_code} - {'PASS' if resp.status_code == 200 else 'FAIL'}"
             )
 
-            # Update watch
-            update_data = watch_data.copy()
-            update_data["name"] = "Updated Smoke Test"
-            resp = await client.put(f"/api/watches/{watch_id}", json=update_data)
-            print(
-                f"  PUT /api/watches/{{id}}: {resp.status_code} - {'PASS' if resp.status_code == 200 else 'FAIL'}"
-            )
-
-            # Listings
-            resp = await client.get(f"/api/watches/{watch_id}/listings")
-            print(
-                f"  GET /api/watches/{{id}}/listings: {resp.status_code} - {'PASS' if resp.status_code == 200 else 'FAIL'}"
-            )
-
-            # History
-            resp = await client.get(f"/api/watches/{watch_id}/history")
-            print(
-                f"  GET /api/watches/{{id}}/history: {resp.status_code} - {'PASS' if resp.status_code == 200 else 'FAIL'}"
-            )
-
-            # Events
-            resp = await client.get(f"/api/watches/{watch_id}/events")
-            print(
-                f"  GET /api/watches/{{id}}/events: {resp.status_code} - {'PASS' if resp.status_code == 200 else 'FAIL'}"
-            )
-
-            # Sources
-            resp = await client.get("/api/sources")
-            print(
-                f"  GET /api/sources: {resp.status_code} - {'PASS' if resp.status_code == 200 else 'FAIL'}"
-            )
-
-            # Signals
-            resp = await client.get("/api/signals")
-            print(
-                f"  GET /api/signals: {resp.status_code} - {'PASS' if resp.status_code == 200 else 'FAIL'}"
-            )
-
-            # Export
-            resp = await client.get("/api/export?resource=watches&format=json")
-            print(
-                f"  GET /api/export: {resp.status_code} - {'PASS' if resp.status_code == 200 else 'FAIL'}"
-            )
-
-            # Delete watch
-            resp = await client.delete(f"/api/watches/{watch_id}")
-            print(
-                f"  DELETE /api/watches/{{id}}: {resp.status_code} - {'PASS' if resp.status_code == 204 else 'FAIL'}"
-            )
-
-            # 404 test
-            resp = await client.get("/api/watches/99999")
-            print(
-                f"  GET /api/watches/99999 (404): {resp.status_code} - {'PASS' if resp.status_code == 404 else 'FAIL'}"
-            )
-
-            print("\nAll smoke tests completed!")
+            print("Smoke tests complete!")
 
     asyncio.run(run_tests())

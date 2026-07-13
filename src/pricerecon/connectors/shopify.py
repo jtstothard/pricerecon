@@ -61,7 +61,7 @@ class ShopifyConnector(BaseConnector):
         )
         response.raise_for_status()
         payload = response.json()
-        return payload.get("product", {}).get("variants", [])
+        return payload.get("product", {}).get("variants", [])  # type: ignore[no-any-return]
 
     def _products_to_listings(self, products: list[dict[str, Any]]) -> list[NormalizedListing]:
         listings: list[NormalizedListing] = []

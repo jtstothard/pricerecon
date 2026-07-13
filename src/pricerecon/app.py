@@ -5,6 +5,7 @@ import sqlite3
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
+from typing import AsyncGenerator
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -30,7 +31,7 @@ APP_VERSION = "0.1.0"
 _app_start_time = datetime.utcnow()
 
 
-async def load_watches_from_db():
+async def load_watches_from_db() -> None:
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -62,7 +63,7 @@ async def load_watches_from_db():
         conn.close()
 
 
-async def check_watch(watch_id: int):
+async def check_watch(watch_id: int) -> None:
     """Scheduler callback: execute a watch and record results."""
     print(f"[scheduler] Executing watch {watch_id}")
     from pricerecon.core.watch_executor import execute_watch
@@ -93,7 +94,7 @@ async def check_watch(watch_id: int):
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     init_db()
     async with scheduler_lifespan() as scheduler:
         scheduler.set_watch_check_function(check_watch)
@@ -132,7 +133,7 @@ if frontend_dist.exists():
     app.mount("/assets", StaticFiles(directory=str(frontend_dist / "assets")), name="assets")
 
     @app.get("/{path:path}")
-    async def serve_frontend(path: str):
+    async def serve_frontend(path: str) -> FileResponse:
         file_path = frontend_dist / path
         if file_path.exists() and file_path.is_file():
             return FileResponse(file_path)

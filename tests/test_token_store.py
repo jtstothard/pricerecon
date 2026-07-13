@@ -4,6 +4,7 @@ import asyncio
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Generator
 from tempfile import TemporaryDirectory
 
 import pytest
@@ -13,7 +14,7 @@ from pricerecon.core.token_store import OAuthTokenStore, TokenData
 
 
 @pytest.fixture
-def temp_db():
+def temp_db() -> Generator[Path, None, None]:
     """Create temporary database for testing."""
     with TemporaryDirectory() as tmpdir:
         db_path = Path(tmpdir) / "test.db"
@@ -21,13 +22,13 @@ def temp_db():
 
 
 @pytest.fixture
-def store(temp_db):
+def store(temp_db: Path) -> Generator[OAuthTokenStore, None, None]:
     """Create token store instance."""
-    return OAuthTokenStore(temp_db)
+    yield OAuthTokenStore(temp_db)
 
 
 @pytest.mark.asyncio
-async def test_token_data_serialization():
+async def test_token_data_serialization() -> None:
     """Test TokenData to_dict/from_dict."""
     now = datetime.utcnow()
     token = TokenData(
@@ -57,7 +58,7 @@ async def test_token_data_serialization():
 
 
 @pytest.mark.asyncio
-async def test_token_expiry_check():
+async def test_token_expiry_check() -> None:
     """Test TokenData.is_expired."""
     now = datetime.utcnow()
 
@@ -79,7 +80,7 @@ async def test_token_expiry_check():
 
 
 @pytest.mark.asyncio
-async def test_store_and_retrieve_token(store):
+async def test_store_and_retrieve_token(store: OAuthTokenStore) -> None:
     """Test storing and retrieving tokens."""
     now = datetime.utcnow() + timedelta(hours=1)
     token = TokenData(
@@ -100,7 +101,7 @@ async def test_store_and_retrieve_token(store):
 
 
 @pytest.mark.asyncio
-async def test_retrieve_expired_token(store):
+async def test_retrieve_expired_token(store: OAuthTokenStore) -> None:
     """Test that expired tokens are not returned."""
     now = datetime.utcnow()
     expired_token = TokenData(access_token="expired_token", expires_at=now - timedelta(hours=1))
@@ -112,7 +113,7 @@ async def test_retrieve_expired_token(store):
 
 
 @pytest.mark.asyncio
-async def test_is_valid(store):
+async def test_is_valid(store: OAuthTokenStore) -> None:
     """Test is_valid method."""
     now = datetime.utcnow()
 
@@ -131,7 +132,7 @@ async def test_is_valid(store):
 
 
 @pytest.mark.asyncio
-async def test_refresh_if_needed_with_valid_token(store):
+async def test_refresh_if_needed_with_valid_token(store: OAuthTokenStore) -> None:
     """Test refresh_if_needed skips refresh when token is valid."""
     now = datetime.utcnow() + timedelta(hours=1)
     token = TokenData(access_token="valid_token", expires_at=now)
@@ -139,7 +140,7 @@ async def test_refresh_if_needed_with_valid_token(store):
 
     refresh_called = False
 
-    async def fake_refresh():
+    async def fake_refresh() -> TokenData:
         nonlocal refresh_called
         refresh_called = True
         return TokenData(
@@ -152,7 +153,7 @@ async def test_refresh_if_needed_with_valid_token(store):
 
 
 @pytest.mark.asyncio
-async def test_refresh_if_needed_with_expired_token(store):
+async def test_refresh_if_needed_with_expired_token(store: OAuthTokenStore) -> None:
     """Test refresh_if_needed calls refresh when token is expired."""
     now = datetime.utcnow()
     expired_token = TokenData(access_token="expired", expires_at=now - timedelta(hours=1))
@@ -160,7 +161,7 @@ async def test_refresh_if_needed_with_expired_token(store):
 
     refresh_called = False
 
-    async def fake_refresh():
+    async def fake_refresh() -> TokenData:
         nonlocal refresh_called
         refresh_called = True
         return TokenData(
@@ -173,11 +174,11 @@ async def test_refresh_if_needed_with_expired_token(store):
 
 
 @pytest.mark.asyncio
-async def test_refresh_if_needed_with_no_token(store):
+async def test_refresh_if_needed_with_no_token(store: OAuthTokenStore) -> None:
     """Test refresh_if_needed calls refresh when no token exists."""
     refresh_called = False
 
-    async def fake_refresh():
+    async def fake_refresh() -> TokenData:
         nonlocal refresh_called
         refresh_called = True
         return TokenData(
@@ -190,11 +191,11 @@ async def test_refresh_if_needed_with_no_token(store):
 
 
 @pytest.mark.asyncio
-async def test_concurrent_refresh(store):
+async def test_concurrent_refresh(store: OAuthTokenStore) -> None:
     """Test that concurrent refresh calls only execute one refresh."""
     refresh_count = 0
 
-    async def slow_refresh():
+    async def slow_refresh() -> TokenData:
         nonlocal refresh_count
         refresh_count += 1
         await asyncio.sleep(0.1)  # Simulate slow refresh
@@ -213,7 +214,7 @@ async def test_concurrent_refresh(store):
 
 
 @pytest.mark.asyncio
-async def test_delete_token(store):
+async def test_delete_token(store: OAuthTokenStore) -> None:
     """Test deleting a token."""
     token = TokenData(access_token="test_token", expires_at=datetime.utcnow() + timedelta(hours=1))
     await store.store_token("test_connector", token)
@@ -224,7 +225,7 @@ async def test_delete_token(store):
 
 
 @pytest.mark.asyncio
-async def test_list_connectors(store):
+async def test_list_connectors(store: OAuthTokenStore) -> None:
     """Test listing connectors with tokens."""
     now = datetime.utcnow() + timedelta(hours=1)
 
@@ -237,7 +238,7 @@ async def test_list_connectors(store):
 
 
 @pytest.mark.asyncio
-async def test_replace_token(store):
+async def test_replace_token(store: OAuthTokenStore) -> None:
     """Test that replace=True overwrites existing tokens."""
     token1 = TokenData(access_token="token1", expires_at=datetime.utcnow() + timedelta(hours=1))
     await store.store_token("test_connector", token1)
@@ -246,11 +247,12 @@ async def test_replace_token(store):
     await store.store_token("test_connector", token2, replace=True)
 
     retrieved = await store.get_token("test_connector")
+    assert retrieved is not None
     assert retrieved.access_token == "token2"
 
 
 @pytest.mark.asyncio
-async def test_no_replace_token(store):
+async def test_no_replace_token(store: OAuthTokenStore) -> None:
     """Test that replace=False skips if token exists."""
     token1 = TokenData(access_token="token1", expires_at=datetime.utcnow() + timedelta(hours=1))
     await store.store_token("test_connector", token1)
@@ -259,11 +261,12 @@ async def test_no_replace_token(store):
     await store.store_token("test_connector", token2, replace=False)
 
     retrieved = await store.get_token("test_connector")
+    assert retrieved is not None
     assert retrieved.access_token == "token1"
 
 
 @pytest.mark.asyncio
-async def test_old_schema_migration():
+async def test_old_schema_migration() -> None:
     """Test migration from old connector_configs schema."""
     with TemporaryDirectory() as tmpdir:
         db_path = Path(tmpdir) / "test.db"
@@ -307,7 +310,7 @@ async def test_old_schema_migration():
 
 
 @pytest.mark.asyncio
-async def test_multiple_keys_per_connector(store):
+async def test_multiple_keys_per_connector(store: OAuthTokenStore) -> None:
     """Test that multiple keys can be stored for same connector."""
     token1 = TokenData(
         access_token="oauth_token", expires_at=datetime.utcnow() + timedelta(hours=1)
@@ -327,4 +330,5 @@ async def test_multiple_keys_per_connector(store):
 
     # OAuth token should still be retrievable
     token = await store.get_token("ebay")
+    assert token is not None
     assert token.access_token == "oauth_token"

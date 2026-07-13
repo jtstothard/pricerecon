@@ -1,7 +1,7 @@
 """Schedule parsing and validation for watch scheduling."""
 
 from dataclasses import dataclass
-from datetime import time
+from datetime import datetime, time
 from typing import Optional
 
 import pytz
@@ -63,7 +63,7 @@ class TimeWindow:
         now = dt.datetime.now(tz)
         return self.is_allowed_at(now, timezone_str)
 
-    def is_allowed_at(self, now, timezone_str: str) -> bool:
+    def is_allowed_at(self, now: datetime, timezone_str: str) -> bool:
         """Check if a specific localized datetime falls within the time window."""
         if now.tzinfo is None:
             tz = ZoneInfo(timezone_str)

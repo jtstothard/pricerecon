@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 try:
     from curl_cffi import requests
 except ImportError:
-    requests = None
+    requests = None  # type: ignore[assignment]
     logger.warning("curl_cffi not installed. Amazon connector will not function.")
 
 
@@ -34,7 +34,7 @@ class AmazonConnector(BaseConnector):
 
         self.config = config or {}
         self.impersonate = self.config.get("impersonate", "chrome124")
-        self.session = requests.Session(impersonate=self.impersonate)
+        self.session: requests.Session = requests.Session(impersonate=self.impersonate)  # type: ignore[union-attr]
 
     @property
     def source_role(self) -> SourceType:

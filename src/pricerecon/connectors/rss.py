@@ -168,7 +168,7 @@ class TemplateConnector(BaseConnector):
                 category=None,
             )
 
-        price = _parse_price_text(entry.title) or Decimal("0")
+        price = extract_visible_gbp_price(f"{entry.title} {entry.content}") or Decimal("0")
         retailer = _extract_retailer(entry.title, entry.content)
         source_listing_id = entry.id or entry.link or entry.title
         return NormalizedListing(
