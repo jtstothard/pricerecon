@@ -25,7 +25,7 @@ function MobileNav({ isOpen, onClose }: MobileNavProps) {
 
   return (
     <>
-      <div className={`mobile-nav-overlay${isOpen ? ' is-open' : ''}`} onClick={onClose} />
+      <div className={`mobile-nav-overlay${isOpen ? ' is-open' : ''}`} onClick={onClose} role="button" tabIndex={-1} aria-hidden="true" />
       <div className={`mobile-nav-panel${isOpen ? ' is-open' : ''}`}>
         <div className="mobile-nav-header">
           <div className="app-shell__brand">
@@ -94,6 +94,7 @@ export default function MobileNavToggle() {
         <span className="mobile-nav-toggle__line" />
         <span className="mobile-nav-toggle__line" />
       </button>
+      <div className="mobile-nav-brand">PriceRecon</div>
       <MobileNav isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>
   )

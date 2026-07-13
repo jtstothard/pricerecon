@@ -61,7 +61,7 @@ class NormalizedListing(BaseModel):
     source_type: SourceType = Field(..., description="Source role")
     source_listing_id: str = Field(..., description="Stable ID from source")
     title_raw: str = Field(..., description="Original listing title")
-    price: Decimal = Field(..., description="Current price in source currency")
+    price: Optional[Decimal] = Field(None, description="Current price in source currency (None if not yet enriched)")
     currency: str = Field(..., description="ISO 4217 currency code")
     url: str = Field(..., description="Direct link to listing")
     timestamp_seen: Optional[datetime] = Field(default_factory=datetime.utcnow)
