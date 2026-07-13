@@ -19,7 +19,7 @@ import httpx
 from pricerecon.connectors.base import BaseConnector
 from pricerecon.connectors.browser_client import BrowserClient
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
-from pricerecon.models import NormalizedListing, SourceType
+from pricerecon.models import NormalizedListing, SourceType, VariantMatchConfidence
 
 logger = logging.getLogger(__name__)
 
@@ -256,7 +256,7 @@ class AliExpressConnector(BaseConnector):
         return listing.model_copy(
             update={
                 "exact_variant_confirmed": exact_match if strong_tokens else listing.exact_variant_confirmed,
-                "variant_match_confidence": "high" if exact_match else ("low" if strong_tokens else listing.variant_match_confidence),
+                "variant_match_confidence": (VariantMatchConfidence.HIGH if exact_match else (VariantMatchConfidence.LOW if strong_tokens else listing.variant_match_confidence)),
                 "mismatch_flags": mismatch_flags or None,
                 "variant_normalized": variant,
             }
