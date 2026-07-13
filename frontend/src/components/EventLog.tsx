@@ -8,7 +8,8 @@ interface Event {
   event_type: string
   severity: string
   data: unknown
-  created_at: string
+  timestamp: string
+  created_at?: string
 }
 
 const severityVariant = (severity: string) => {
@@ -70,7 +71,7 @@ export default function EventLog({ watchId }: { watchId: number }) {
         <div key={event.id} className={`event-item event-item--${severityVariant(event.severity)}`}>
           <div className="event-item__header">
             <StatusBadge variant={severityVariant(event.severity)}>{event.event_type}</StatusBadge>
-            <span className="event-item__time">{formatDateTime(event.created_at)}</span>
+            <span className="event-item__time">{formatDateTime(event.timestamp || event.created_at)}</span>
           </div>
           <pre className="event-item__data">{formatEventData(event.data)}</pre>
         </div>

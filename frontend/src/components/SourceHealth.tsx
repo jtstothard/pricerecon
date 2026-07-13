@@ -1,6 +1,7 @@
 import EmptyState from './ui/EmptyState'
 import StatusBadge from './ui/StatusBadge'
 import type { SourceSummary } from './watchTypes'
+import { formatSourceName } from '../lib/sourceNames'
 
 interface SourceHealthProps {
   sources: SourceSummary[]
@@ -60,11 +61,12 @@ export default function SourceHealth({ sources }: SourceHealthProps) {
           return (
             <div key={source.connector} className="source-health__item" role="listitem">
               <div>
-                <p className="source-health__title">{source.name}</p>
-                <div className="source-health__meta">
-                  <span className="source-health__connector">{source.connector}</span>
-                  {source.last_error || 'No recent errors'}
-                </div>
+                <p className="source-health__title">{formatSourceName(source.name || source.connector)}</p>
+                {source.last_error && (
+                  <div className="source-health__meta">
+                    {source.last_error}
+                  </div>
+                )}
               </div>
               <StatusBadge variant={variant === 'neutral' ? 'neutral' : variant}>{statusLabel(source.status)}</StatusBadge>
             </div>
