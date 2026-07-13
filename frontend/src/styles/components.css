@@ -386,18 +386,50 @@ a:focus-visible {
   vertical-align: top;
 }
 
-.watch-table th,
-.listings-table th {
+.watch-table thead th,
+.listings-table thead th {
   color: var(--text-tertiary);
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-weight: 700;
+  white-space: nowrap;
+}
+
+.watch-table tbody tr,
+.listings-table tbody tr {
+  transition: background-color 150ms ease;
 }
 
 .watch-table tbody tr:hover,
 .listings-table tbody tr:hover {
   background: rgba(255, 255, 255, 0.025);
+}
+
+/* Smooth transitions for filtering and content changes */
+.dashboard-stack > *,
+.detail-stack > * {
+  animation: fadeIn 300ms ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Smooth toolbar filter transitions */
+.toolbar__filter {
+  transition: all 150ms ease;
+}
+
+.sidebar-nav__link {
+  transition: all 150ms ease;
 }
 
 .watch-row__name {
@@ -562,12 +594,21 @@ a:focus-visible {
   gap: 16px;
   align-items: start;
   max-width: 100%;
-  overflow: hidden;
+}
+
+@media (max-width: 1024px) {
+  .detail-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-layout--dense > * {
+    min-width: 0;
+  }
 }
 
 .detail-layout--dense > * {
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .detail-stack {

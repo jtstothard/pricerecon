@@ -6,6 +6,7 @@ import SectionCard from './ui/SectionCard'
 import StatusBadge from './ui/StatusBadge'
 import EmptyState from './ui/EmptyState'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { formatSourceName } from '../lib/sourceNames'
 
 interface Watch {
   id: number
@@ -49,18 +50,7 @@ const formatPrice = (currency: string, price: number | string) => {
   return `${currency} ${numericPrice.toFixed(2)}`
 }
 
-const sourceDisplayNames: Record<string, string> = {
-  'v1': 'eBay',
-  'ebay': 'eBay',
-  'amazon_uk': 'Amazon UK',
-  'cex': 'CeX',
-  'aliexpress': 'AliExpress',
-  'aliexpress_sg': 'AliExpress',
-}
 
-const formatSourceName = (connector: string) => {
-  return sourceDisplayNames[connector] || connector
-}
 
 export default function WatchDetail() {
   const { id } = useParams<{ id: string }>()

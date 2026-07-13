@@ -8,6 +8,8 @@ import StatusBadge from './ui/StatusBadge'
 import EmptyState from './ui/EmptyState'
 import type { SourceSummary, WatchSummary } from './watchTypes'
 import { usePageTitle } from '../hooks/usePageTitle'
+import { formatSourceName } from '../lib/sourceNames'
+import { formatDateTime } from '../lib/dateUtils'
 
 interface PaginatedResponse<T> {
   items: T[]
@@ -32,15 +34,11 @@ const normalizeSourceStatus = (status: string): NormalizedSourceStatus => {
     case 'failed':
       return 'failed'
     case 'disabled':
+    case 'paused':
       return 'paused'
     default:
       return 'neutral'
   }
-}
-
-const formatDateTime = (value: string | null) => {
-  if (!value) return '—'
-  return new Date(value).toLocaleString()
 }
 
 const dedupeTrailingTokens = (value: string) => value.replace(/\b([\p{L}\p{N}_-]+)(?:\s+\1)+$/giu, '$1')
@@ -69,15 +67,15 @@ const formatConnectorSummary = (watch: WatchSummary, connectedSources: number, s
 
 const sourceDisplayName = (connector: string, sources: SourceSummary[]) => {
   const source = sources.find(s => s.connector === connector)
-  return source?.name || connector
+  return formatSourceName(source?.name || connector)
 }
 
 const sourceStateLabel = (statuses: NormalizedSourceStatus[]) => {
-  if (statuses.some(status => status === 'failed')) return 'failed'
-  if (statuses.some(status => status === 'degraded')) return 'degraded'
-  if (statuses.some(status => status === 'paused')) return 'paused'
-  if (statuses.some(status => status === 'healthy')) return 'healthy'
-  return 'neutral'
+  if (statuses.some(status => status === 'failed')) return 'Failed'
+  if (statuses.some(status => status === 'degraded')) return 'Degraded'
+  if (statuses.some(status => status === 'paused')) return 'Paused'
+  if (statuses.some(status => status === 'healthy')) return 'Healthy'
+  return 'Unknown'
 }
 
 export default function WatchList() {
@@ -383,7 +381,7 @@ export default function WatchList() {
         <SectionCard
           title="Watch queue"
           subtitle=""
-          action={<StatusBadge variant="accent">Page {pageInfo.page} · {pageInfo.pageSize || filteredWatches.length} shown</StatusBadge>}
+          action={<StatusBadge variant="accent">Showing {filteredWatches.length} of {pageInfo.total} watches</StatusBadge>}
         >
           {watchRows.length === 0 ? (
             <EmptyState
@@ -479,7 +477,7 @@ export default function WatchList() {
 
         <SectionCard
           title="Source health"
-          subtitle="Healthy, degraded, and failed connectors kept in one compact operational panel."
+          subtitle=""
           action={<StatusBadge variant="neutral">{sources.length} connectors</StatusBadge>}
         >
           <SourceHealth sources={sources} />

@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router-dom'
+import { useData } from '../../context/DataContext'
 
 const sections = [
-  { to: '/', label: 'Watch queue', metric: '' },
-  { to: '/events', label: 'Event stream', metric: '' },
-  { to: '/connectors', label: 'Connectors', metric: '' },
+  { to: '/', label: 'Watch queue', metricKey: 'totalWatches' as const },
+  { to: '/events', label: 'Event stream', metricKey: 'totalEvents' as const },
+  { to: '/connectors', label: 'Connectors', metricKey: 'healthySources' as const },
 ]
 
 const ops = [
@@ -14,6 +15,8 @@ const ops = [
 ]
 
 export default function SidebarNav() {
+  const { metrics, loading } = useData()
+
   return (
     <div>
       <div className="app-shell__brand">
@@ -35,7 +38,9 @@ export default function SidebarNav() {
               <span className="sidebar-nav__dot" />
               {item.label}
             </span>
-            <span className="sidebar-nav__metric">{item.metric}</span>
+            <span className="sidebar-nav__metric">
+              {loading ? '—' : String(metrics[item.metricKey])}
+            </span>
           </NavLink>
         ))}
 
