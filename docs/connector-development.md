@@ -168,9 +168,13 @@ Each connector must declare its `source_role`:
   - Not direct listings, but pointers to deals
   - Community-curated content
   - Often time-sensitive
-- **Diff behavior**: New posts are the primary signal; price changes are less relevant
+- **Operational notes**:
+  - Prefer canonical feed URLs over redirecting aliases. HotUKDeals currently resolves directly at `/rss/new`; if a feed starts redirecting, update the template to the canonical path instead of relying on the redirect chain.
+  - Reddit community feeds are frequently rate limited or bot-blocked. Treat HTTP 429 as `rate_limited` with retry on the next sweep, and HTTP 403 as `bot_blocked`/anti-bot rather than a generic failure.
+  - For Reddit, prefer queryless `/new/.rss` fetching plus local query filtering. That keeps the connector resilient when Reddit blocks search RSS endpoints.
 
 ## Connector Config Patterns
+
 
 ### API Key Configuration
 
