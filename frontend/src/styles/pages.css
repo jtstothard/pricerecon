@@ -1,6 +1,12 @@
 .page {
   padding: 1.5rem;
   min-height: calc(100vh - 100px);
+  animation: pageFadeIn 200ms ease-out;
+}
+
+@keyframes pageFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .page h1 {
