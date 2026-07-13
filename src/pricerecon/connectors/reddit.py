@@ -60,7 +60,7 @@ class RedditBapcSalesUKConnector(TemplateConnector):
             _load_template_or_default(
                 self.CONNECTOR_ID,
                 display_name="Reddit bapcsalesuk",
-                source_role=SourceType.SIGNAL,
+                source_role=SourceType.MARKETPLACE,
                 endpoint_url=(
                     "https://www.reddit.com/r/bapcsalesuk/search.rss"
                     "?q={query}&sort=new&limit={limit}&restrict_sr=1"

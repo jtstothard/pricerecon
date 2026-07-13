@@ -141,9 +141,14 @@ class eBayConnector(BaseConnector):
             return token.access_token
 
         logger.info("Fetching new eBay OAuth token")
-        token = await self._fetch_token()
-        self.token_store.save_token(token)
-        return token.access_token
+        try:
+            token = await self._fetch_token()
+            self.token_store.save_token(token)
+            self._clear_health_error()
+            return token.access_token
+        except Exception as exc:
+            self._mark_health_error(str(exc))
+            raise
 
     async def _fetch_token(self) -> eBayOAuthToken:
         url = "https://api.ebay.com/identity/v1/oauth2/token"
@@ -181,6 +186,28 @@ class eBayConnector(BaseConnector):
         secret = self.cert_id or self.app_id
         credentials = f"{self.app_id}:{secret}"
         return base64.b64encode(credentials.encode()).decode()
+
+    def _clear_health_error(self) -> None:
+        """Clear stale error state after a successful token refresh."""
+        from pricerecon.core.connector_health import upsert_connector_health
+
+        upsert_connector_health(
+            self.CONNECTOR_ID,
+            status="ok",
+            last_error=None,
+            details={"token_refreshed": True},
+        )
+
+    def _mark_health_error(self, error: str) -> None:
+        """Record a token refresh failure in connector health."""
+        from pricerecon.core.connector_health import upsert_connector_health
+
+        upsert_connector_health(
+            self.CONNECTOR_ID,
+            status="auth_failed",
+            last_error=error,
+            details={"error": error, "error_type": "TokenRefreshError"},
+        )
 
     async def search(
         self, query: str, filters: Optional[dict[str, Any]] = None
