@@ -118,7 +118,9 @@ class TemplateConnector(BaseConnector):
         response.raise_for_status()
         return response.text
 
-    async def search(self, query: str, filters: dict[str, Any] | None = None) -> list[NormalizedListing]:
+    async def search(
+        self, query: str, filters: dict[str, Any] | None = None
+    ) -> list[NormalizedListing]:
         html = await self._fetch_html(self._format_search_url(query))
         return parse_listings_from_html(
             html,

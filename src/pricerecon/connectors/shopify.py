@@ -37,7 +37,9 @@ class ShopifyConnector(BaseConnector):
     def detect(self, headers: httpx.Headers, body: str) -> bool:
         return any(key.lower().startswith("x-shop") for key in headers.keys()) or "Shopify" in body
 
-    async def search(self, query: str, filters: dict[str, Any] | None = None) -> list[NormalizedListing]:
+    async def search(
+        self, query: str, filters: dict[str, Any] | None = None
+    ) -> list[NormalizedListing]:
         if not self.base_url:
             raise ValueError("ShopifyConnector requires base_url")
         await self._client.get(
@@ -85,19 +87,25 @@ class ShopifyConnector(BaseConnector):
                         product_normalized=title,
                         variant_normalized={
                             "shopify_variant_title": variant.get("title") or title,
-                            **extract_specs(f"{title} {variant.get('title') or ''}", product.get("product_type")),
+                            **extract_specs(
+                                f"{title} {variant.get('title') or ''}", product.get("product_type")
+                            ),
                         },
                         condition=None,
                         condition_raw=None,
                         shipping_cost=None,
                         total_landed_cost=None,
-                        seller_or_store=self.base_url.replace("https://", "").replace("http://", ""),
+                        seller_or_store=self.base_url.replace("https://", "").replace(
+                            "http://", ""
+                        ),
                         seller_feedback_score=None,
                         seller_feedback_pct=None,
                         location=None,
                         in_stock=variant.get("available"),
                         stock_state=None,
-                        image_url=product_image.get("src") if isinstance(product_image, dict) else None,
+                        image_url=(
+                            product_image.get("src") if isinstance(product_image, dict) else None
+                        ),
                         exact_variant_confirmed=None,
                         variant_match_confidence=None,
                         mismatch_flags=None,

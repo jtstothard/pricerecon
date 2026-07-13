@@ -61,7 +61,9 @@ class NormalizedListing(BaseModel):
     source_type: SourceType = Field(..., description="Source role")
     source_listing_id: str = Field(..., description="Stable ID from source")
     title_raw: str = Field(..., description="Original listing title")
-    price: Optional[Decimal] = Field(None, description="Current price in source currency (None if not yet enriched)")
+    price: Optional[Decimal] = Field(
+        None, description="Current price in source currency (None if not yet enriched)"
+    )
     currency: str = Field(..., description="ISO 4217 currency code")
     url: str = Field(..., description="Direct link to listing")
     timestamp_seen: Optional[datetime] = Field(default_factory=datetime.utcnow)
@@ -89,9 +91,7 @@ class NormalizedListing(BaseModel):
     mismatch_flags: Optional[list[str]] = Field(
         None, description="Flags like WRONG_VARIANT, ACCESSORIES_ONLY"
     )
-    risk_flags: Optional[list[str]] = Field(
-        None, description="Flags like LOW_SELLER_FEEDBACK"
-    )
+    risk_flags: Optional[list[str]] = Field(None, description="Flags like LOW_SELLER_FEEDBACK")
     category: Optional[str] = Field(None, description="Product category")
 
     @field_validator("currency")

@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from datetime import datetime
 from decimal import Decimal
-from typing import Optional
 
 from pricerecon.db.schema import DB_PATH
 from pricerecon.models import EventType, NormalizedListing
@@ -59,7 +57,7 @@ def get_previous_listings(watch_id: int) -> dict[tuple[str, str], dict]:
                   timestamp_seen, listing_json
            FROM listings
            WHERE watch_id = ?""",
-        (watch_id,)
+        (watch_id,),
     )
     rows = cursor.fetchall()
     conn.close()
@@ -118,10 +116,12 @@ def compute_diff(
     # Check for new listings
     for key, listing in current.items():
         if key not in previous:
-            new_listings.append({
-                "listing": listing.model_dump(),
-                "event_type": EventType.NEW_LISTING.value,
-            })
+            new_listings.append(
+                {
+                    "listing": listing.model_dump(),
+                    "event_type": EventType.NEW_LISTING.value,
+                }
+            )
 
     # Check for price changes and stock changes
     for key, listing in current.items():
@@ -131,26 +131,31 @@ def compute_diff(
             prev_price = prev["price"]
 
             if current_price < prev_price:
-                price_drops.append({
-                    "listing": listing.model_dump(),
-                    "previous_price": float(prev_price),
-                    "current_price": float(current_price),
-                    "drop_amount": float(prev_price - current_price),
-                    "event_type": EventType.PRICE_DROP.value,
-                })
+                price_drops.append(
+                    {
+                        "listing": listing.model_dump(),
+                        "previous_price": float(prev_price),
+                        "current_price": float(current_price),
+                        "drop_amount": float(prev_price - current_price),
+                        "event_type": EventType.PRICE_DROP.value,
+                    }
+                )
             elif current_price > prev_price:
-                price_increases.append({
-                    "listing": listing.model_dump(),
-                    "previous_price": float(prev_price),
-                    "current_price": float(current_price),
-                    "increase_amount": float(current_price - prev_price),
-                    "event_type": EventType.PRICE_INCREASE.value,
-                })
+                price_increases.append(
+                    {
+                        "listing": listing.model_dump(),
+                        "previous_price": float(prev_price),
+                        "current_price": float(current_price),
+                        "increase_amount": float(current_price - prev_price),
+                        "event_type": EventType.PRICE_INCREASE.value,
+                    }
+                )
 
             # Check stock change (in_stock transition)
             prev_stock = prev.get("listing_json", "{}")
             # Extract in_stock from previous JSON if available
             import json
+
             try:
                 prev_data = json.loads(prev_stock)
                 prev_in_stock = prev_data.get("in_stock")
@@ -161,24 +166,28 @@ def compute_diff(
 
             if prev_in_stock is not None and curr_in_stock is not None:
                 if prev_in_stock != curr_in_stock:
-                    stock_changes.append({
-                        "listing": listing.model_dump(),
-                        "previous_in_stock": prev_in_stock,
-                        "current_in_stock": curr_in_stock,
-                        "event_type": EventType.STOCK_CHANGE.value,
-                    })
+                    stock_changes.append(
+                        {
+                            "listing": listing.model_dump(),
+                            "previous_in_stock": prev_in_stock,
+                            "current_in_stock": curr_in_stock,
+                            "event_type": EventType.STOCK_CHANGE.value,
+                        }
+                    )
 
     # Check for listings that disappeared
     for key in previous:
         if key not in current:
             prev = previous[key]
-            listings_gone.append({
-                "source": key[0],
-                "source_listing_id": key[1],
-                "title_raw": prev["title_raw"],
-                "url": prev["url"],
-                "event_type": EventType.LISTING_GONE.value,
-            })
+            listings_gone.append(
+                {
+                    "source": key[0],
+                    "source_listing_id": key[1],
+                    "title_raw": prev["title_raw"],
+                    "url": prev["url"],
+                    "event_type": EventType.LISTING_GONE.value,
+                }
+            )
 
     return DiffResult(
         new_listings=new_listings,
@@ -216,7 +225,7 @@ def store_listings(watch_id: int, listings: list[NormalizedListing]) -> None:
                 listing.url,
                 listing.timestamp_seen.isoformat(),
                 listing.model_dump_json(),
-            )
+            ),
         )
 
     conn.commit()
@@ -228,7 +237,6 @@ def store_events(watch_id: int, diff_result: DiffResult) -> list[int]:
 
     Returns list of created event IDs.
     """
-    import json
 
     conn = get_db()
     cursor = conn.cursor()
@@ -249,7 +257,7 @@ def store_events(watch_id: int, diff_result: DiffResult) -> list[int]:
                 f"{event['listing']['source']}|{event['listing']['source_listing_id']}",
                 "info",
                 json.dumps(event, default=str),
-            )
+            ),
         )
         event_ids.append(cursor.lastrowid)
 
@@ -267,7 +275,7 @@ def store_events(watch_id: int, diff_result: DiffResult) -> list[int]:
                 f"{event['listing']['source']}|{event['listing']['source_listing_id']}",
                 "info",
                 json.dumps(event, default=str),
-            )
+            ),
         )
         event_ids.append(cursor.lastrowid)
 
@@ -285,7 +293,7 @@ def store_events(watch_id: int, diff_result: DiffResult) -> list[int]:
                 f"{event['listing']['source']}|{event['listing']['source_listing_id']}",
                 "info",
                 json.dumps(event, default=str),
-            )
+            ),
         )
         event_ids.append(cursor.lastrowid)
 
@@ -299,7 +307,7 @@ def store_events(watch_id: int, diff_result: DiffResult) -> list[int]:
                 f"{event['source']}|{event['source_listing_id']}",
                 "info",
                 json.dumps(event, default=str),
-            )
+            ),
         )
         event_ids.append(cursor.lastrowid)
 

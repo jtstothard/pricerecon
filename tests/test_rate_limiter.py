@@ -3,7 +3,6 @@
 import asyncio
 from datetime import datetime, timedelta
 
-import pytest
 
 from pricerecon.core.rate_limiter import (
     ConnectorRateLimiter,
@@ -13,7 +12,6 @@ from pricerecon.core.rate_limiter import (
 )
 from pricerecon.models.rate_limit import (
     RateLimitConfig,
-    RateLimitStatus,
     RateLimitWindow,
 )
 

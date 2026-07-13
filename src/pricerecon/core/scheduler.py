@@ -41,10 +41,7 @@ class WatchScheduler:
             logger.info("Starting watch scheduler")
             self.scheduler.start()
             # Log scheduler events for debugging
-            self.scheduler.add_listener(
-                self._on_job_executed,
-                EVENT_JOB_EXECUTED | EVENT_JOB_ERROR
-            )
+            self.scheduler.add_listener(self._on_job_executed, EVENT_JOB_EXECUTED | EVENT_JOB_ERROR)
 
     def stop(self) -> None:
         """Stop the scheduler gracefully."""
@@ -52,8 +49,13 @@ class WatchScheduler:
             logger.info("Stopping watch scheduler")
             self.scheduler.shutdown(wait=False)
 
-    def add_watch(self, watch_id: int, interval: str, timezone: str = "UTC",
-                  time_window: Optional[dict] = None) -> str:
+    def add_watch(
+        self,
+        watch_id: int,
+        interval: str,
+        timezone: str = "UTC",
+        time_window: Optional[dict] = None,
+    ) -> str:
         """Add a watch to the scheduler.
 
         Args:
@@ -84,6 +86,7 @@ class WatchScheduler:
 
         # Add job to scheduler
         import datetime as _dt
+
         now = _dt.datetime.now(_dt.timezone.utc)
         self.scheduler.add_job(
             func=self._execute_watch,
@@ -194,12 +197,16 @@ class WatchScheduler:
         for watch_id, job_id in self._watch_jobs.items():
             job = self.scheduler.get_job(job_id)
             if job:
-                watches.append({
-                    "watch_id": watch_id,
-                    "job_id": job_id,
-                    "next_run_time": job.next_run_time.isoformat() if job.next_run_time else None,
-                    "paused": not job.next_run_time
-                })
+                watches.append(
+                    {
+                        "watch_id": watch_id,
+                        "job_id": job_id,
+                        "next_run_time": (
+                            job.next_run_time.isoformat() if job.next_run_time else None
+                        ),
+                        "paused": not job.next_run_time,
+                    }
+                )
         return watches
 
     async def _execute_watch(self, watch_id: int, schedule: ParsedSchedule) -> None:

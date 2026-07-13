@@ -30,8 +30,12 @@ def _seed_sources(conn: sqlite3.Connection) -> None:
             # Instantiate to read source_role
             try:
                 instance = cls()
-                role = instance.source_role.value if hasattr(instance.source_role, 'value') else str(instance.source_role)
-                name = getattr(instance, 'display_name', cid)
+                role = (
+                    instance.source_role.value
+                    if hasattr(instance.source_role, "value")
+                    else str(instance.source_role)
+                )
+                name = getattr(instance, "display_name", cid)
             except Exception:
                 role = "retailer"
                 name = cid
@@ -57,8 +61,7 @@ def init_db(path: Path | None = None) -> None:
     cursor = conn.cursor()
 
     # Create tables
-    cursor.executescript(
-        """
+    cursor.executescript("""
         -- Watches: watch configurations
         CREATE TABLE IF NOT EXISTS watches (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -191,8 +194,7 @@ def init_db(path: Path | None = None) -> None:
         -- Insert initial schema version
         INSERT OR IGNORE INTO schema_migrations (version, description)
         VALUES ('1.0', 'Initial schema');
-        """
-    )
+        """)
 
     conn.commit()
     _seed_sources(conn)

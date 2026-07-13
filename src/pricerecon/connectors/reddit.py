@@ -2,14 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from decimal import Decimal
 from typing import Any, Optional
 
-from pricerecon.connectors.base import BaseConnector
 from pricerecon.connectors.rss import (
     ConnectorTemplateConfig,
-    FeedEntry,
     TemplateConnector,
     load_template_configs_result,
 )
@@ -71,7 +67,9 @@ class RedditBapcSalesUKConnector(TemplateConnector):
             )
         )
 
-    async def search(self, query: str, filters: Optional[dict[str, Any]] = None) -> list[NormalizedListing]:
+    async def search(
+        self, query: str, filters: Optional[dict[str, Any]] = None
+    ) -> list[NormalizedListing]:
         listings = await super().search(query, filters)
         for listing in listings:
             listing.in_stock = None
@@ -91,7 +89,9 @@ class HotUKDealsConnector(TemplateConnector):
             )
         )
 
-    async def search(self, query: str, filters: Optional[dict[str, Any]] = None) -> list[NormalizedListing]:
+    async def search(
+        self, query: str, filters: Optional[dict[str, Any]] = None
+    ) -> list[NormalizedListing]:
         listings = await super().search(query, filters)
         keyword = query.lower().strip()
         if keyword:

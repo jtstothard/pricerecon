@@ -94,8 +94,7 @@ class OAuthTokenStore:
 
             if row is None:
                 # Table doesn't exist, create with new schema
-                await conn.execute(
-                    """
+                await conn.execute("""
                     CREATE TABLE connector_configs (
                         connector_id TEXT NOT NULL,
                         key TEXT NOT NULL,
@@ -103,8 +102,7 @@ class OAuthTokenStore:
                         expires_at TEXT,
                         PRIMARY KEY (connector_id, key)
                     );
-                    """
-                )
+                    """)
                 await conn.execute(
                     "CREATE INDEX idx_connector_configs_expires ON connector_configs(expires_at);"
                 )
@@ -138,8 +136,7 @@ class OAuthTokenStore:
         rows = await cursor.fetchall()
 
         # Create new table
-        await conn.execute(
-            """
+        await conn.execute("""
             CREATE TABLE connector_configs_new (
                 connector_id TEXT NOT NULL,
                 key TEXT NOT NULL,
@@ -147,8 +144,7 @@ class OAuthTokenStore:
                 expires_at TEXT,
                 PRIMARY KEY (connector_id, key)
             );
-            """
-        )
+            """)
         await conn.execute(
             "CREATE INDEX idx_connector_configs_new_expires ON connector_configs_new(expires_at);"
         )

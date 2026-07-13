@@ -2,13 +2,13 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
 
 class RateLimitWindow(str, Enum):
     """Rate limit time window options."""
+
     MINUTE = "1m"
     HOUR = "1h"
     DAY = "1d"
@@ -16,6 +16,7 @@ class RateLimitWindow(str, Enum):
 
 class RateLimitConfig(BaseModel):
     """Rate limit configuration for a connector."""
+
     max_requests: int = Field(..., gt=0, description="Maximum requests per window")
     window: RateLimitWindow = Field(default=RateLimitWindow.HOUR, description="Time window")
     tokens_per_request: int = Field(default=1, gt=0, description="Tokens consumed per request")
@@ -23,6 +24,7 @@ class RateLimitConfig(BaseModel):
 
 class RateLimitStatus(BaseModel):
     """Current rate limit status for a connector."""
+
     connector_id: str = Field(..., description="Connector identifier")
     max_requests: int = Field(..., description="Maximum requests per window")
     remaining: int = Field(..., description="Remaining requests in current window")
@@ -36,7 +38,7 @@ class RateLimitStatus(BaseModel):
 
 class ConnectorRateLimits(BaseModel):
     """Rate limits for multiple connectors."""
+
     connectors: dict[str, RateLimitStatus] = Field(
-        default_factory=dict,
-        description="Rate limit status per connector"
+        default_factory=dict, description="Rate limit status per connector"
     )

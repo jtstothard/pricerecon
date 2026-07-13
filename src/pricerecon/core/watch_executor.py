@@ -5,7 +5,6 @@ Orchestrates connector calls, diff engine, and event emission.
 
 from __future__ import annotations
 
-import importlib
 import json
 import sqlite3
 from datetime import datetime
@@ -17,11 +16,11 @@ import httpx
 from pricerecon.config import load_config
 from pricerecon.connectors.browser_client import BrowserClient, BrowserSessionConfig
 from pricerecon.core.connector_health import upsert_connector_health
-from pricerecon.core.diff_engine import DiffResult, run_check
+from pricerecon.core.diff_engine import run_check
 from pricerecon.core.notifications import dispatch_for_event
 from pricerecon.connectors.specs import extract_specs
 from pricerecon.connectors.status import ConnectorDegradedError
-from pricerecon.db.schema import DB_PATH, get_db_path
+from pricerecon.db.schema import DB_PATH
 from pricerecon.models import EventType, NormalizedListing, Watch
 
 
@@ -53,7 +52,9 @@ def get_watch(watch_id: int) -> Optional[Watch]:
         enabled=config.get("enabled", True),
         created_at=datetime.fromisoformat(row["created_at"]),
         updated_at=datetime.fromisoformat(row["updated_at"]),
-        last_check_at=datetime.fromisoformat(row["last_check_at"]) if row["last_check_at"] else None,
+        last_check_at=(
+            datetime.fromisoformat(row["last_check_at"]) if row["last_check_at"] else None
+        ),
         status=config.get("status", "active"),
     )
 
@@ -81,7 +82,9 @@ def _storage_gb_from_specs(specs: dict[str, Any]) -> int | None:
 
 
 def _spec_matches_listing(listing: NormalizedListing, spec_match: Any) -> bool:
-    match_dict = spec_match.model_dump() if hasattr(spec_match, "model_dump") else (spec_match or {})
+    match_dict = (
+        spec_match.model_dump() if hasattr(spec_match, "model_dump") else (spec_match or {})
+    )
     if not match_dict:
         return True
 
@@ -115,7 +118,9 @@ def _spec_matches_listing(listing: NormalizedListing, spec_match: Any) -> bool:
     return True
 
 
-def apply_post_normalization_filters(listings: list[NormalizedListing], filters: Any) -> list[NormalizedListing]:
+def apply_post_normalization_filters(
+    listings: list[NormalizedListing], filters: Any
+) -> list[NormalizedListing]:
     filtered = listings
     filter_dict = filters.model_dump() if hasattr(filters, "model_dump") else filters
     price_max = filter_dict.get("price_max")
@@ -132,13 +137,20 @@ def apply_post_normalization_filters(listings: list[NormalizedListing], filters:
         dedup_keys = {}
         for lst in filtered:
             import re
-            title_norm = re.sub(r"\s*-\s*(Fair|Good|Excellent|Premium|Pristine)\s*$", "", lst.title_raw, flags=re.IGNORECASE)
+
+            title_norm = re.sub(
+                r"\s*-\s*(Fair|Good|Excellent|Premium|Pristine)\s*$",
+                "",
+                lst.title_raw,
+                flags=re.IGNORECASE,
+            )
             if title_norm not in dedup_keys:
                 dedup_keys[title_norm] = lst
         filtered = list(dedup_keys.values())
     exclude_patterns = filter_dict.get("exclude_patterns", [])
     if exclude_patterns:
         import re
+
         for lst in filtered[:]:
             title_lower = lst.title_raw.lower()
             if any(re.search(pattern.lower(), title_lower) for pattern in exclude_patterns):
@@ -157,7 +169,9 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
         return {"success": False, "error": f"Watch {watch_id} not found"}
 
     runtime_config = load_config()
-    connector_defaults = runtime_config.get("connectors", {}) if isinstance(runtime_config, dict) else {}
+    connector_defaults = (
+        runtime_config.get("connectors", {}) if isinstance(runtime_config, dict) else {}
+    )
 
     all_listings = []
     for source in watch.sources:
@@ -170,6 +184,7 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
         try:
             # Use entry-point registry to resolve connector_id -> class
             from pricerecon.connectors import discover_connectors
+
             all_connectors = discover_connectors()
             connector_class = all_connectors.get(connector_id)
             if connector_class is None:
@@ -183,10 +198,12 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
             connector_kwargs: dict[str, Any] = {**config_defaults, **dict(source.config or {})}
             if connector_id == "ebay":
                 import os
+
                 connector_kwargs.setdefault("app_id", os.environ.get("EBAY_APP_ID", ""))
                 connector_kwargs.setdefault("cert_id", os.environ.get("EBAY_CERT_ID"))
             elif connector_id == "aliexpress":
                 import os
+
                 cfg = {**config_defaults, **dict(source.config or {})}
                 cfg.setdefault("app_key", os.environ.get("ALIEXPRESS_APP_KEY"))
                 cfg.setdefault("app_secret", os.environ.get("ALIEXPRESS_APP_SECRET"))
@@ -195,14 +212,23 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
                 cfg.setdefault("ds_access_token", os.environ.get("ALIEXPRESS_DS_ACCESS_TOKEN"))
                 cfg.setdefault("ds_refresh_token", os.environ.get("ALIEXPRESS_DS_REFRESH_TOKEN"))
                 browser_client = None
-                camofox_url = cfg.get("camofox_url") or os.environ.get("ALIEXPRESS_CAMOFOX_URL") or os.environ.get("CAMOFOX_URL") or "http://192.168.10.252:9377"
+                camofox_url = (
+                    cfg.get("camofox_url")
+                    or os.environ.get("ALIEXPRESS_CAMOFOX_URL")
+                    or os.environ.get("CAMOFOX_URL")
+                    or "http://192.168.10.252:9377"
+                )
                 cfg.setdefault("camofox_url", camofox_url)
                 if camofox_url:
                     browser_client = BrowserClient(
                         config=BrowserSessionConfig(
                             camofox_url=str(camofox_url),
-                            camofox_user_id=str(cfg.get("camofox_user_id") or f"pricerecon_{watch_id}"),
-                            camofox_session_key=str(cfg.get("camofox_session_key") or f"watch_{watch_id}"),
+                            camofox_user_id=str(
+                                cfg.get("camofox_user_id") or f"pricerecon_{watch_id}"
+                            ),
+                            camofox_session_key=str(
+                                cfg.get("camofox_session_key") or f"watch_{watch_id}"
+                            ),
                             camofox_api_key=os.environ.get("CAMOFOX_API_KEY"),
                             camofox_access_key=os.environ.get("CAMOFOX_ACCESS_KEY"),
                         )
@@ -223,7 +249,9 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
             upsert_connector_health(connector_id, "ok", details={"listing_count": len(listings)})
         except ConnectorDegradedError as exc:
             last_error = exc.message.strip() if exc.message else exc.status.value
-            upsert_connector_health(connector_id, exc.status.value, last_error=last_error, details=exc.detail)
+            upsert_connector_health(
+                connector_id, exc.status.value, last_error=last_error, details=exc.detail
+            )
             continue
         except httpx.TimeoutException as exc:
             message = _non_empty_error_message(exc)
@@ -337,22 +365,28 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
 
     if not first_run and diff_result.has_events:
         for event in diff_result.new_listings:
-            result["events"].append({"type": EventType.NEW_LISTING.value, "listing": event["listing"]})
+            result["events"].append(
+                {"type": EventType.NEW_LISTING.value, "listing": event["listing"]}
+            )
         for event in diff_result.price_drops:
-            result["events"].append({
-                "type": EventType.PRICE_DROP.value,
-                "listing": event["listing"],
-                "previous_price": event["previous_price"],
-                "current_price": event["current_price"],
-                "drop_amount": event["drop_amount"],
-            })
+            result["events"].append(
+                {
+                    "type": EventType.PRICE_DROP.value,
+                    "listing": event["listing"],
+                    "previous_price": event["previous_price"],
+                    "current_price": event["current_price"],
+                    "drop_amount": event["drop_amount"],
+                }
+            )
         for event in diff_result.stock_changes:
-            result["events"].append({
-                "type": EventType.STOCK_CHANGE.value,
-                "listing": event["listing"],
-                "previous_in_stock": event["previous_in_stock"],
-                "current_in_stock": event["current_in_stock"],
-            })
+            result["events"].append(
+                {
+                    "type": EventType.STOCK_CHANGE.value,
+                    "listing": event["listing"],
+                    "previous_in_stock": event["previous_in_stock"],
+                    "current_in_stock": event["current_in_stock"],
+                }
+            )
     return result
 
 

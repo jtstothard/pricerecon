@@ -51,7 +51,9 @@ class _RemoteCamofoxPage:
         self._context = context
         self._tab_id: str | None = None
 
-    async def goto(self, url: str, *, wait_until: str | None = None, timeout: int | None = None) -> None:
+    async def goto(
+        self, url: str, *, wait_until: str | None = None, timeout: int | None = None
+    ) -> None:
         if self._tab_id is None:
             payload = {
                 "userId": self._context.user_id,
@@ -66,7 +68,11 @@ class _RemoteCamofoxPage:
         else:
             await self._context._post(
                 f"/tabs/{self._tab_id}/navigate",
-                {"userId": self._context.user_id, "url": url, "sessionKey": self._context.session_key},
+                {
+                    "userId": self._context.user_id,
+                    "url": url,
+                    "sessionKey": self._context.session_key,
+                },
                 timeout=timeout,
             )
 
@@ -88,20 +94,16 @@ class _RemoteCamofoxContext:
         self._config = config
         self._client = client
         self._pages: list[_RemoteCamofoxPage] = []
-        self.user_id = (
-            (config.camofox_user_id or "").strip()
-            or f"pricerecon_{os.getpid()}"
-        )
-        self.session_key = (
-            (config.camofox_session_key or "").strip()
-            or "aliexpress"
-        )
+        self.user_id = (config.camofox_user_id or "").strip() or f"pricerecon_{os.getpid()}"
+        self.session_key = (config.camofox_session_key or "").strip() or "aliexpress"
 
     def _headers(self) -> dict[str, str]:
         token = (self._config.camofox_api_key or self._config.camofox_access_key or "").strip()
         return {"Authorization": f"Bearer {token}"} if token else {}
 
-    async def _post(self, path: str, body: dict[str, Any], timeout: int | None = None) -> dict[str, Any]:
+    async def _post(
+        self, path: str, body: dict[str, Any], timeout: int | None = None
+    ) -> dict[str, Any]:
         base_url = self._config.camofox_url
         assert base_url is not None
         response = await self._client.post(
@@ -127,6 +129,7 @@ class _RemoteCamofoxContext:
 
     async def _wait(self, timeout_ms: int) -> None:
         import asyncio
+
         await asyncio.sleep(max(timeout_ms, 0) / 1000.0)
 
     async def new_page(self) -> _RemoteCamofoxPage:
@@ -223,7 +226,10 @@ class BrowserClient:
             return context
         assert self._browser is not None
         context_kwargs: dict[str, Any] = {
-            "viewport": {"width": self.config.viewport_width, "height": self.config.viewport_height},
+            "viewport": {
+                "width": self.config.viewport_width,
+                "height": self.config.viewport_height,
+            },
             "locale": self.config.locale,
             "timezone_id": self.config.timezone_id,
         }

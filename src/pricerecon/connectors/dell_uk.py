@@ -77,7 +77,9 @@ class DellUKConnector(BaseConnector):
             return f"{self.DEFAULT_LISTING_URL}?text={quote_plus(query)}"
         return self.DEFAULT_LISTING_URL
 
-    async def search(self, query: str, filters: dict[str, Any] | None = None) -> list[NormalizedListing]:
+    async def search(
+        self, query: str, filters: dict[str, Any] | None = None
+    ) -> list[NormalizedListing]:
         filters = filters or {}
         url = self._listing_url(query, filters)
 
@@ -141,7 +143,9 @@ class DellUKConnector(BaseConnector):
 
             seen_ids.add(source_listing_id)
             variant = extract_specs(f"{title} {card_text}", "laptop")
-            in_stock = None if re.search(r"out of stock|sold out|unavailable", card_text, re.I) else True
+            in_stock = (
+                None if re.search(r"out of stock|sold out|unavailable", card_text, re.I) else True
+            )
 
             listings.append(
                 NormalizedListing(

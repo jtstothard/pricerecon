@@ -168,7 +168,7 @@ class TemplateConnector(BaseConnector):
                 category=None,
             )
 
-        price = _extract_price(entry.title, entry.content) or Decimal("0")
+        price = _parse_price_text(entry.title) or Decimal("0")
         retailer = _extract_retailer(entry.title, entry.content)
         source_listing_id = entry.id or entry.link or entry.title
         return NormalizedListing(
@@ -182,7 +182,9 @@ class TemplateConnector(BaseConnector):
             url=entry.link,
             timestamp_seen=entry.published_at or datetime.now(timezone.utc),
             product_normalized=None,
-            variant_normalized={"query": entry.title} if self.template.source_role == SourceType.SIGNAL else None,
+            variant_normalized=(
+                {"query": entry.title} if self.template.source_role == SourceType.SIGNAL else None
+            ),
             condition=None,
             condition_raw=None,
             shipping_cost=None,
@@ -251,14 +253,18 @@ def load_template_configs_result(
     return Success(configs)
 
 
-def load_template_configs(template_dir: Path | str | None = None) -> dict[str, ConnectorTemplateConfig]:
+def load_template_configs(
+    template_dir: Path | str | None = None,
+) -> dict[str, ConnectorTemplateConfig]:
     """Load validated RSS connector templates or return an empty mapping on failure."""
 
     result = load_template_configs_result(template_dir)
     return result.unwrap() if isinstance(result, Success) else {}
 
 
-def register_template_connectors(template_dir: Path | str | None = None) -> dict[str, ConnectorTemplateConfig]:
+def register_template_connectors(
+    template_dir: Path | str | None = None,
+) -> dict[str, ConnectorTemplateConfig]:
     """Load templates into the module registry."""
 
     global TEMPLATE_CONNECTORS
@@ -344,7 +350,9 @@ def _parse_atom_feed(root: ET.Element) -> list[FeedEntry]:
             item.findtext("atom:published", default=None, namespaces=ATOM_NS)
             or item.findtext("atom:updated", default=None, namespaces=ATOM_NS)
         )
-        entry_id = (item.findtext("atom:id", default="", namespaces=ATOM_NS) or link or title).strip()
+        entry_id = (
+            item.findtext("atom:id", default="", namespaces=ATOM_NS) or link or title
+        ).strip()
         entries.append(
             FeedEntry(
                 id=entry_id,
@@ -368,7 +376,11 @@ def _parse_rss_feed(root: ET.Element) -> list[FeedEntry]:
         title = (item.findtext("title") or "").strip()
         link = (item.findtext("link") or "").strip()
         author = item.findtext("author") or item.findtext("dc:creator", namespaces=ATOM_NS)
-        content = item.findtext("description") or item.findtext("content:encoded", namespaces=ATOM_NS) or ""
+        content = (
+            item.findtext("description")
+            or item.findtext("content:encoded", namespaces=ATOM_NS)
+            or ""
+        )
         published = _parse_timestamp(item.findtext("pubDate"))
         entry_id = (item.findtext("guid") or link or title).strip()
         entries.append(

@@ -4,7 +4,6 @@ from datetime import datetime
 from decimal import Decimal
 
 import sqlite3
-from pathlib import Path
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
 
@@ -21,6 +20,7 @@ router = APIRouter()
 
 class HistoryResponse(BaseModel):
     """Response for price history."""
+
     items: list[PriceHistory]
     total: int
     page: int
@@ -67,23 +67,19 @@ async def get_price_history(
     """Get price history for a watch."""
     conn = get_db()
     cursor = conn.cursor()
-    
+
     # Check if watch exists
     cursor.execute("SELECT id FROM watches WHERE id = ?", (watch_id,))
     if not cursor.fetchone():
         conn.close()
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Watch {watch_id} not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Watch {watch_id} not found"
         )
-    
+
     # Get total count
-    cursor.execute(
-        "SELECT COUNT(*) as total FROM price_history WHERE watch_id = ?",
-        (watch_id,)
-    )
+    cursor.execute("SELECT COUNT(*) as total FROM price_history WHERE watch_id = ?", (watch_id,))
     total = cursor.fetchone()["total"]
-    
+
     # Get paginated results
     skip = (page - 1) * page_size
     cursor.execute(
@@ -91,13 +87,13 @@ async def get_price_history(
            WHERE watch_id = ? 
            ORDER BY timestamp DESC 
            LIMIT ? OFFSET ?""",
-        (watch_id, page_size, skip)
+        (watch_id, page_size, skip),
     )
     rows = cursor.fetchall()
-    
+
     history = [history_row_to_model(row) for row in rows]
     conn.close()
-    
+
     return HistoryResponse(
         items=history,
         total=total,

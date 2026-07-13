@@ -4,7 +4,6 @@ from datetime import datetime
 
 import sqlite3
 import json
-from pathlib import Path
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
 
@@ -21,6 +20,7 @@ router = APIRouter()
 
 class EventsResponse(BaseModel):
     """Response for events."""
+
     items: list[Event]
     total: int
     page: int
@@ -67,23 +67,19 @@ async def get_watch_events(
     """Get events for a watch."""
     conn = get_db()
     cursor = conn.cursor()
-    
+
     # Check if watch exists
     cursor.execute("SELECT id FROM watches WHERE id = ?", (watch_id,))
     if not cursor.fetchone():
         conn.close()
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Watch {watch_id} not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Watch {watch_id} not found"
         )
-    
+
     # Get total count
-    cursor.execute(
-        "SELECT COUNT(*) as total FROM events WHERE watch_id = ?",
-        (watch_id,)
-    )
+    cursor.execute("SELECT COUNT(*) as total FROM events WHERE watch_id = ?", (watch_id,))
     total = cursor.fetchone()["total"]
-    
+
     # Get paginated results
     skip = (page - 1) * page_size
     cursor.execute(
@@ -91,13 +87,13 @@ async def get_watch_events(
            WHERE watch_id = ? 
            ORDER BY created_at DESC 
            LIMIT ? OFFSET ?""",
-        (watch_id, page_size, skip)
+        (watch_id, page_size, skip),
     )
     rows = cursor.fetchall()
-    
+
     events = [event_row_to_model(row) for row in rows]
     conn.close()
-    
+
     return EventsResponse(
         items=events,
         total=total,
@@ -114,24 +110,24 @@ async def get_all_events(
     """Get all events across all watches."""
     conn = get_db()
     cursor = conn.cursor()
-    
+
     # Get total count
     cursor.execute("SELECT COUNT(*) as total FROM events")
     total = cursor.fetchone()["total"]
-    
+
     # Get paginated results
     skip = (page - 1) * page_size
     cursor.execute(
         """SELECT * FROM events 
            ORDER BY created_at DESC 
            LIMIT ? OFFSET ?""",
-        (page_size, skip)
+        (page_size, skip),
     )
     rows = cursor.fetchall()
-    
+
     events = [event_row_to_model(row) for row in rows]
     conn.close()
-    
+
     return EventsResponse(
         items=events,
         total=total,

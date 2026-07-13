@@ -26,8 +26,12 @@ class SelectorConfig:
     id: str | None = None
     pagination_next: str | None = None
     dedupe: bool = True
-    stock_in: tuple[str, ...] = field(default=("in stock", "available", "dispatch", "add to basket", "buy now"))
-    stock_out: tuple[str, ...] = field(default=("out of stock", "sold out", "unavailable", "coming soon", "pre-order", "preorder"))
+    stock_in: tuple[str, ...] = field(
+        default=("in stock", "available", "dispatch", "add to basket", "buy now")
+    )
+    stock_out: tuple[str, ...] = field(
+        default=("out of stock", "sold out", "unavailable", "coming soon", "pre-order", "preorder")
+    )
 
 
 def parse_price(text: str) -> Decimal | None:
@@ -88,7 +92,9 @@ def parse_listings_from_html(
         if selector.image:
             image_node = _first(card, selector.image)
             if image_node:
-                image_url = image_node.attributes.get("src") or image_node.attributes.get("data-src")
+                image_url = image_node.attributes.get("src") or image_node.attributes.get(
+                    "data-src"
+                )
                 if image_url:
                     image_url = urljoin(base_url, image_url)
 

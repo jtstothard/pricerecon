@@ -1,8 +1,7 @@
 """Unit tests for notification dispatcher."""
 
-import asyncio
 import json
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import patch
 
 import httpx
 import pytest
@@ -39,9 +38,7 @@ async def test_send_webhook_success():
 async def test_send_webhook_failure():
     """Test webhook send failure."""
     with respx.mock:
-        route = respx.post("https://example.com/webhook").mock(
-            return_value=Response(500)
-        )
+        respx.post("https://example.com/webhook").mock(return_value=Response(500))
 
         result = await send_webhook("https://example.com/webhook", {"test": "data"})
 
@@ -92,7 +89,9 @@ async def test_send_telegram_respects_rate_limit_and_retries_429(monkeypatch):
                 raise httpx.HTTPStatusError(
                     "rate limited",
                     request=request,
-                    response=httpx.Response(self.status_code, headers=self.headers, request=request),
+                    response=httpx.Response(
+                        self.status_code, headers=self.headers, request=request
+                    ),
                 )
 
     responses = [
@@ -115,6 +114,8 @@ async def test_send_telegram_respects_rate_limit_and_retries_429(monkeypatch):
     assert sleep_calls[0] == pytest.approx(0.3)
     assert sleep_calls[1] == pytest.approx(2.0)
     assert notifications_module._TELEGRAM_LAST_SEND_AT == pytest.approx(102.3)
+
+
 @pytest.mark.asyncio
 async def test_send_discord_success():
     """Test successful Discord send."""
@@ -136,9 +137,7 @@ async def test_send_discord_success():
 async def test_send_discord_failure():
     """Test Discord send failure."""
     with respx.mock:
-        route = respx.post("https://discord.com/api/webhooks/123/test").mock(
-            return_value=Response(400)
-        )
+        respx.post("https://discord.com/api/webhooks/123/test").mock(return_value=Response(400))
 
         result = await send_discord("https://discord.com/api/webhooks/123/test", "Test message")
 
@@ -237,9 +236,7 @@ def test_format_message_listing_gone():
 async def test_dispatch_notifications_webhook(mock_log):
     """Test dispatching webhook notifications."""
     with respx.mock:
-        route = respx.post("https://example.com/webhook").mock(
-            return_value=Response(200)
-        )
+        route = respx.post("https://example.com/webhook").mock(return_value=Response(200))
 
         watch_notifications = {
             "events": ["new_listing"],
@@ -421,7 +418,13 @@ async def test_dispatch_for_event(mock_dispatch, mock_get_config):
         event_type=EventType.NEW_LISTING,
         watch_name="Test Watch",
         watch_notifications={"events": ["new_listing"], "channels": ["telegram"]},
-        listing={"title_raw": "Test", "price": "100", "currency": "GBP", "source": "test", "url": "https://test.com"},
+        listing={
+            "title_raw": "Test",
+            "price": "100",
+            "currency": "GBP",
+            "source": "test",
+            "url": "https://test.com",
+        },
     )
 
     assert result == ["telegram"]

@@ -1,6 +1,5 @@
 """Token bucket rate limiter per connector."""
 
-import asyncio
 import logging
 import time
 from datetime import datetime, timedelta
@@ -149,7 +148,9 @@ class ConnectorRateLimiter:
             # Use default config for known connectors
             config = DEFAULT_RATE_LIMITS.get(connector_id)
             if config is None:
-                logger.warning(f"No default rate limit for connector {connector_id}, using generous defaults")
+                logger.warning(
+                    f"No default rate limit for connector {connector_id}, using generous defaults"
+                )
                 config = RateLimitConfig(
                     max_requests=1000,
                     window=RateLimitWindow.HOUR,
