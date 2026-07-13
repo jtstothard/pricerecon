@@ -296,44 +296,36 @@ class OAuthTokenStore:
         Raises:
             Exception: If refresh fails
         """
-        async with self._lock:
-            # Check if token exists and is valid
+        while True:
             token = await self.get_token(connector_id)
             if token is not None:
                 return token
 
-        # Token is missing or expired, need to refresh
-        refresh_event = asyncio.Event()
-
-        # Check if another caller is already refreshing
-        async with self._lock:
-            if connector_id in self._refresh_in_progress:
-                existing_event = self._refresh_in_progress[connector_id]
-                logger.debug(f"Token refresh in progress for {connector_id}, waiting...")
-                # Wait for existing refresh to complete
-                await existing_event.wait()
-                # Try to get the refreshed token
-                token = await self.get_token(connector_id)
-                if token is not None:
-                    return token
-                # Refresh failed, fall through to retry
-            else:
-                # Mark that we're starting a refresh
-                self._refresh_in_progress[connector_id] = refresh_event
-
-        try:
-            logger.info(f"Refreshing token for {connector_id}")
-            # Call the connector-specific refresh function
-            new_token = await refresh_func()
-            # Store the new token
-            await self.store_token(connector_id, new_token)
-            logger.info(f"Token refreshed for {connector_id}")
-            return new_token
-        finally:
-            # Signal that refresh is complete
             async with self._lock:
-                refresh_event.set()
-                self._refresh_in_progress.pop(connector_id, None)
+                refresh_event = self._refresh_in_progress.get(connector_id)
+                should_refresh = refresh_event is None
+                if should_refresh:
+                    refresh_event = asyncio.Event()
+                    self._refresh_in_progress[connector_id] = refresh_event
+
+            if not should_refresh:
+                logger.debug(f"Token refresh in progress for {connector_id}, waiting...")
+                await refresh_event.wait()
+                continue
+
+            try:
+                logger.info(f"Refreshing token for {connector_id}")
+                # Call the connector-specific refresh function
+                new_token = await refresh_func()
+                # Store the new token
+                await self.store_token(connector_id, new_token)
+                logger.info(f"Token refreshed for {connector_id}")
+                return new_token
+            finally:
+                # Signal that refresh is complete
+                async with self._lock:
+                    refresh_event.set()
+                    self._refresh_in_progress.pop(connector_id, None)
 
     async def delete_token(self, connector_id: str) -> None:
         """Delete stored token.

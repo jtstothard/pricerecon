@@ -4,3 +4,9 @@ frontend/node_modules/
 __pycache__/
 *.pyc
 pricerecon.db
+docker-compose.override.yml
+docs/prds/
+.worktrees/
+.hermes/
+*.bak.*
+sketches/

@@ -179,6 +179,20 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
                 import os
                 connector_kwargs.setdefault("app_id", os.environ.get("EBAY_APP_ID", ""))
                 connector_kwargs.setdefault("cert_id", os.environ.get("EBAY_CERT_ID"))
+            elif connector_id == "aliexpress":
+                import os
+                # AliExpress connector takes a single `config` dict; merge env
+                # credentials into it (per-watch config takes precedence).
+                connector_kwargs = {
+                    "config": dict(source.config or {}),
+                }
+                cfg = connector_kwargs["config"]
+                cfg.setdefault("app_key", os.environ.get("ALIEXPRESS_APP_KEY"))
+                cfg.setdefault("app_secret", os.environ.get("ALIEXPRESS_APP_SECRET"))
+                cfg.setdefault("ds_app_key", os.environ.get("ALIEXPRESS_DS_APP_KEY"))
+                cfg.setdefault("ds_app_secret", os.environ.get("ALIEXPRESS_DS_APP_SECRET"))
+                cfg.setdefault("ds_access_token", os.environ.get("ALIEXPRESS_DS_ACCESS_TOKEN"))
+                cfg.setdefault("ds_refresh_token", os.environ.get("ALIEXPRESS_DS_REFRESH_TOKEN"))
             try:
                 connector = connector_class(**connector_kwargs)
             except TypeError:

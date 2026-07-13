@@ -1,0 +1,19 @@
+.page {
+  padding: 1.5rem;
+  min-height: calc(100vh - 100px);
+}
+
+.page h1 {
+  margin: 0 0 1rem 0;
+  font-size: var(--fs-h1);
+  color: var(--color-text);
+}
+
+.page-empty-state {
+  margin: 2rem 0;
+  padding: 3rem 2rem;
+  text-align: center;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-subtle);
+  border-radius: 8px;
+}

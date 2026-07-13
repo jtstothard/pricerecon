@@ -1,0 +1,57 @@
+:root {
+  color-scheme: dark;
+  --bg: #0b0f14;
+  --bg-elevated: #111723;
+  --bg-surface: #151c29;
+  --bg-surface-2: #1a2232;
+  --bg-overlay: rgba(5, 9, 16, 0.72);
+  --border: rgba(148, 163, 184, 0.16);
+  --border-strong: rgba(148, 163, 184, 0.24);
+  --text: #eef2ff;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --text-inverse: #081019;
+  --accent: #6d7dff;
+  --accent-strong: #8796ff;
+  --accent-soft: rgba(109, 125, 255, 0.16);
+  --success: #34d399;
+  --success-soft: rgba(52, 211, 153, 0.16);
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.16);
+  --danger: #f87171;
+  --danger-soft: rgba(248, 113, 113, 0.16);
+  --info: #38bdf8;
+  --info-soft: rgba(56, 189, 248, 0.16);
+  --shadow-sm: 0 8px 18px rgba(0, 0, 0, 0.18);
+  --shadow-md: 0 18px 44px rgba(0, 0, 0, 0.24);
+  --shadow-lg: 0 28px 72px rgba(0, 0, 0, 0.34);
+  --radius-xs: 10px;
+  --radius-sm: 14px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --container-max: 1480px;
+  --sidebar-width: 274px;
+  --topbar-height: 78px;
+  --focus-ring: 0 0 0 3px rgba(109, 125, 255, 0.5);
+  --fs-h1: 2rem;
+  --fs-h2: 1.5rem;
+  --fs-body: 1rem;
+  --fs-small: 0.875rem;
+
+  /* Breakpoints for responsive design */
+  --bp-mobile: 640px;
+  --bp-tablet: 1024px;
+  --bp-desktop: 1024px;
+
+  /* Tap target minimum size (WCAG 2.2 SC 2.5.8) */
+  --tap-target-min: 24px;
+}

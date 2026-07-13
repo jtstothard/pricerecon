@@ -1,8 +1,13 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import AppShell from './components/layout/AppShell'
-import TopActionBar from './components/layout/TopActionBar'
 import WatchList from './components/WatchList'
 import WatchDetail from './components/WatchDetail'
+import Notifications from './pages/Notifications'
+import Runs from './pages/Runs'
+import Exports from './pages/Exports'
+import Settings from './pages/Settings'
+import Events from './pages/Events'
+import Connectors from './pages/Connectors'
 import './App.css'
 
 function App() {
@@ -10,40 +15,17 @@ function App() {
     <BrowserRouter>
       <AppShell>
         <Routes>
-          <Route
-            path="/"
-            element={(
-              <>
-                <TopActionBar
-                  eyebrow="Operations control center"
-                  title="Watch dashboard"
-                  description="Scan priority watches, source posture, and the next action without digging through detail pages."
-                  actions={(
-                    <>
-                      <button className="btn btn-secondary">Refresh</button>
-                      <button className="btn btn-secondary">Export</button>
-                      <button className="btn btn-primary">+ New watch</button>
-                    </>
-                  )}
-                />
-                <WatchList />
-              </>
-            )}
-          />
+          <Route path="/" element={<WatchList />} />
           <Route
             path="/watch/:id"
-            element={(
-              <>
-                <TopActionBar
-                  eyebrow="Watch detail"
-                  title="Watch overview"
-                  description="Inspect current listings, price history, and event stream for a single watch."
-                  actions={<button className="btn btn-primary">Check now</button>}
-                />
-                <WatchDetail />
-              </>
-            )}
+            element={<WatchDetail />}
           />
+          <Route path="/notifications" element={<Notifications />} />
+          <Route path="/runs" element={<Runs />} />
+          <Route path="/exports" element={<Exports />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/events" element={<Events />} />
+          <Route path="/connectors" element={<Connectors />} />
         </Routes>
       </AppShell>
     </BrowserRouter>
