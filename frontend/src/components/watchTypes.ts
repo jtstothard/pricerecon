@@ -16,6 +16,7 @@ export interface WatchSummary {
 export interface SourceSummary {
   connector: string
   name: string
+  source_type?: string
   status: string
   last_error: string | null
 }
