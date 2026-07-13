@@ -1,12 +1,10 @@
 """Watches CRUD API endpoints."""
 
 from datetime import datetime
-from decimal import Decimal
 from typing import Any
 
 import sqlite3
 import json
-from pathlib import Path
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
 
@@ -16,7 +14,6 @@ from pricerecon.models import (
     WatchCreate,
     WatchUpdate,
     WatchCheckResponse,
-    ErrorResponse,
 )
 
 router = APIRouter()
@@ -72,6 +69,7 @@ def sync_watch_scheduler(watch: Watch) -> None:
 
 class WatchListResponse(BaseModel):
     """Response for listing watches."""
+
     items: list[Watch]
     total: int
     page: int
@@ -106,7 +104,9 @@ def watch_row_to_model(row: sqlite3.Row) -> Watch:
         enabled=config.get("enabled", True),
         created_at=datetime.fromisoformat(row["created_at"]),
         updated_at=datetime.fromisoformat(row["updated_at"]),
-        last_check_at=datetime.fromisoformat(row["last_check_at"]) if row["last_check_at"] else None,
+        last_check_at=(
+            datetime.fromisoformat(row["last_check_at"]) if row["last_check_at"] else None
+        ),
         status=config.get("status", "active"),
     )
 
@@ -124,22 +124,21 @@ async def list_watches(
     """List all watches with pagination."""
     conn = get_db()
     cursor = conn.cursor()
-    
+
     # Get total count
     cursor.execute("SELECT COUNT(*) as total FROM watches")
     total = cursor.fetchone()["total"]
-    
+
     # Get paginated results
     skip = (page - 1) * page_size
     cursor.execute(
-        "SELECT * FROM watches ORDER BY created_at DESC LIMIT ? OFFSET ?",
-        (page_size, skip)
+        "SELECT * FROM watches ORDER BY created_at DESC LIMIT ? OFFSET ?", (page_size, skip)
     )
     rows = cursor.fetchall()
-    
+
     watches = [watch_row_to_model(row) for row in rows]
     conn.close()
-    
+
     return WatchListResponse(
         items=watches,
         total=total,
@@ -153,7 +152,7 @@ async def create_watch(watch_create: WatchCreate) -> Watch:
     """Create a new watch."""
     conn = get_db()
     cursor = conn.cursor()
-    
+
     try:
         # Build config JSON
         config = {
@@ -176,7 +175,7 @@ async def create_watch(watch_create: WatchCreate) -> Watch:
                 json.dumps(config),
                 datetime.utcnow().isoformat(),
                 datetime.utcnow().isoformat(),
-            )
+            ),
         )
         watch_id = cursor.lastrowid
         conn.commit()
@@ -198,13 +197,13 @@ async def create_watch(watch_create: WatchCreate) -> Watch:
             return watch_row_to_model(row)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Watch with name '{watch_create.name}' already exists"
+            detail=f"Watch with name '{watch_create.name}' already exists",
         )
     except Exception as e:
         conn.close()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create watch: {str(e)}"
+            detail=f"Failed to create watch: {str(e)}",
         )
 
 
@@ -213,17 +212,16 @@ async def get_watch(watch_id: int) -> Watch:
     """Get watch details by ID."""
     conn = get_db()
     cursor = conn.cursor()
-    
+
     cursor.execute("SELECT * FROM watches WHERE id = ?", (watch_id,))
     row = cursor.fetchone()
     conn.close()
-    
+
     if not row:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Watch {watch_id} not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Watch {watch_id} not found"
         )
-    
+
     return watch_row_to_model(row)
 
 
@@ -232,17 +230,16 @@ async def update_watch(watch_id: int, watch_update: WatchUpdate) -> Watch:
     """Update a watch."""
     conn = get_db()
     cursor = conn.cursor()
-    
+
     # Check if watch exists
     cursor.execute("SELECT * FROM watches WHERE id = ?", (watch_id,))
     row = cursor.fetchone()
     if not row:
         conn.close()
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Watch {watch_id} not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Watch {watch_id} not found"
         )
-    
+
     try:
         # Build config JSON
         config = {
@@ -252,9 +249,11 @@ async def update_watch(watch_id: int, watch_update: WatchUpdate) -> Watch:
             "grouping": watch_update.grouping.model_dump(mode="json"),
             "notifications": watch_update.notifications.model_dump(mode="json"),
             "enabled": watch_update.enabled,
-            "status": json.loads(row["config_json"]).get("status", "active"),  # Preserve existing status
+            "status": json.loads(row["config_json"]).get(
+                "status", "active"
+            ),  # Preserve existing status
         }
-        
+
         cursor.execute(
             """UPDATE watches 
                SET name = ?, query = ?, category = ?, config_json = ?, updated_at = ?
@@ -266,10 +265,10 @@ async def update_watch(watch_id: int, watch_update: WatchUpdate) -> Watch:
                 json.dumps(config),
                 datetime.utcnow().isoformat(),
                 watch_id,
-            )
+            ),
         )
         conn.commit()
-        
+
         # Get the updated watch
         cursor.execute("SELECT * FROM watches WHERE id = ?", (watch_id,))
         row = cursor.fetchone()
@@ -277,13 +276,13 @@ async def update_watch(watch_id: int, watch_update: WatchUpdate) -> Watch:
         conn.close()
 
         sync_watch_scheduler(watch)
-        
+
         return watch
     except Exception as e:
         conn.close()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update watch: {str(e)}"
+            detail=f"Failed to update watch: {str(e)}",
         )
 
 
@@ -292,22 +291,22 @@ async def delete_watch(watch_id: int) -> None:
     """Delete a watch."""
     conn = get_db()
     cursor = conn.cursor()
-    
+
     # Check if watch exists
     cursor.execute("SELECT id FROM watches WHERE id = ?", (watch_id,))
     if not cursor.fetchone():
         conn.close()
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Watch {watch_id} not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Watch {watch_id} not found"
         )
-    
+
     cursor.execute("DELETE FROM watches WHERE id = ?", (watch_id,))
     conn.commit()
     conn.close()
 
     try:
         from pricerecon.core.scheduler import get_scheduler
+
         scheduler = get_scheduler()
         scheduler.remove_watch(watch_id)
     except Exception:
@@ -330,7 +329,7 @@ async def trigger_watch_check(watch_id: int) -> WatchCheckResponse:
     if not result["success"]:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=result.get("error", "Unknown error")
+            detail=result.get("error", "Unknown error"),
         )
 
     # Update last_check timestamp
@@ -338,7 +337,7 @@ async def trigger_watch_check(watch_id: int) -> WatchCheckResponse:
     cursor = conn.cursor()
     cursor.execute(
         "UPDATE watches SET last_check_at = ? WHERE id = ?",
-        (datetime.utcnow().isoformat(), watch_id)
+        (datetime.utcnow().isoformat(), watch_id),
     )
     conn.commit()
     conn.close()

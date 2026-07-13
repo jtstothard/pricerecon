@@ -9,7 +9,7 @@ import httpx
 from pydantic import BaseModel, Field
 
 from pricerecon.connectors.base import BaseConnector
-from pricerecon.models import Condition, NormalizedListing, SourceType
+from pricerecon.models import NormalizedListing, SourceType
 
 logger = logging.getLogger(__name__)
 
@@ -42,12 +42,10 @@ class eBayTokenStore:
         conn = sqlite3.connect(db)
         cursor = conn.cursor()
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT config_json FROM connector_configs
             WHERE connector_id = 'ebay'
-        """
-        )
+        """)
         row = cursor.fetchone()
         conn.close()
 
@@ -82,16 +80,14 @@ class eBayTokenStore:
             db.parent.mkdir(parents=True, exist_ok=True)
             conn = sqlite3.connect(db)
             cursor = conn.cursor()
-            cursor.execute(
-                """
+            cursor.execute("""
                 CREATE TABLE IF NOT EXISTS connector_configs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     connector_id TEXT NOT NULL UNIQUE,
                     config_json TEXT NOT NULL,
                     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
-            """
-            )
+            """)
             conn.commit()
             conn.close()
             logger.info(f"Created database at {self.db_path}")
@@ -99,7 +95,7 @@ class eBayTokenStore:
         conn = sqlite3.connect(db)
         cursor = conn.cursor()
 
-        config_json = json.dumps({"oauth_token": token.model_dump(mode='json')})
+        config_json = json.dumps({"oauth_token": token.model_dump(mode="json")})
 
         cursor.execute(
             """
@@ -186,7 +182,9 @@ class eBayConnector(BaseConnector):
         credentials = f"{self.app_id}:{secret}"
         return base64.b64encode(credentials.encode()).decode()
 
-    async def search(self, query: str, filters: Optional[dict[str, Any]] = None) -> list[NormalizedListing]:
+    async def search(
+        self, query: str, filters: Optional[dict[str, Any]] = None
+    ) -> list[NormalizedListing]:
         filters = filters or {}
         await self.ensure_token()
 
@@ -246,10 +244,15 @@ class eBayConnector(BaseConnector):
                     timestamp_seen=datetime.utcnow(),
                     seller_or_store=item.get("seller", {}).get("username"),
                     seller_feedback_score=item.get("seller", {}).get("feedbackScore"),
-                    seller_feedback_pct=float(item.get("seller", {}).get("feedbackPercentage"))
-                    if item.get("seller", {}).get("feedbackPercentage")
-                    else None,
-                    in_stock=item.get("availability", {}).get("shipToLocationAvailability", {}).get("quantity", 1) > 0,
+                    seller_feedback_pct=(
+                        float(item.get("seller", {}).get("feedbackPercentage"))
+                        if item.get("seller", {}).get("feedbackPercentage")
+                        else None
+                    ),
+                    in_stock=item.get("availability", {})
+                    .get("shipToLocationAvailability", {})
+                    .get("quantity", 1)
+                    > 0,
                 )
                 listings.append(listing)
             except Exception as exc:

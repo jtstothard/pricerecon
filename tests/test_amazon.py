@@ -21,9 +21,9 @@ def connector(monkeypatch, mock_session):
     # Mock curl_cffi.requests.Session
     mock_requests = MagicMock()
     mock_requests.Session.return_value = mock_session
-    
+
     monkeypatch.setattr("pricerecon.connectors.amazon.requests", mock_requests)
-    
+
     return AmazonConnector()
 
 
@@ -41,6 +41,7 @@ def test_source_role(connector):
 def test_initialize(connector):
     """Test initialization."""
     import asyncio
+
     asyncio.run(connector.initialize())
     # Should not raise
 
@@ -48,6 +49,7 @@ def test_initialize(connector):
 def test_cleanup(connector):
     """Test cleanup."""
     import asyncio
+
     asyncio.run(connector.cleanup())
     # Should not raise
 
@@ -70,13 +72,13 @@ async def test_search_basic(connector, mock_session):
     """
     mock_response.raise_for_status = Mock()
     mock_session.get.return_value = mock_response
-    
+
     # Perform search
     listings = await connector.search("RTX 4090")
-    
+
     # Verify
     assert len(listings) >= 2  # At least 2 ASINs found
-    
+
     # Check first listing
     first = listings[0]
     assert first.source == "amazon_uk"
@@ -84,7 +86,7 @@ async def test_search_basic(connector, mock_session):
     assert first.currency == "GBP"
     assert first.condition == Condition.NEW
     assert "/dp/" in first.url
-    
+
     # Verify session was called with correct params
     mock_session.get.assert_called_once()
     call_args = mock_session.get.call_args
@@ -103,14 +105,14 @@ async def test_search_with_refurbished_filter(connector, mock_session):
     """
     mock_response.raise_for_status = Mock()
     mock_session.get.return_value = mock_response
-    
+
     # Search with refurbished filter
     listings = await connector.search("RTX 4090", {"condition": "refurbished"})
-    
+
     # Verify condition filter was applied
     assert len(listings) >= 1
     assert listings[0].condition == Condition.REFURBISHED
-    
+
     # Verify URL includes refurbished filter
     mock_session.get.assert_called_once()
     call_args = mock_session.get.call_args
@@ -122,7 +124,7 @@ async def test_search_error_handling(connector, mock_session):
     """Test search error handling."""
     # Mock request failure
     mock_session.get.side_effect = Exception("Network error")
-    
+
     # Search should return empty list on error
     listings = await connector.search("RTX 4090")
     assert listings == []
@@ -143,15 +145,15 @@ async def test_get_product_page(connector, mock_session):
     """
     mock_response.raise_for_status = Mock()
     mock_session.get.return_value = mock_response
-    
+
     # Fetch product page
     details = await connector.get_product_page("B0C123ABC1")
-    
+
     # Verify parsed details
     assert "title" in details
     assert "RTX 4090" in details["title"]
     assert details["price"] == Decimal("599.99")
-    assert details["in_stock"] == True
+    assert details["in_stock"]
     assert details["image_url"] == "https://example.com/image.jpg"
 
 
@@ -163,13 +165,13 @@ def test_parse_search_results_no_prices(connector):
             <h2>Product without price</h2>
         </div>
     """
-    
+
     listings = connector._parse_search_results(html, "test query", {})
-    
+
     # Should still create listing with zero price
     assert len(listings) >= 1
     assert listings[0].price == Decimal("0.00")
-    assert listings[0].in_stock == False
+    assert not listings[0].in_stock
 
 
 def test_parse_search_results_duplicate_asins(connector):
@@ -179,9 +181,9 @@ def test_parse_search_results_duplicate_asins(connector):
         <a href="/dp/B0C123ABC1">Product 1 duplicate</a>
         <a href="/dp/B0C456DEF2">Product 2</a>
     """
-    
+
     listings = connector._parse_search_results(html, "test query", {})
-    
+
     # Should deduplicate by ASIN
     source_ids = [listing.source_listing_id for listing in listings]
     assert len(source_ids) == len(set(source_ids))

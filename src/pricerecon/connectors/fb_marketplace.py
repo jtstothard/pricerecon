@@ -76,7 +76,10 @@ class FacebookMarketplaceConnector(BaseConnector):
                 connector_id=self.CONNECTOR_ID,
                 detail={"missing": missing},
             )
-        return [{"name": name, "value": value or "", "domain": ".facebook.com", "path": "/"} for name, value in required.items()]
+        return [
+            {"name": name, "value": value or "", "domain": ".facebook.com", "path": "/"}
+            for name, value in required.items()
+        ]
 
     async def _delay(self) -> None:
         now = datetime.utcnow()
@@ -107,13 +110,17 @@ class FacebookMarketplaceConnector(BaseConnector):
             f"{encoded}&exact=false&radius={radius}&location={location}"
         )
 
-    async def search(self, query: str, filters: dict[str, Any] | None = None) -> list[NormalizedListing]:
+    async def search(
+        self, query: str, filters: dict[str, Any] | None = None
+    ) -> list[NormalizedListing]:
         if self._context is None or self._page is None:
             await self.initialize()
         assert self._page is not None
         await self._delay()
         try:
-            await self._page.goto(self._search_url(query, filters), wait_until="domcontentloaded", timeout=45000)
+            await self._page.goto(
+                self._search_url(query, filters), wait_until="domcontentloaded", timeout=45000
+            )
             await self._page.wait_for_timeout(2500)
             cards = await self._page.locator("a[href*='/marketplace/item/']").evaluate_all(
                 """els => els.map(el => {
@@ -136,7 +143,9 @@ class FacebookMarketplaceConnector(BaseConnector):
                     NormalizedListing(
                         source=self.connector_id,
                         source_type=SourceType.MARKETPLACE,
-                        source_listing_id=hashlib.sha1((card.get('url') or title).encode()).hexdigest(),
+                        source_listing_id=hashlib.sha1(
+                            (card.get("url") or title).encode()
+                        ).hexdigest(),
                         title_raw=title,
                         price=price,
                         currency="GBP",

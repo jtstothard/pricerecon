@@ -55,8 +55,14 @@ def discover_connectors() -> dict[str, type[BaseConnector]]:
             continue
         for attr_name in dir(module):
             attr = getattr(module, attr_name)
-            if isinstance(attr, type) and issubclass(attr, BaseConnector) and attr is not BaseConnector:
-                connector_id = getattr(attr, "CONNECTOR_ID", None) or attr_name.lower().replace("connector", "")
+            if (
+                isinstance(attr, type)
+                and issubclass(attr, BaseConnector)
+                and attr is not BaseConnector
+            ):
+                connector_id = getattr(attr, "CONNECTOR_ID", None) or attr_name.lower().replace(
+                    "connector", ""
+                )
                 connectors[str(connector_id)] = attr
 
     return connectors

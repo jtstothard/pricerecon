@@ -14,12 +14,11 @@ import httpx
 from pricerecon.connectors.base import BaseConnector
 from pricerecon.models import NormalizedListing, SourceType, Condition
 
-
 # CeX grade mapping
 GRADE_MAP = {
     "A": Condition.USED_LIKE_NEW,  # Excellent/Mint
-    "B": Condition.USED_GOOD,       # Good
-    "C": Condition.USED_FAIR,       # Fair
+    "B": Condition.USED_GOOD,  # Good
+    "C": Condition.USED_FAIR,  # Fair
 }
 
 
@@ -71,7 +70,7 @@ class CexConnector(BaseConnector):
                 headers={
                     "Content-Type": "application/json",
                     "User-Agent": "Mozilla/5.0 (compatible; PriceRecon/1.0)",
-                }
+                },
             )
             response.raise_for_status()
             data = response.json()
@@ -135,9 +134,7 @@ class CexConnector(BaseConnector):
         image_url = None
         if image_urls:
             image_url = (
-                image_urls.get("medium")
-                or image_urls.get("large")
-                or image_urls.get("small")
+                image_urls.get("medium") or image_urls.get("large") or image_urls.get("small")
             )
 
         return NormalizedListing(

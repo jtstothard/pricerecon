@@ -8,11 +8,10 @@ import hmac
 import json
 import logging
 import re
-import time
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from typing import Any
-from urllib.parse import parse_qs, urlencode, urlparse
+from urllib.parse import parse_qs, urlparse
 
 import httpx
 
@@ -72,7 +71,9 @@ class AliExpressConnector(BaseConnector):
         if self._owns_client:
             await self._client.aclose()
 
-    async def search(self, query: str, filters: dict[str, Any] | None = None) -> list[NormalizedListing]:
+    async def search(
+        self, query: str, filters: dict[str, Any] | None = None
+    ) -> list[NormalizedListing]:
         filters = filters or {}
         listings: list[NormalizedListing] = []
 
@@ -199,7 +200,9 @@ class AliExpressConnector(BaseConnector):
         if not parsed.netloc or parsed.netloc.lower() not in _SHORT_LINK_HOSTS:
             return None
         try:
-            response = httpx.get(url, follow_redirects=True, timeout=10.0, headers={"User-Agent": "Mozilla/5.0"})
+            response = httpx.get(
+                url, follow_redirects=True, timeout=10.0, headers={"User-Agent": "Mozilla/5.0"}
+            )
         except Exception:
             return None
         final_url = str(response.url)
@@ -255,8 +258,18 @@ class AliExpressConnector(BaseConnector):
         )
         return listing.model_copy(
             update={
-                "exact_variant_confirmed": exact_match if strong_tokens else listing.exact_variant_confirmed,
-                "variant_match_confidence": (VariantMatchConfidence.HIGH if exact_match else (VariantMatchConfidence.LOW if strong_tokens else listing.variant_match_confidence)),
+                "exact_variant_confirmed": (
+                    exact_match if strong_tokens else listing.exact_variant_confirmed
+                ),
+                "variant_match_confidence": (
+                    VariantMatchConfidence.HIGH
+                    if exact_match
+                    else (
+                        VariantMatchConfidence.LOW
+                        if strong_tokens
+                        else listing.variant_match_confidence
+                    )
+                ),
                 "mismatch_flags": mismatch_flags or None,
                 "variant_normalized": variant,
             }
@@ -268,9 +281,27 @@ class AliExpressConnector(BaseConnector):
 
     def _query_strong_tokens(self, query: str) -> list[str]:
         stopwords = {
-            "amd", "intel", "cpu", "processor", "motherboard", "board", "memory",
-            "ram", "desktop", "used", "new", "for", "with", "and", "the", "socket",
-            "series", "gb", "mhz", "am4", "am5",
+            "amd",
+            "intel",
+            "cpu",
+            "processor",
+            "motherboard",
+            "board",
+            "memory",
+            "ram",
+            "desktop",
+            "used",
+            "new",
+            "for",
+            "with",
+            "and",
+            "the",
+            "socket",
+            "series",
+            "gb",
+            "mhz",
+            "am4",
+            "am5",
         }
         tokens = [token.lower() for token in re.findall(r"[a-z0-9+.-]+", query or "")]
         strong: list[str] = []
@@ -282,11 +313,15 @@ class AliExpressConnector(BaseConnector):
                 strong.append(normalized)
         return list(dict.fromkeys(strong))
 
-    async def _affiliate_search(self, query: str, filters: dict[str, Any]) -> list[NormalizedListing]:
+    async def _affiliate_search(
+        self, query: str, filters: dict[str, Any]
+    ) -> list[NormalizedListing]:
         payload: dict[str, Any] = {
             "keywords": query,
             "target_currency": str(filters.get("currency", self._affiliate_currency)).upper(),
-            "ship_to_country": str(filters.get("ship_to_country", self.config.get("ship_to_country", "GB"))).upper(),
+            "ship_to_country": str(
+                filters.get("ship_to_country", self.config.get("ship_to_country", "GB"))
+            ).upper(),
             "page_no": int(filters.get("page", 1)),
             "page_size": int(filters.get("page_size", 50)),
         }
@@ -342,7 +377,7 @@ class AliExpressConnector(BaseConnector):
             return listings
 
         # Extract unique PIDs
-        pids = list(dict.fromkeys(re.findall(r'aliexpress\.com/item/(\d{10,})', html)))
+        pids = list(dict.fromkeys(re.findall(r"aliexpress\.com/item/(\d{10,})", html)))
         pids = pids[:max_pids]
 
         if not pids:
@@ -376,7 +411,9 @@ class AliExpressConnector(BaseConnector):
         delay = 1.5
         await asyncio.sleep(delay)
 
-    async def _manual_pid_search(self, pids: list[str], filters: dict[str, Any]) -> list[NormalizedListing]:
+    async def _manual_pid_search(
+        self, pids: list[str], filters: dict[str, Any]
+    ) -> list[NormalizedListing]:
         listings: list[NormalizedListing] = []
         for pid in pids:
             listing = self._manual_listing(pid, filters)
@@ -410,7 +447,9 @@ class AliExpressConnector(BaseConnector):
         )
         return listing
 
-    async def _enrich_manual_listings(self, listings: list[NormalizedListing], filters: dict[str, Any]) -> list[NormalizedListing]:
+    async def _enrich_manual_listings(
+        self, listings: list[NormalizedListing], filters: dict[str, Any]
+    ) -> list[NormalizedListing]:
         """Enrich manual PID listings to get real prices. Tries DS, affiliate API, browser, then simple HTTP."""
         if not listings:
             return listings
@@ -438,7 +477,9 @@ class AliExpressConnector(BaseConnector):
                 try:
                     affiliate_detail = await self._fetch_affiliate_detail(pid)
                     if affiliate_detail:
-                        enriched = self._merge_listing_with_affiliate_detail(listing, affiliate_detail, pid)
+                        enriched = self._merge_listing_with_affiliate_detail(
+                            listing, affiliate_detail, pid
+                        )
                         success = True
                         logger.debug(f"Manual PID {pid} enriched via affiliate API")
                 except Exception as exc:
@@ -487,7 +528,9 @@ class AliExpressConnector(BaseConnector):
 
         try:
             response = await self._top_post("aliexpress.affiliate.productdetail.get", payload)
-            self._raise_for_top_response(response, f"AliExpress affiliate lookup failed for PID {pid}")
+            self._raise_for_top_response(
+                response, f"AliExpress affiliate lookup failed for PID {pid}"
+            )
         except Exception:
             # Silently fail; caller will try other enrichment methods
             return None
@@ -515,7 +558,9 @@ class AliExpressConnector(BaseConnector):
         }
 
         try:
-            response = await self._client.get(url, headers=headers, timeout=30.0, follow_redirects=True)
+            response = await self._client.get(
+                url, headers=headers, timeout=30.0, follow_redirects=True
+            )
             response.raise_for_status()
             html = response.text
         except Exception as exc:
@@ -525,7 +570,9 @@ class AliExpressConnector(BaseConnector):
         # Use the existing _extract_price regex helper
         return self._extract_price(html)
 
-    def _merge_listing_with_affiliate_detail(self, listing: NormalizedListing, item: dict[str, Any], pid: str) -> NormalizedListing:
+    def _merge_listing_with_affiliate_detail(
+        self, listing: NormalizedListing, item: dict[str, Any], pid: str
+    ) -> NormalizedListing:
         """Merge a listing with affiliate API detail data."""
         display_price = self._first_decimal(
             item,
@@ -550,17 +597,25 @@ class AliExpressConnector(BaseConnector):
         )
         shipping_cost = self._first_decimal(item, "shippingCost", "shipping_cost")
         seller = self._first_text(item, "shop_name", "shopName", "storeName", "sellerName")
-        rating = self._first_decimal(item, "evaluate_rate", "evaluateRate", "rating", "storeRating", "score")
+        rating = self._first_decimal(
+            item, "evaluate_rate", "evaluateRate", "rating", "storeRating", "score"
+        )
         sales = self._first_text(item, "lastest_volume", "orders", "sales", "salesCount", "sold")
         stock = self._first_bool(item, "inStock", "in_stock", "available")
-        title = self._first_text(item, "product_title", "title", "productTitle", "itemTitle") or listing.title_raw
-        currency = self._first_text(
-            item,
-            "target_sale_price_currency",
-            "targetSalePriceCurrency",
-            "currency",
-            "priceCurrency",
-        ) or listing.currency
+        title = (
+            self._first_text(item, "product_title", "title", "productTitle", "itemTitle")
+            or listing.title_raw
+        )
+        currency = (
+            self._first_text(
+                item,
+                "target_sale_price_currency",
+                "targetSalePriceCurrency",
+                "currency",
+                "priceCurrency",
+            )
+            or listing.currency
+        )
 
         enrichment = dict(listing.variant_normalized or {})
         enrichment.update(
@@ -584,11 +639,18 @@ class AliExpressConnector(BaseConnector):
                 "price": display_price or listing.price,
                 "currency": currency,
                 "seller_or_store": seller or listing.seller_or_store,
-                "shipping_cost": shipping_cost if shipping_cost is not None else listing.shipping_cost,
-                "total_landed_cost": (display_price + shipping_cost) if display_price and shipping_cost else (display_price or listing.total_landed_cost),
+                "shipping_cost": (
+                    shipping_cost if shipping_cost is not None else listing.shipping_cost
+                ),
+                "total_landed_cost": (
+                    (display_price + shipping_cost)
+                    if display_price and shipping_cost
+                    else (display_price or listing.total_landed_cost)
+                ),
                 "in_stock": stock if stock is not None else listing.in_stock,
                 "variant_normalized": enrichment,
-                "image_url": self._first_text(item, "imageUrl", "image_url", "image") or listing.image_url,
+                "image_url": self._first_text(item, "imageUrl", "image_url", "image")
+                or listing.image_url,
             }
         )
 
@@ -613,7 +675,9 @@ class AliExpressConnector(BaseConnector):
         pid = self._first_text(item, "productId", "product_id", "itemId", "item_id", "id")
         if not pid:
             pid = hashlib.sha1(repr(sorted(item.items())).encode()).hexdigest()[:16]
-        title = self._first_text(item, "product_title", "title", "productTitle", "itemTitle") or query
+        title = (
+            self._first_text(item, "product_title", "title", "productTitle", "itemTitle") or query
+        )
         display_price = self._first_decimal(
             item,
             "target_sale_price",
@@ -637,17 +701,27 @@ class AliExpressConnector(BaseConnector):
         )
         shipping_cost = self._first_decimal(item, "shippingCost", "shipping_cost")
         seller = self._first_text(item, "shop_name", "shopName", "storeName", "sellerName")
-        rating = self._first_decimal(item, "evaluate_rate", "evaluateRate", "rating", "storeRating", "score")
+        rating = self._first_decimal(
+            item, "evaluate_rate", "evaluateRate", "rating", "storeRating", "score"
+        )
         sales = self._first_text(item, "lastest_volume", "orders", "sales", "salesCount", "sold")
         stock = self._first_bool(item, "inStock", "in_stock", "available")
-        url = self._first_text(item, "product_detail_url", "promotion_link", "url", "itemUrl", "item_url") or f"https://www.aliexpress.com/item/{pid}.html"
-        currency = self._first_text(
-            item,
-            "target_sale_price_currency",
-            "targetSalePriceCurrency",
-            "currency",
-            "priceCurrency",
-        ) or self._affiliate_currency
+        url = (
+            self._first_text(
+                item, "product_detail_url", "promotion_link", "url", "itemUrl", "item_url"
+            )
+            or f"https://www.aliexpress.com/item/{pid}.html"
+        )
+        currency = (
+            self._first_text(
+                item,
+                "target_sale_price_currency",
+                "targetSalePriceCurrency",
+                "currency",
+                "priceCurrency",
+            )
+            or self._affiliate_currency
+        )
         currency = currency.upper()
 
         enrichment = self._build_enrichment_payload(
@@ -673,7 +747,11 @@ class AliExpressConnector(BaseConnector):
                 "url": url,
                 "seller_or_store": seller,
                 "shipping_cost": shipping_cost,
-                "total_landed_cost": (display_price + shipping_cost) if display_price and shipping_cost else display_price,
+                "total_landed_cost": (
+                    (display_price + shipping_cost)
+                    if display_price and shipping_cost
+                    else display_price
+                ),
                 "in_stock": stock,
                 "variant_normalized": enrichment,
                 "image_url": self._first_text(item, "imageUrl", "image_url", "image"),
@@ -713,12 +791,18 @@ class AliExpressConnector(BaseConnector):
             "aliexpress_coupon_layers": [],
         }
 
-    async def _apply_ds_enrichment(self, listings: list[NormalizedListing]) -> list[NormalizedListing]:
+    async def _apply_ds_enrichment(
+        self, listings: list[NormalizedListing]
+    ) -> list[NormalizedListing]:
         if not self._has_ds_credentials():
             return listings
         enriched: list[NormalizedListing] = []
         for listing in listings:
-            pid = self._normalize_pid(listing.source_listing_id) or self._extract_pid(listing.url) or listing.source_listing_id
+            pid = (
+                self._normalize_pid(listing.source_listing_id)
+                or self._extract_pid(listing.url)
+                or listing.source_listing_id
+            )
             if not pid:
                 enriched.append(listing)
                 continue
@@ -803,7 +887,13 @@ class AliExpressConnector(BaseConnector):
                 status=ConnectorStatus.auth_failed,
                 message="AliExpress DS credentials are incomplete",
                 connector_id=self.connector_id,
-                detail={"missing": [name for name, value in (("ds_app_key", app_key), ("ds_app_secret", app_secret)) if not value]},
+                detail={
+                    "missing": [
+                        name
+                        for name, value in (("ds_app_key", app_key), ("ds_app_secret", app_secret))
+                        if not value
+                    ]
+                },
             )
 
         params = {
@@ -831,17 +921,26 @@ class AliExpressConnector(BaseConnector):
                 detail={"error": str(exc)},
             ) from exc
 
-        if str(data.get("code") or "") != "0" or not (data.get("access_token") or data.get("accessToken")):
+        if str(data.get("code") or "") != "0" or not (
+            data.get("access_token") or data.get("accessToken")
+        ):
             raise ConnectorDegradedError(
                 status=ConnectorStatus.auth_failed,
                 message="AliExpress DS token refresh failed",
                 connector_id=self.connector_id,
-                detail={"error": data.get("message") or data.get("msg") or data.get("code") or "missing access token"},
+                detail={
+                    "error": data.get("message")
+                    or data.get("msg")
+                    or data.get("code")
+                    or "missing access token"
+                },
             )
 
         access_token = str(data.get("access_token") or data.get("accessToken") or "").strip()
         self._ds_access_token = access_token
-        self._ds_refresh_token = str(data.get("refresh_token") or data.get("refreshToken") or self._ds_refresh_token)
+        self._ds_refresh_token = str(
+            data.get("refresh_token") or data.get("refreshToken") or self._ds_refresh_token
+        )
         expires_in = data.get("expires_in") or data.get("expire_in") or 3600
         try:
             expires_in_int = int(expires_in)
@@ -869,14 +968,24 @@ class AliExpressConnector(BaseConnector):
         app_key: str | None = None,
         app_secret: str | None = None,
     ) -> dict[str, str]:
-        key = str(app_key or self.config.get("ds_app_key") or self.config.get("app_key") or "").strip()
-        secret = str(app_secret or self.config.get("ds_app_secret") or self.config.get("app_secret") or "").strip()
+        key = str(
+            app_key or self.config.get("ds_app_key") or self.config.get("app_key") or ""
+        ).strip()
+        secret = str(
+            app_secret or self.config.get("ds_app_secret") or self.config.get("app_secret") or ""
+        ).strip()
         if not key or not secret:
             raise ConnectorDegradedError(
                 status=ConnectorStatus.auth_failed,
                 message="AliExpress Open Platform credentials are incomplete",
                 connector_id=self.connector_id,
-                detail={"missing": [name for name, value in (("app_key", key), ("app_secret", secret)) if not value]},
+                detail={
+                    "missing": [
+                        name
+                        for name, value in (("app_key", key), ("app_secret", secret))
+                        if not value
+                    ]
+                },
             )
 
         request_params: dict[str, str] = {
@@ -916,8 +1025,14 @@ class AliExpressConnector(BaseConnector):
         return digest
 
     def _ds_system_sign(self, api_path: str, params: dict[str, str], secret: str) -> str:
-        base = api_path + "".join(f"{key}{params[key]}" for key in sorted(k for k in params if k != "sign"))
-        return hmac.new(secret.encode("utf-8"), base.encode("utf-8"), hashlib.sha256).hexdigest().upper()
+        base = api_path + "".join(
+            f"{key}{params[key]}" for key in sorted(k for k in params if k != "sign")
+        )
+        return (
+            hmac.new(secret.encode("utf-8"), base.encode("utf-8"), hashlib.sha256)
+            .hexdigest()
+            .upper()
+        )
 
     def _extract_top_response_payload(self, payload: Any) -> Any:
         if isinstance(payload, dict):
@@ -929,7 +1044,12 @@ class AliExpressConnector(BaseConnector):
             ):
                 value = payload.get(key)
                 if isinstance(value, dict):
-                    return value.get("result") or value.get("resp_result") or value.get("data") or value
+                    return (
+                        value.get("result")
+                        or value.get("resp_result")
+                        or value.get("data")
+                        or value
+                    )
             for key in ("result", "resp_result", "data", "response"):
                 value = payload.get(key)
                 if isinstance(value, dict):
@@ -951,16 +1071,22 @@ class AliExpressConnector(BaseConnector):
                 detail=detail,
             )
 
-    def _merge_listing_with_detail(self, listing: NormalizedListing, detail: dict[str, Any], pid: str) -> NormalizedListing:
+    def _merge_listing_with_detail(
+        self, listing: NormalizedListing, detail: dict[str, Any], pid: str
+    ) -> NormalizedListing:
         data = self._extract_ds_detail(detail)
-        display_price = self._first_decimal(data, "displayPrice", "display_price", "price", "salePrice", "sale_price")
+        display_price = self._first_decimal(
+            data, "displayPrice", "display_price", "price", "salePrice", "sale_price"
+        )
         original_price = self._first_decimal(data, "originalPrice", "original_price")
         shipping_cost = self._first_decimal(data, "shippingCost", "shipping_cost")
         seller = self._first_text(data, "shopName", "storeName", "sellerName", "seller_name")
         rating = self._first_decimal(data, "rating", "evaluateRate", "storeRating")
         sales = self._first_text(data, "sales", "salesCount", "orders", "sold")
         stock = self._first_bool(data, "inStock", "in_stock", "available")
-        title = self._first_text(data, "title", "productTitle", "product_title") or listing.title_raw
+        title = (
+            self._first_text(data, "title", "productTitle", "product_title") or listing.title_raw
+        )
         coupon_layers = self._extract_coupon_layers(data)
 
         enrichment = dict(listing.variant_normalized or {})
@@ -984,8 +1110,14 @@ class AliExpressConnector(BaseConnector):
             update={
                 "title_raw": title,
                 "price": display_price or listing.price,
-                "shipping_cost": shipping_cost if shipping_cost is not None else listing.shipping_cost,
-                "total_landed_cost": (display_price + shipping_cost) if display_price and shipping_cost else listing.total_landed_cost,
+                "shipping_cost": (
+                    shipping_cost if shipping_cost is not None else listing.shipping_cost
+                ),
+                "total_landed_cost": (
+                    (display_price + shipping_cost)
+                    if display_price and shipping_cost
+                    else listing.total_landed_cost
+                ),
                 "seller_or_store": seller or listing.seller_or_store,
                 "in_stock": stock if stock is not None else listing.in_stock,
                 "variant_normalized": enrichment,
@@ -1012,18 +1144,35 @@ class AliExpressConnector(BaseConnector):
         sku_container = data.get("ae_item_sku_info_dtos")
         if not isinstance(sku_container, dict):
             sku_container = {}
-        sku_list = sku_container.get("ae_item_sku_info_d_t_o") or sku_container.get("ae_item_sku_info_dto") or []
-        first_sku = sku_list[0] if isinstance(sku_list, list) and sku_list and isinstance(sku_list[0], dict) else {}
+        sku_list = (
+            sku_container.get("ae_item_sku_info_d_t_o")
+            or sku_container.get("ae_item_sku_info_dto")
+            or []
+        )
+        first_sku = (
+            sku_list[0]
+            if isinstance(sku_list, list) and sku_list and isinstance(sku_list[0], dict)
+            else {}
+        )
 
         subject = self._first_text(base_info, "subject", "title", "productTitle", "product_title")
         if subject:
             normalized.setdefault("title", subject)
 
-        display_price = self._first_text(first_sku, "offer_sale_price", "offerSalePrice", "displayPrice", "salePrice", "sale_price")
+        display_price = self._first_text(
+            first_sku,
+            "offer_sale_price",
+            "offerSalePrice",
+            "displayPrice",
+            "salePrice",
+            "sale_price",
+        )
         if display_price:
             normalized.setdefault("displayPrice", display_price)
 
-        original_price = self._first_text(first_sku, "sku_price", "skuPrice", "originalPrice", "price")
+        original_price = self._first_text(
+            first_sku, "sku_price", "skuPrice", "originalPrice", "price"
+        )
         if original_price:
             normalized.setdefault("originalPrice", original_price)
 
@@ -1031,7 +1180,14 @@ class AliExpressConnector(BaseConnector):
         if sales:
             normalized.setdefault("sales", sales)
 
-        rating = self._first_text(base_info, "avg_evaluation_rating", "avgEvaluationRating", "rating", "evaluateRate", "storeRating")
+        rating = self._first_text(
+            base_info,
+            "avg_evaluation_rating",
+            "avgEvaluationRating",
+            "rating",
+            "evaluateRate",
+            "storeRating",
+        )
         if rating:
             normalized.setdefault("rating", rating)
 
@@ -1058,7 +1214,9 @@ class AliExpressConnector(BaseConnector):
                         coupons.append(item)
         return coupons
 
-    async def _apply_browser_enrichment(self, listings: list[NormalizedListing], filters: dict[str, Any]) -> list[NormalizedListing]:
+    async def _apply_browser_enrichment(
+        self, listings: list[NormalizedListing], filters: dict[str, Any]
+    ) -> list[NormalizedListing]:
         if self._browser_client is None and not self._camofox_url:
             return listings
         enriched: list[NormalizedListing] = []
@@ -1113,7 +1271,9 @@ class AliExpressConnector(BaseConnector):
             "sessionKey": self._camofox_session_key,
             "url": url,
         }
-        response = await self._client.post(f"{self._camofox_url}/tabs", json=create_payload, headers=headers, timeout=45.0)
+        response = await self._client.post(
+            f"{self._camofox_url}/tabs", json=create_payload, headers=headers, timeout=45.0
+        )
         response.raise_for_status()
         tab_id = str(response.json().get("tabId") or "").strip()
         if not tab_id:
@@ -1159,35 +1319,41 @@ class AliExpressConnector(BaseConnector):
             "display_price": self._extract_price(normalized),
             "original_price": self._extract_first_decimal_from_patterns(
                 normalized,
-                [r'original[^\n]{0,80}?(?:£|GBP|\$|€)\s*([0-9]+(?:\.[0-9]{1,2})?)'],
+                [r"original[^\n]{0,80}?(?:£|GBP|\$|€)\s*([0-9]+(?:\.[0-9]{1,2})?)"],
             ),
             "effective_price": self._extract_first_decimal_from_patterns(
                 normalized,
-                [r'effective[^\n]{0,80}?(?:£|GBP|\$|€)\s*([0-9]+(?:\.[0-9]{1,2})?)'],
+                [r"effective[^\n]{0,80}?(?:£|GBP|\$|€)\s*([0-9]+(?:\.[0-9]{1,2})?)"],
             ),
             "shipping_cost": self._extract_first_decimal_from_patterns(
                 normalized,
-                [r'shipping[^\n]{0,80}?(?:£|GBP|\$|€)\s*([0-9]+(?:\.[0-9]{1,2})?)'],
+                [r"shipping[^\n]{0,80}?(?:£|GBP|\$|€)\s*([0-9]+(?:\.[0-9]{1,2})?)"],
             ),
             "rating": self._extract_first_decimal_from_patterns(
                 normalized,
-                [r'([0-9]\.[0-9])\s*/\s*5'],
+                [r"([0-9]\.[0-9])\s*/\s*5"],
             ),
             "sales": self._extract_first_pattern(
                 normalized,
-                [r'([0-9,]+)\s+(?:sold|orders)', r'([0-9,]+)\s+sales'],
+                [r"([0-9,]+)\s+(?:sold|orders)", r"([0-9,]+)\s+sales"],
             ),
             "coupons": self._extract_browser_coupons(normalized),
-            "stock": None if not re.search(r"out of stock|sold out", normalized, re.IGNORECASE) else False,
+            "stock": (
+                None
+                if not re.search(r"out of stock|sold out", normalized, re.IGNORECASE)
+                else False
+            ),
         }
 
     def _parse_browser_html(self, html: str) -> dict[str, Any]:
-        text = re.sub(r"\s+", " ", re.sub(r"<script.*?</script>", " ", html, flags=re.DOTALL | re.IGNORECASE))
+        text = re.sub(
+            r"\s+", " ", re.sub(r"<script.*?</script>", " ", html, flags=re.DOTALL | re.IGNORECASE)
+        )
         return {
             "title": self._extract_first_pattern(
                 html,
                 [
-                    r'<h1[^>]*>([^<]+)</h1>',
+                    r"<h1[^>]*>([^<]+)</h1>",
                     r'"title"\s*:\s*"([^"]+)"',
                     r'<meta[^>]+property="og:title"[^>]+content="([^"]+)"',
                 ],
@@ -1196,32 +1362,34 @@ class AliExpressConnector(BaseConnector):
             "original_price": self._extract_first_decimal_from_patterns(
                 html,
                 [
-                    r'original[^\n]{0,80}?(?:£|GBP|\$|€)\s*([0-9]+(?:\.[0-9]{1,2})?)',
+                    r"original[^\n]{0,80}?(?:£|GBP|\$|€)\s*([0-9]+(?:\.[0-9]{1,2})?)",
                     r'"originalPrice"\s*:\s*"?([0-9]+(?:\.[0-9]{1,2})?)"?',
                 ],
             ),
             "effective_price": self._extract_first_decimal_from_patterns(
                 html,
                 [
-                    r'effective[^\n]{0,80}?(?:£|GBP|\$|€)\s*([0-9]+(?:\.[0-9]{1,2})?)',
+                    r"effective[^\n]{0,80}?(?:£|GBP|\$|€)\s*([0-9]+(?:\.[0-9]{1,2})?)",
                 ],
             ),
             "shipping_cost": self._extract_first_decimal_from_patterns(
                 html,
                 [
-                    r'shipping[^\n]{0,80}?(?:£|GBP|\$|€)\s*([0-9]+(?:\.[0-9]{1,2})?)',
+                    r"shipping[^\n]{0,80}?(?:£|GBP|\$|€)\s*([0-9]+(?:\.[0-9]{1,2})?)",
                 ],
             ),
             "rating": self._extract_first_decimal_from_patterns(
                 html,
-                [r'([0-9]\.[0-9])\s*/\s*5', r'"ratingValue"\s*:\s*"?([0-9]\.[0-9])"?'],
+                [r"([0-9]\.[0-9])\s*/\s*5", r'"ratingValue"\s*:\s*"?([0-9]\.[0-9])"?'],
             ),
             "sales": self._extract_first_pattern(
                 text,
-                [r'([0-9,]+)\s+(?:sold|orders)', r'([0-9,]+)\s+sales'],
+                [r"([0-9,]+)\s+(?:sold|orders)", r"([0-9,]+)\s+sales"],
             ),
             "coupons": self._extract_browser_coupons(text),
-            "stock": None if not re.search(r"out of stock|sold out", text, re.IGNORECASE) else False,
+            "stock": (
+                None if not re.search(r"out of stock|sold out", text, re.IGNORECASE) else False
+            ),
         }
 
     def _extract_browser_coupons(self, text: str) -> list[dict[str, Any]]:
@@ -1232,7 +1400,9 @@ class AliExpressConnector(BaseConnector):
             coupons.append({"text": text[start:end].strip()})
         return coupons
 
-    def _merge_listing_with_browser_detail(self, listing: NormalizedListing, detail: dict[str, Any], pid: str) -> NormalizedListing:
+    def _merge_listing_with_browser_detail(
+        self, listing: NormalizedListing, detail: dict[str, Any], pid: str
+    ) -> NormalizedListing:
         display_price = self._to_decimal(detail.get("display_price")) or listing.price
         original_price = self._to_decimal(detail.get("original_price"))
         effective_price = self._to_decimal(detail.get("effective_price"))
@@ -1266,8 +1436,15 @@ class AliExpressConnector(BaseConnector):
             update={
                 "title_raw": title,
                 "price": display_price,
-                "shipping_cost": shipping_cost if shipping_cost is not None else listing.shipping_cost,
-                "total_landed_cost": effective_price or (display_price + shipping_cost if display_price and shipping_cost else listing.total_landed_cost),
+                "shipping_cost": (
+                    shipping_cost if shipping_cost is not None else listing.shipping_cost
+                ),
+                "total_landed_cost": effective_price
+                or (
+                    display_price + shipping_cost
+                    if display_price and shipping_cost
+                    else listing.total_landed_cost
+                ),
                 "in_stock": stock if stock is not None else listing.in_stock,
                 "variant_normalized": enrichment,
             }
@@ -1287,7 +1464,7 @@ class AliExpressConnector(BaseConnector):
     def _extract_price(self, html: str) -> Decimal | None:
         for pattern in (
             r'"priceCurrency"\s*:\s*"[A-Z]{3}"\s*,\s*"price"\s*:\s*"?([0-9]+(?:\.[0-9]{1,2})?)"?',
-            r'(?:£|GBP|\$|€)\s*([0-9]+(?:\.[0-9]{1,2})?)',
+            r"(?:£|GBP|\$|€)\s*([0-9]+(?:\.[0-9]{1,2})?)",
             r'"salePrice"\s*:\s*"?([0-9]+(?:\.[0-9]{1,2})?)"?',
         ):
             match = re.search(pattern, html, re.IGNORECASE | re.DOTALL)
@@ -1295,7 +1472,9 @@ class AliExpressConnector(BaseConnector):
                 return self._to_decimal(match.group(1))
         return None
 
-    def _extract_first_decimal_from_patterns(self, text: str, patterns: list[str]) -> Decimal | None:
+    def _extract_first_decimal_from_patterns(
+        self, text: str, patterns: list[str]
+    ) -> Decimal | None:
         for pattern in patterns:
             match = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
             if match:
@@ -1370,4 +1549,6 @@ class AliExpressConnector(BaseConnector):
         if value is None:
             return None
         normalized = value.normalize()
-        return format(normalized, "f") if normalized == normalized.to_integral() else str(normalized)
+        return (
+            format(normalized, "f") if normalized == normalized.to_integral() else str(normalized)
+        )

@@ -10,14 +10,16 @@ from zoneinfo import ZoneInfo
 
 class ScheduleParseError(Exception):
     """Raised when schedule configuration is invalid."""
+
     pass
 
 
 @dataclass
 class TimeWindow:
     """Time window constraint for watch execution."""
+
     start: time  # Start time (e.g., 09:00)
-    end: time    # End time (e.g., 21:00)
+    end: time  # End time (e.g., 21:00)
     days: set[str]  # Days of week (e.g., {"mon", "tue", "wed", "thu", "fri"})
 
     @classmethod
@@ -50,7 +52,7 @@ class TimeWindow:
         return {
             "start": self.start.strftime("%H:%M"),
             "end": self.end.strftime("%H:%M"),
-            "days": sorted(list(self.days))
+            "days": sorted(list(self.days)),
         }
 
     def is_allowed_now(self, timezone_str: str) -> bool:
@@ -69,9 +71,7 @@ class TimeWindow:
         else:
             now = now.astimezone(ZoneInfo(timezone_str))
 
-        day_map = {
-            0: "mon", 1: "tue", 2: "wed", 3: "thu", 4: "fri", 5: "sat", 6: "sun"
-        }
+        day_map = {0: "mon", 1: "tue", 2: "wed", 3: "thu", 4: "fri", 5: "sat", 6: "sun"}
         current_day = day_map[now.weekday()]
         if current_day not in self.days:
             return False
@@ -83,13 +83,15 @@ class TimeWindow:
 @dataclass
 class ParsedSchedule:
     """Parsed schedule configuration ready for APScheduler."""
+
     interval_seconds: int
     timezone: str
     time_window: Optional[TimeWindow] = None
 
     @classmethod
-    def parse(cls, interval_str: str, timezone_str: str = "UTC", 
-              time_window_data: Optional[dict] = None) -> "ParsedSchedule":
+    def parse(
+        cls, interval_str: str, timezone_str: str = "UTC", time_window_data: Optional[dict] = None
+    ) -> "ParsedSchedule":
         """Parse schedule configuration from strings.
 
         Args:
@@ -118,9 +120,7 @@ class ParsedSchedule:
             time_window = TimeWindow.from_dict(time_window_data)
 
         return cls(
-            interval_seconds=interval_seconds,
-            timezone=timezone_str,
-            time_window=time_window
+            interval_seconds=interval_seconds, timezone=timezone_str, time_window=time_window
         )
 
     @staticmethod
@@ -146,16 +146,14 @@ class ParsedSchedule:
 
         # Convert to seconds
         multipliers = {
-            's': 1,        # seconds
-            'm': 60,       # minutes
-            'h': 3600,     # hours
-            'd': 86400,    # days
+            "s": 1,  # seconds
+            "m": 60,  # minutes
+            "h": 3600,  # hours
+            "d": 86400,  # days
         }
 
         if unit not in multipliers:
-            raise ScheduleParseError(
-                f"Invalid interval unit: {unit} (use s, m, h, d)"
-            )
+            raise ScheduleParseError(f"Invalid interval unit: {unit} (use s, m, h, d)")
 
         return number * multipliers[unit]
 

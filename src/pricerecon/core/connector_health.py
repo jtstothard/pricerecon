@@ -52,7 +52,9 @@ def upsert_connector_health(
 def list_connector_health() -> dict[str, dict[str, Any]]:
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT connector_id, status, last_error, details_json, updated_at FROM connector_health")
+    cursor.execute(
+        "SELECT connector_id, status, last_error, details_json, updated_at FROM connector_health"
+    )
     rows = cursor.fetchall()
     conn.close()
     result: dict[str, dict[str, Any]] = {}
@@ -70,7 +72,9 @@ def list_connector_health() -> dict[str, dict[str, Any]]:
     return result
 
 
-def source_status(connector_id: str, source_type: SourceType, enabled: bool, name: str) -> dict[str, Any]:
+def source_status(
+    connector_id: str, source_type: SourceType, enabled: bool, name: str
+) -> dict[str, Any]:
     state = list_connector_health().get(connector_id, {})
     return {
         "connector": connector_id,

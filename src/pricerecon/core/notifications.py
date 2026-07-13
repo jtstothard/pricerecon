@@ -66,9 +66,7 @@ async def _send_telegram_once(bot_token: str, chat_id: str, message: str) -> htt
         return response
 
 
-async def send_telegram(
-    bot_token: str, chat_id: str, message: str
-) -> bool:
+async def send_telegram(bot_token: str, chat_id: str, message: str) -> bool:
     """Send message to Telegram chat.
 
     Args:
@@ -95,7 +93,9 @@ async def send_telegram(
             except httpx.HTTPStatusError as e:
                 status_code = e.response.status_code if e.response is not None else None
                 if status_code == 429 and attempt == 0:
-                    retry_after = e.response.headers.get("Retry-After") if e.response is not None else None
+                    retry_after = (
+                        e.response.headers.get("Retry-After") if e.response is not None else None
+                    )
                     delay = _TELEGRAM_RETRY_BACKOFF_SECONDS
                     if retry_after:
                         try:
@@ -264,7 +264,9 @@ async def dispatch_notifications(
 
         try:
             if channel == "webhook":
-                webhook_url = watch_notifications.get("webhook_url") or global_config.get("webhook_url")
+                webhook_url = watch_notifications.get("webhook_url") or global_config.get(
+                    "webhook_url"
+                )
                 if webhook_url:
                     payload = {
                         "watch_id": watch_id,
@@ -280,6 +282,7 @@ async def dispatch_notifications(
 
             elif channel == "telegram":
                 import os
+
                 bot_token = (
                     watch_notifications.get("telegram_bot_token")
                     or global_config.get("telegram_bot_token")
@@ -296,7 +299,9 @@ async def dispatch_notifications(
                     error_message = "Telegram bot token or chat ID not configured"
 
             elif channel == "discord":
-                webhook_url = watch_notifications.get("discord_webhook_url") or global_config.get("discord_webhook_url")
+                webhook_url = watch_notifications.get("discord_webhook_url") or global_config.get(
+                    "discord_webhook_url"
+                )
                 if webhook_url:
                     success = await send_discord(webhook_url, message)
                 else:

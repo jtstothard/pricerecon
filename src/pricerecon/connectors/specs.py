@@ -15,7 +15,9 @@ _CPU_RE = re.compile(
 )
 _RAM_RE = re.compile(r"(?P<size>\d{1,3})\s?GB\s*(?P<kind>DDR[3-5])?", re.IGNORECASE)
 _STORAGE_RE = re.compile(r"(?P<size>\d{2,5})\s?(?P<unit>TB|GB)\b", re.IGNORECASE)
-_CLOCK_RE = re.compile(r"(?P<clock>\d{3,4}(?:\.\d+)?)\s?MHz|(?P<clock_ghz>\d(?:\.\d+)?)\s?GHz", re.IGNORECASE)
+_CLOCK_RE = re.compile(
+    r"(?P<clock>\d{3,4}(?:\.\d+)?)\s?MHz|(?P<clock_ghz>\d(?:\.\d+)?)\s?GHz", re.IGNORECASE
+)
 
 
 def extract_specs(title: str, category: str | None = None) -> dict[str, Any]:

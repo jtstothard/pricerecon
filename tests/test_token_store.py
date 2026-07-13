@@ -62,27 +62,19 @@ async def test_token_expiry_check():
     now = datetime.utcnow()
 
     # Fresh token (1 hour from now)
-    fresh_token = TokenData(
-        access_token="fresh", expires_at=now + timedelta(hours=1)
-    )
+    fresh_token = TokenData(access_token="fresh", expires_at=now + timedelta(hours=1))
     assert not fresh_token.is_expired()
 
     # Expired token (1 hour ago)
-    expired_token = TokenData(
-        access_token="expired", expires_at=now - timedelta(hours=1)
-    )
+    expired_token = TokenData(access_token="expired", expires_at=now - timedelta(hours=1))
     assert expired_token.is_expired()
 
     # Token expiring in 2 minutes (within 5 min buffer)
-    near_expiry = TokenData(
-        access_token="near", expires_at=now + timedelta(minutes=2)
-    )
+    near_expiry = TokenData(access_token="near", expires_at=now + timedelta(minutes=2))
     assert near_expiry.is_expired(buffer_seconds=300)
 
     # Token expiring in 10 minutes (outside buffer)
-    outside_buffer = TokenData(
-        access_token="ok", expires_at=now + timedelta(minutes=10)
-    )
+    outside_buffer = TokenData(access_token="ok", expires_at=now + timedelta(minutes=10))
     assert not outside_buffer.is_expired(buffer_seconds=300)
 
 
@@ -111,9 +103,7 @@ async def test_store_and_retrieve_token(store):
 async def test_retrieve_expired_token(store):
     """Test that expired tokens are not returned."""
     now = datetime.utcnow()
-    expired_token = TokenData(
-        access_token="expired_token", expires_at=now - timedelta(hours=1)
-    )
+    expired_token = TokenData(access_token="expired_token", expires_at=now - timedelta(hours=1))
 
     await store.store_token("test_connector", expired_token)
 
@@ -127,16 +117,12 @@ async def test_is_valid(store):
     now = datetime.utcnow()
 
     # Valid token
-    valid_token = TokenData(
-        access_token="valid", expires_at=now + timedelta(hours=1)
-    )
+    valid_token = TokenData(access_token="valid", expires_at=now + timedelta(hours=1))
     await store.store_token("valid_connector", valid_token)
     assert await store.is_valid("valid_connector")
 
     # Expired token
-    expired_token = TokenData(
-        access_token="expired", expires_at=now - timedelta(hours=1)
-    )
+    expired_token = TokenData(access_token="expired", expires_at=now - timedelta(hours=1))
     await store.store_token("expired_connector", expired_token)
     assert not await store.is_valid("expired_connector")
 
@@ -217,9 +203,7 @@ async def test_concurrent_refresh(store):
         )
 
     # Launch multiple concurrent refreshes
-    tasks = [
-        store.refresh_if_needed("test_connector", slow_refresh) for _ in range(5)
-    ]
+    tasks = [store.refresh_if_needed("test_connector", slow_refresh) for _ in range(5)]
     results = await asyncio.gather(*tasks)
 
     # All should get the same token
@@ -231,9 +215,7 @@ async def test_concurrent_refresh(store):
 @pytest.mark.asyncio
 async def test_delete_token(store):
     """Test deleting a token."""
-    token = TokenData(
-        access_token="test_token", expires_at=datetime.utcnow() + timedelta(hours=1)
-    )
+    token = TokenData(access_token="test_token", expires_at=datetime.utcnow() + timedelta(hours=1))
     await store.store_token("test_connector", token)
 
     assert await store.is_valid("test_connector")
@@ -257,14 +239,10 @@ async def test_list_connectors(store):
 @pytest.mark.asyncio
 async def test_replace_token(store):
     """Test that replace=True overwrites existing tokens."""
-    token1 = TokenData(
-        access_token="token1", expires_at=datetime.utcnow() + timedelta(hours=1)
-    )
+    token1 = TokenData(access_token="token1", expires_at=datetime.utcnow() + timedelta(hours=1))
     await store.store_token("test_connector", token1)
 
-    token2 = TokenData(
-        access_token="token2", expires_at=datetime.utcnow() + timedelta(hours=2)
-    )
+    token2 = TokenData(access_token="token2", expires_at=datetime.utcnow() + timedelta(hours=2))
     await store.store_token("test_connector", token2, replace=True)
 
     retrieved = await store.get_token("test_connector")
@@ -274,14 +252,10 @@ async def test_replace_token(store):
 @pytest.mark.asyncio
 async def test_no_replace_token(store):
     """Test that replace=False skips if token exists."""
-    token1 = TokenData(
-        access_token="token1", expires_at=datetime.utcnow() + timedelta(hours=1)
-    )
+    token1 = TokenData(access_token="token1", expires_at=datetime.utcnow() + timedelta(hours=1))
     await store.store_token("test_connector", token1)
 
-    token2 = TokenData(
-        access_token="token2", expires_at=datetime.utcnow() + timedelta(hours=2)
-    )
+    token2 = TokenData(access_token="token2", expires_at=datetime.utcnow() + timedelta(hours=2))
     await store.store_token("test_connector", token2, replace=False)
 
     retrieved = await store.get_token("test_connector")
@@ -298,16 +272,14 @@ async def test_old_schema_migration():
         import sqlite3
 
         conn = sqlite3.connect(db_path)
-        conn.execute(
-            """
+        conn.execute("""
             CREATE TABLE connector_configs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 connector_id TEXT NOT NULL UNIQUE,
                 config_json TEXT NOT NULL,
                 updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
-            """
-        )
+            """)
 
         # Insert old-style config with oauth_token
         old_config = {

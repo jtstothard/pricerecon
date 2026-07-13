@@ -49,7 +49,18 @@ def export_watch_history(watch_id: int, fmt: str = "csv") -> str:
     if fmt == "json":
         return json.dumps(items, indent=2)
     output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=["watch_id", "listing_key", "price", "currency", "stock_state", "in_stock", "timestamp"])
+    writer = csv.DictWriter(
+        output,
+        fieldnames=[
+            "watch_id",
+            "listing_key",
+            "price",
+            "currency",
+            "stock_state",
+            "in_stock",
+            "timestamp",
+        ],
+    )
     writer.writeheader()
     writer.writerows(items)
     return output.getvalue()

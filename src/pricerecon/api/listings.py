@@ -2,16 +2,20 @@
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Any
 
 import sqlite3
 import json
-from pathlib import Path
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
 
 from pricerecon.db.schema import DB_PATH
-from pricerecon.models import NormalizedListing, SourceType, Condition, StockState, VariantMatchConfidence
+from pricerecon.models import (
+    NormalizedListing,
+    SourceType,
+    Condition,
+    StockState,
+    VariantMatchConfidence,
+)
 
 router = APIRouter()
 
@@ -23,6 +27,7 @@ router = APIRouter()
 
 class ListingsResponse(BaseModel):
     """Response for listings."""
+
     items: list[NormalizedListing]
     total: int
     page: int
@@ -58,17 +63,33 @@ def listing_row_to_model(row: sqlite3.Row) -> NormalizedListing:
         variant_normalized=listing_json.get("variant_normalized"),
         condition=Condition(listing_json["condition"]) if listing_json.get("condition") else None,
         condition_raw=listing_json.get("condition_raw"),
-        shipping_cost=Decimal(listing_json["shipping_cost"]) if listing_json.get("shipping_cost") else None,
-        total_landed_cost=Decimal(listing_json["total_landed_cost"]) if listing_json.get("total_landed_cost") else None,
+        shipping_cost=(
+            Decimal(listing_json["shipping_cost"]) if listing_json.get("shipping_cost") else None
+        ),
+        total_landed_cost=(
+            Decimal(listing_json["total_landed_cost"])
+            if listing_json.get("total_landed_cost")
+            else None
+        ),
         seller_or_store=listing_json.get("seller_or_store"),
         seller_feedback_score=listing_json.get("seller_feedback_score"),
-        seller_feedback_pct=Decimal(listing_json["seller_feedback_pct"]) if listing_json.get("seller_feedback_pct") else None,
+        seller_feedback_pct=(
+            Decimal(listing_json["seller_feedback_pct"])
+            if listing_json.get("seller_feedback_pct")
+            else None
+        ),
         location=listing_json.get("location"),
         in_stock=listing_json.get("in_stock"),
-        stock_state=StockState(listing_json["stock_state"]) if listing_json.get("stock_state") else None,
+        stock_state=(
+            StockState(listing_json["stock_state"]) if listing_json.get("stock_state") else None
+        ),
         image_url=listing_json.get("image_url"),
         exact_variant_confirmed=listing_json.get("exact_variant_confirmed"),
-        variant_match_confidence=VariantMatchConfidence(listing_json["variant_match_confidence"]) if listing_json.get("variant_match_confidence") else None,
+        variant_match_confidence=(
+            VariantMatchConfidence(listing_json["variant_match_confidence"])
+            if listing_json.get("variant_match_confidence")
+            else None
+        ),
         mismatch_flags=listing_json.get("mismatch_flags", []),
         risk_flags=listing_json.get("risk_flags", []),
         category=listing_json.get("category"),
@@ -89,23 +110,19 @@ async def get_watch_listings(
     """Get current listings for a watch."""
     conn = get_db()
     cursor = conn.cursor()
-    
+
     # Check if watch exists
     cursor.execute("SELECT id FROM watches WHERE id = ?", (watch_id,))
     if not cursor.fetchone():
         conn.close()
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Watch {watch_id} not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Watch {watch_id} not found"
         )
-    
+
     # Get total count
-    cursor.execute(
-        "SELECT COUNT(*) as total FROM listings WHERE watch_id = ?",
-        (watch_id,)
-    )
+    cursor.execute("SELECT COUNT(*) as total FROM listings WHERE watch_id = ?", (watch_id,))
     total = cursor.fetchone()["total"]
-    
+
     # Get paginated results
     skip = (page - 1) * page_size
     cursor.execute(
@@ -113,13 +130,13 @@ async def get_watch_listings(
            WHERE watch_id = ? 
            ORDER BY price ASC 
            LIMIT ? OFFSET ?""",
-        (watch_id, page_size, skip)
+        (watch_id, page_size, skip),
     )
     rows = cursor.fetchall()
-    
+
     listings = [listing_row_to_model(row) for row in rows]
     conn.close()
-    
+
     return ListingsResponse(
         items=listings,
         total=total,
@@ -136,28 +153,26 @@ async def get_listing(
     """Get a specific listing by ID."""
     conn = get_db()
     cursor = conn.cursor()
-    
+
     # Check if watch exists
     cursor.execute("SELECT id FROM watches WHERE id = ?", (watch_id,))
     if not cursor.fetchone():
         conn.close()
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Watch {watch_id} not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Watch {watch_id} not found"
         )
-    
+
     cursor.execute(
         """SELECT * FROM listings 
            WHERE watch_id = ? AND source_listing_id = ?""",
-        (watch_id, listing_id)
+        (watch_id, listing_id),
     )
     row = cursor.fetchone()
     conn.close()
-    
+
     if not row:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Listing {listing_id} not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Listing {listing_id} not found"
         )
-    
+
     return listing_row_to_model(row)
