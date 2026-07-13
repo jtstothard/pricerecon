@@ -60,8 +60,8 @@ const SOURCE_GROUP_LABELS: Record<string, string> = {
 const CONNECTOR_GROUPS: Record<string, string> = {
   ebay: 'marketplace',
   facebook_marketplace: 'marketplace',
-  reddit_bapcsalesuk: 'community',
-  reddit_hardwareswapuk: 'community',
+  reddit_bapcsalesuk: 'marketplace',
+  reddit_hardwareswapuk: 'marketplace',
   hotukdeals: 'community',
 }
 
