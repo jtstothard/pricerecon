@@ -115,7 +115,7 @@ See [`.env.example`](.env.example) for all available options.
 | **Scan** | Retailer | FlareSolverr | Anti-bot bypass |
 | **Overclockers** | Retailer | FlareSolverr | Anti-bot bypass |
 | **Aria** | Retailer | FlareSolverr | Anti-bot bypass |
-| **Shopify** | Marketplace | None | Generic Shopify stores |
+| **Shopify** | Retailer | None | Store-specific storefronts; requires `base_url` per watch or an intentional single-store default |
 | **HTML Generic** | Retailer | None | CSS selector-based scrapers |
 
 ### Source Types
@@ -123,6 +123,14 @@ See [`.env.example`](.env.example) for all available options.
 - **Retailer** — Official retailer sites, single seller per listing
 - **Marketplace** — Multi-seller platforms with user listings
 - **Signal** — Community forums, deal aggregators, RSS feeds
+
+### Shopify Contract
+
+The `shopify` connector is a store-specific retailer connector. It does not search Shopify as a platform, and PriceRecon should not ship a shared production default that silently points every Shopify watch at the same merchant.
+
+- Required config for normal use: `sources[].config.base_url` (or `store_url`) on each Shopify watch.
+- Optional convenience default: `connectors.shopify.base_url` in `config.yml` / `config.local.yml`, but only for single-store deployments where every Shopify watch should target the same storefront.
+- If no store URL is configured, the connector reports a structured degraded state instead of failing as a generic unknown error.
 
 ### Facebook Marketplace Caveat
 

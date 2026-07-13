@@ -141,7 +141,7 @@ Each connector must declare its `source_role`:
 
 ### RETAILER
 - **Definition**: Official retailer sites with single seller per listing
-- **Examples**: Amazon, Currys, Scan, Box, Overclockers
+- **Examples**: Amazon, Currys, Scan, Box, Overclockers, individual Shopify storefronts
 - **Characteristics**:
   - Fixed product catalog
   - Prices change over time, but listings are stable
@@ -150,7 +150,7 @@ Each connector must declare its `source_role`:
 
 ### MARKETPLACE
 - **Definition**: Multi-seller platforms with user-generated listings
-- **Examples**: eBay, CeX, Facebook Marketplace, Shopify stores
+- **Examples**: eBay, CeX, Facebook Marketplace
 - **Characteristics**:
   - Many sellers offering the same product
   - Listings appear and disappear frequently
@@ -175,6 +175,13 @@ Each connector must declare its `source_role`:
 
 ## Connector Config Patterns
 
+### Store-Specific Retailer Configuration
+
+Some connectors represent a platform family but still need one concrete store URL at runtime. Shopify is the current example: the connector talks to one storefront's `/search` and `/products.json` endpoints, so it is a retailer connector for that specific merchant, not a marketplace-wide search.
+
+- Default strategy: require `sources[].config.base_url` (or `store_url`) on each Shopify watch.
+- Optional single-store shortcut: set `connectors.shopify.base_url` in `config.yml` / `config.local.yml` only if every Shopify watch in that deployment should hit the same storefront.
+- Do not add a shared production default for Shopify in multi-store environments; that would incorrectly route unrelated watches to one merchant.
 
 ### API Key Configuration
 
