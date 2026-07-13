@@ -28,10 +28,9 @@ const statusVariant = (status: string): BadgeVariant => {
 }
 
 const statusLabel = (status: string) => {
-  // Normalize to "healthy" consistently
   const lowerStatus = status.toLowerCase()
-  if (lowerStatus === 'ok') return 'healthy'
-  return lowerStatus.replace(/_/g, ' ')
+  const normalized = lowerStatus === 'ok' ? 'healthy' : lowerStatus.replace(/_/g, ' ')
+  return normalized.replace(/\b\w/g, letter => letter.toUpperCase())
 }
 
 export default function SourceHealth({ sources }: SourceHealthProps) {
@@ -51,9 +50,9 @@ export default function SourceHealth({ sources }: SourceHealthProps) {
   return (
     <div className="source-health">
       <div className="source-health__summary" aria-live="polite" aria-atomic="true">
-        <StatusBadge variant="healthy">{counts.healthy} healthy</StatusBadge>
-        <StatusBadge variant="warning">{counts.degraded} degraded</StatusBadge>
-        <StatusBadge variant="failed">{counts.failed} failed</StatusBadge>
+        <StatusBadge variant="healthy">{counts.healthy} Healthy</StatusBadge>
+        <StatusBadge variant="warning">{counts.degraded} Degraded</StatusBadge>
+        <StatusBadge variant="failed">{counts.failed} Failed</StatusBadge>
       </div>
       <div className="source-health__grid" role="list">
         {sources.map(source => {

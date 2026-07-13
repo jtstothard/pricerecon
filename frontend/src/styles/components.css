@@ -1930,3 +1930,156 @@ a:focus-visible {
   font-size: 1rem;
   opacity: 0.8;
 }
+
+/* The dashboard currently has one primary card; let it use the full content width. */
+.dashboard-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Keep the dashboard queue within its card on desktop. */
+.table-scroll:has(.watch-table) {
+  overflow-x: hidden;
+}
+
+.table-scroll:has(.watch-table),
+.table-scroll:has(.listings-table) {
+  margin: 0;
+  padding: 0;
+}
+
+.watch-table__watch-column { width: 29%; }
+.watch-table__source-column { width: 18%; }
+.watch-table__check-column { width: 20%; }
+.watch-table__status-column { width: 12%; }
+.watch-table__action-column { width: 21%; }
+
+.watch-table td {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.watch-table thead th,
+.listings-table thead th {
+  white-space: normal;
+}
+
+.watch-table td[data-label="Primary action"] {
+  overflow: visible;
+}
+
+.watch-table td[data-label="Primary action"] .watch-row__actions {
+  gap: 5px;
+}
+
+.listings-table {
+  min-width: 0;
+}
+
+.listings-table__source-column { width: 10%; }
+.listings-table__title-column { width: 40%; }
+.listings-table__price-column { width: 11%; }
+.listings-table__condition-column { width: 11%; }
+.listings-table__stock-column { width: 9%; }
+.listings-table__seen-column { width: 12%; }
+.listings-table__link-column { width: 7%; }
+
+.listings-table td {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.listings-table td[data-label="Title"] .table-cell__primary {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.source-health__item {
+  width: 100%;
+  max-width: none;
+}
+
+.source-health__item > div {
+  min-width: 0;
+}
+
+.source-multiselect__dropdown--portal {
+  top: auto;
+  bottom: auto;
+  z-index: 1300;
+}
+
+@media (max-width: 820px) {
+  .listings-table,
+  .listings-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .listings-table {
+    overflow-x: visible;
+  }
+
+  .listings-table colgroup,
+  .listings-table thead {
+    display: none;
+  }
+
+  .listings-table tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 14px;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 12px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .listings-table td {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+    text-align: left;
+  }
+
+  .listings-table td::before {
+    content: attr(data-label);
+    color: var(--text-tertiary);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .listings-table td[data-label="Title"] {
+    grid-column: 1 / -1;
+  }
+
+  .listings-table td[data-label="Title"] .table-cell__primary {
+    -webkit-line-clamp: 2;
+  }
+
+  .listings-table td[data-label="Link"] {
+    border-bottom: none;
+  }
+
+  .listings-table td[data-label="Price"] .table-cell__secondary {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .table-scroll:has(.watch-table) {
+    overflow: visible;
+  }
+
+  .listings-table tr {
+    padding: 12px;
+  }
+}
