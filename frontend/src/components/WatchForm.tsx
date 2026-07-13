@@ -12,6 +12,7 @@ import { Label } from "./ui/label"
 import { Input } from "./ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { Checkbox } from "./ui/checkbox"
+import { formatSourceName } from '../lib/sourceNames'
 import type { WatchSummary, SourceSummary } from './watchTypes'
 
 interface WatchFormData {
@@ -235,7 +236,7 @@ export default function WatchForm({ open, onClose, onCreated }: WatchFormProps) 
                           disabled={loading}
                         />
                         <span className="text-sm">
-                          {source.name} <span className="text-xs text-muted-foreground">({source.connector})</span>
+                          {formatSourceName(source.name || source.connector)}
                         </span>
                       </label>
                     ))}
@@ -250,12 +251,12 @@ export default function WatchForm({ open, onClose, onCreated }: WatchFormProps) 
                           key={connector}
                           className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2 py-0.5 text-xs"
                         >
-                          {source?.name || connector}
+                          {formatSourceName(source?.name || connector)}
                           <button
                             type="button"
                             onClick={() => toggleSource(connector)}
                             className="ml-1 hover:text-primary-foreground"
-                            aria-label={`Remove ${source?.name || connector}`}
+                            aria-label={`Remove ${formatSourceName(source?.name || connector)}`}
                           >
                             ×
                           </button>
@@ -286,19 +287,19 @@ export default function WatchForm({ open, onClose, onCreated }: WatchFormProps) 
             <div className="col-span-2 space-y-2">
               <Label>Condition</Label>
               <div className="grid grid-cols-3 gap-2">
-                {['new', 'new_open_box', 'refurbished', 'used_like_new', 'used_good', 'used_fair'].map(cond => (
-                  <div key={cond} className="flex items-center space-x-2">
+                {[{ value: 'new', label: 'New' }, { value: 'new_open_box', label: 'New Open Box' }, { value: 'refurbished', label: 'Refurbished' }, { value: 'used_like_new', label: 'Used Like New' }, { value: 'used_good', label: 'Used Good' }, { value: 'used_fair', label: 'Used Fair' }].map(cond => (
+                  <div key={cond.value} className="flex items-center space-x-2">
                     <Checkbox
-                      id={`condition-${cond}`}
-                      checked={formData.filters.condition.includes(cond)}
-                      onCheckedChange={() => toggleCondition(cond)}
+                      id={`condition-${cond.value}`}
+                      checked={formData.filters.condition.includes(cond.value)}
+                      onCheckedChange={() => toggleCondition(cond.value)}
                       disabled={loading}
                     />
                     <Label
-                      htmlFor={`condition-${cond}`}
+                      htmlFor={`condition-${cond.value}`}
                       className="text-sm font-normal cursor-pointer"
                     >
-                      {cond.replace(/_/g, ' ')}
+                      {cond.label}
                     </Label>
                   </div>
                 ))}

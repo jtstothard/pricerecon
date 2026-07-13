@@ -614,6 +614,74 @@ a:focus-visible {
   margin-top: 4px;
 }
 
+/* Style select dropdowns rendered in portals */
+[data-slot="select-content"],
+[data-slot="select-popup"],
+[data-slot="listbox"],
+[role="listbox"][data-slot] {
+  background: rgb(17, 23, 35) !important;
+  border: 1px solid rgba(148, 163, 184, 0.18) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4) !important;
+  padding: 4px !important;
+}
+
+[data-slot="select-item"],
+[data-slot="option"],
+[role="option"] {
+  border-radius: 8px !important;
+  padding: 8px 10px !important;
+}
+
+[data-slot="select-item"]:hover,
+[data-slot="option"]:hover,
+[role="option"]:hover {
+  background: rgba(109, 125, 255, 0.12) !important;
+}
+
+/* Style buttons inside dialog to match app theme */
+.pr-dialog-content [data-slot="button"] {
+  border-radius: 10px;
+  font-weight: 600;
+  padding: 8px 16px;
+  font-size: 14px;
+  transition: all 150ms ease;
+}
+
+.pr-dialog-content [data-slot="button"][data-variant="primary"],
+.pr-dialog-content button[type="submit"],
+.pr-dialog-content form button:last-child {
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: white;
+  border: none;
+}
+
+.pr-dialog-content [data-slot="button"][data-variant="ghost"],
+.pr-dialog-content [data-slot="button"][data-variant="outline"] {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.pr-dialog-content [data-slot="button"]:hover {
+  opacity: 0.88;
+}
+
+/* Style select triggers inside dialog */
+.pr-dialog-content [data-slot="select-trigger"],
+.pr-dialog-content [role="combobox"] {
+  background: rgba(255, 255, 255, 0.04);
+  height: 40px;
+  width: 100%;
+}
+
+/* Style checkboxes inside dialog */
+.pr-dialog-content [data-slot="checkbox"] {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+}
+
 .source-health {
   display: grid;
   gap: 12px;
