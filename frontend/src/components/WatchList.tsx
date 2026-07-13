@@ -95,11 +95,11 @@ export default function WatchList() {
   usePageTitle('Dashboard')
 
   useEffect(() => {
-    void fetchDashboardData()
+    void fetchDashboardData({ initial: true })
   }, [])
 
-  const fetchDashboardData = async () => {
-    setLoading(true)
+  const fetchDashboardData = async ({ initial = false }: { initial?: boolean } = {}) => {
+    if (initial) setLoading(true)
     try {
       const [watchesResponse, sourcesResponse] = await Promise.all([
         fetch('/api/watches?page=1&page_size=100'),
@@ -165,18 +165,52 @@ export default function WatchList() {
     window.open('/api/export?resource=all&format=json', '_blank', 'noopener,noreferrer')
   }
 
-  const toggleWatch = async (id: number, enabled: boolean) => {
+  const toggleWatch = async (watch: WatchSummary) => {
     try {
-      const response = await fetch(`/api/watches/${id}`, {
+      const response = await fetch(`/api/watches/${watch.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled: !enabled }),
+        body: JSON.stringify({
+          name: watch.name,
+          query: watch.query,
+          category: watch.category,
+          sources: watch.sources.map(source => ({
+            connector: source.connector,
+            enabled: source.enabled ?? true,
+            config: {},
+          })),
+          filters: {
+            price_max: null,
+            currency: 'GBP',
+            condition_filter: { conditions: [], dedup_enabled: false },
+            exclude_patterns: [],
+            spec_match: {},
+            min_seller_feedback: null,
+            min_seller_feedback_pct: null,
+          },
+          schedule: {
+            interval: watch.schedule?.interval || '4h',
+            timezone: watch.schedule?.timezone || 'UTC',
+            time_window: watch.schedule?.time_window || null,
+          },
+          grouping: { enabled: false, product_key: null },
+          notifications: {
+            events: ['new_listing', 'price_drop', 'stock_change'],
+            channels: ['webhook'],
+            webhook_url: null,
+            telegram_bot_token: null,
+            telegram_chat_id: null,
+            discord_webhook_url: null,
+          },
+          enabled: !watch.enabled,
+        }),
       })
       if (!response.ok) throw new Error('Failed to toggle watch')
       const updatedWatch: WatchSummary = await response.json()
-      setWatches(prev => prev.map(w => (w.id === id ? updatedWatch : w)))
+      setWatches(prev => prev.map(w => (w.id === watch.id ? updatedWatch : w)))
+      setToast({ message: updatedWatch.enabled ? 'Watch resumed' : 'Watch paused', variant: 'success' })
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to toggle watch')
+      setToast({ message: err instanceof Error ? err.message : 'Failed to toggle watch', variant: 'error' })
     }
   }
 
@@ -455,7 +489,7 @@ export default function WatchList() {
                           <button
                             type="button"
                             className="btn btn-secondary btn--icon"
-                            onClick={() => toggleWatch(watch.id, watch.enabled)}
+                            onClick={() => toggleWatch(watch)}
                             aria-label={watch.enabled ? `Pause watch ${displayName}` : `Resume watch ${displayName}`}
                             title={watch.enabled ? 'Pause' : 'Resume'}
                           >
