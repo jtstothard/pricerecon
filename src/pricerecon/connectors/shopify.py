@@ -1,4 +1,4 @@
-"""Generic Shopify connector template and detection helpers."""
+"""Store-specific Shopify storefront connector and detection helpers."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ import httpx
 
 from pricerecon.connectors.base import BaseConnector
 from pricerecon.connectors.specs import extract_specs
+from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 from pricerecon.models import NormalizedListing, SourceType
 
 
@@ -41,7 +42,12 @@ class ShopifyConnector(BaseConnector):
         self, query: str, filters: dict[str, Any] | None = None
     ) -> list[NormalizedListing]:
         if not self.base_url:
-            raise ValueError("ShopifyConnector requires base_url")
+            raise ConnectorDegradedError(
+                status=ConnectorStatus.auth_failed,
+                message="shopify requires base_url (or store_url) for a specific storefront",
+                connector_id=self.connector_id,
+                detail={"missing": ["base_url"], "accepted_keys": ["base_url", "store_url"]},
+            )
         await self._client.get(
             f"{self.base_url}/search?q={quote_plus(query)}&type=product",
             headers={"User-Agent": "Mozilla/5.0 (compatible; PriceRecon/1.0)"},

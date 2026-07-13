@@ -102,8 +102,7 @@ class RedditBapcSalesUKConnector(TemplateConnector):
                 display_name="Reddit bapcsalesuk",
                 source_role=SourceType.MARKETPLACE,
                 endpoint_url=(
-                    "https://www.reddit.com/r/bapcsalesuk/new/.rss"
-                    "?limit={limit}&restrict_sr=1"
+                    "https://www.reddit.com/r/bapcsalesuk/new/.rss" "?limit={limit}&restrict_sr=1"
                 ),
             )
         )

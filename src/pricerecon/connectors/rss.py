@@ -138,7 +138,9 @@ class TemplateConnector(BaseConnector):
                     "requested_url": url,
                     "final_url": str(response.url),
                     "status_code": response.status_code,
-                    "retry_after_seconds": _retry_after_seconds(response.headers.get("Retry-After")),
+                    "retry_after_seconds": _retry_after_seconds(
+                        response.headers.get("Retry-After")
+                    ),
                 },
             )
         if response.status_code == 403:

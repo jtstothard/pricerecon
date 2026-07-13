@@ -19,4 +19,9 @@ connectors:
     enabled: true
   fb_marketplace:
     enabled: false  # Requires Facebook cookies
+  shopify:
+    enabled: true
+    # Optional single-store default only. In shared/multi-store deployments,
+    # prefer per-watch sources[].config.base_url (or store_url) instead.
+    # base_url: https://example.myshopify.com
   # Add more connector configs here

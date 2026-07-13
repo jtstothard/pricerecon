@@ -479,6 +479,20 @@ async def test_shopify_connector_fetches_products_and_variants() -> None:
 
 
 @pytest.mark.asyncio
+async def test_shopify_connector_requires_store_base_url() -> None:
+    connector = ShopifyConnector()
+
+    with pytest.raises(ConnectorDegradedError) as exc_info:
+        await connector.search("RTX 4070")
+
+    await connector.cleanup()
+    err = exc_info.value
+    assert err.status == ConnectorStatus.auth_failed
+    assert err.connector_id == "shopify"
+    assert err.detail == {"missing": ["base_url"], "accepted_keys": ["base_url", "store_url"]}
+
+
+@pytest.mark.asyncio
 async def test_shopify_connector_accepts_store_url_alias() -> None:
     calls: list[str] = []
 
