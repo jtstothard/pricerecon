@@ -65,7 +65,7 @@ class AliExpressConnector(BaseConnector):
 
     @property
     def source_role(self) -> SourceType:
-        return SourceType.MARKETPLACE
+        return SourceType.RETAILER
 
     async def cleanup(self) -> None:
         if self._owns_client:
