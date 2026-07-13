@@ -14,6 +14,8 @@ from typing import Any, Optional
 
 import httpx
 
+from pricerecon.config import load_config
+from pricerecon.connectors.browser_client import BrowserClient, BrowserSessionConfig
 from pricerecon.core.connector_health import upsert_connector_health
 from pricerecon.core.diff_engine import DiffResult, run_check
 from pricerecon.core.notifications import dispatch_for_event
@@ -154,6 +156,9 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
     if not watch:
         return {"success": False, "error": f"Watch {watch_id} not found"}
 
+    runtime_config = load_config()
+    connector_defaults = runtime_config.get("connectors", {}) if isinstance(runtime_config, dict) else {}
+
     all_listings = []
     for source in watch.sources:
         if not source.enabled:
@@ -172,27 +177,39 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
                     f"Connector '{connector_id}' not found in registry. "
                     f"Available: {sorted(all_connectors.keys())}"
                 )
-            # Build connector kwargs: merge env-level credentials with per-watch config
-            # Per-watch config takes precedence over env defaults
-            connector_kwargs = dict(source.config or {})
+            # Build connector kwargs: merge config-file defaults, env-level credentials,
+            # and per-watch config. Per-watch config takes precedence.
+            config_defaults = dict(connector_defaults.get(connector_id, {}) or {})
+            connector_kwargs: dict[str, Any] = {**config_defaults, **dict(source.config or {})}
             if connector_id == "ebay":
                 import os
                 connector_kwargs.setdefault("app_id", os.environ.get("EBAY_APP_ID", ""))
                 connector_kwargs.setdefault("cert_id", os.environ.get("EBAY_CERT_ID"))
             elif connector_id == "aliexpress":
                 import os
-                # AliExpress connector takes a single `config` dict; merge env
-                # credentials into it (per-watch config takes precedence).
-                connector_kwargs = {
-                    "config": dict(source.config or {}),
-                }
-                cfg = connector_kwargs["config"]
+                cfg = {**config_defaults, **dict(source.config or {})}
                 cfg.setdefault("app_key", os.environ.get("ALIEXPRESS_APP_KEY"))
                 cfg.setdefault("app_secret", os.environ.get("ALIEXPRESS_APP_SECRET"))
                 cfg.setdefault("ds_app_key", os.environ.get("ALIEXPRESS_DS_APP_KEY"))
                 cfg.setdefault("ds_app_secret", os.environ.get("ALIEXPRESS_DS_APP_SECRET"))
                 cfg.setdefault("ds_access_token", os.environ.get("ALIEXPRESS_DS_ACCESS_TOKEN"))
                 cfg.setdefault("ds_refresh_token", os.environ.get("ALIEXPRESS_DS_REFRESH_TOKEN"))
+                browser_client = None
+                camofox_url = cfg.get("camofox_url") or os.environ.get("ALIEXPRESS_CAMOFOX_URL") or os.environ.get("CAMOFOX_URL") or "http://192.168.10.252:9377"
+                cfg.setdefault("camofox_url", camofox_url)
+                if camofox_url:
+                    browser_client = BrowserClient(
+                        config=BrowserSessionConfig(
+                            camofox_url=str(camofox_url),
+                            camofox_user_id=str(cfg.get("camofox_user_id") or f"pricerecon_{watch_id}"),
+                            camofox_session_key=str(cfg.get("camofox_session_key") or f"watch_{watch_id}"),
+                            camofox_api_key=os.environ.get("CAMOFOX_API_KEY"),
+                            camofox_access_key=os.environ.get("CAMOFOX_ACCESS_KEY"),
+                        )
+                    )
+                connector_kwargs = {"config": cfg}
+                if browser_client is not None:
+                    connector_kwargs["browser_client"] = browser_client
             try:
                 connector = connector_class(**connector_kwargs)
             except TypeError:

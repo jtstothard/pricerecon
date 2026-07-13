@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import hmac
 import json
 import logging
 import re
@@ -11,7 +12,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from typing import Any
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlencode, urlparse
 
 import httpx
 
@@ -54,6 +55,10 @@ class AliExpressConnector(BaseConnector):
         self._affiliate_currency = str(self.config.get("affiliate_currency", "GBP")).upper()
         self._manual_pids = self._normalize_pid_list(self.config.get("manual_pids", []))
         self._manual_links = list(self.config.get("manual_links", []))
+        self._camofox_url = str(self.config.get("camofox_url") or "").rstrip("/")
+        self._camofox_user_id = str(self.config.get("camofox_user_id") or "pricerecon-aliexpress")
+        self._camofox_session_key = str(self.config.get("camofox_session_key") or "watcher")
+        self._camofox_wait_s = int(self.config.get("camofox_wait_s", 12))
         self._browser_enrich_default = bool(self.config.get("browser_enrich", False))
         self._enrich_with_ds_default = bool(self.config.get("enrich_with_ds", False))
         self._brave_discovery_default = bool(self.config.get("brave_discovery", True))
@@ -91,6 +96,9 @@ class AliExpressConnector(BaseConnector):
         if self._should_enrich_with_browser(filters):
             listings = await self._apply_browser_enrichment(listings, filters)
 
+        # Do not emit unresolved placeholder rows for Brave/manual discovery.
+        listings = [listing for listing in listings if listing.price is not None]
+
         return listings
 
     def _is_affiliate_search_enabled(self, filters: dict[str, Any]) -> bool:
@@ -111,7 +119,7 @@ class AliExpressConnector(BaseConnector):
     def _should_enrich_with_browser(self, filters: dict[str, Any]) -> bool:
         if filters.get("browser_enrich") is not None:
             return bool(filters.get("browser_enrich"))
-        return self._browser_enrich_default or self._browser_client is not None
+        return self._browser_enrich_default
 
     def _has_ds_credentials(self) -> bool:
         return bool(
@@ -228,13 +236,14 @@ class AliExpressConnector(BaseConnector):
 
     async def _affiliate_search(self, query: str, filters: dict[str, Any]) -> list[NormalizedListing]:
         payload: dict[str, Any] = {
-            "query": query,
-            "currency": filters.get("currency", self._affiliate_currency),
-            "page": int(filters.get("page", 1)),
+            "keywords": query,
+            "target_currency": str(filters.get("currency", self._affiliate_currency)).upper(),
+            "ship_to_country": str(filters.get("ship_to_country", self.config.get("ship_to_country", "GB"))).upper(),
+            "page_no": int(filters.get("page", 1)),
             "page_size": int(filters.get("page_size", 50)),
         }
         if "price_max" in filters:
-            payload["max_price"] = str(filters["price_max"])
+            payload["max_sale_price"] = str(filters["price_max"])
 
         try:
             response = await self._top_post("aliexpress.affiliate.product.query", payload)
@@ -300,7 +309,7 @@ class AliExpressConnector(BaseConnector):
                     "source_type": self.source_role,
                     "source_listing_id": pid,
                     "title_raw": f"AliExpress {pid}",
-                    "price": Decimal("0"),
+                    "price": None,
                     "currency": currency,
                     "url": f"https://www.aliexpress.com/item/{pid}.html",
                     "in_stock": None,
@@ -422,15 +431,14 @@ class AliExpressConnector(BaseConnector):
 
     async def _fetch_affiliate_detail(self, pid: str) -> dict[str, Any] | None:
         """Fetch product details from AliExpress affiliate API using product ID."""
-        # The affiliate API supports looking up specific products by product_ids
-        # This method is similar to _affiliate_search but for specific PIDs
         payload = {
             "product_ids": pid,
-            "currency": self._affiliate_currency,
+            "target_currency": self._affiliate_currency,
+            "target_language": self.config.get("target_language", "EN"),
         }
 
         try:
-            response = await self._top_post("aliexpress.affiliate.product.query", payload)
+            response = await self._top_post("aliexpress.affiliate.productdetail.get", payload)
             self._raise_for_top_response(response, f"AliExpress affiliate lookup failed for PID {pid}")
         except Exception:
             # Silently fail; caller will try other enrichment methods
@@ -440,12 +448,13 @@ class AliExpressConnector(BaseConnector):
         if not data:
             return None
 
-        # Return the first matching item (should be the requested PID)
         for item in data:
             item_pid = self._first_text(item, "productId", "product_id", "itemId", "item_id", "id")
             if item_pid == pid:
                 return item
 
+        if len(data) == 1:
+            return data[0]
         return None
 
     async def _fetch_price_from_html(self, pid: str) -> Decimal | None:
@@ -470,15 +479,40 @@ class AliExpressConnector(BaseConnector):
 
     def _merge_listing_with_affiliate_detail(self, listing: NormalizedListing, item: dict[str, Any], pid: str) -> NormalizedListing:
         """Merge a listing with affiliate API detail data."""
-        display_price = self._first_decimal(item, "displayPrice", "display_price", "salePrice", "sale_price", "price")
-        original_price = self._first_decimal(item, "originalPrice", "original_price", "msrpPrice", "old_price")
+        display_price = self._first_decimal(
+            item,
+            "target_sale_price",
+            "targetSalePrice",
+            "target_app_sale_price",
+            "targetAppSalePrice",
+            "displayPrice",
+            "display_price",
+            "salePrice",
+            "sale_price",
+            "price",
+        )
+        original_price = self._first_decimal(
+            item,
+            "target_original_price",
+            "targetOriginalPrice",
+            "originalPrice",
+            "original_price",
+            "msrpPrice",
+            "old_price",
+        )
         shipping_cost = self._first_decimal(item, "shippingCost", "shipping_cost")
-        seller = self._first_text(item, "shopName", "storeName", "sellerName", "shop_name")
-        rating = self._first_decimal(item, "evaluateRate", "rating", "storeRating", "score")
-        sales = self._first_text(item, "orders", "sales", "salesCount", "sold")
+        seller = self._first_text(item, "shop_name", "shopName", "storeName", "sellerName")
+        rating = self._first_decimal(item, "evaluate_rate", "evaluateRate", "rating", "storeRating", "score")
+        sales = self._first_text(item, "lastest_volume", "orders", "sales", "salesCount", "sold")
         stock = self._first_bool(item, "inStock", "in_stock", "available")
-        title = self._first_text(item, "title", "productTitle", "product_title", "itemTitle") or listing.title_raw
-        currency = self._first_text(item, "currency", "priceCurrency") or listing.currency
+        title = self._first_text(item, "product_title", "title", "productTitle", "itemTitle") or listing.title_raw
+        currency = self._first_text(
+            item,
+            "target_sale_price_currency",
+            "targetSalePriceCurrency",
+            "currency",
+            "priceCurrency",
+        ) or listing.currency
 
         enrichment = dict(listing.variant_normalized or {})
         enrichment.update(
@@ -531,16 +565,41 @@ class AliExpressConnector(BaseConnector):
         pid = self._first_text(item, "productId", "product_id", "itemId", "item_id", "id")
         if not pid:
             pid = hashlib.sha1(repr(sorted(item.items())).encode()).hexdigest()[:16]
-        title = self._first_text(item, "title", "productTitle", "product_title", "itemTitle") or query
-        display_price = self._first_decimal(item, "displayPrice", "display_price", "salePrice", "sale_price", "price")
-        original_price = self._first_decimal(item, "originalPrice", "original_price", "msrpPrice", "old_price")
+        title = self._first_text(item, "product_title", "title", "productTitle", "itemTitle") or query
+        display_price = self._first_decimal(
+            item,
+            "target_sale_price",
+            "targetSalePrice",
+            "target_app_sale_price",
+            "targetAppSalePrice",
+            "displayPrice",
+            "display_price",
+            "salePrice",
+            "sale_price",
+            "price",
+        )
+        original_price = self._first_decimal(
+            item,
+            "target_original_price",
+            "targetOriginalPrice",
+            "originalPrice",
+            "original_price",
+            "msrpPrice",
+            "old_price",
+        )
         shipping_cost = self._first_decimal(item, "shippingCost", "shipping_cost")
-        seller = self._first_text(item, "shopName", "storeName", "sellerName", "shop_name")
-        rating = self._first_decimal(item, "evaluateRate", "rating", "storeRating", "score")
-        sales = self._first_text(item, "orders", "sales", "salesCount", "sold")
+        seller = self._first_text(item, "shop_name", "shopName", "storeName", "sellerName")
+        rating = self._first_decimal(item, "evaluate_rate", "evaluateRate", "rating", "storeRating", "score")
+        sales = self._first_text(item, "lastest_volume", "orders", "sales", "salesCount", "sold")
         stock = self._first_bool(item, "inStock", "in_stock", "available")
-        url = self._first_text(item, "url", "itemUrl", "item_url") or f"https://www.aliexpress.com/item/{pid}.html"
-        currency = self._first_text(item, "currency", "priceCurrency") or self._affiliate_currency
+        url = self._first_text(item, "product_detail_url", "promotion_link", "url", "itemUrl", "item_url") or f"https://www.aliexpress.com/item/{pid}.html"
+        currency = self._first_text(
+            item,
+            "target_sale_price_currency",
+            "targetSalePriceCurrency",
+            "currency",
+            "priceCurrency",
+        ) or self._affiliate_currency
         currency = currency.upper()
 
         enrichment = self._build_enrichment_payload(
@@ -699,12 +758,23 @@ class AliExpressConnector(BaseConnector):
                 detail={"missing": [name for name, value in (("ds_app_key", app_key), ("ds_app_secret", app_secret)) if not value]},
             )
 
-        payload = {
-            "refresh_token": self._ds_refresh_token,
+        params = {
+            "app_key": str(app_key),
+            "refresh_token": str(self._ds_refresh_token),
+            "timestamp": str(int(datetime.now().timestamp() * 1000)),
+            "sign_method": "sha256",
+            "simplify": "true",
         }
+        params["sign"] = self._ds_system_sign("/auth/token/refresh", params, str(app_secret))
         try:
-            response = await self._top_post("aliexpress.ds.auth.token.refresh", payload, app_key=str(app_key), app_secret=str(app_secret))
-            self._raise_for_top_response(response, "AliExpress DS token refresh failed")
+            response = await self._client.get(
+                "https://api-sg.aliexpress.com/rest/auth/token/refresh",
+                params=params,
+                headers={"User-Agent": "Mozilla/5.0"},
+                timeout=30.0,
+            )
+            response.raise_for_status()
+            data = response.json()
         except Exception as exc:
             raise ConnectorDegradedError(
                 status=ConnectorStatus.auth_failed,
@@ -713,24 +783,15 @@ class AliExpressConnector(BaseConnector):
                 detail={"error": str(exc)},
             ) from exc
 
-        data = self._extract_top_response_payload(response.json())
-        if not isinstance(data, dict):
+        if str(data.get("code") or "") != "0" or not (data.get("access_token") or data.get("accessToken")):
             raise ConnectorDegradedError(
                 status=ConnectorStatus.auth_failed,
                 message="AliExpress DS token refresh failed",
                 connector_id=self.connector_id,
-                detail={"error": "unexpected token response"},
+                detail={"error": data.get("message") or data.get("msg") or data.get("code") or "missing access token"},
             )
 
         access_token = str(data.get("access_token") or data.get("accessToken") or "").strip()
-        if not access_token:
-            raise ConnectorDegradedError(
-                status=ConnectorStatus.auth_failed,
-                message="AliExpress DS token refresh failed",
-                connector_id=self.connector_id,
-                detail={"error": "missing access token"},
-            )
-
         self._ds_access_token = access_token
         self._ds_refresh_token = str(data.get("refresh_token") or data.get("refreshToken") or self._ds_refresh_token)
         expires_in = data.get("expires_in") or data.get("expire_in") or 3600
@@ -806,9 +867,18 @@ class AliExpressConnector(BaseConnector):
         digest = hashlib.md5("".join(pieces).encode("utf-8")).hexdigest().upper()
         return digest
 
+    def _ds_system_sign(self, api_path: str, params: dict[str, str], secret: str) -> str:
+        base = api_path + "".join(f"{key}{params[key]}" for key in sorted(k for k in params if k != "sign"))
+        return hmac.new(secret.encode("utf-8"), base.encode("utf-8"), hashlib.sha256).hexdigest().upper()
+
     def _extract_top_response_payload(self, payload: Any) -> Any:
         if isinstance(payload, dict):
-            for key in ("aliexpress_affiliate_product_query_response", "aliexpress_ds_product_get_response", "aliexpress_ds_auth_token_refresh_response"):
+            for key in (
+                "aliexpress_affiliate_product_query_response",
+                "aliexpress_affiliate_productdetail_get_response",
+                "aliexpress_ds_product_get_response",
+                "aliexpress_ds_auth_token_refresh_response",
+            ):
                 value = payload.get(key)
                 if isinstance(value, dict):
                     return value.get("result") or value.get("resp_result") or value.get("data") or value
@@ -941,12 +1011,16 @@ class AliExpressConnector(BaseConnector):
         return coupons
 
     async def _apply_browser_enrichment(self, listings: list[NormalizedListing], filters: dict[str, Any]) -> list[NormalizedListing]:
-        if self._browser_client is None:
+        if self._browser_client is None and not self._camofox_url:
             return listings
         enriched: list[NormalizedListing] = []
+        enrich_all = bool(filters.get("browser_enrich_all"))
         for listing in listings:
             pid = self._normalize_pid(listing.source_listing_id) or self._extract_pid(listing.url)
             if not pid:
+                enriched.append(listing)
+                continue
+            if not enrich_all and listing.price is not None:
                 enriched.append(listing)
                 continue
             try:
@@ -965,8 +1039,16 @@ class AliExpressConnector(BaseConnector):
 
     async def _fetch_browser_detail(self, pid: str) -> dict[str, Any]:
         url = f"https://www.aliexpress.com/item/{pid}.html"
+        if self._camofox_url:
+            return await self._fetch_camofox_detail(pid, url)
         browser_client = self._browser_client
-        assert browser_client is not None
+        if browser_client is None:
+            raise ConnectorDegradedError(
+                status=ConnectorStatus.unknown_error,
+                message="AliExpress browser enrichment unavailable",
+                connector_id=self.connector_id,
+                detail={"product_id": pid},
+            )
         context = await browser_client.new_context()
         try:
             page = await context.new_page()
@@ -975,6 +1057,81 @@ class AliExpressConnector(BaseConnector):
         finally:
             await context.close()
         return self._parse_browser_html(html)
+
+    async def _fetch_camofox_detail(self, pid: str, url: str) -> dict[str, Any]:
+        headers = {"User-Agent": "Mozilla/5.0"}
+        create_payload = {
+            "userId": self._camofox_user_id,
+            "sessionKey": self._camofox_session_key,
+            "url": url,
+        }
+        response = await self._client.post(f"{self._camofox_url}/tabs", json=create_payload, headers=headers, timeout=45.0)
+        response.raise_for_status()
+        tab_id = str(response.json().get("tabId") or "").strip()
+        if not tab_id:
+            raise ConnectorDegradedError(
+                status=ConnectorStatus.unknown_error,
+                message="AliExpress Camofox tab creation failed",
+                connector_id=self.connector_id,
+                detail={"product_id": pid, "response": response.text[:500]},
+            )
+        try:
+            await asyncio.sleep(self._camofox_wait_s)
+            snapshot = await self._client.get(
+                f"{self._camofox_url}/tabs/{tab_id}/snapshot",
+                params={"userId": self._camofox_user_id},
+                headers=headers,
+                timeout=60.0,
+            )
+            snapshot.raise_for_status()
+            text = str(snapshot.json().get("snapshot") or "")
+        finally:
+            try:
+                await self._client.delete(
+                    f"{self._camofox_url}/tabs/{tab_id}",
+                    params={"userId": self._camofox_user_id},
+                    headers=headers,
+                    timeout=15.0,
+                )
+            except Exception:
+                pass
+        return self._parse_browser_text(text)
+
+    def _parse_browser_text(self, text: str) -> dict[str, Any]:
+        normalized = re.sub(r"\s+", " ", text)
+        title = self._extract_first_pattern(
+            normalized,
+            [
+                r"AliExpress\s*[:\-]\s*([^£$€]{10,200})",
+                r"(^.*?)(?:\s+(?:£|GBP|\$|€)\s*\d)",
+            ],
+        )
+        return {
+            "title": title,
+            "display_price": self._extract_price(normalized),
+            "original_price": self._extract_first_decimal_from_patterns(
+                normalized,
+                [r'original[^\n]{0,80}?(?:£|GBP|\$|€)\s*([0-9]+(?:\.[0-9]{1,2})?)'],
+            ),
+            "effective_price": self._extract_first_decimal_from_patterns(
+                normalized,
+                [r'effective[^\n]{0,80}?(?:£|GBP|\$|€)\s*([0-9]+(?:\.[0-9]{1,2})?)'],
+            ),
+            "shipping_cost": self._extract_first_decimal_from_patterns(
+                normalized,
+                [r'shipping[^\n]{0,80}?(?:£|GBP|\$|€)\s*([0-9]+(?:\.[0-9]{1,2})?)'],
+            ),
+            "rating": self._extract_first_decimal_from_patterns(
+                normalized,
+                [r'([0-9]\.[0-9])\s*/\s*5'],
+            ),
+            "sales": self._extract_first_pattern(
+                normalized,
+                [r'([0-9,]+)\s+(?:sold|orders)', r'([0-9,]+)\s+sales'],
+            ),
+            "coupons": self._extract_browser_coupons(normalized),
+            "stock": None if not re.search(r"out of stock|sold out", normalized, re.IGNORECASE) else False,
+        }
 
     def _parse_browser_html(self, html: str) -> dict[str, Any]:
         text = re.sub(r"\s+", " ", re.sub(r"<script.*?</script>", " ", html, flags=re.DOTALL | re.IGNORECASE))
