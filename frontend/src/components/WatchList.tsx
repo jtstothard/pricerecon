@@ -19,6 +19,14 @@ interface PaginatedResponse<T> {
   page_size: number
 }
 
+interface DashboardCache {
+  watches: WatchSummary[]
+  sources: SourceSummary[]
+  pageInfo: { page: number; pageSize: number; total: number }
+}
+
+let dashboardCache: DashboardCache | null = null
+
 type WatchFilter = 'all' | 'active' | 'paused'
 type HealthFilter = 'all' | 'healthy' | 'issues'
 type NormalizedSourceStatus = 'healthy' | 'degraded' | 'failed' | 'paused' | 'neutral'
@@ -72,30 +80,32 @@ const sourceDisplayName = (connector: string, sources: SourceSummary[]) => {
 }
 
 const sourceStateLabel = (statuses: NormalizedSourceStatus[]) => {
-  if (statuses.some(status => status === 'failed')) return 'Failed'
-  if (statuses.some(status => status === 'degraded')) return 'Degraded'
-  if (statuses.some(status => status === 'paused')) return 'Paused'
-  if (statuses.some(status => status === 'healthy')) return 'Healthy'
-  return 'Unknown'
+  if (statuses.some(status => status === 'failed')) return 'failed'
+  if (statuses.some(status => status === 'degraded')) return 'degraded'
+  if (statuses.some(status => status === 'paused')) return 'paused'
+  if (statuses.some(status => status === 'healthy')) return 'healthy'
+  return 'unknown'
 }
 
+const formatSourceState = (status: string) => status.charAt(0).toUpperCase() + status.slice(1)
+
 export default function WatchList() {
-  const [watches, setWatches] = useState<WatchSummary[]>([])
-  const [sources, setSources] = useState<SourceSummary[]>([])
+  const [watches, setWatches] = useState<WatchSummary[]>(() => dashboardCache?.watches ?? [])
+  const [sources, setSources] = useState<SourceSummary[]>(() => dashboardCache?.sources ?? [])
   const [showForm, setShowForm] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => dashboardCache === null)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [watchFilter, setWatchFilter] = useState<WatchFilter>('all')
   const [healthFilter, setHealthFilter] = useState<HealthFilter>('all')
-  const [pageInfo, setPageInfo] = useState({ page: 1, pageSize: 0, total: 0 })
+  const [pageInfo, setPageInfo] = useState(() => dashboardCache?.pageInfo ?? { page: 1, pageSize: 0, total: 0 })
   const [toast, setToast] = useState<{ message: string; variant: ToastVariant } | null>(null)
 
   usePageTitle('Dashboard')
 
   useEffect(() => {
-    void fetchDashboardData({ initial: true })
+    void fetchDashboardData({ initial: dashboardCache === null })
   }, [])
 
   const fetchDashboardData = async ({ initial = false }: { initial?: boolean } = {}) => {
@@ -112,13 +122,17 @@ export default function WatchList() {
       const watchesData: PaginatedResponse<WatchSummary> = await watchesResponse.json()
       const sourcesData: SourceSummary[] = await sourcesResponse.json()
 
-      setWatches(Array.isArray(watchesData.items) ? watchesData.items : [])
-      setSources(Array.isArray(sourcesData) ? sourcesData : [])
-      setPageInfo({
+      const nextWatches = Array.isArray(watchesData.items) ? watchesData.items : []
+      const nextSources = Array.isArray(sourcesData) ? sourcesData : []
+      const nextPageInfo = {
         page: watchesData.page ?? 1,
         pageSize: watchesData.page_size ?? watchesData.items.length,
         total: watchesData.total ?? watchesData.items.length,
-      })
+      }
+      dashboardCache = { watches: nextWatches, sources: nextSources, pageInfo: nextPageInfo }
+      setWatches(nextWatches)
+      setSources(nextSources)
+      setPageInfo(nextPageInfo)
       setError(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load dashboard')
@@ -141,13 +155,17 @@ export default function WatchList() {
       const watchesData: PaginatedResponse<WatchSummary> = await watchesResponse.json()
       const sourcesData: SourceSummary[] = await sourcesResponse.json()
 
-      setWatches(Array.isArray(watchesData.items) ? watchesData.items : [])
-      setSources(Array.isArray(sourcesData) ? sourcesData : [])
-      setPageInfo({
+      const nextWatches = Array.isArray(watchesData.items) ? watchesData.items : []
+      const nextSources = Array.isArray(sourcesData) ? sourcesData : []
+      const nextPageInfo = {
         page: watchesData.page ?? 1,
         pageSize: watchesData.page_size ?? watchesData.items.length,
         total: watchesData.total ?? watchesData.items.length,
-      })
+      }
+      dashboardCache = { watches: nextWatches, sources: nextSources, pageInfo: nextPageInfo }
+      setWatches(nextWatches)
+      setSources(nextSources)
+      setPageInfo(nextPageInfo)
       setError(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to refresh')
@@ -422,6 +440,13 @@ export default function WatchList() {
           ) : (
             <div className="table-scroll">
               <table className="watch-table" aria-label="Watch queue table">
+                <colgroup>
+                  <col className="watch-table__watch-column" />
+                  <col className="watch-table__source-column" />
+                  <col className="watch-table__check-column" />
+                  <col className="watch-table__status-column" />
+                  <col className="watch-table__action-column" />
+                </colgroup>
                 <thead>
                   <tr>
                     <th>Watch</th>
@@ -460,7 +485,7 @@ export default function WatchList() {
                                       : 'neutral'
                             }
                           >
-                            {rowState}
+                            {formatSourceState(rowState)}
                           </StatusBadge>
                           <div className="watch-table__secondary">
                             {connectedSources} source{connectedSources === 1 ? '' : 's'} · {healthyConnections} healthy

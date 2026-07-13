@@ -4,10 +4,12 @@ import SectionCard from '../components/ui/SectionCard'
 import type { SourceSummary } from '../components/watchTypes'
 import { usePageTitle } from '../hooks/usePageTitle'
 
+let connectorsCache: SourceSummary[] | null = null
+
 export default function Connectors() {
   usePageTitle('Connectors')
-  const [sources, setSources] = useState<SourceSummary[]>([])
-  const [loading, setLoading] = useState(true)
+  const [sources, setSources] = useState<SourceSummary[]>(() => connectorsCache ?? [])
+  const [loading, setLoading] = useState(() => connectorsCache === null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -17,7 +19,9 @@ export default function Connectors() {
         return res.json()
       })
       .then((data: SourceSummary[]) => {
-        setSources(Array.isArray(data) ? data : [])
+        const nextSources = Array.isArray(data) ? data : []
+        connectorsCache = nextSources
+        setSources(nextSources)
         setError(null)
       })
       .catch(err => {

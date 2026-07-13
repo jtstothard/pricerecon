@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { formatSourceName } from '../lib/sourceNames'
 import type { WatchSummary, SourceSummary } from './watchTypes'
 
@@ -56,16 +57,54 @@ function SourceMultiSelect({ sources, selected, onToggle, disabled }: {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const ref = useRef<HTMLDivElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [dropdownPosition, setDropdownPosition] = useState<React.CSSProperties>({})
+
+  const updateDropdownPosition = () => {
+    const trigger = ref.current
+    if (!trigger) return
+
+    const rect = trigger.getBoundingClientRect()
+    const gutter = 12
+    const width = Math.min(rect.width, window.innerWidth - gutter * 2)
+    const left = Math.min(Math.max(rect.left, gutter), window.innerWidth - width - gutter)
+    const availableBelow = window.innerHeight - rect.bottom - gutter
+    const availableAbove = rect.top - gutter
+    const openAbove = availableBelow < 220 && availableAbove > availableBelow
+
+    setDropdownPosition({
+      position: 'fixed',
+      left,
+      width,
+      ...(openAbove ? { bottom: window.innerHeight - rect.top + 4 } : { top: rect.bottom + 4 }),
+    })
+  }
 
   useEffect(() => {
     if (!open) return
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      if (
+        ref.current &&
+        !ref.current.contains(e.target as Node) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
         setOpen(false)
       }
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  useLayoutEffect(() => {
+    if (!open) return
+    updateDropdownPosition()
+    window.addEventListener('resize', updateDropdownPosition)
+    window.addEventListener('scroll', updateDropdownPosition, true)
+    return () => {
+      window.removeEventListener('resize', updateDropdownPosition)
+      window.removeEventListener('scroll', updateDropdownPosition, true)
+    }
   }, [open])
 
   const filtered = sources.filter(s => {
@@ -99,8 +138,8 @@ function SourceMultiSelect({ sources, selected, onToggle, disabled }: {
         <span className="source-multiselect__arrow">{open ? '▲' : '▼'}</span>
       </button>
 
-      {open && (
-        <div className="source-multiselect__dropdown">
+      {open && createPortal(
+        <div className="source-multiselect__dropdown source-multiselect__dropdown--portal" ref={dropdownRef} style={dropdownPosition}>
           <input
             type="text"
             className="source-multiselect__search"
@@ -132,7 +171,8 @@ function SourceMultiSelect({ sources, selected, onToggle, disabled }: {
               })
             )}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )

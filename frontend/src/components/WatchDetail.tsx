@@ -41,6 +41,13 @@ interface PaginatedResponse<T> {
   page_size: number
 }
 
+interface WatchDetailCache {
+  watch: Watch
+  listings: Listing[]
+}
+
+const watchDetailCache = new Map<number, WatchDetailCache>()
+
 const formatDateTime = (value: string | null) => {
   if (!value) return '—'
   return new Date(value).toLocaleString()
@@ -57,9 +64,10 @@ const formatPrice = (currency: string, price: number | string) => {
 export default function WatchDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [watch, setWatch] = useState<Watch | null>(null)
-  const [listings, setListings] = useState<Listing[]>([])
-  const [loading, setLoading] = useState(true)
+  const cachedDetail = id ? watchDetailCache.get(Number(id)) : undefined
+  const [watch, setWatch] = useState<Watch | null>(() => cachedDetail?.watch ?? null)
+  const [listings, setListings] = useState<Listing[]>(() => cachedDetail?.listings ?? [])
+  const [loading, setLoading] = useState(() => !cachedDetail)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [checking, setChecking] = useState(false)
@@ -69,6 +77,13 @@ export default function WatchDetail() {
 
   useEffect(() => {
     if (id) {
+      const cached = watchDetailCache.get(Number(id))
+      if (cached) {
+        setWatch(cached.watch)
+        setListings(cached.listings)
+      }
+      setLoading(!cached)
+      setError(null)
       fetchWatchData()
     }
   }, [id])
@@ -88,6 +103,7 @@ export default function WatchDetail() {
       const watchData: Watch = await watchRes.json()
       const listingsData: PaginatedResponse<Listing> = await listingsRes.json()
 
+      watchDetailCache.set(Number(id), { watch: watchData, listings: listingsData.items })
       setWatch(watchData)
       setListings(listingsData.items)
     } catch (err) {
@@ -223,6 +239,15 @@ export default function WatchDetail() {
             ) : (
               <div className="table-scroll">
                 <table className="listings-table" aria-label="Current listings table">
+                  <colgroup>
+                    <col className="listings-table__source-column" />
+                    <col className="listings-table__title-column" />
+                    <col className="listings-table__price-column" />
+                    <col className="listings-table__condition-column" />
+                    <col className="listings-table__stock-column" />
+                    <col className="listings-table__seen-column" />
+                    <col className="listings-table__link-column" />
+                  </colgroup>
                   <thead>
                     <tr>
                       <th>Source</th>
