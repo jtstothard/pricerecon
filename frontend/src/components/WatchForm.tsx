@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { formatSourceName } from '../lib/sourceNames'
 import type { WatchSummary, SourceSummary } from './watchTypes'
 
@@ -46,6 +46,97 @@ const CONDITIONS = [
   { value: 'used_good', label: 'Used Good' },
   { value: 'used_fair', label: 'Used Fair' },
 ]
+
+function SourceMultiSelect({ sources, selected, onToggle, disabled }: {
+  sources: SourceSummary[]
+  selected: string[]
+  onToggle: (connector: string) => void
+  disabled?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const filtered = sources.filter(s => {
+    const name = formatSourceName(s.name || s.connector).toLowerCase()
+    return name.includes(query.toLowerCase())
+  })
+
+  const selectedNames = selected
+    .map(connector => {
+      const s = sources.find(x => x.connector === connector)
+      return s ? formatSourceName(s.name || s.connector) : connector
+    })
+
+  return (
+    <div className="source-multiselect" ref={ref}>
+      <button
+        type="button"
+        className="source-multiselect__trigger"
+        onClick={() => setOpen(!open)}
+        disabled={disabled}
+      >
+        {selected.length === 0 ? (
+          <span className="source-multiselect__placeholder">Select sources…</span>
+        ) : (
+          <span className="source-multiselect__selected">
+            {selectedNames.slice(0, 3).join(', ')}
+            {selectedNames.length > 3 && ` +${selectedNames.length - 3} more`}
+          </span>
+        )}
+        <span className="source-multiselect__badge">{selected.length}</span>
+        <span className="source-multiselect__arrow">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="source-multiselect__dropdown">
+          <input
+            type="text"
+            className="source-multiselect__search"
+            placeholder="Search sources…"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            autoFocus
+          />
+          <div className="source-multiselect__options">
+            {filtered.length === 0 ? (
+              <div className="source-multiselect__empty">No sources found</div>
+            ) : (
+              filtered.map(source => {
+                const isSelected = selected.includes(source.connector)
+                const name = formatSourceName(source.name || source.connector)
+                return (
+                  <button
+                    key={source.connector}
+                    type="button"
+                    className={`source-multiselect__option${isSelected ? ' is-selected' : ''}`}
+                    onClick={() => onToggle(source.connector)}
+                  >
+                    <span className={`source-multiselect__check${isSelected ? ' is-checked' : ''}`}>
+                      {isSelected ? '✓' : ''}
+                    </span>
+                    {name}
+                  </button>
+                )
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function WatchForm({ open, onClose, onCreated }: WatchFormProps) {
   const [formData, setFormData] = useState<WatchFormData>({
@@ -224,26 +315,16 @@ export default function WatchForm({ open, onClose, onCreated }: WatchFormProps) 
             </div>
 
             <div className="watch-form-field watch-form-field--full">
-              <label>Sources</label>
+              <label>Sources ({formData.sources.length} selected)</label>
               {sourcesLoading ? (
                 <p className="watch-form-hint">Loading sources…</p>
               ) : (
-                <div className="watch-form-chips">
-                  {availableSources.map(source => {
-                    const selected = formData.sources.includes(source.connector)
-                    return (
-                      <button
-                        key={source.connector}
-                        type="button"
-                        className={`watch-chip${selected ? ' watch-chip--active' : ''}`}
-                        onClick={() => toggleSource(source.connector)}
-                        disabled={loading}
-                      >
-                        {formatSourceName(source.name || source.connector)}
-                      </button>
-                    )
-                  })}
-                </div>
+                <SourceMultiSelect
+                  sources={availableSources}
+                  selected={formData.sources}
+                  onToggle={toggleSource}
+                  disabled={loading}
+                />
               )}
             </div>
 
