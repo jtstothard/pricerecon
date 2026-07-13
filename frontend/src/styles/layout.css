@@ -309,7 +309,7 @@
   position: fixed;
   bottom: 24px;
   right: 24px;
-  z-index: 1001;
+  z-index: 100;
   display: none;
 }
 
