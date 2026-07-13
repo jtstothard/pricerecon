@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useData } from '../../context/DataContext'
 
@@ -81,6 +81,16 @@ function MobileNav({ isOpen, onClose }: MobileNavProps) {
 
 export default function MobileNavToggle() {
   const [isOpen, setIsOpen] = useState(false)
+
+  // Lock body scroll when nav is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [isOpen])
 
   return (
     <>

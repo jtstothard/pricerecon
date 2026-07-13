@@ -131,20 +131,16 @@
 
 .app-shell__main {
   min-width: 0;
-  padding: 22px 24px 32px;
+  padding: 16px 24px 24px;
 }
 
 .app-shell__topbar {
-  min-height: var(--topbar-height);
+  min-height: 48px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 18px;
-}
-
-.app-shell__topbar > * {
-  position: static;
+  margin-bottom: 12px;
 }
 
 .page-title {
@@ -242,7 +238,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
-  z-index: 1100;
+  z-index: 999;
   backdrop-filter: blur(4px);
   opacity: 0;
   visibility: hidden;
@@ -265,7 +261,7 @@
   max-width: 85vw;
   background: linear-gradient(180deg, rgba(8, 11, 17, 0.98), rgba(7, 10, 15, 0.96));
   border-right: 1px solid var(--border);
-  z-index: 1000;
+  z-index: 1100;
   padding: 18px;
   display: flex;
   flex-direction: column;
