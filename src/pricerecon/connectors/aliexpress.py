@@ -96,6 +96,9 @@ class AliExpressConnector(BaseConnector):
         if self._should_enrich_with_browser(filters):
             listings = await self._apply_browser_enrichment(listings, filters)
 
+        listings = [self._annotate_query_match(listing, query) for listing in listings]
+        listings = [listing for listing in listings if self._listing_matches_query(listing)]
+
         # Do not emit unresolved placeholder rows for Brave/manual discovery.
         listings = [listing for listing in listings if listing.price is not None]
 
@@ -233,6 +236,51 @@ class AliExpressConnector(BaseConnector):
                 targets.append(pid)
 
         return list(dict.fromkeys(targets))
+
+    def _annotate_query_match(self, listing: NormalizedListing, query: str) -> NormalizedListing:
+        title = (listing.title_raw or "").lower()
+        strong_tokens = self._query_strong_tokens(query)
+        matched_tokens = [token for token in strong_tokens if token in title]
+        exact_match = bool(strong_tokens) and len(matched_tokens) == len(strong_tokens)
+        mismatch_flags = list(listing.mismatch_flags or [])
+        if strong_tokens and not exact_match and "QUERY_MISMATCH" not in mismatch_flags:
+            mismatch_flags.append("QUERY_MISMATCH")
+        variant = dict(listing.variant_normalized or {})
+        variant.update(
+            {
+                "query": query,
+                "query_strong_tokens": strong_tokens,
+                "query_matched_tokens": matched_tokens,
+            }
+        )
+        return listing.model_copy(
+            update={
+                "exact_variant_confirmed": exact_match if strong_tokens else listing.exact_variant_confirmed,
+                "variant_match_confidence": "high" if exact_match else ("low" if strong_tokens else listing.variant_match_confidence),
+                "mismatch_flags": mismatch_flags or None,
+                "variant_normalized": variant,
+            }
+        )
+
+    def _listing_matches_query(self, listing: NormalizedListing) -> bool:
+        mismatch_flags = set(listing.mismatch_flags or [])
+        return "QUERY_MISMATCH" not in mismatch_flags
+
+    def _query_strong_tokens(self, query: str) -> list[str]:
+        stopwords = {
+            "amd", "intel", "cpu", "processor", "motherboard", "board", "memory",
+            "ram", "desktop", "used", "new", "for", "with", "and", "the", "socket",
+            "series", "gb", "mhz", "am4", "am5",
+        }
+        tokens = [token.lower() for token in re.findall(r"[a-z0-9+.-]+", query or "")]
+        strong: list[str] = []
+        for token in tokens:
+            normalized = token.strip("-._")
+            if not normalized or normalized in stopwords:
+                continue
+            if any(ch.isdigit() for ch in normalized) or len(normalized) >= 5:
+                strong.append(normalized)
+        return list(dict.fromkeys(strong))
 
     async def _affiliate_search(self, query: str, filters: dict[str, Any]) -> list[NormalizedListing]:
         payload: dict[str, Any] = {
