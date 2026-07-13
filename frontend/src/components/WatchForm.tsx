@@ -1,13 +1,40 @@
-import { useState } from 'react'
-import type { WatchSummary } from './watchTypes'
+import * as React from "react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog"
+import { Button } from "./ui/button"
+import { Label } from "./ui/label"
+import { Input } from "./ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+import { Checkbox } from "./ui/checkbox"
+import type { WatchSummary, SourceSummary } from './watchTypes'
+
+interface WatchFormData {
+  name: string
+  query: string
+  category: string
+  interval: string
+  enabled: boolean
+  sources: string[]
+  filters: {
+    price_max: string
+    condition: string[]
+  }
+}
 
 interface WatchFormProps {
+  open: boolean
   onClose: () => void
   onCreated: (watch: WatchSummary) => void
 }
 
-export default function WatchForm({ onClose, onCreated }: WatchFormProps) {
-  const [formData, setFormData] = useState({
+export default function WatchForm({ open, onClose, onCreated }: WatchFormProps) {
+  const [formData, setFormData] = React.useState<WatchFormData>({
     name: '',
     query: '',
     category: 'gpu',
@@ -19,8 +46,29 @@ export default function WatchForm({ onClose, onCreated }: WatchFormProps) {
       condition: ['new', 'refurbished', 'used_like_new'],
     },
   })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+
+  // Fetch available sources
+  const [availableSources, setAvailableSources] = React.useState<SourceSummary[]>([])
+  const [sourcesLoading, setSourcesLoading] = React.useState(true)
+
+  React.useEffect(() => {
+    fetch('/api/sources')
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch sources')
+        return res.json()
+      })
+      .then((data: SourceSummary[]) => {
+        setAvailableSources(Array.isArray(data) ? data : [])
+      })
+      .catch(err => {
+        console.error('Failed to load sources:', err)
+      })
+      .finally(() => {
+        setSourcesLoading(false)
+      })
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -49,6 +97,7 @@ export default function WatchForm({ onClose, onCreated }: WatchFormProps) {
 
       const newWatch: WatchSummary = await response.json()
       onCreated(newWatch)
+      onClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create watch')
     } finally {
@@ -56,147 +105,217 @@ export default function WatchForm({ onClose, onCreated }: WatchFormProps) {
     }
   }
 
-  const toggleSource = (source: string) => {
-    setFormData({
-      ...formData,
-      sources: formData.sources.includes(source)
-        ? formData.sources.filter(s => s !== source)
-        : [...formData.sources, source],
-    })
+  const toggleSource = (connector: string) => {
+    setFormData(prev => ({
+      ...prev,
+      sources: prev.sources.includes(connector)
+        ? prev.sources.filter(s => s !== connector)
+        : [...prev.sources, connector],
+    }))
   }
 
   const toggleCondition = (condition: string) => {
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       filters: {
-        ...formData.filters,
-        condition: formData.filters.condition.includes(condition)
-          ? formData.filters.condition.filter(c => c !== condition)
-          : [...formData.filters.condition, condition],
+        ...prev.filters,
+        condition: prev.filters.condition.includes(condition)
+          ? prev.filters.condition.filter(c => c !== condition)
+          : [...prev.filters.condition, condition],
       },
-    })
+    }))
+  }
+
+  const handleCategoryChange = (value: string | null) => {
+    if (value) setFormData(prev => ({ ...prev, category: value }))
+  }
+
+  const handleIntervalChange = (value: string | null) => {
+    if (value) setFormData(prev => ({ ...prev, interval: value }))
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h3>Create watch</h3>
-          <button className="close-btn" onClick={onClose}>×</button>
-        </div>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Create watch</DialogTitle>
+          <DialogDescription>
+            Configure a new watch to track prices across your selected sources.
+          </DialogDescription>
+        </DialogHeader>
 
-        {error && <div className="error">{error}</div>}
+        {error && (
+          <div className="p-3 text-sm text-destructive-foreground bg-destructive/10 rounded-lg border border-destructive/20">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="name">Name</label>
-            <input
-              id="name"
-              type="text"
-              value={formData.name}
-              onChange={e => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
-          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="My GPU watch"
+                required
+                disabled={loading}
+              />
+            </div>
 
-          <div className="form-group">
-            <label htmlFor="query">Query</label>
-            <input
-              id="query"
-              type="text"
-              value={formData.query}
-              onChange={e => setFormData({ ...formData, query: e.target.value })}
-              required
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="query">Query</Label>
+              <Input
+                id="query"
+                value={formData.query}
+                onChange={e => setFormData(prev => ({ ...prev, query: e.target.value }))}
+                placeholder="RTX 4090 24GB"
+                required
+                disabled={loading}
+              />
+            </div>
 
-          <div className="form-group">
-            <label htmlFor="category">Category</label>
-            <select
-              id="category"
-              value={formData.category}
-              onChange={e => setFormData({ ...formData, category: e.target.value })}
-            >
-              <option value="gpu">GPU</option>
-              <option value="cpu">CPU</option>
-              <option value="ram">RAM</option>
-              <option value="storage">Storage</option>
-              <option value="motherboard">Motherboard</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <Select
+                value={formData.category}
+                onValueChange={handleCategoryChange}
+                disabled={loading}
+              >
+                <SelectTrigger id="category">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="gpu">GPU</SelectItem>
+                  <SelectItem value="cpu">CPU</SelectItem>
+                  <SelectItem value="ram">RAM</SelectItem>
+                  <SelectItem value="storage">Storage</SelectItem>
+                  <SelectItem value="motherboard">Motherboard</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="form-group">
-            <label htmlFor="interval">Check Interval</label>
-            <select
-              id="interval"
-              value={formData.interval}
-              onChange={e => setFormData({ ...formData, interval: e.target.value })}
-            >
-              <option value="1h">Every hour</option>
-              <option value="4h">Every 4 hours</option>
-              <option value="8h">Every 8 hours</option>
-              <option value="12h">Every 12 hours</option>
-              <option value="1d">Every day</option>
-            </select>
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="interval">Check Interval</Label>
+              <Select
+                value={formData.interval}
+                onValueChange={handleIntervalChange}
+                disabled={loading}
+              >
+                <SelectTrigger id="interval">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1h">Every hour</SelectItem>
+                  <SelectItem value="4h">Every 4 hours</SelectItem>
+                  <SelectItem value="8h">Every 8 hours</SelectItem>
+                  <SelectItem value="12h">Every 12 hours</SelectItem>
+                  <SelectItem value="1d">Every day</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="form-group">
-            <label>Sources</label>
-            <div className="checkbox-group">
-              {['ebay', 'cex', 'amazon_uk'].map(source => (
-                <label key={source} className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={formData.sources.includes(source)}
-                    onChange={() => toggleSource(source)}
-                  />
-                  {source}
-                </label>
-              ))}
+            <div className="col-span-2 space-y-2">
+              <Label>Sources</Label>
+              <div className="space-y-2">
+                <div className="text-xs text-muted-foreground">
+                  Select the sources you want to check:
+                </div>
+                {sourcesLoading ? (
+                  <div className="text-sm text-muted-foreground">Loading sources...</div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    {availableSources.map(source => (
+                      <label key={source.connector} className="flex items-center space-x-2 cursor-pointer">
+                        <Checkbox
+                          checked={formData.sources.includes(source.connector)}
+                          onCheckedChange={() => toggleSource(source.connector)}
+                          disabled={loading}
+                        />
+                        <span className="text-sm">
+                          {source.name} <span className="text-xs text-muted-foreground">({source.connector})</span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+                {formData.sources.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {formData.sources.map(connector => {
+                      const source = availableSources.find(s => s.connector === connector)
+                      return (
+                        <span
+                          key={connector}
+                          className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2 py-0.5 text-xs"
+                        >
+                          {source?.name || connector}
+                          <button
+                            type="button"
+                            onClick={() => toggleSource(connector)}
+                            className="ml-1 hover:text-primary-foreground"
+                            aria-label={`Remove ${source?.name || connector}`}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="price_max">Max Price (optional)</Label>
+              <Input
+                id="price_max"
+                type="number"
+                step="0.01"
+                value={formData.filters.price_max}
+                onChange={e => setFormData(prev => ({
+                  ...prev,
+                  filters: { ...prev.filters, price_max: e.target.value }
+                }))}
+                placeholder="1000.00"
+                disabled={loading}
+              />
+            </div>
+
+            <div className="col-span-2 space-y-2">
+              <Label>Condition</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {['new', 'new_open_box', 'refurbished', 'used_like_new', 'used_good', 'used_fair'].map(cond => (
+                  <div key={cond} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`condition-${cond}`}
+                      checked={formData.filters.condition.includes(cond)}
+                      onCheckedChange={() => toggleCondition(cond)}
+                      disabled={loading}
+                    />
+                    <Label
+                      htmlFor={`condition-${cond}`}
+                      className="text-sm font-normal cursor-pointer"
+                    >
+                      {cond.replace(/_/g, ' ')}
+                    </Label>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="price_max">Max Price (optional)</label>
-            <input
-              id="price_max"
-              type="number"
-              step="0.01"
-              value={formData.filters.price_max}
-              onChange={e => setFormData({
-                ...formData,
-                filters: { ...formData.filters, price_max: e.target.value }
-              })}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Condition</label>
-            <div className="checkbox-group">
-              {['new', 'new_open_box', 'refurbished', 'used_like_new', 'used_good', 'used_fair'].map(cond => (
-                <label key={cond} className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={formData.filters.condition.includes(cond)}
-                    onChange={() => toggleCondition(cond)}
-                  />
-                  {cond.replace(/_/g, ' ')}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className="modal-actions">
-            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={loading}>
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>
               Cancel
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
+            </Button>
+            <Button type="submit" disabled={loading}>
               {loading ? 'Creating...' : 'Create Watch'}
-            </button>
-          </div>
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

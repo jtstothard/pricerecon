@@ -1,13 +1,59 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+@import url('./styles/tokens.css');
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 221 14% 7%;  /* --bg: #0b0f14 */
+    --foreground: 229 93% 91%; /* --text: #eef2ff */
+    --card: 223 16% 11%;       /* --bg-elevated: #111723 */
+    --card-foreground: 229 93% 91%;
+    --popover: 223 16% 11%;
+    --popover-foreground: 229 93% 91%;
+    --primary: 233 100% 72%;   /* --accent: #6d7dff */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 221 14% 13%;  /* --bg-surface: #151c29 */
+    --secondary-foreground: 229 93% 91%;
+    --muted: 221 14% 13%;
+    --muted-foreground: 215 16% 60%; /* --text-tertiary: #94a3b8 */
+    --accent: 233 100% 72%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%; /* --danger: #f87171 */
+    --destructive-foreground: 0 0% 100%;
+    --border: 215 16% 15%;    /* --border: rgba(148, 163, 184, 0.16) ~ #526c9b29 */
+    --input: 215 16% 15%;
+    --ring: 233 100% 72%;
+    --radius: 18px;           /* --radius-md: 18px */
+  }
+
+  .dark {
+    --background: 221 14% 7%;
+    --foreground: 229 93% 91%;
+    --card: 223 16% 11%;
+    --card-foreground: 229 93% 91%;
+    --popover: 223 16% 11%;
+    --popover-foreground: 229 93% 91%;
+    --primary: 233 100% 72%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 221 14% 13%;
+    --secondary-foreground: 229 93% 91%;
+    --muted: 221 14% 13%;
+    --muted-foreground: 215 16% 60%;
+    --accent: 233 100% 72%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 215 16% 15%;
+    --input: 215 16% 15%;
+    --ring: 233 100% 72%;
+    --radius: 18px;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
 }

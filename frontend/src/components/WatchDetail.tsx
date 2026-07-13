@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import PriceHistoryChart from './PriceHistoryChart'
 import EventLog from './EventLog'
+import SectionCard from './ui/SectionCard'
+import StatusBadge from './ui/StatusBadge'
+import EmptyState from './ui/EmptyState'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 interface Watch {
   id: number
@@ -34,13 +38,42 @@ interface PaginatedResponse<T> {
   page_size: number
 }
 
+const formatDateTime = (value: string | null) => {
+  if (!value) return '—'
+  return new Date(value).toLocaleString()
+}
+
+const formatPrice = (currency: string, price: number | string) => {
+  const numericPrice = Number(price)
+  if (Number.isNaN(numericPrice)) return `${currency} ${price}`
+  return `${currency} ${numericPrice.toFixed(2)}`
+}
+
+const sourceDisplayNames: Record<string, string> = {
+  'v1': 'eBay',
+  'ebay': 'eBay',
+  'amazon_uk': 'Amazon UK',
+  'cex': 'CeX',
+  'aliexpress': 'AliExpress',
+  'aliexpress_sg': 'AliExpress',
+}
+
+const formatSourceName = (connector: string) => {
+  return sourceDisplayNames[connector] || connector
+}
+
 export default function WatchDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [watch, setWatch] = useState<Watch | null>(null)
   const [listings, setListings] = useState<Listing[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [checking, setChecking] = useState(false)
+  const [checkSuccessMsg, setCheckSuccessMsg] = useState<string | null>(null)
+
+  usePageTitle(watch ? `Watch: ${watch.name}` : 'Watch detail')
 
   useEffect(() => {
     if (id) {
@@ -69,100 +102,214 @@ export default function WatchDetail() {
       setError(err instanceof Error ? err.message : 'Failed to load watch')
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
+  }
+
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    await fetchWatchData()
   }
 
   const triggerCheck = async () => {
     if (!id) return
+    setChecking(true)
     try {
       const response = await fetch(`/api/watches/${id}/check`, { method: 'POST' })
       if (!response.ok) throw new Error('Failed to trigger check')
       await fetchWatchData()
+      setCheckSuccessMsg('Check triggered successfully')
+      setTimeout(() => setCheckSuccessMsg(null), 3000)
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to trigger check')
+    } finally {
+      setChecking(false)
     }
   }
 
-  if (loading) return <div className="loading">Loading watch...</div>
-  if (error) return <div className="error">{error}</div>
-  if (!watch) return <div className="error">Watch not found</div>
+
+  if (loading) {
+    return (
+      <div className="state-panel state-panel--loading">
+        <div className="state-panel__title">Loading watch detail</div>
+        <div className="state-panel__description">Fetching the latest watch record, listings, history, and events.</div>
+      </div>
+    )
+  }
+  if (error) {
+    return (
+      <EmptyState
+        title="Watch detail failed to load"
+        description={error}
+        icon="!"
+        action={<button className="btn btn-secondary" onClick={() => void fetchWatchData()}>Try again</button>}
+      />
+    )
+  }
+  if (!watch) {
+    return (
+      <EmptyState
+        title="Watch not found"
+        description="The requested watch no longer exists or the route is invalid."
+        action={<button className="btn btn-secondary" onClick={() => navigate(-1)}>Go back</button>}
+      />
+    )
+  }
+
+  const lastCheck = formatDateTime(watch.last_check_at)
+  const schedule = watch.schedule?.interval || '—'
+  const category = watch.category || '—'
 
   return (
-    <div className="watch-detail">
-      <div className="watch-detail-header">
-        <button className="btn btn-secondary" onClick={() => navigate('/')}>
-          ← Back
-        </button>
-        <div className="header-content">
-          <h2>{watch.name}</h2>
-          <button className="btn btn-primary" onClick={triggerCheck}>
-            Check Now
-          </button>
-        </div>
-      </div>
-
-      <div className="watch-info">
-        <p><strong>Query:</strong> {watch.query}</p>
-        <p><strong>Category:</strong> {watch.category || '—'}</p>
-        <p><strong>Interval:</strong> {watch.schedule?.interval || '—'}</p>
-        <p><strong>Status:</strong> {watch.enabled ? 'Active' : 'Paused'}</p>
-        {watch.last_check_at && (
-          <p><strong>Last check:</strong> {new Date(watch.last_check_at).toLocaleString()}</p>
+    <div className="detail-page">
+      <SectionCard
+        eyebrow="Watch detail"
+        title={watch.name}
+        subtitle=""
+        headingLevel="h1"
+        id="page-title"
+        action={(
+          <div className="inline-actions">
+            <button className="btn btn-secondary" onClick={() => navigate(-1)} aria-label="Go back to dashboard">
+              ← Back
+            </button>
+            <button className="btn btn-secondary" onClick={() => void handleRefresh()} disabled={refreshing} aria-label="Refresh watch data">
+              {refreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
+            <button className="btn btn-primary" onClick={triggerCheck} disabled={checking} aria-label="Trigger watch check now">
+              {checking ? 'Checking...' : 'Check now'}
+            </button>
+          </div>
         )}
-      </div>
+      >
+        {checkSuccessMsg && (
+          <div className="alert alert--success" role="status" aria-live="polite">
+            {checkSuccessMsg}
+          </div>
+        )}
+        <div className="detail-hero">
+          <div className="detail-header__name">
+            <StatusBadge variant={watch.enabled ? 'active' : 'paused'}>
+              {watch.enabled ? 'Active' : 'Paused'}
+            </StatusBadge>
+            <StatusBadge variant="neutral">Watch #{watch.id}</StatusBadge>
+            <StatusBadge variant="accent">{watch.category ? watch.category : 'Uncategorized'}</StatusBadge>
+          </div>
 
-      <div className="watch-sections">
-        <section className="watch-section">
-          <h3>Current Listings ({listings.length})</h3>
-          {listings.length === 0 ? (
-            <p className="empty-state">No listings found</p>
-          ) : (
-            <div className="listings-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Source</th>
-                    <th>Title</th>
-                    <th>Price</th>
-                    <th>Condition</th>
-                    <th>Stock</th>
-                    <th>Seen</th>
-                    <th>Link</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {listings.map(listing => (
-                    <tr key={listing.source_listing_id}>
-                      <td>{listing.source}</td>
-                      <td>{listing.title_raw}</td>
-                      <td>{listing.currency} {Number(listing.price).toFixed(2)}</td>
-                      <td>{listing.condition || 'N/A'}</td>
-                      <td>
-                        <span className={`stock-badge ${listing.in_stock ? 'in-stock' : 'out-of-stock'}`}>
-                          {listing.in_stock ? 'In Stock' : 'Out of Stock'}
-                        </span>
-                      </td>
-                      <td>{new Date(listing.timestamp_seen).toLocaleString()}</td>
-                      <td>
-                        <a href={listing.url} target="_blank" rel="noopener noreferrer">
-                          View
-                        </a>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <div className="detail-meta">
+            <span><strong>Query</strong> {watch.query}</span>
+            <span><strong>Schedule</strong> {schedule}</span>
+            <span><strong>Last check</strong> {lastCheck}</span>
+          </div>
+
+          <div className="detail-stat-grid">
+            <div className="detail-stat">
+              <div className="detail-stat__label">Listings</div>
+              <div className="detail-stat__value">{listings.length}</div>
             </div>
-          )}
-        </section>
+            <div className="detail-stat">
+              <div className="detail-stat__label">Category</div>
+              <div className="detail-stat__value">{category}</div>
+            </div>
+            <div className="detail-stat">
+              <div className="detail-stat__label">Status</div>
+              <div className="detail-stat__value">{watch.enabled ? 'Watching' : 'Paused'}</div>
+            </div>
+          </div>
+        </div>
+      </SectionCard>
 
-        <section className="watch-section">
-          <PriceHistoryChart watchId={parseInt(id!)} />
-        </section>
 
-        <section className="watch-section">
-          <EventLog watchId={parseInt(id!)} />
-        </section>
+      {checkSuccessMsg && (
+        <div className="state-panel" style={{ background: 'rgba(52, 211, 153, 0.08)', borderColor: 'rgba(52, 211, 153, 0.2)', color: '#a7f3d0' }}>
+          {checkSuccessMsg}
+        </div>
+      )}
+      <div className="detail-layout detail-layout--dense">
+        <div className="detail-stack">
+          <SectionCard
+            title={`Current listings (${listings.length})`}
+            subtitle=""
+          >
+            <div aria-live="polite" aria-atomic="true" className="visually-hidden">
+              Showing {listings.length} listings
+            </div>
+            {listings.length === 0 ? (
+              <EmptyState
+                title="No listings yet"
+                description="The watch has not produced any listings yet. Trigger a check or wait for the next run."
+                action={<button className="btn btn-primary" onClick={triggerCheck}>Check now</button>}
+              />
+            ) : (
+              <div className="table-scroll">
+                <table className="listings-table" aria-label="Current listings table">
+                  <thead>
+                    <tr>
+                      <th>Source</th>
+                      <th>Title</th>
+                      <th>Price</th>
+                      <th>Condition</th>
+                      <th>Stock</th>
+                      <th>Seen</th>
+                      <th>Link</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {listings.map(listing => (
+                      <tr key={listing.source_listing_id}>
+                        <td data-label="Source">
+                          <div className="table-cell-stack">
+                            <span className="table-cell__primary" title={formatSourceName(listing.source)}>{formatSourceName(listing.source)}</span>
+                          </div>
+                        </td>
+                        <td data-label="Title">
+                          <div className="table-cell-stack">
+                            <span className="table-cell__primary">{listing.title_raw}</span>
+                          </div>
+                        </td>
+                        <td data-label="Price">
+                          <div className="table-cell-stack">
+                            <span className="table-cell__primary">{formatPrice(listing.currency, listing.price)}</span>
+                            <span className="table-cell__secondary">Latest observed price</span>
+                          </div>
+                        </td>
+                        <td data-label="Condition">{listing.condition || 'N/A'}</td>
+                        <td data-label="Stock">
+                          <StatusBadge variant={listing.in_stock ? 'healthy' : 'failed'}>
+                            {listing.in_stock ? 'In stock' : 'Out of stock'}
+                          </StatusBadge>
+                        </td>
+                        <td data-label="Seen">{formatDateTime(listing.timestamp_seen)}</td>
+                        <td data-label="Link">
+                          <a className="btn btn-secondary btn--compact" href={listing.url} target="_blank" rel="noopener noreferrer" aria-label={`View listing on ${formatSourceName(listing.source)}`}>
+                            View
+                          </a>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </SectionCard>
+
+          <SectionCard
+            title="Price history"
+            subtitle=""
+            className="chart-card"
+          >
+            <PriceHistoryChart watchId={parseInt(id!)} />
+          </SectionCard>
+        </div>
+
+        <div className="detail-stack">
+          <SectionCard
+            title="Event log"
+            subtitle=""
+          >
+            <EventLog watchId={parseInt(id!)} />
+          </SectionCard>
+        </div>
       </div>
     </div>
   )

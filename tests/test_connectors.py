@@ -551,6 +551,100 @@ async def test_shopify_connector_accepts_store_url_alias():
 
 
 @pytest.mark.asyncio
+async def test_aliexpress_connector_uses_top_sync_endpoint_and_signed_requests():
+    calls: list[dict[str, object]] = []
+
+    class DummyResponse:
+        def __init__(self, payload: dict[str, object], status_code: int = 200):
+            self._payload = payload
+            self.status_code = status_code
+            self.headers: dict[str, str] = {}
+
+        def raise_for_status(self):
+            if self.status_code >= 400:
+                raise httpx.HTTPStatusError('boom', request=httpx.Request('POST', 'https://example.test'), response=httpx.Response(self.status_code))
+
+        def json(self):
+            return self._payload
+
+    class DummyClient:
+        async def post(self, url, json=None, headers=None, data=None):
+            body = data if data is not None else json
+            calls.append({'url': url, 'body': body, 'headers': headers})
+            if isinstance(body, dict) and body.get('method') == 'aliexpress.affiliate.product.query':
+                return DummyResponse({'result': {'items': [{'productId': '1005008557811111', 'title': 'Ali CPU', 'displayPrice': '199.99', 'originalPrice': '249.99', 'shippingCost': '4.99', 'shopName': 'SZCPU', 'evaluateRate': '4.8', 'orders': '123', 'inStock': True, 'currency': 'GBP'}]}})
+            if isinstance(body, dict) and body.get('method') == 'aliexpress.ds.auth.token.refresh':
+                return DummyResponse({'result': {'access_token': 'fresh-token', 'refresh_token': 'fresh-refresh', 'expires_in': 7200}})
+            if isinstance(body, dict) and body.get('method') == 'aliexpress.ds.product.get':
+                return DummyResponse({'result': {'data': {'title': 'Ali CPU DS', 'displayPrice': '189.99', 'originalPrice': '239.99', 'shippingCost': '3.99', 'shopName': 'SZCPU DS', 'rating': '4.9', 'sales': '456', 'inStock': True, 'coupons': [{'text': '£10 off'}]}}})
+            raise AssertionError(body)
+
+        async def aclose(self):
+            return None
+
+    class DummyBrowserPage:
+        async def goto(self, url, wait_until=None, timeout=None):
+            calls.append({'url': url, 'kind': 'goto'})
+
+        async def content(self):
+            return '<html><body><h1>Ali CPU Browser</h1><script>priceCurrency:"GBP",price:"179.99"</script><div>Extra 10% off with coins</div><div>1,234 sold</div></body></html>'
+
+    class DummyBrowserContext:
+        async def new_page(self):
+            return DummyBrowserPage()
+
+        async def close(self):
+            return None
+
+    class DummyBrowserClient:
+        async def new_context(self):
+            return DummyBrowserContext()
+
+    connector = AliExpressConnector(
+        {
+            'manual_pids': ['1005012248779870'],
+            'ds_access_token': 'stale-token',
+            'ds_refresh_token': 'refresh-token',
+            'ds_app_key': 'app-key',
+            'ds_app_secret': 'app-secret',
+            'ds_expires_at': '2026-01-01T00:00:00+00:00',
+        },
+        browser_client=cast(Any, DummyBrowserClient()),
+        http_client=cast(Any, DummyClient()),
+    )
+    listings = await connector.search('1005008557811111', {'browser_enrich': True, 'enrich_with_ds': True, 'brave_discovery': False})
+    await connector.cleanup()
+
+    api_calls = [call for call in calls if call.get('url') == 'https://api-sg.aliexpress.com/sync']
+    assert api_calls, calls
+
+    def body_method(call: dict[str, Any]) -> str | None:
+        body = call.get('body')
+        return body.get('method') if isinstance(body, dict) else None
+
+    def body_has_sign(call: dict[str, Any]) -> bool:
+        body = call.get('body')
+        return isinstance(body, dict) and body.get('sign_method') == 'md5' and 'sign' in body
+
+    assert any(body_method(call) == 'aliexpress.affiliate.product.query' for call in api_calls)
+    assert any(body_method(call) == 'aliexpress.ds.auth.token.refresh' for call in api_calls)
+    assert any(body_method(call) == 'aliexpress.ds.product.get' for call in api_calls)
+    assert all(body_has_sign(call) for call in api_calls)
+    assert any('goto' == call.get('kind') for call in calls)
+    assert any(l.source_listing_id == '1005008557811111' for l in listings)
+    manual = next(l for l in listings if l.source_listing_id == '1005012248779870')
+    assert manual.variant_normalized is not None
+    assert manual.variant_normalized['aliexpress_watch_mode'] == 'manual_pid'
+    assert manual.price == Decimal('189.99')
+    assert manual.variant_normalized['aliexpress_source_lane'] in {'ds', 'browser'}
+    affiliate = next(l for l in listings if l.source_listing_id == '1005008557811111')
+    assert affiliate.price == Decimal('189.99')
+    assert affiliate.variant_normalized is not None
+    assert affiliate.variant_normalized['aliexpress_source_lane'] in {'ds', 'browser'}
+    assert affiliate.variant_normalized['aliexpress_coupon_layers']
+
+
+@pytest.mark.asyncio
 async def test_aliexpress_connector_uses_manual_pid_and_ds_and_browser(monkeypatch):
     calls: list[tuple[str, str]] = []
 
@@ -567,15 +661,16 @@ async def test_aliexpress_connector_uses_manual_pid_and_ds_and_browser(monkeypat
             return self._payload
 
     class DummyClient:
-        async def post(self, url, json=None, headers=None):
+        async def post(self, url, json=None, headers=None, data=None):
+            body = data if data is not None else json
             calls.append((url, 'POST'))
-            if 'affiliate/product/query' in url:
-                return DummyResponse({'items': [{'productId': '1005008557811111', 'title': 'Ali CPU', 'displayPrice': '199.99', 'originalPrice': '249.99', 'shippingCost': '4.99', 'shopName': 'SZCPU', 'evaluateRate': '4.8', 'orders': '123', 'inStock': True, 'currency': 'GBP'}]})
-            if 'auth/token/refresh' in url:
-                return DummyResponse({'access_token': 'fresh-token', 'refresh_token': 'fresh-refresh', 'expires_in': 7200})
-            if 'ds/product/get' in url:
-                return DummyResponse({'data': {'title': 'Ali CPU DS', 'displayPrice': '189.99', 'originalPrice': '239.99', 'shippingCost': '3.99', 'shopName': 'SZCPU DS', 'rating': '4.9', 'sales': '456', 'inStock': True, 'coupons': [{'text': '£10 off'}]}})
-            raise AssertionError(url)
+            if isinstance(body, dict) and body.get('method') == 'aliexpress.affiliate.product.query':
+                return DummyResponse({'result': {'items': [{'productId': '1005008557811111', 'title': 'Ali CPU', 'displayPrice': '199.99', 'originalPrice': '249.99', 'shippingCost': '4.99', 'shopName': 'SZCPU', 'evaluateRate': '4.8', 'orders': '123', 'inStock': True, 'currency': 'GBP'}]}})
+            if isinstance(body, dict) and body.get('method') == 'aliexpress.ds.auth.token.refresh':
+                return DummyResponse({'result': {'access_token': 'fresh-token', 'refresh_token': 'fresh-refresh', 'expires_in': 7200}})
+            if isinstance(body, dict) and body.get('method') == 'aliexpress.ds.product.get':
+                return DummyResponse({'result': {'data': {'title': 'Ali CPU DS', 'displayPrice': '189.99', 'originalPrice': '239.99', 'shippingCost': '3.99', 'shopName': 'SZCPU DS', 'rating': '4.9', 'sales': '456', 'inStock': True, 'coupons': [{'text': '£10 off'}]}}})
+            raise AssertionError(body)
 
         async def aclose(self):
             return None
@@ -610,11 +705,10 @@ async def test_aliexpress_connector_uses_manual_pid_and_ds_and_browser(monkeypat
         browser_client=cast(Any, DummyBrowserClient()),
         http_client=cast(Any, DummyClient()),
     )
-    listings = await connector.search('1005008557811111', {'browser_enrich': True, 'enrich_with_ds': True})
+    listings = await connector.search('1005008557811111', {'browser_enrich': True, 'enrich_with_ds': True, 'brave_discovery': False})
     await connector.cleanup()
 
-    assert any('affiliate/product/query' in url for url, _ in calls)
-    assert any('ds/product/get' in url for url, _ in calls)
+    assert calls
     assert any('goto' == kind for _, kind in calls)
     assert any(l.source_listing_id == '1005008557811111' for l in listings)
     manual = next(l for l in listings if l.source_listing_id == '1005012248779870')
@@ -627,6 +721,72 @@ async def test_aliexpress_connector_uses_manual_pid_and_ds_and_browser(monkeypat
     assert affiliate.variant_normalized is not None
     assert affiliate.variant_normalized['aliexpress_source_lane'] in {'ds', 'browser'}
     assert affiliate.variant_normalized['aliexpress_coupon_layers']
+
+
+def test_aliexpress_connector_extracts_nested_ds_payload_shape():
+    now = watch_executor.datetime.utcnow()
+    connector = AliExpressConnector({})
+    listing = NormalizedListing(
+        source='aliexpress',
+        source_type=SourceType.MARKETPLACE,
+        source_listing_id='1005008557811111',
+        title_raw='1005008557811111',
+        price=Decimal('0'),
+        currency='GBP',
+        url='https://www.aliexpress.com/item/1005008557811111.html',
+        timestamp_seen=now,
+        product_normalized=None,
+        variant_normalized={'aliexpress_product_id': '1005008557811111', 'aliexpress_watch_mode': 'manual_pid'},
+        condition=None,
+        condition_raw=None,
+        shipping_cost=None,
+        total_landed_cost=None,
+        seller_or_store=None,
+        seller_feedback_score=None,
+        seller_feedback_pct=None,
+        location=None,
+        in_stock=None,
+        stock_state=None,
+        image_url=None,
+        exact_variant_confirmed=None,
+        variant_match_confidence=None,
+        mismatch_flags=None,
+        risk_flags=None,
+        category='cpu',
+    )
+
+    detail = {
+        'ae_item_sku_info_dtos': {
+            'ae_item_sku_info_d_t_o': [
+                {
+                    'offer_sale_price': '261.59',
+                    'sku_price': '379.12',
+                    'currency_code': 'GBP',
+                    'sku_available_stock': 19,
+                }
+            ]
+        },
+        'ae_item_base_info_dto': {
+            'subject': 'AMD Ryzen 9 5950X New Ryzen 9 5000 Series Vermeer (Zen 3) 16-Core 3.4 GHz Socket AM4 105W Socket AM4 but without cooler',
+            'evaluation_count': '28',
+            'sales_count': '48',
+            'product_status_type': 'onSelling',
+            'avg_evaluation_rating': '4.6',
+            'product_id': 1005008557811111,
+        },
+    }
+
+    merged = connector._merge_listing_with_detail(listing, detail, '1005008557811111')
+
+    assert merged.title_raw.startswith('AMD Ryzen 9 5950X')
+    assert merged.price == Decimal('261.59')
+    assert merged.in_stock is True
+    assert merged.variant_normalized is not None
+    assert merged.variant_normalized['aliexpress_source_lane'] == 'ds'
+    assert merged.variant_normalized['aliexpress_display_price'] == '261.59'
+    assert merged.variant_normalized['aliexpress_original_price'] == '379.12'
+    assert merged.variant_normalized['aliexpress_rating'] == '4.6'
+    assert merged.variant_normalized['aliexpress_sales'] == '48'
 
 
 @pytest.mark.asyncio

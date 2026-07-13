@@ -1,3 +1,4 @@
+import EmptyState from './ui/EmptyState'
 import StatusBadge from './ui/StatusBadge'
 import type { SourceSummary } from './watchTypes'
 
@@ -25,7 +26,12 @@ const statusVariant = (status: string): BadgeVariant => {
   }
 }
 
-const statusLabel = (status: string) => status.toLowerCase().replace(/_/g, ' ')
+const statusLabel = (status: string) => {
+  // Normalize to "healthy" consistently
+  const lowerStatus = status.toLowerCase()
+  if (lowerStatus === 'ok') return 'healthy'
+  return lowerStatus.replace(/_/g, ' ')
+}
 
 export default function SourceHealth({ sources }: SourceHealthProps) {
   const counts = sources.reduce(
@@ -38,21 +44,21 @@ export default function SourceHealth({ sources }: SourceHealthProps) {
   )
 
   if (sources.length === 0) {
-    return <p className="empty-state__description">No source health data yet.</p>
+    return <EmptyState title="No source health data yet" description="Connectors will appear here once the dashboard loads live health status." />
   }
 
   return (
     <div className="source-health">
-      <div className="source-health__summary">
+      <div className="source-health__summary" aria-live="polite" aria-atomic="true">
         <StatusBadge variant="healthy">{counts.healthy} healthy</StatusBadge>
         <StatusBadge variant="warning">{counts.degraded} degraded</StatusBadge>
         <StatusBadge variant="failed">{counts.failed} failed</StatusBadge>
       </div>
-      <div className="source-health__grid">
+      <div className="source-health__grid" role="list">
         {sources.map(source => {
           const variant = statusVariant(source.status)
           return (
-            <div key={source.connector} className="source-health__item">
+            <div key={source.connector} className="source-health__item" role="listitem">
               <div>
                 <p className="source-health__title">{source.name}</p>
                 <div className="source-health__meta">

@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import TopActionBar from './layout/TopActionBar'
 import WatchForm from './WatchForm'
 import SourceHealth from './SourceHealth'
 import SectionCard from './ui/SectionCard'
 import StatusBadge from './ui/StatusBadge'
 import EmptyState from './ui/EmptyState'
 import type { SourceSummary, WatchSummary } from './watchTypes'
+import { usePageTitle } from '../hooks/usePageTitle'
 
 interface PaginatedResponse<T> {
   items: T[]
@@ -41,6 +43,35 @@ const formatDateTime = (value: string | null) => {
   return new Date(value).toLocaleString()
 }
 
+const dedupeTrailingTokens = (value: string) => value.replace(/\b([\p{L}\p{N}_-]+)(?:\s+\1)+$/giu, '$1')
+
+const formatWatchLabel = (value: string) => dedupeTrailingTokens(value).trim()
+
+const formatWatchMeta = (watch: WatchSummary) => {
+  const parts: string[] = []
+  const category = watch.category?.trim()
+  const query = dedupeTrailingTokens(watch.query).trim()
+
+  if (category) parts.push(category)
+  if (query && query.toLowerCase() !== watch.name.trim().toLowerCase()) {
+    parts.push(query)
+  }
+
+  return parts.length > 0 ? parts.join(' · ') : 'No category or query summary'
+}
+
+const formatConnectorSummary = (watch: WatchSummary, connectedSources: number, sources: SourceSummary[]) => {
+  const sourceLabel = `${connectedSources} source${connectedSources === 1 ? '' : 's'}`
+  const connectors = watch.sources.map(source => sourceDisplayName(source.connector, sources)).join(' · ')
+
+  return connectors ? `${sourceLabel} · ${connectors}` : sourceLabel
+}
+
+const sourceDisplayName = (connector: string, sources: SourceSummary[]) => {
+  const source = sources.find(s => s.connector === connector)
+  return source?.name || connector
+}
+
 const sourceStateLabel = (statuses: NormalizedSourceStatus[]) => {
   if (statuses.some(status => status === 'failed')) return 'failed'
   if (statuses.some(status => status === 'degraded')) return 'degraded'
@@ -54,11 +85,15 @@ export default function WatchList() {
   const [sources, setSources] = useState<SourceSummary[]>([])
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [watchFilter, setWatchFilter] = useState<WatchFilter>('all')
   const [healthFilter, setHealthFilter] = useState<HealthFilter>('all')
   const [pageInfo, setPageInfo] = useState({ page: 1, pageSize: 0, total: 0 })
+  const [checkSuccessMsg, setCheckSuccessMsg] = useState<string | null>(null)
+
+  usePageTitle('Dashboard')
 
   useEffect(() => {
     void fetchDashboardData()
@@ -93,9 +128,42 @@ export default function WatchList() {
     }
   }
 
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    try {
+      const [watchesResponse, sourcesResponse] = await Promise.all([
+        fetch('/api/watches?page=1&page_size=100'),
+        fetch('/api/sources'),
+      ])
+
+      if (!watchesResponse.ok) throw new Error('Failed to fetch watches')
+      if (!sourcesResponse.ok) throw new Error('Failed to fetch sources')
+
+      const watchesData: PaginatedResponse<WatchSummary> = await watchesResponse.json()
+      const sourcesData: SourceSummary[] = await sourcesResponse.json()
+
+      setWatches(Array.isArray(watchesData.items) ? watchesData.items : [])
+      setSources(Array.isArray(sourcesData) ? sourcesData : [])
+      setPageInfo({
+        page: watchesData.page ?? 1,
+        pageSize: watchesData.page_size ?? watchesData.items.length,
+        total: watchesData.total ?? watchesData.items.length,
+      })
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to refresh')
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
   const handleWatchCreated = (watch: WatchSummary) => {
     setWatches(prev => [watch, ...prev])
     setShowForm(false)
+  }
+
+  const handleExport = () => {
+    window.open('/api/export?resource=all&format=json', '_blank', 'noopener,noreferrer')
   }
 
   const toggleWatch = async (id: number, enabled: boolean) => {
@@ -182,6 +250,8 @@ export default function WatchList() {
     const rowSourceStatuses = rowSourceRecords.map(source => normalizeSourceStatus(source!.status))
     const rowState = sourceStateLabel(rowSourceStatuses)
     const connectedSources = rowSourceRecords.length > 0 ? rowSourceRecords.length : watch.sources.length
+    const displayName = formatWatchLabel(watch.name)
+    const displayMeta = formatWatchMeta(watch)
     const healthyConnections = rowSourceStatuses.filter(status => status === 'healthy').length
     const degradedConnections = rowSourceStatuses.filter(status => status === 'degraded').length
     const failedConnections = rowSourceStatuses.filter(status => status === 'failed').length
@@ -190,6 +260,8 @@ export default function WatchList() {
       watch,
       rowState,
       connectedSources,
+      displayName,
+      displayMeta,
       healthyConnections,
       degradedConnections,
       failedConnections,
@@ -197,31 +269,79 @@ export default function WatchList() {
   })
 
   const handleCheckNow = async (watchId: number) => {
-    const response = await fetch(`/api/watches/${watchId}/check`, { method: 'POST' })
-    if (!response.ok) throw new Error('Failed to trigger watch check')
-    await fetchDashboardData()
+    try {
+      const response = await fetch(`/api/watches/${watchId}/check`, { method: "POST" })
+      if (!response.ok) throw new Error("Failed to trigger watch check")
+      await fetchDashboardData()
+      setCheckSuccessMsg("Check triggered successfully")
+      setTimeout(() => setCheckSuccessMsg(null), 3000)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to trigger watch check")
+    }
   }
 
-  if (loading) return <div className="loading">Loading control center...</div>
-  if (error) return <div className="error">{error}</div>
+  if (loading) {
+    return (
+      <div className="state-panel state-panel--loading">
+        <div className="state-panel__title">Loading control center</div>
+        <div className="state-panel__description">Syncing watches and connector health into the redesigned dashboard.</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <EmptyState
+        title="Dashboard failed to load"
+        description={error}
+        icon="!"
+        action={<button className="btn btn-secondary" onClick={() => void fetchDashboardData()}>Try again</button>}
+      />
+    )
+  }
 
   return (
     <div className="dashboard-stack">
+      <TopActionBar
+        eyebrow="Operations control center"
+        title="Watch dashboard"
+        description=""
+        actions={(
+          <>
+            <button className="btn btn-secondary" onClick={() => void handleRefresh()} disabled={refreshing}>
+              {refreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
+            <button className="btn btn-secondary" onClick={handleExport}>
+              Export
+            </button>
+            <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+              + New watch
+            </button>
+          </>
+        )}
+      />
+
+      {checkSuccessMsg && (
+        <div className="state-panel" style={{ background: 'rgba(52, 211, 153, 0.08)', borderColor: 'rgba(52, 211, 153, 0.2)', color: '#a7f3d0' }}>
+          {checkSuccessMsg}
+        </div>
+      )}
+
       <div className="kpi-grid">
         <SectionCard title="Active watches" subtitle="Currently checking on schedule">
-          <div className="kpi-card__value">{kpis.activeWatches}</div>
+          <div className="kpi-card__value" aria-live="polite">{kpis.activeWatches}</div>
           <div className="kpi-card__meta">{kpis.pausedWatches} paused · {watches.length} total</div>
         </SectionCard>
         <SectionCard title="Watches checked" subtitle="Watches with a recorded check">
-          <div className="kpi-card__value">{kpis.checkedWatches}</div>
+          <div className="kpi-card__value" aria-live="polite">{kpis.checkedWatches}</div>
           <div className="kpi-card__meta">{pageInfo.total} listed in the current page window</div>
         </SectionCard>
         <SectionCard title="Healthy sources" subtitle="Connector posture across the board">
-          <div className="kpi-card__value">{kpis.healthySources}</div>
+          <div className="kpi-card__value" aria-live="polite">{kpis.healthySources}</div>
           <div className="kpi-card__meta">{kpis.degradedSources} degraded · {kpis.failedSources} failed</div>
         </SectionCard>
         <SectionCard title="Attention needed" subtitle="Anything worth drilling into">
-          <div className="kpi-card__value">{kpis.degradedSources + kpis.failedSources}</div>
+          <div className="kpi-card__value" aria-live="polite">{kpis.degradedSources + kpis.failedSources}</div>
           <div className="kpi-card__meta">Source health issues and manual follow-up</div>
         </SectionCard>
       </div>
@@ -233,26 +353,27 @@ export default function WatchList() {
           placeholder="Search watches, queries, categories, or connectors…"
           value={search}
           onChange={e => setSearch(e.target.value)}
+          aria-label="Search watches"
         />
-        <div className="watch-filter-group">
-          <button type="button" className={`toolbar__filter ${watchFilter === 'all' ? 'is-active' : ''}`} onClick={() => setWatchFilter('all')}>
+        <div className="watch-filter-group" role="group" aria-label="Watch status filter">
+          <button type="button" className={`toolbar__filter ${watchFilter === 'all' ? 'is-active' : ''}`} onClick={() => setWatchFilter('all')} aria-pressed={watchFilter === 'all'}>
             All watches
           </button>
-          <button type="button" className={`toolbar__filter ${watchFilter === 'active' ? 'is-active' : ''}`} onClick={() => setWatchFilter('active')}>
+          <button type="button" className={`toolbar__filter ${watchFilter === 'active' ? 'is-active' : ''}`} onClick={() => setWatchFilter('active')} aria-pressed={watchFilter === 'active'}>
             Active
           </button>
-          <button type="button" className={`toolbar__filter ${watchFilter === 'paused' ? 'is-active' : ''}`} onClick={() => setWatchFilter('paused')}>
+          <button type="button" className={`toolbar__filter ${watchFilter === 'paused' ? 'is-active' : ''}`} onClick={() => setWatchFilter('paused')} aria-pressed={watchFilter === 'paused'}>
             Paused
           </button>
         </div>
-        <div className="watch-filter-group">
-          <button type="button" className={`toolbar__filter ${healthFilter === 'all' ? 'is-active' : ''}`} onClick={() => setHealthFilter('all')}>
+        <div className="watch-filter-group" role="group" aria-label="Source health filter">
+          <button type="button" className={`toolbar__filter ${healthFilter === 'all' ? 'is-active' : ''}`} onClick={() => setHealthFilter('all')} aria-pressed={healthFilter === 'all'}>
             Any source state
           </button>
-          <button type="button" className={`toolbar__filter ${healthFilter === 'healthy' ? 'is-active' : ''}`} onClick={() => setHealthFilter('healthy')}>
+          <button type="button" className={`toolbar__filter ${healthFilter === 'healthy' ? 'is-active' : ''}`} onClick={() => setHealthFilter('healthy')} aria-pressed={healthFilter === 'healthy'}>
             Healthy only
           </button>
-          <button type="button" className={`toolbar__filter ${healthFilter === 'issues' ? 'is-active' : ''}`} onClick={() => setHealthFilter('issues')}>
+          <button type="button" className={`toolbar__filter ${healthFilter === 'issues' ? 'is-active' : ''}`} onClick={() => setHealthFilter('issues')} aria-pressed={healthFilter === 'issues'}>
             Needs attention
           </button>
         </div>
@@ -261,18 +382,18 @@ export default function WatchList() {
       <div className="dashboard-grid">
         <SectionCard
           title="Watch queue"
-          subtitle="Dense operations view with query summary, source state, recency, and the next action."
+          subtitle=""
           action={<StatusBadge variant="accent">Page {pageInfo.page} · {pageInfo.pageSize || filteredWatches.length} shown</StatusBadge>}
         >
           {watchRows.length === 0 ? (
             <EmptyState
               title="No watches match the current filters"
               description="Broaden the search or switch the source-health filter to reveal more watches."
-              action={<button className="btn btn-primary" onClick={() => setShowForm(true)}>Create watch</button>}
+              action={<button className="btn btn-primary" onClick={() => setShowForm(true)} aria-label="Create new watch">Create watch</button>}
             />
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table className="watch-table">
+            <div className="table-scroll">
+              <table className="watch-table" aria-label="Watch queue table">
                 <thead>
                   <tr>
                     <th>Watch</th>
@@ -283,22 +404,20 @@ export default function WatchList() {
                   </tr>
                 </thead>
                 <tbody>
-                  {watchRows.map(({ watch, rowState, connectedSources, healthyConnections, degradedConnections, failedConnections }) => (
+                  {watchRows.map(({ watch, rowState, connectedSources, displayName, displayMeta, healthyConnections, degradedConnections, failedConnections }) => (
                     <tr key={watch.id}>
-                      <td>
+                      <td data-label="Watch">
                         <div className="watch-row__name">
                           <div className="watch-row__title">
                             <Link to={`/watch/${watch.id}`} className="watch-table__link">
-                              {watch.name}
+                              {displayName}
                             </Link>
                           </div>
-                          <div className="watch-row__meta">{watch.query}</div>
-                          <div className="watch-table__secondary">
-                            {watch.category || 'Uncategorized'} · {watch.sources.map(source => source.connector).join(' · ') || 'No sources configured'}
-                          </div>
+                          <div className="watch-row__meta">{displayMeta}</div>
+                          <div className="watch-table__secondary">{formatConnectorSummary(watch, connectedSources, sources)}</div>
                         </div>
                       </td>
-                      <td>
+                      <td data-label="Source state">
                         <div className="watch-row__name">
                           <StatusBadge
                             variant={
@@ -322,7 +441,7 @@ export default function WatchList() {
                           </div>
                         </div>
                       </td>
-                      <td>
+                      <td data-label="Last check / change">
                         <div className="watch-row__name">
                           <div className="watch-row__title">{formatDateTime(watch.last_check_at)}</div>
                           <div className="watch-table__secondary">
@@ -332,20 +451,20 @@ export default function WatchList() {
                           </div>
                         </div>
                       </td>
-                      <td>
+                      <td data-label="Status">
                         <StatusBadge variant={watch.enabled ? 'active' : 'paused'}>
                           {watch.enabled ? 'Active' : 'Paused'}
                         </StatusBadge>
                       </td>
-                      <td>
+                      <td data-label="Primary action">
                         <div className="watch-row__actions">
-                          <button type="button" className="btn btn-secondary" onClick={() => toggleWatch(watch.id, watch.enabled)}>
+                          <button type="button" className="btn btn-secondary" onClick={() => toggleWatch(watch.id, watch.enabled)} aria-label={watch.enabled ? `Pause watch ${displayName}` : `Resume watch ${displayName}`}>
                             {watch.enabled ? 'Pause' : 'Resume'}
                           </button>
-                          <button type="button" className="btn btn-secondary" onClick={() => void handleCheckNow(watch.id).catch(err => alert(err instanceof Error ? err.message : 'Failed to trigger watch check'))}>
+                          <button type="button" className="btn btn-secondary" onClick={() => void handleCheckNow(watch.id).catch(err => alert(err instanceof Error ? err.message : 'Failed to trigger watch check'))} aria-label={`Check watch ${displayName} now`}>
                             Check now
                           </button>
-                          <button type="button" className="btn btn-danger" onClick={() => deleteWatch(watch.id)}>
+                          <button type="button" className="btn btn-danger" onClick={() => deleteWatch(watch.id)} aria-label={`Delete watch ${displayName}`}>
                             Delete
                           </button>
                         </div>
@@ -367,12 +486,11 @@ export default function WatchList() {
         </SectionCard>
       </div>
 
-      {showForm && (
-        <WatchForm
-          onClose={() => setShowForm(false)}
-          onCreated={handleWatchCreated}
-        />
-      )}
+      <WatchForm
+        open={showForm}
+        onClose={() => setShowForm(false)}
+        onCreated={handleWatchCreated}
+      />
     </div>
   )
 }

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import json
 import logging
 import re
 import time
@@ -21,9 +22,7 @@ from pricerecon.models import NormalizedListing, SourceType
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_AFFILIATE_ENDPOINT = "https://api.aliexpress.com/affiliate/product/query"
-_DEFAULT_DS_REFRESH_ENDPOINT = "https://api.aliexpress.com/auth/token/refresh"
-_DEFAULT_DS_PRODUCT_ENDPOINT = "https://api.aliexpress.com/ds/product/get"
+_DEFAULT_TOP_ENDPOINT = "https://api-sg.aliexpress.com/sync"
 
 _SHORT_LINK_HOSTS = {"a.aliexpress.com", "s.click.aliexpress.com"}
 _PID_RE = re.compile(r"\b(\d{10,20})\b")
@@ -49,9 +48,9 @@ class AliExpressConnector(BaseConnector):
         self._ds_access_token = self.config.get("ds_access_token")
         self._ds_refresh_token = self.config.get("ds_refresh_token")
         self._ds_expires_at = self._parse_datetime(self.config.get("ds_expires_at"))
-        self._affiliate_endpoint = self.config.get("affiliate_api_endpoint", _DEFAULT_AFFILIATE_ENDPOINT)
-        self._ds_refresh_endpoint = self.config.get("ds_refresh_endpoint", _DEFAULT_DS_REFRESH_ENDPOINT)
-        self._ds_product_endpoint = self.config.get("ds_product_endpoint", _DEFAULT_DS_PRODUCT_ENDPOINT)
+        self._affiliate_endpoint = self.config.get("affiliate_api_endpoint", _DEFAULT_TOP_ENDPOINT)
+        self._ds_refresh_endpoint = self.config.get("ds_refresh_endpoint", _DEFAULT_TOP_ENDPOINT)
+        self._ds_product_endpoint = self.config.get("ds_product_endpoint", _DEFAULT_TOP_ENDPOINT)
         self._affiliate_currency = str(self.config.get("affiliate_currency", "GBP")).upper()
         self._manual_pids = self._normalize_pid_list(self.config.get("manual_pids", []))
         self._manual_links = list(self.config.get("manual_links", []))
@@ -232,14 +231,14 @@ class AliExpressConnector(BaseConnector):
             "query": query,
             "currency": filters.get("currency", self._affiliate_currency),
             "page": int(filters.get("page", 1)),
-            "pageSize": int(filters.get("page_size", 50)),
+            "page_size": int(filters.get("page_size", 50)),
         }
         if "price_max" in filters:
-            payload["maxPrice"] = str(filters["price_max"])
+            payload["max_price"] = str(filters["price_max"])
 
         try:
-            response = await self._client.post(self._affiliate_endpoint, json=payload)
-            response.raise_for_status()
+            response = await self._top_post("aliexpress.affiliate.product.query", payload)
+            self._raise_for_top_response(response, "AliExpress affiliate search failed")
         except Exception as exc:
             text = str(exc).lower()
             if "auth" in text or "401" in text or "403" in text:
@@ -256,7 +255,7 @@ class AliExpressConnector(BaseConnector):
                 detail={"error": str(exc)},
             ) from exc
 
-        data = self._extract_response_list(response.json())
+        data = self._extract_response_list(self._extract_top_response_payload(response.json()))
         return [self._listing_from_affiliate_item(item, query) for item in data]
 
     async def _brave_search(self, query: str, filters: dict[str, Any]) -> list[NormalizedListing]:
@@ -468,19 +467,15 @@ class AliExpressConnector(BaseConnector):
 
     async def _fetch_ds_detail(self, pid: str) -> dict[str, Any]:
         token = await self._ensure_ds_access_token()
-        headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
         payload = {
-            "productId": pid,
+            "product_id": pid,
             "ship_to_country": self.config.get("ds_ship_to_country", "GB"),
             "target_currency": self._affiliate_currency,
+            "access_token": token,
         }
         try:
-            response = await self._client.post(self._ds_product_endpoint, json=payload, headers=headers)
-            if response.status_code in {401, 403}:
-                token = await self._refresh_ds_token(force=True)
-                headers["Authorization"] = f"Bearer {token}"
-                response = await self._client.post(self._ds_product_endpoint, json=payload, headers=headers)
-            response.raise_for_status()
+            response = await self._top_post("aliexpress.ds.product.get", payload)
+            self._raise_for_top_response(response, "AliExpress DS product lookup failed")
         except ConnectorDegradedError:
             raise
         except Exception as exc:
@@ -499,7 +494,7 @@ class AliExpressConnector(BaseConnector):
                 detail={"error": str(exc), "product_id": pid},
             ) from exc
 
-        payload = response.json()
+        payload = self._extract_top_response_payload(response.json())
         if isinstance(payload, dict) and payload.get("error"):
             raise ConnectorDegradedError(
                 status=ConnectorStatus.auth_failed,
@@ -541,13 +536,11 @@ class AliExpressConnector(BaseConnector):
             )
 
         payload = {
-            "app_key": app_key,
-            "app_secret": app_secret,
             "refresh_token": self._ds_refresh_token,
         }
         try:
-            response = await self._client.post(self._ds_refresh_endpoint, json=payload)
-            response.raise_for_status()
+            response = await self._top_post("aliexpress.ds.auth.token.refresh", payload, app_key=str(app_key), app_secret=str(app_secret))
+            self._raise_for_top_response(response, "AliExpress DS token refresh failed")
         except Exception as exc:
             raise ConnectorDegradedError(
                 status=ConnectorStatus.auth_failed,
@@ -556,7 +549,7 @@ class AliExpressConnector(BaseConnector):
                 detail={"error": str(exc)},
             ) from exc
 
-        data = response.json()
+        data = self._extract_top_response_payload(response.json())
         if not isinstance(data, dict):
             raise ConnectorDegradedError(
                 status=ConnectorStatus.auth_failed,
@@ -583,6 +576,98 @@ class AliExpressConnector(BaseConnector):
             expires_in_int = 3600
         self._ds_expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in_int)
         return access_token
+
+    async def _top_post(
+        self,
+        method: str,
+        params: dict[str, Any],
+        *,
+        app_key: str | None = None,
+        app_secret: str | None = None,
+    ) -> httpx.Response:
+        signed = self._build_top_request(method, params, app_key=app_key, app_secret=app_secret)
+        return await self._client.post(self._affiliate_endpoint, data=signed)
+
+    def _build_top_request(
+        self,
+        method: str,
+        params: dict[str, Any],
+        *,
+        app_key: str | None = None,
+        app_secret: str | None = None,
+    ) -> dict[str, str]:
+        key = str(app_key or self.config.get("ds_app_key") or self.config.get("app_key") or "").strip()
+        secret = str(app_secret or self.config.get("ds_app_secret") or self.config.get("app_secret") or "").strip()
+        if not key or not secret:
+            raise ConnectorDegradedError(
+                status=ConnectorStatus.auth_failed,
+                message="AliExpress Open Platform credentials are incomplete",
+                connector_id=self.connector_id,
+                detail={"missing": [name for name, value in (("app_key", key), ("app_secret", secret)) if not value]},
+            )
+
+        request_params: dict[str, str] = {
+            "app_key": key,
+            "method": method,
+            "sign_method": "md5",
+            "timestamp": self._top_timestamp(),
+            "v": "2.0",
+            "format": "json",
+        }
+        for name, value in params.items():
+            if value is None:
+                continue
+            request_params[name] = self._top_value(value)
+        request_params["sign"] = self._top_sign(request_params, secret)
+        return request_params
+
+    def _top_timestamp(self) -> str:
+        return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+
+    def _top_value(self, value: Any) -> str:
+        if isinstance(value, str):
+            return value
+        if isinstance(value, (int, float, Decimal)):
+            return str(value)
+        if isinstance(value, (dict, list)):
+            return json.dumps(value, separators=(",", ":"), ensure_ascii=False, sort_keys=True)
+        return str(value)
+
+    def _top_sign(self, params: dict[str, str], secret: str) -> str:
+        pieces = [secret]
+        for key in sorted(k for k in params if k != "sign"):
+            pieces.append(key)
+            pieces.append(params[key])
+        pieces.append(secret)
+        digest = hashlib.md5("".join(pieces).encode("utf-8")).hexdigest().upper()
+        return digest
+
+    def _extract_top_response_payload(self, payload: Any) -> Any:
+        if isinstance(payload, dict):
+            for key in ("aliexpress_affiliate_product_query_response", "aliexpress_ds_product_get_response", "aliexpress_ds_auth_token_refresh_response"):
+                value = payload.get(key)
+                if isinstance(value, dict):
+                    return value.get("result") or value.get("resp_result") or value.get("data") or value
+            for key in ("result", "resp_result", "data", "response"):
+                value = payload.get(key)
+                if isinstance(value, dict):
+                    return value
+        return payload
+
+    def _raise_for_top_response(self, response: httpx.Response, message: str) -> None:
+        if response.status_code >= 400:
+            response.raise_for_status()
+        if response.status_code in {301, 302, 303, 307, 308}:
+            location = response.headers.get("location", "")
+            detail = {"status_code": response.status_code, "location": location}
+            if "maintain.html" in location:
+                detail["redirect"] = "maintain.html"
+            raise ConnectorDegradedError(
+                status=ConnectorStatus.unknown_error,
+                message=message,
+                connector_id=self.connector_id,
+                detail=detail,
+            )
 
     def _merge_listing_with_detail(self, listing: NormalizedListing, detail: dict[str, Any], pid: str) -> NormalizedListing:
         data = self._extract_ds_detail(detail)
@@ -626,11 +711,60 @@ class AliExpressConnector(BaseConnector):
         )
 
     def _extract_ds_detail(self, payload: dict[str, Any]) -> dict[str, Any]:
+        data = payload
         for key in ("data", "result", "item", "product", "productInfo"):
-            value = payload.get(key)
+            value = data.get(key)
             if isinstance(value, dict):
-                return value
-        return payload
+                data = value
+                break
+
+        normalized = dict(data)
+
+        # Real aliexpress.ds.product.get responses are heavily nested under
+        # ae_item_* DTOs. Flatten the common fields we need so the existing
+        # merge logic can treat DS and affiliate payloads consistently.
+        base_info = data.get("ae_item_base_info_dto")
+        if not isinstance(base_info, dict):
+            base_info = {}
+
+        sku_container = data.get("ae_item_sku_info_dtos")
+        if not isinstance(sku_container, dict):
+            sku_container = {}
+        sku_list = sku_container.get("ae_item_sku_info_d_t_o") or sku_container.get("ae_item_sku_info_dto") or []
+        first_sku = sku_list[0] if isinstance(sku_list, list) and sku_list and isinstance(sku_list[0], dict) else {}
+
+        subject = self._first_text(base_info, "subject", "title", "productTitle", "product_title")
+        if subject:
+            normalized.setdefault("title", subject)
+
+        display_price = self._first_text(first_sku, "offer_sale_price", "offerSalePrice", "displayPrice", "salePrice", "sale_price")
+        if display_price:
+            normalized.setdefault("displayPrice", display_price)
+
+        original_price = self._first_text(first_sku, "sku_price", "skuPrice", "originalPrice", "price")
+        if original_price:
+            normalized.setdefault("originalPrice", original_price)
+
+        sales = self._first_text(base_info, "sales_count", "salesCount", "sales", "orders", "sold")
+        if sales:
+            normalized.setdefault("sales", sales)
+
+        rating = self._first_text(base_info, "avg_evaluation_rating", "avgEvaluationRating", "rating", "evaluateRate", "storeRating")
+        if rating:
+            normalized.setdefault("rating", rating)
+
+        stock_count = first_sku.get("sku_available_stock")
+        if stock_count is not None:
+            try:
+                normalized.setdefault("inStock", int(stock_count) > 0)
+            except (TypeError, ValueError):
+                pass
+
+        currency = self._first_text(first_sku, "currency_code", "currencyCode", "currency")
+        if currency:
+            normalized.setdefault("currency", currency)
+
+        return normalized
 
     def _extract_coupon_layers(self, payload: dict[str, Any]) -> list[dict[str, Any]]:
         coupons: list[dict[str, Any]] = []
