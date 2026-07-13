@@ -411,7 +411,7 @@
     margin-bottom: 16px;
   }
 
-  .app-shell__topbar > :not(.mobile-nav-toggle):not(.mobile-nav-panel):not(.mobile-nav-overlay) {
+  .app-shell__topbar > :not(.mobile-nav-toggle):not(.mobile-nav-panel):not(.mobile-nav-overlay):not(.mobile-nav-brand) {
     display: none;
   }
 
