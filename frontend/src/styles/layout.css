@@ -287,6 +287,14 @@
   border-color: var(--border-strong);
 }
 
+.mobile-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1001;
+  display: none;
+}
+
 /* Responsive Breakpoints */
 
 /* Tablet (640px - 1024px) */
@@ -346,6 +354,34 @@
   .mobile-nav-overlay.is-open,
   .mobile-nav-panel.is-open {
     display: flex;
+  }
+
+  .mobile-fab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 28px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+    border: none;
+    box-shadow: 0 4px 12px rgba(109, 125, 255, 0.4);
+    cursor: pointer;
+    transition: transform 150ms ease, box-shadow 150ms ease;
+  }
+
+  .mobile-fab:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(109, 125, 255, 0.5);
+  }
+
+  .mobile-fab:active {
+    transform: translateY(0);
+  }
+
+  .mobile-fab:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(109, 125, 255, 0.5);
   }
 
   .app-shell__main {
