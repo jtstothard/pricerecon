@@ -57,10 +57,18 @@ const SOURCE_GROUP_LABELS: Record<string, string> = {
   aggregator: 'Aggregators',
 }
 
-function getSourceGroup(sourceType?: string): string {
-  if (!sourceType) return 'aggregator'
-  if (['ebay', 'aliexpress', 'amazon_uk', 'facebook_marketplace'].includes(sourceType)) return 'marketplace'
-  return sourceType in SOURCE_GROUP_LABELS ? sourceType : 'retailer'
+const CONNECTOR_GROUPS: Record<string, string> = {
+  ebay: 'marketplace',
+  aliexpress: 'marketplace',
+  facebook_marketplace: 'marketplace',
+  reddit_bapcsalesuk: 'community',
+  reddit_hardwareswapuk: 'community',
+  hotukdeals: 'community',
+}
+
+function getSourceGroup(connector: string): string {
+  if (connector in CONNECTOR_GROUPS) return CONNECTOR_GROUPS[connector]
+  return 'retailer'
 }
 
 function SourceMultiSelect({ sources, selected, onToggle, disabled }: {
@@ -170,7 +178,7 @@ function SourceMultiSelect({ sources, selected, onToggle, disabled }: {
               (() => {
                 const groups = new Map<string, SourceSummary[]>()
                 for (const s of filtered) {
-                  const g = getSourceGroup(s.source_type)
+                  const g = getSourceGroup(s.connector ?? '')
                   if (!groups.has(g)) groups.set(g, [])
                   groups.get(g)!.push(s)
                 }
