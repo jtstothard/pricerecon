@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import TopActionBar from './layout/TopActionBar'
 import WatchForm from './WatchForm'
-import SourceHealth from './SourceHealth'
 import SectionCard from './ui/SectionCard'
 import StatusBadge from './ui/StatusBadge'
 import EmptyState from './ui/EmptyState'
@@ -524,14 +523,6 @@ export default function WatchList() {
               </table>
             </div>
           )}
-        </SectionCard>
-
-        <SectionCard
-          title="Source health"
-          subtitle=""
-          action={<StatusBadge variant="neutral">{sources.length} connectors</StatusBadge>}
-        >
-          <SourceHealth sources={sources} />
         </SectionCard>
       </div>
 
