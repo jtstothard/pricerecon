@@ -10,3 +10,5 @@ docs/prds/
 .hermes/
 *.bak.*
 sketches/
+# Local runtime config with secrets
+config.local.yml

@@ -36,17 +36,34 @@ class Settings(BaseSettings):
         env_prefix = "PRICERECON_"
 
 
+def _deep_merge(base: dict, overlay: dict) -> dict:
+    result = dict(base)
+    for key, value in overlay.items():
+        if isinstance(value, dict) and isinstance(result.get(key), dict):
+            result[key] = _deep_merge(result[key], value)
+        else:
+            result[key] = value
+    return result
+
+
 def load_config(path: Path | str | None = None) -> dict:
-    """Load YAML config file."""
+    """Load YAML config file, optionally overlaying config.local.yml."""
     if path is None:
         path = Path("config.yml")
 
     config_path = Path(path)
-    if not config_path.exists():
-        return {}
+    config: dict = {}
+    if config_path.exists():
+        with open(config_path) as f:
+            config = yaml.safe_load(f) or {}
 
-    with open(config_path) as f:
-        return yaml.safe_load(f) or {}
+    local_override = config_path.with_name("config.local.yml")
+    if local_override.exists():
+        with open(local_override) as f:
+            local_config = yaml.safe_load(f) or {}
+        config = _deep_merge(config, local_config)
+
+    return config
 
 
 def get_settings() -> Settings:
