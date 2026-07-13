@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any, Optional
+
+from returns.result import Success
 
 from pricerecon.connectors.rss import (
     ConnectorTemplateConfig,
@@ -10,7 +13,6 @@ from pricerecon.connectors.rss import (
     load_template_configs_result,
 )
 from pricerecon.models import NormalizedListing, SourceType
-from returns.result import Success
 
 
 def _load_template_or_default(
@@ -35,6 +37,35 @@ def _load_template_or_default(
     )
 
 
+def _query_terms(query: str) -> list[str]:
+    return [term for term in re.split(r"[^a-z0-9]+", query.lower()) if term]
+
+
+def _filter_listings_by_query(
+    listings: list[NormalizedListing], query: str
+) -> list[NormalizedListing]:
+    terms = _query_terms(query)
+    if not terms:
+        return listings
+
+    filtered: list[NormalizedListing] = []
+    for listing in listings:
+        variant = listing.variant_normalized or {}
+        haystack = " ".join(
+            str(part).lower()
+            for part in (
+                listing.title_raw,
+                listing.url,
+                variant.get("item_description"),
+                variant.get("query"),
+            )
+            if part
+        )
+        if all(term in haystack for term in terms):
+            filtered.append(listing)
+    return filtered
+
+
 class RedditHardwareSwapUKConnector(TemplateConnector):
     CONNECTOR_ID = "reddit_hardwareswapuk"
 
@@ -45,11 +76,20 @@ class RedditHardwareSwapUKConnector(TemplateConnector):
                 display_name="Reddit hardwareswapuk",
                 source_role=SourceType.MARKETPLACE,
                 endpoint_url=(
-                    "https://www.reddit.com/r/hardwareswapuk/search.rss"
-                    "?q={query}&sort=new&limit={limit}&restrict_sr=1"
+                    "https://www.reddit.com/r/hardwareswapuk/new/.rss"
+                    "?limit={limit}&restrict_sr=1"
                 ),
             )
         )
+
+    async def search(
+        self, query: str, filters: Optional[dict[str, Any]] = None
+    ) -> list[NormalizedListing]:
+        listings = await super().search(query, filters)
+        listings = _filter_listings_by_query(listings, query)
+        for listing in listings:
+            listing.in_stock = None
+        return listings
 
 
 class RedditBapcSalesUKConnector(TemplateConnector):
@@ -62,8 +102,8 @@ class RedditBapcSalesUKConnector(TemplateConnector):
                 display_name="Reddit bapcsalesuk",
                 source_role=SourceType.MARKETPLACE,
                 endpoint_url=(
-                    "https://www.reddit.com/r/bapcsalesuk/search.rss"
-                    "?q={query}&sort=new&limit={limit}&restrict_sr=1"
+                    "https://www.reddit.com/r/bapcsalesuk/new/.rss"
+                    "?limit={limit}&restrict_sr=1"
                 ),
             )
         )
@@ -72,6 +112,7 @@ class RedditBapcSalesUKConnector(TemplateConnector):
         self, query: str, filters: Optional[dict[str, Any]] = None
     ) -> list[NormalizedListing]:
         listings = await super().search(query, filters)
+        listings = _filter_listings_by_query(listings, query)
         for listing in listings:
             listing.in_stock = None
         return listings
@@ -86,7 +127,7 @@ class HotUKDealsConnector(TemplateConnector):
                 self.CONNECTOR_ID,
                 display_name="HotUKDeals",
                 source_role=SourceType.SIGNAL,
-                endpoint_url="https://www.hotukdeals.com/rss",
+                endpoint_url="https://www.hotukdeals.com/rss/new",
             )
         )
 
@@ -94,14 +135,7 @@ class HotUKDealsConnector(TemplateConnector):
         self, query: str, filters: Optional[dict[str, Any]] = None
     ) -> list[NormalizedListing]:
         listings = await super().search(query, filters)
-        keyword = query.lower().strip()
-        if keyword:
-            listings = [
-                listing
-                for listing in listings
-                if keyword in listing.title_raw.lower()
-                or keyword in (listing.variant_normalized or {}).get("query", "").lower()
-            ]
+        listings = _filter_listings_by_query(listings, query)
         for listing in listings:
             listing.in_stock = None
         return listings

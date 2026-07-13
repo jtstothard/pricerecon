@@ -14,9 +14,16 @@ from pricerecon.connectors.overclockers import OverclockersConnector
 from returns.result import Failure
 
 from pricerecon.connectors.rss import (
+    ConnectorTemplateConfig,
+    TemplateConnector,
     load_template_configs,
     load_template_configs_result,
     parse_hardwareswapuk_post,
+)
+from pricerecon.connectors.reddit import (
+    HotUKDealsConnector,
+    RedditBapcSalesUKConnector,
+    RedditHardwareSwapUKConnector,
 )
 from pricerecon.connectors.shopify import ShopifyConnector
 from pricerecon.connectors.aliexpress import AliExpressConnector
@@ -272,6 +279,90 @@ def test_reddit_hardwareswapuk_price_parser_uses_visible_gbp_amount() -> None:
         "https://www.reddit.com/r/hardwareswapuk/comments/abc123/post/",
     )
     assert listing["price"] == Decimal("3000")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("connector_cls", "expected_path"),
+    [
+        (HotUKDealsConnector, "/rss/new"),
+        (RedditHardwareSwapUKConnector, "/r/hardwareswapuk/new/.rss"),
+        (RedditBapcSalesUKConnector, "/r/bapcsalesuk/new/.rss"),
+    ],
+)
+async def test_signal_rss_connectors_use_canonical_feeds_and_filter_locally(
+    connector_cls: Any, expected_path: str
+) -> None:
+    feed = """<?xml version='1.0' encoding='UTF-8'?>
+<rss><channel>
+  <item>
+    <title>RTX 5070 GPU bargain</title>
+    <link>https://example.com/1</link>
+    <description>RTX 5070 GPU bargain</description>
+    <guid>1</guid>
+  </item>
+  <item>
+    <title>Gaming laptop sale</title>
+    <link>https://example.com/2</link>
+    <description>Gaming laptop sale</description>
+    <guid>2</guid>
+  </item>
+</channel></rss>
+"""
+    captured: list[str] = []
+
+    async def handler(request: Request) -> Response:
+        captured.append(str(request.url))
+        return Response(200, text=feed, request=request)
+
+    transport = httpx.MockTransport(handler)
+    connector = connector_cls()
+    connector._client = httpx.AsyncClient(transport=transport, timeout=30.0)
+    listings = await connector.search("RTX 5070")
+    await connector.cleanup()
+
+    assert captured
+    assert expected_path in captured[0]
+    assert "search.rss" not in captured[0]
+    assert len(listings) == 1
+    assert "RTX 5070" in listings[0].title_raw
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("status_code", "expected_status"),
+    [(429, ConnectorStatus.rate_limited), (403, ConnectorStatus.bot_blocked)],
+)
+async def test_template_connector_classifies_upstream_status_codes(
+    status_code: int, expected_status: ConnectorStatus
+) -> None:
+    template = ConnectorTemplateConfig(
+        source="reddit_test",
+        display_name="Reddit test",
+        source_role=SourceType.SIGNAL,
+        endpoint_url="https://example.com/rss?q={query}&limit={limit}",
+    )
+    connector = TemplateConnector(template)
+
+    async def handler(request: Request) -> Response:
+        return Response(status_code, text="", headers={"Retry-After": "120"}, request=request)
+
+    connector._client = httpx.AsyncClient(transport=httpx.MockTransport(handler), timeout=30.0)
+
+    with pytest.raises(ConnectorDegradedError) as exc_info:
+        await connector.search("RTX 5070")
+
+    err = exc_info.value
+    assert err.status == expected_status
+    detail = cast(dict[str, Any], err.detail)
+    assert detail["status_code"] == status_code
+    assert detail["requested_url"].startswith("https://example.com/rss?q=RTX")
+    assert detail["requested_url"].endswith("&limit=25")
+    if status_code == 429:
+        assert detail["retry_after_seconds"] == 120
+    else:
+        assert "retry_after_seconds" not in detail or detail["retry_after_seconds"] is None
+    await connector.cleanup()
 
 
 def test_rss_template_loader_skips_non_rss_html_templates(tmp_path: Any) -> None:

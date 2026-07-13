@@ -17,6 +17,7 @@ from returns.result import Failure, Result, Success
 
 from pricerecon.connectors.base import BaseConnector
 from pricerecon.connectors.price import extract_visible_gbp_price
+from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 from pricerecon.models import NormalizedListing, SourceType
 
 ATOM_NS = {
@@ -128,6 +129,40 @@ class TemplateConnector(BaseConnector):
             url,
             headers=self.template.request_headers or None,
         )
+        if response.status_code == 429:
+            raise ConnectorDegradedError(
+                status=ConnectorStatus.rate_limited,
+                message=f"{self.template.source} rate limited by upstream feed",
+                connector_id=self.template.source,
+                detail={
+                    "requested_url": url,
+                    "final_url": str(response.url),
+                    "status_code": response.status_code,
+                    "retry_after_seconds": _retry_after_seconds(response.headers.get("Retry-After")),
+                },
+            )
+        if response.status_code == 403:
+            raise ConnectorDegradedError(
+                status=ConnectorStatus.bot_blocked,
+                message=f"{self.template.source} blocked by upstream anti-bot checks",
+                connector_id=self.template.source,
+                detail={
+                    "requested_url": url,
+                    "final_url": str(response.url),
+                    "status_code": response.status_code,
+                },
+            )
+        if response.status_code == 401:
+            raise ConnectorDegradedError(
+                status=ConnectorStatus.auth_failed,
+                message=f"{self.template.source} rejected upstream request",
+                connector_id=self.template.source,
+                detail={
+                    "requested_url": url,
+                    "final_url": str(response.url),
+                    "status_code": response.status_code,
+                },
+            )
         response.raise_for_status()
         return parse_feed(response.text)
 
@@ -437,6 +472,16 @@ def _parse_timestamp(value: Optional[str]) -> Optional[datetime]:
 
 def _strip_ns(tag: str) -> str:
     return tag.rsplit("}", 1)[-1] if "}" in tag else tag
+
+
+def _retry_after_seconds(value: Optional[str]) -> int | None:
+    if not value:
+        return None
+    try:
+        seconds = int(value.strip())
+    except (TypeError, ValueError):
+        return None
+    return seconds if seconds >= 0 else None
 
 
 def _parse_price_text(value: str) -> Decimal:
