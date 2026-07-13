@@ -3,11 +3,11 @@
 import asyncio
 import logging
 from contextlib import asynccontextmanager
-from typing import Callable, Optional
+from typing import AsyncGenerator, Callable, Optional
 
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.interval import IntervalTrigger
-from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR, JobEvent
+from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore
+from apscheduler.triggers.interval import IntervalTrigger  # type: ignore
+from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR, JobEvent  # type: ignore
 
 from pricerecon.core.schedule import ParsedSchedule, ScheduleParseError
 
@@ -21,7 +21,7 @@ class WatchScheduler:
     Supports time-window filtering to skip executions outside configured windows.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the scheduler."""
         self.scheduler = AsyncIOScheduler(timezone="UTC")
         self._watch_jobs: dict[int, str] = {}  # watch_id -> job_id mapping
@@ -184,7 +184,7 @@ class WatchScheduler:
         job_id = self._watch_jobs[watch_id]
         job = self.scheduler.get_job(job_id)
         if job and job.next_run_time:
-            return job.next_run_time.isoformat()
+            return job.next_run_time.isoformat()  # type: ignore[no-any-return]
         return None
 
     def list_watches(self) -> list[dict]:
@@ -280,7 +280,7 @@ def init_scheduler() -> WatchScheduler:
 
 
 @asynccontextmanager
-async def scheduler_lifespan():
+async def scheduler_lifespan() -> AsyncGenerator[WatchScheduler, None]:
     """FastAPI lifespan context manager for the scheduler.
 
     Usage in FastAPI app:

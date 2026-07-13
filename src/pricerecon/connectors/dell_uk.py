@@ -15,7 +15,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 from urllib.parse import quote_plus, urljoin, urlparse
 
-from selectolax.parser import HTMLParser
+from selectolax.parser import HTMLParser, Node
 
 from pricerecon.connectors.base import BaseConnector
 from pricerecon.connectors.browser_client import BrowserClient
@@ -179,7 +179,7 @@ class DellUKConnector(BaseConnector):
 
         return listings
 
-    def _find_title_node(self, card):
+    def _find_title_node(self, card: Node) -> Node | None:
         for selector in (
             "h1 a[href]",
             "h2 a[href]",
@@ -219,7 +219,7 @@ class DellUKConnector(BaseConnector):
             return f"https:{href}"
         return urljoin(self.BASE_URL, href)
 
-    def _image_url(self, card) -> str | None:
+    def _image_url(self, card: Node) -> str | None:
         image = card.css_first("img")
         if image is None:
             return None

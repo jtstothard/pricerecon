@@ -1,5 +1,7 @@
 """Tests for Amazon UK connector."""
 
+from typing import Any
+
 import pytest
 from decimal import Decimal
 from unittest.mock import Mock, MagicMock
@@ -9,14 +11,14 @@ from pricerecon.models import Condition, SourceType
 
 
 @pytest.fixture
-def mock_session():
+def mock_session() -> Any:
     """Mock curl_cffi session."""
     session = MagicMock()
     return session
 
 
 @pytest.fixture
-def connector(monkeypatch, mock_session):
+def connector(monkeypatch: Any, mock_session: Any) -> Any:
     """Create Amazon connector with mocked session."""
     # Mock curl_cffi.requests.Session
     mock_requests = MagicMock()
@@ -27,18 +29,18 @@ def connector(monkeypatch, mock_session):
     return AmazonConnector()
 
 
-def test_connector_id(connector):
+def test_connector_id(connector: Any) -> None:
     """Test connector ID."""
     assert connector.CONNECTOR_ID == "amazon_uk"
     assert connector.connector_id == "amazon_uk"
 
 
-def test_source_role(connector):
+def test_source_role(connector: Any) -> None:
     """Test source role."""
     assert connector.source_role == SourceType.RETAILER
 
 
-def test_initialize(connector):
+def test_initialize(connector: Any) -> None:
     """Test initialization."""
     import asyncio
 
@@ -46,7 +48,7 @@ def test_initialize(connector):
     # Should not raise
 
 
-def test_cleanup(connector):
+def test_cleanup(connector: Any) -> None:
     """Test cleanup."""
     import asyncio
 
@@ -55,7 +57,7 @@ def test_cleanup(connector):
 
 
 @pytest.mark.asyncio
-async def test_search_basic(connector, mock_session):
+async def test_search_basic(connector: Any, mock_session: Any) -> None:
     """Test basic search."""
     # Mock response with HTML containing ASINs and prices
     mock_response = Mock()
@@ -94,7 +96,7 @@ async def test_search_basic(connector, mock_session):
 
 
 @pytest.mark.asyncio
-async def test_search_with_refurbished_filter(connector, mock_session):
+async def test_search_with_refurbished_filter(connector: Any, mock_session: Any) -> None:
     """Test search with refurbished condition filter."""
     # Mock response
     mock_response = Mock()
@@ -120,7 +122,7 @@ async def test_search_with_refurbished_filter(connector, mock_session):
 
 
 @pytest.mark.asyncio
-async def test_search_error_handling(connector, mock_session):
+async def test_search_error_handling(connector: Any, mock_session: Any) -> None:
     """Test search error handling."""
     # Mock request failure
     mock_session.get.side_effect = Exception("Network error")
@@ -131,7 +133,7 @@ async def test_search_error_handling(connector, mock_session):
 
 
 @pytest.mark.asyncio
-async def test_get_product_page(connector, mock_session):
+async def test_get_product_page(connector: Any, mock_session: Any) -> None:
     """Test product page fetching."""
     # Mock product page response
     mock_response = Mock()
@@ -157,7 +159,7 @@ async def test_get_product_page(connector, mock_session):
     assert details["image_url"] == "https://example.com/image.jpg"
 
 
-def test_parse_search_results_no_prices(connector):
+def test_parse_search_results_no_prices(connector: Any) -> None:
     """Test parsing when no prices found."""
     html = """
         <div>
@@ -174,7 +176,7 @@ def test_parse_search_results_no_prices(connector):
     assert not listings[0].in_stock
 
 
-def test_parse_search_results_duplicate_asins(connector):
+def test_parse_search_results_duplicate_asins(connector: Any) -> None:
     """Test deduplication of duplicate ASINs."""
     html = """
         <a href="/dp/B0C123ABC1">Product 1</a>

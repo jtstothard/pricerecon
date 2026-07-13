@@ -48,7 +48,7 @@ class SignalsResponse(BaseModel):
 # ============================================================================
 
 
-def get_db():
+def get_db() -> sqlite3.Connection:
     """Get database connection."""
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -73,7 +73,7 @@ async def get_signals(
 
     # Build query with filters
     where_clauses = []
-    params = []
+    params: list[str | int] = []
 
     if signal_type:
         where_clauses.append("event_type = ?")
@@ -132,7 +132,7 @@ async def get_signals(
         old_price = None
         new_price = None
         discount_pct = None
-        listing_id = row["listing_key"]
+        listing_id = str(row["listing_key"]) if row["listing_key"] else None
 
         if signal_type == "price_drop":
             old_price = (

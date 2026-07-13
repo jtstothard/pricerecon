@@ -45,8 +45,8 @@ class AliExpressConnector(BaseConnector):
         self._client = http_client or httpx.AsyncClient(timeout=30.0)
         self._owns_client = http_client is None
         self._browser_client = browser_client
-        self._ds_access_token = self.config.get("ds_access_token")
-        self._ds_refresh_token = self.config.get("ds_refresh_token")
+        self._ds_access_token: str | None = self.config.get("ds_access_token")
+        self._ds_refresh_token: str | None = self.config.get("ds_refresh_token")
         self._ds_expires_at = self._parse_datetime(self.config.get("ds_expires_at"))
         self._affiliate_endpoint = self.config.get("affiliate_api_endpoint", _DEFAULT_TOP_ENDPOINT)
         self._ds_refresh_endpoint = self.config.get("ds_refresh_endpoint", _DEFAULT_TOP_ENDPOINT)

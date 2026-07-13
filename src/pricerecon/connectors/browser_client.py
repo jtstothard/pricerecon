@@ -21,7 +21,7 @@ try:
     from playwright.async_api import async_playwright  # type: ignore
 except Exception as exc:  # pragma: no cover - optional dependency
     async_playwright = None  # type: ignore[assignment]
-    _PLAYWRIGHT_IMPORT_ERROR = exc
+    _PLAYWRIGHT_IMPORT_ERROR: Exception | None = exc
 else:
     _PLAYWRIGHT_IMPORT_ERROR = None
 
@@ -113,7 +113,7 @@ class _RemoteCamofoxContext:
             timeout=(timeout / 1000.0) if timeout else 60.0,
         )
         response.raise_for_status()
-        return response.json()
+        return response.json()  # type: ignore[no-any-return]
 
     async def _get(self, path: str, *, params: dict[str, Any] | None = None) -> dict[str, Any]:
         base_url = self._config.camofox_url
@@ -125,7 +125,7 @@ class _RemoteCamofoxContext:
             timeout=60.0,
         )
         response.raise_for_status()
-        return response.json()
+        return response.json()  # type: ignore[no-any-return]
 
     async def _wait(self, timeout_ms: int) -> None:
         import asyncio

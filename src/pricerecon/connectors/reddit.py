@@ -10,6 +10,7 @@ from pricerecon.connectors.rss import (
     load_template_configs_result,
 )
 from pricerecon.models import NormalizedListing, SourceType
+from returns.result import Success
 
 
 def _load_template_or_default(
@@ -20,10 +21,10 @@ def _load_template_or_default(
     endpoint_url: str,
 ) -> ConnectorTemplateConfig:
     loaded = load_template_configs_result()
-    if loaded.is_success():
+    if isinstance(loaded, Success):
         template = loaded.unwrap().get(connector_id)
         if template is not None:
-            return template
+            return template  # type: ignore[no-any-return]
     return ConnectorTemplateConfig(
         source=connector_id,
         display_name=display_name,

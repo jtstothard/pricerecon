@@ -7,7 +7,7 @@ from decimal import Decimal, InvalidOperation
 from urllib.parse import urljoin
 import re
 
-from selectolax.parser import HTMLParser
+from selectolax.parser import HTMLParser, Node
 
 from pricerecon.models import NormalizedListing, SourceType, StockState
 from .specs import extract_specs
@@ -44,11 +44,11 @@ def parse_price(text: str) -> Decimal | None:
         return None
 
 
-def _text(node) -> str:
+def _text(node: Node | None) -> str:
     return re.sub(r"\s+", " ", node.text(separator=" ", strip=True) if node else "").strip()
 
 
-def _first(node, selector: str):
+def _first(node: Node, selector: str) -> Node | None:
     return node.css_first(selector) if selector else None
 
 

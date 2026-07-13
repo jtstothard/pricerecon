@@ -150,4 +150,17 @@ class CexConnector(BaseConnector):
             in_stock=in_stock,
             image_url=image_url,
             seller_or_store="CeX",  # CeX is the retailer
+            product_normalized=None,
+            variant_normalized=None,
+            shipping_cost=None,
+            total_landed_cost=None,
+            seller_feedback_score=None,
+            seller_feedback_pct=None,
+            location=None,
+            stock_state=None,
+            exact_variant_confirmed=None,
+            variant_match_confidence=None,
+            mismatch_flags=None,
+            risk_flags=None,
+            category=None,
         )

@@ -38,7 +38,7 @@ from pricerecon.models import (
 
 
 @pytest.mark.asyncio
-async def test_flaresolverr_client_posts_expected_payload(monkeypatch):
+async def test_flaresolverr_client_posts_expected_payload(monkeypatch: Any) -> None:
     seen: dict[str, object] = {}
 
     async def handler(request: Request) -> Response:
@@ -50,7 +50,7 @@ async def test_flaresolverr_client_posts_expected_payload(monkeypatch):
     transport = httpx.MockTransport(handler)
 
     class DummyClient(httpx.AsyncClient):
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
             super().__init__(transport=transport, timeout=kwargs.get("timeout", 90.0))
 
     monkeypatch.setattr(httpx, "AsyncClient", DummyClient)
@@ -62,7 +62,7 @@ async def test_flaresolverr_client_posts_expected_payload(monkeypatch):
     assert seen["url"] == "http://example.test/v1"
 
 
-def test_spec_extraction_covers_common_parts():
+def test_spec_extraction_covers_common_parts() -> None:
     gpu = extract_specs("MSI NVIDIA GeForce RTX 4090 24GB Gaming X", "gpu")
     assert gpu["gpu_model"] == "RTX 4090"
     assert gpu["ram_gb"] == 24
@@ -71,7 +71,7 @@ def test_spec_extraction_covers_common_parts():
     assert "7800X3D" in cpu["cpu_model"]
 
 
-def test_html_parser_normalizes_cards():
+def test_html_parser_normalizes_cards() -> None:
     html = """
     <html><body>
       <article class='product-card'>
@@ -114,7 +114,7 @@ def test_html_parser_normalizes_cards():
 
 
 @pytest.mark.asyncio
-async def test_watch_executor_filters_by_spec_match_ram(monkeypatch):
+async def test_watch_executor_filters_by_spec_match_ram(monkeypatch: Any) -> None:
     now = watch_executor.datetime.utcnow()
     watch = Watch(
         id=99,
@@ -205,39 +205,39 @@ async def test_watch_executor_filters_by_spec_match_ram(monkeypatch):
     recorded: list[tuple[str, str, str | None, dict[str, object] | None]] = []
 
     class FakeConnector:
-        async def initialize(self):
+        async def initialize(self) -> Any:
             return None
 
-        async def search(self, query, connector_filters):
+        async def search(self, query: Any, connector_filters: Any) -> Any:
             assert connector_filters == {}
             return listings
 
-        async def cleanup(self):
+        async def cleanup(self) -> Any:
             return None
 
     class FakeCursor:
-        def execute(self, *args, **kwargs):
+        def execute(self, *args: Any, **kwargs: Any) -> Any:
             return None
 
-        def fetchone(self):
+        def fetchone(self) -> Any:
             return None
 
     class FakeConn:
-        def cursor(self):
+        def cursor(self) -> Any:
             return FakeCursor()
 
-        def commit(self):
+        def commit(self) -> Any:
             return None
 
-        def close(self):
+        def close(self) -> Any:
             return None
 
     class FakeDiffResult:
         has_events = False
-        new_listings = []
-        price_drops = []
-        stock_changes = []
-        listings_gone = []
+        new_listings: list[Any] = []
+        price_drops: list[Any] = []
+        stock_changes: list[Any] = []
+        listings_gone: list[Any] = []
 
     monkeypatch.setattr(watch_executor, "get_watch", lambda watch_id: watch)
     monkeypatch.setattr(
@@ -264,7 +264,7 @@ async def test_watch_executor_filters_by_spec_match_ram(monkeypatch):
     assert recorded[0][1] == "ok"
 
 
-def test_reddit_hardwareswapuk_price_parser_uses_visible_gbp_amount():
+def test_reddit_hardwareswapuk_price_parser_uses_visible_gbp_amount() -> None:
     listing = parse_hardwareswapuk_post(
         "[SG] Sealed ASUS GeForce RTX 5090 OC Edition 32GB GPU [W] £3,000",
         "",
@@ -274,7 +274,7 @@ def test_reddit_hardwareswapuk_price_parser_uses_visible_gbp_amount():
     assert listing["price"] == Decimal("3000")
 
 
-def test_rss_template_loader_skips_non_rss_html_templates(tmp_path):
+def test_rss_template_loader_skips_non_rss_html_templates(tmp_path: Any) -> None:
     (tmp_path / "scan.yml").write_text(
         """name: scan\nsource_type: retailer\nbase_url: https://example.com\nsearch_url: https://example.com/search?q={query}\nselectors:\n  card: article\n  title: h3\n  price: .price\n  url: a\n"""
     )
@@ -289,7 +289,7 @@ def test_rss_template_loader_skips_non_rss_html_templates(tmp_path):
     assert set(configs) == {"reddit_hardwareswapuk"}
 
 
-def test_rss_template_loader_returns_failure_for_invalid_yaml(tmp_path):
+def test_rss_template_loader_returns_failure_for_invalid_yaml(tmp_path: Any) -> None:
     bad_template = tmp_path / "reddit_hardwareswapuk.yml"
     bad_template.write_text(
         """source: reddit_hardwareswapuk\nsource_role: marketplace\nendpoint_url: [oops\n"""
@@ -302,7 +302,7 @@ def test_rss_template_loader_returns_failure_for_invalid_yaml(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_facebook_marketplace_connector_parses_concatenated_gbp_price():
+async def test_facebook_marketplace_connector_parses_concatenated_gbp_price() -> None:
     cards = [
         {
             "title": "£550Nvidia GeForce rtx 4060 8GB",
@@ -317,28 +317,28 @@ async def test_facebook_marketplace_connector_parses_concatenated_gbp_price():
     ]
 
     class FakeLocator:
-        def __init__(self, payload):
+        def __init__(self, payload: Any) -> None:
             self.payload = payload
 
-        async def evaluate_all(self, _script):
+        async def evaluate_all(self, _script: Any) -> Any:
             return self.payload
 
     class FakePage:
-        async def goto(self, *_args, **_kwargs):
+        async def goto(self, *_args: Any, **_kwargs: Any) -> Any:
             return None
 
-        async def wait_for_timeout(self, *_args, **_kwargs):
+        async def wait_for_timeout(self, *_args: Any, **_kwargs: Any) -> Any:
             return None
 
-        def locator(self, _selector):
+        def locator(self, _selector: Any) -> Any:
             return FakeLocator(cards)
 
     class FakeContext:
         pass
 
     connector = FacebookMarketplaceConnector(browser_client=None)
-    connector._context = FakeContext()
-    connector._page = FakePage()
+    connector._context = cast(Any, FakeContext())
+    connector._page = cast(Any, FakePage())
 
     listings = await connector.search("rtx")
 
@@ -347,7 +347,7 @@ async def test_facebook_marketplace_connector_parses_concatenated_gbp_price():
 
 
 @pytest.mark.asyncio
-async def test_shopify_connector_fetches_products_and_variants():
+async def test_shopify_connector_fetches_products_and_variants() -> None:
     calls: list[str] = []
 
     async def handler(request: Request) -> Response:
@@ -388,7 +388,7 @@ async def test_shopify_connector_fetches_products_and_variants():
 
 
 @pytest.mark.asyncio
-async def test_shopify_connector_accepts_store_url_alias():
+async def test_shopify_connector_accepts_store_url_alias() -> None:
     calls: list[str] = []
 
     async def handler(request: Request) -> Response:
@@ -427,16 +427,16 @@ async def test_shopify_connector_accepts_store_url_alias():
 
 
 @pytest.mark.asyncio
-async def test_aliexpress_connector_uses_top_sync_endpoint_and_signed_requests():
+async def test_aliexpress_connector_uses_top_sync_endpoint_and_signed_requests() -> None:
     calls: list[dict[str, object]] = []
 
     class DummyResponse:
-        def __init__(self, payload: dict[str, object], status_code: int = 200):
+        def __init__(self, payload: dict[str, object], status_code: int = 200) -> None:
             self._payload = payload
             self.status_code = status_code
             self.headers: dict[str, str] = {}
 
-        def raise_for_status(self):
+        def raise_for_status(self) -> Any:
             if self.status_code >= 400:
                 raise httpx.HTTPStatusError(
                     "boom",
@@ -444,11 +444,36 @@ async def test_aliexpress_connector_uses_top_sync_endpoint_and_signed_requests()
                     response=httpx.Response(self.status_code),
                 )
 
-        def json(self):
+        def json(self) -> Any:
             return self._payload
 
     class DummyClient:
-        async def post(self, url, json=None, headers=None, data=None):
+        async def get(
+            self, url: Any, params: Any = None, headers: Any = None, timeout: Any = None
+        ) -> Any:
+            calls.append(
+                {
+                    "url": url,
+                    "method": "GET",
+                    "params": params,
+                    "headers": headers,
+                    "timeout": timeout,
+                }
+            )
+            assert url == "https://api-sg.aliexpress.com/rest/auth/token/refresh"
+            assert isinstance(params, dict)
+            return DummyResponse(
+                {
+                    "code": "0",
+                    "access_token": "fresh-token",
+                    "refresh_token": "fresh-refresh",
+                    "expires_in": 7200,
+                }
+            )
+
+        async def post(
+            self, url: Any, json: Any = None, headers: Any = None, data: Any = None
+        ) -> Any:
             body = data if data is not None else json
             calls.append({"url": url, "body": body, "headers": headers})
             if (
@@ -475,16 +500,6 @@ async def test_aliexpress_connector_uses_top_sync_endpoint_and_signed_requests()
                         }
                     }
                 )
-            if isinstance(body, dict) and body.get("method") == "aliexpress.ds.auth.token.refresh":
-                return DummyResponse(
-                    {
-                        "result": {
-                            "access_token": "fresh-token",
-                            "refresh_token": "fresh-refresh",
-                            "expires_in": 7200,
-                        }
-                    }
-                )
             if isinstance(body, dict) and body.get("method") == "aliexpress.ds.product.get":
                 return DummyResponse(
                     {
@@ -505,25 +520,25 @@ async def test_aliexpress_connector_uses_top_sync_endpoint_and_signed_requests()
                 )
             raise AssertionError(body)
 
-        async def aclose(self):
+        async def aclose(self) -> Any:
             return None
 
     class DummyBrowserPage:
-        async def goto(self, url, wait_until=None, timeout=None):
+        async def goto(self, url: Any, wait_until: Any = None, timeout: Any = None) -> Any:
             calls.append({"url": url, "kind": "goto"})
 
-        async def content(self):
-            return '<html><body><h1>Ali CPU Browser</h1><script>priceCurrency:"GBP",price:"179.99"</script><div>Extra 10% off with coins</div><div>1,234 sold</div></body></html>'
+        async def content(self) -> Any:
+            return '<html><body><h1>Ali CPU Browser 1005008557811111</h1><script>priceCurrency:"GBP",price:"189.99"</script><div>Extra 10% off with coins</div><div>1,234 sold</div></body></html>'
 
     class DummyBrowserContext:
-        async def new_page(self):
+        async def new_page(self) -> Any:
             return DummyBrowserPage()
 
-        async def close(self):
+        async def close(self) -> Any:
             return None
 
     class DummyBrowserClient:
-        async def new_context(self):
+        async def new_context(self) -> Any:
             return DummyBrowserContext()
 
     connector = AliExpressConnector(
@@ -540,9 +555,28 @@ async def test_aliexpress_connector_uses_top_sync_endpoint_and_signed_requests()
     )
     listings = await connector.search(
         "1005008557811111",
-        {"browser_enrich": True, "enrich_with_ds": True, "brave_discovery": False},
+        {
+            "browser_enrich": True,
+            "browser_enrich_all": True,
+            "enrich_with_ds": True,
+            "brave_discovery": False,
+        },
     )
     await connector.cleanup()
+
+    refresh_calls = [
+        call
+        for call in calls
+        if call.get("url") == "https://api-sg.aliexpress.com/rest/auth/token/refresh"
+    ]
+    assert len(refresh_calls) == 1
+    refresh_params = refresh_calls[0].get("params")
+    assert isinstance(refresh_params, dict)
+    assert refresh_calls[0].get("method") == "GET"
+    assert refresh_params["sign_method"] == "sha256"
+    assert refresh_params["sign"] == connector._ds_system_sign(
+        "/auth/token/refresh", refresh_params, "app-secret"
+    )
 
     api_calls = [call for call in calls if call.get("url") == "https://api-sg.aliexpress.com/sync"]
     assert api_calls, calls
@@ -556,7 +590,6 @@ async def test_aliexpress_connector_uses_top_sync_endpoint_and_signed_requests()
         return isinstance(body, dict) and body.get("sign_method") == "md5" and "sign" in body
 
     assert any(body_method(call) == "aliexpress.affiliate.product.query" for call in api_calls)
-    assert any(body_method(call) == "aliexpress.ds.auth.token.refresh" for call in api_calls)
     assert any(body_method(call) == "aliexpress.ds.product.get" for call in api_calls)
     assert all(body_has_sign(call) for call in api_calls)
     assert any("goto" == call.get("kind") for call in calls)
@@ -578,15 +611,15 @@ async def test_aliexpress_connector_uses_top_sync_endpoint_and_signed_requests()
 
 
 @pytest.mark.asyncio
-async def test_aliexpress_connector_uses_manual_pid_and_ds_and_browser(monkeypatch):
+async def test_aliexpress_connector_uses_manual_pid_and_ds_and_browser(monkeypatch: Any) -> None:
     calls: list[tuple[str, str]] = []
 
     class DummyResponse:
-        def __init__(self, payload: dict[str, object], status_code: int = 200):
+        def __init__(self, payload: dict[str, object], status_code: int = 200) -> None:
             self._payload = payload
             self.status_code = status_code
 
-        def raise_for_status(self):
+        def raise_for_status(self) -> Any:
             if self.status_code >= 400:
                 raise httpx.HTTPStatusError(
                     "boom",
@@ -594,11 +627,28 @@ async def test_aliexpress_connector_uses_manual_pid_and_ds_and_browser(monkeypat
                     response=httpx.Response(self.status_code),
                 )
 
-        def json(self):
+        def json(self) -> Any:
             return self._payload
 
     class DummyClient:
-        async def post(self, url, json=None, headers=None, data=None):
+        async def get(
+            self, url: Any, params: Any = None, headers: Any = None, timeout: Any = None
+        ) -> Any:
+            calls.append((url, "GET"))
+            assert url == "https://api-sg.aliexpress.com/rest/auth/token/refresh"
+            assert isinstance(params, dict)
+            return DummyResponse(
+                {
+                    "code": "0",
+                    "access_token": "fresh-token",
+                    "refresh_token": "fresh-refresh",
+                    "expires_in": 7200,
+                }
+            )
+
+        async def post(
+            self, url: Any, json: Any = None, headers: Any = None, data: Any = None
+        ) -> Any:
             body = data if data is not None else json
             calls.append((url, "POST"))
             if (
@@ -625,16 +675,6 @@ async def test_aliexpress_connector_uses_manual_pid_and_ds_and_browser(monkeypat
                         }
                     }
                 )
-            if isinstance(body, dict) and body.get("method") == "aliexpress.ds.auth.token.refresh":
-                return DummyResponse(
-                    {
-                        "result": {
-                            "access_token": "fresh-token",
-                            "refresh_token": "fresh-refresh",
-                            "expires_in": 7200,
-                        }
-                    }
-                )
             if isinstance(body, dict) and body.get("method") == "aliexpress.ds.product.get":
                 return DummyResponse(
                     {
@@ -655,25 +695,25 @@ async def test_aliexpress_connector_uses_manual_pid_and_ds_and_browser(monkeypat
                 )
             raise AssertionError(body)
 
-        async def aclose(self):
+        async def aclose(self) -> Any:
             return None
 
     class DummyBrowserPage:
-        async def goto(self, url, wait_until=None, timeout=None):
+        async def goto(self, url: Any, wait_until: Any = None, timeout: Any = None) -> Any:
             calls.append((url, "goto"))
 
-        async def content(self):
-            return '<html><body><h1>Ali CPU Browser</h1><script>priceCurrency:"GBP",price:"179.99"</script><div>Extra 10% off with coins</div><div>1,234 sold</div></body></html>'
+        async def content(self) -> Any:
+            return '<html><body><h1>Ali CPU Browser 1005008557811111</h1><script>priceCurrency:"GBP",price:"189.99"</script><div>Extra 10% off with coins</div><div>1,234 sold</div></body></html>'
 
     class DummyBrowserContext:
-        async def new_page(self):
+        async def new_page(self) -> Any:
             return DummyBrowserPage()
 
-        async def close(self):
+        async def close(self) -> Any:
             return None
 
     class DummyBrowserClient:
-        async def new_context(self):
+        async def new_context(self) -> Any:
             return DummyBrowserContext()
 
     connector = AliExpressConnector(
@@ -690,11 +730,18 @@ async def test_aliexpress_connector_uses_manual_pid_and_ds_and_browser(monkeypat
     )
     listings = await connector.search(
         "1005008557811111",
-        {"browser_enrich": True, "enrich_with_ds": True, "brave_discovery": False},
+        {
+            "browser_enrich": True,
+            "browser_enrich_all": True,
+            "enrich_with_ds": True,
+            "brave_discovery": False,
+        },
     )
     await connector.cleanup()
 
     assert calls
+    assert ("https://api-sg.aliexpress.com/rest/auth/token/refresh", "GET") in calls
+    assert ("https://api-sg.aliexpress.com/sync", "POST") in calls
     assert any("goto" == kind for _, kind in calls)
     assert any(listing.source_listing_id == "1005008557811111" for listing in listings)
     manual = next(
@@ -713,7 +760,7 @@ async def test_aliexpress_connector_uses_manual_pid_and_ds_and_browser(monkeypat
     assert affiliate.variant_normalized["aliexpress_coupon_layers"]
 
 
-def test_aliexpress_connector_extracts_nested_ds_payload_shape():
+def test_aliexpress_connector_extracts_nested_ds_payload_shape() -> None:
     now = watch_executor.datetime.utcnow()
     connector = AliExpressConnector({})
     listing = NormalizedListing(
@@ -783,27 +830,35 @@ def test_aliexpress_connector_extracts_nested_ds_payload_shape():
 
 
 @pytest.mark.asyncio
-async def test_aliexpress_connector_surfaces_ds_auth_failure():
+async def test_aliexpress_connector_surfaces_ds_auth_failure() -> None:
+    refresh_calls: list[dict[str, Any]] = []
+
     class FailingClient:
-        async def get(self, url, headers=None, timeout=None):
-            class Resp:
-                text = "<html></html>"
+        async def get(
+            self, url: Any, params: Any = None, headers: Any = None, timeout: Any = None
+        ) -> Any:
+            refresh_calls.append({"url": url, "params": params})
+            assert url == "https://api-sg.aliexpress.com/rest/auth/token/refresh"
+            raise httpx.HTTPStatusError(
+                "403", request=httpx.Request("GET", url), response=httpx.Response(403)
+            )
 
-                def raise_for_status(self):
-                    return None
-
-            return Resp()
-
-        async def post(self, url, json=None, headers=None):
-            if "affiliate/product/query" in url:
+        async def post(
+            self, url: Any, json: Any = None, headers: Any = None, data: Any = None
+        ) -> Any:
+            if (
+                url == "https://api-sg.aliexpress.com/sync"
+                and isinstance(data, dict)
+                and data.get("method") == "aliexpress.affiliate.product.query"
+            ):
 
                 class Resp:
                     status_code = 200
 
-                    def raise_for_status(self):
+                    def raise_for_status(self) -> Any:
                         return None
 
-                    def json(self):
+                    def json(self) -> Any:
                         return {
                             "items": [
                                 {
@@ -821,23 +876,9 @@ async def test_aliexpress_connector_surfaces_ds_auth_failure():
                         }
 
                 return Resp()
-            if "auth/token/refresh" in url:
-
-                class Resp:
-                    status_code = 403
-
-                    def raise_for_status(self):
-                        raise httpx.HTTPStatusError(
-                            "403", request=httpx.Request("POST", url), response=httpx.Response(403)
-                        )
-
-                    def json(self):
-                        return {"message": "forbidden"}
-
-                return Resp()
             raise AssertionError(url)
 
-        async def aclose(self):
+        async def aclose(self) -> Any:
             return None
 
     connector = AliExpressConnector(
@@ -849,17 +890,24 @@ async def test_aliexpress_connector_surfaces_ds_auth_failure():
         http_client=cast(Any, FailingClient()),
     )
     with pytest.raises(ConnectorDegradedError) as exc_info:
-        await connector.search(
-            "1005008557811111", {"enrich_with_ds": True, "affiliate_only": False}
-        )
+        await connector.search("CPU", {"enrich_with_ds": True, "brave_discovery": False})
     err = exc_info.value
     assert err.status == ConnectorStatus.auth_failed
     assert err.connector_id == "aliexpress"
+    assert len(refresh_calls) == 1
+    refresh_params = refresh_calls[0]["params"]
+    assert isinstance(refresh_params, dict)
+    assert refresh_params["sign_method"] == "sha256"
+    assert refresh_params["sign"] == connector._ds_system_sign(
+        "/auth/token/refresh", refresh_params, "app-secret"
+    )
     await connector.cleanup()
 
 
 @pytest.mark.asyncio
-async def test_overclockers_uses_runtime_flaresolverr_url_and_surfaces_timeout(monkeypatch):
+async def test_overclockers_uses_runtime_flaresolverr_url_and_surfaces_timeout(
+    monkeypatch: Any,
+) -> None:
     monkeypatch.setenv("PRICERECON_FLARESOLVERR_URL", "http://runtime.test/v1")
 
     captured: dict[str, str] = {}
@@ -884,15 +932,16 @@ async def test_overclockers_uses_runtime_flaresolverr_url_and_surfaces_timeout(m
     assert err.status == ConnectorStatus.timeout
     assert err.connector_id == "overclockers"
     assert captured["endpoint"] == "http://runtime.test/v1"
-    assert err.detail["endpoint"] == "http://runtime.test/v1"
+    detail = cast(dict[str, Any], err.detail)
+    assert detail["endpoint"] == "http://runtime.test/v1"
     assert "flaresolverr" in err.message.lower()
     await connector.cleanup()
 
 
 @pytest.mark.asyncio
 async def test_dell_uk_connector_parses_visible_listing_cards_and_registers_entry_point(
-    monkeypatch,
-):
+    monkeypatch: Any,
+) -> None:
     html = """
     <html><body>
       <article>
@@ -912,27 +961,27 @@ async def test_dell_uk_connector_parses_visible_listing_cards_and_registers_entr
     """
 
     class DummyPage:
-        async def goto(self, url, wait_until=None, timeout=None):
+        async def goto(self, url: Any, wait_until: Any = None, timeout: Any = None) -> Any:
             self.url = url
 
-        async def wait_for_timeout(self, ms):
+        async def wait_for_timeout(self, ms: Any) -> Any:
             return None
 
-        async def content(self):
+        async def content(self) -> Any:
             return html
 
     class DummyContext:
-        async def new_page(self):
+        async def new_page(self) -> Any:
             return DummyPage()
 
-        async def close(self):
+        async def close(self) -> Any:
             return None
 
     class DummyBrowserClient:
-        async def new_context(self):
+        async def new_context(self) -> Any:
             return DummyContext()
 
-        async def close(self):
+        async def close(self) -> Any:
             return None
 
     connector = DellUKConnector(browser_client=cast(Any, DummyBrowserClient()))
@@ -966,7 +1015,7 @@ async def test_dell_uk_connector_parses_visible_listing_cards_and_registers_entr
 
 
 @pytest.mark.asyncio
-async def test_watch_executor_records_non_empty_timeout_health(monkeypatch):
+async def test_watch_executor_records_non_empty_timeout_health(monkeypatch: Any) -> None:
     now = watch_executor.datetime.utcnow()
     watch = Watch(
         id=42,
@@ -997,38 +1046,38 @@ async def test_watch_executor_records_non_empty_timeout_health(monkeypatch):
     recorded: list[tuple[str, str, str | None, dict[str, object] | None]] = []
 
     class FakeConnector:
-        async def initialize(self):
+        async def initialize(self) -> Any:
             return None
 
-        async def search(self, query, connector_filters):
+        async def search(self, query: Any, connector_filters: Any) -> Any:
             raise httpx.ConnectTimeout("", request=httpx.Request("POST", "http://example.test/v1"))
 
-        async def cleanup(self):
+        async def cleanup(self) -> Any:
             return None
 
     class FakeCursor:
-        def execute(self, *args, **kwargs):
+        def execute(self, *args: Any, **kwargs: Any) -> Any:
             return None
 
-        def fetchone(self):
+        def fetchone(self) -> Any:
             return None
 
     class FakeConn:
-        def cursor(self):
+        def cursor(self) -> Any:
             return FakeCursor()
 
-        def commit(self):
+        def commit(self) -> Any:
             return None
 
-        def close(self):
+        def close(self) -> Any:
             return None
 
     class FakeDiffResult:
         has_events = False
-        new_listings = []
-        price_drops = []
-        stock_changes = []
-        listings_gone = []
+        new_listings: list[Any] = []
+        price_drops: list[Any] = []
+        stock_changes: list[Any] = []
+        listings_gone: list[Any] = []
 
     monkeypatch.setattr(watch_executor, "get_watch", lambda watch_id: watch)
     monkeypatch.setattr(

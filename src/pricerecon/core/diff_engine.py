@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from datetime import datetime
 from decimal import Decimal
 
 from pricerecon.db.schema import DB_PATH
@@ -37,7 +38,7 @@ class DiffResult:
         )
 
 
-def get_db():
+def get_db() -> sqlite3.Connection:
     """Get database connection."""
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -223,7 +224,11 @@ def store_listings(watch_id: int, listings: list[NormalizedListing]) -> None:
                 str(listing.price),
                 listing.currency,
                 listing.url,
-                listing.timestamp_seen.isoformat(),
+                (
+                    listing.timestamp_seen.isoformat()
+                    if listing.timestamp_seen
+                    else datetime.utcnow().isoformat()
+                ),
                 listing.model_dump_json(),
             ),
         )
@@ -259,7 +264,8 @@ def store_events(watch_id: int, diff_result: DiffResult) -> list[int]:
                 json.dumps(event, default=str),
             ),
         )
-        event_ids.append(cursor.lastrowid)
+        if cursor.lastrowid is not None:
+            event_ids.append(cursor.lastrowid)
 
     for event in diff_result.price_drops:
         listing_data = event["listing"]
@@ -277,7 +283,8 @@ def store_events(watch_id: int, diff_result: DiffResult) -> list[int]:
                 json.dumps(event, default=str),
             ),
         )
-        event_ids.append(cursor.lastrowid)
+        if cursor.lastrowid is not None:
+            event_ids.append(cursor.lastrowid)
 
     for event in diff_result.stock_changes:
         listing_data = event["listing"]
@@ -295,7 +302,8 @@ def store_events(watch_id: int, diff_result: DiffResult) -> list[int]:
                 json.dumps(event, default=str),
             ),
         )
-        event_ids.append(cursor.lastrowid)
+        if cursor.lastrowid is not None:
+            event_ids.append(cursor.lastrowid)
 
     for event in diff_result.listings_gone:
         cursor.execute(
@@ -309,7 +317,8 @@ def store_events(watch_id: int, diff_result: DiffResult) -> list[int]:
                 json.dumps(event, default=str),
             ),
         )
-        event_ids.append(cursor.lastrowid)
+        if cursor.lastrowid is not None:
+            event_ids.append(cursor.lastrowid)
 
     conn.commit()
     conn.close()

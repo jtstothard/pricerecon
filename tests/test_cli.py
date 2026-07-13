@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import sqlite3
+from pathlib import Path
 
 from pricerecon.cli import main
+import pytest
 from pricerecon.db.schema import init_db
 
 
-def test_cli_export_watch_history_stdout(tmp_path, monkeypatch, capsys):
+def test_cli_export_watch_history_stdout(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
     db_path = tmp_path / "pricerecon.db"
     monkeypatch.setenv("PRICERECON_DATABASE_PATH", str(db_path))
     monkeypatch.chdir(tmp_path)

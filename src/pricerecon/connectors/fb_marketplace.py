@@ -49,7 +49,7 @@ class FacebookMarketplaceConnector(BaseConnector):
     async def initialize(self) -> None:
         cookies = self._build_cookies()
         self._context = await self.browser_client.new_context(cookies=cookies)
-        self._page = await self._context.new_page()
+        self._page = await self._context.new_page() if self._context is not None else None
 
     async def cleanup(self) -> None:
         if self._page is not None:

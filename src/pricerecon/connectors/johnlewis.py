@@ -156,12 +156,9 @@ class JohnLewisConnector(BaseConnector):
                 price_text = match.group(1)
                 break
         if not price_text:
-            price_nodes = card.select("p, span, div")
-            for node in price_nodes:
-                if not isinstance(node, Tag):
-                    continue
-                text = node.get_text(" ", strip=True)
-                match = _PRICE_RE.search(text.replace("\xa0", " "))
+            for element in card.select("p, span, div"):
+                node_text = str(element.get_text(" ", strip=True))
+                match = _PRICE_RE.search(node_text.replace("\\xa0", " "))
                 if match:
                     price_text = match.group(1)
                     break

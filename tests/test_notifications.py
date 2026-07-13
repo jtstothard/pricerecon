@@ -1,7 +1,8 @@
 """Unit tests for notification dispatcher."""
 
 import json
-from unittest.mock import patch
+from typing import Any
+from unittest.mock import Mock, patch
 
 import httpx
 import pytest
@@ -21,7 +22,7 @@ from pricerecon.models import EventType
 
 
 @pytest.mark.asyncio
-async def test_send_webhook_success():
+async def test_send_webhook_success() -> None:
     """Test successful webhook send."""
     with respx.mock:
         route = respx.post("https://example.com/webhook").mock(
@@ -35,7 +36,7 @@ async def test_send_webhook_success():
 
 
 @pytest.mark.asyncio
-async def test_send_webhook_failure():
+async def test_send_webhook_failure() -> None:
     """Test webhook send failure."""
     with respx.mock:
         respx.post("https://example.com/webhook").mock(return_value=Response(500))
@@ -46,7 +47,7 @@ async def test_send_webhook_failure():
 
 
 @pytest.mark.asyncio
-async def test_send_telegram_success():
+async def test_send_telegram_success() -> None:
     """Test successful Telegram send."""
     with respx.mock:
         route = respx.post("https://api.telegram.org/bot123:ABC/sendMessage").mock(
@@ -65,7 +66,9 @@ async def test_send_telegram_success():
 
 
 @pytest.mark.asyncio
-async def test_send_telegram_respects_rate_limit_and_retries_429(monkeypatch):
+async def test_send_telegram_respects_rate_limit_and_retries_429(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Telegram sends should pace and retry once on 429."""
     notifications_module._TELEGRAM_LAST_SEND_AT = 99.8
     current_time = {"value": 100.0}
@@ -99,10 +102,9 @@ async def test_send_telegram_respects_rate_limit_and_retries_429(monkeypatch):
         FakeResponse(200),
     ]
 
-    async def fake_send_once(bot_token: str, chat_id: str, message: str):
+    async def fake_send_once(bot_token: str, chat_id: str, message: str) -> None:
         response = responses.pop(0)
         response.raise_for_status()
-        return response
 
     monkeypatch.setattr(notifications_module.asyncio, "sleep", fake_sleep)
     monkeypatch.setattr(notifications_module, "_send_telegram_once", fake_send_once)
@@ -117,7 +119,7 @@ async def test_send_telegram_respects_rate_limit_and_retries_429(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_send_discord_success():
+async def test_send_discord_success() -> None:
     """Test successful Discord send."""
     with respx.mock:
         route = respx.post("https://discord.com/api/webhooks/123/test").mock(
@@ -134,7 +136,7 @@ async def test_send_discord_success():
 
 
 @pytest.mark.asyncio
-async def test_send_discord_failure():
+async def test_send_discord_failure() -> None:
     """Test Discord send failure."""
     with respx.mock:
         respx.post("https://discord.com/api/webhooks/123/test").mock(return_value=Response(400))
@@ -144,7 +146,7 @@ async def test_send_discord_failure():
         assert result is False
 
 
-def test_format_message_new_listing():
+def test_format_message_new_listing() -> None:
     """Test message formatting for new listing event."""
     listing = {
         "title_raw": "NVIDIA GeForce RTX 3090",
@@ -163,7 +165,7 @@ def test_format_message_new_listing():
     assert "https://example.com/item/123" in message
 
 
-def test_format_message_price_drop():
+def test_format_message_price_drop() -> None:
     """Test message formatting for price drop event."""
     listing = {
         "title_raw": "NVIDIA GeForce RTX 3090",
@@ -182,7 +184,7 @@ def test_format_message_price_drop():
     assert "NVIDIA GeForce RTX 3090" in message
 
 
-def test_format_message_stock_change_in_stock():
+def test_format_message_stock_change_in_stock() -> None:
     """Test message formatting for stock change (back in stock)."""
     listing = {
         "title_raw": "NVIDIA GeForce RTX 3090",
@@ -200,7 +202,7 @@ def test_format_message_stock_change_in_stock():
     assert "GBP650.00" in message
 
 
-def test_format_message_stock_change_out_of_stock():
+def test_format_message_stock_change_out_of_stock() -> None:
     """Test message formatting for stock change (out of stock)."""
     listing = {
         "title_raw": "NVIDIA GeForce RTX 3090",
@@ -217,7 +219,7 @@ def test_format_message_stock_change_out_of_stock():
     assert "Out of stock" in message
 
 
-def test_format_message_listing_gone():
+def test_format_message_listing_gone() -> None:
     """Test message formatting for listing gone event."""
     listing = {
         "title_raw": "NVIDIA GeForce RTX 3090",
@@ -233,7 +235,7 @@ def test_format_message_listing_gone():
 
 @pytest.mark.asyncio
 @patch("pricerecon.core.notifications._log_notification")
-async def test_dispatch_notifications_webhook(mock_log):
+async def test_dispatch_notifications_webhook(mock_log: Mock) -> None:
     """Test dispatching webhook notifications."""
     with respx.mock:
         route = respx.post("https://example.com/webhook").mock(return_value=Response(200))
@@ -243,7 +245,7 @@ async def test_dispatch_notifications_webhook(mock_log):
             "channels": ["webhook"],
             "webhook_url": "https://example.com/webhook",
         }
-        global_config = {}
+        global_config: dict[str, Any] = {}
 
         result = await dispatch_notifications(
             watch_id=1,
@@ -271,7 +273,7 @@ async def test_dispatch_notifications_webhook(mock_log):
 
 @pytest.mark.asyncio
 @patch("pricerecon.core.notifications._log_notification")
-async def test_dispatch_notifications_telegram(mock_log):
+async def test_dispatch_notifications_telegram(mock_log: Mock) -> None:
     """Test dispatching Telegram notifications."""
     with respx.mock:
         route = respx.post("https://api.telegram.org/bot123:ABC/sendMessage").mock(
@@ -309,7 +311,7 @@ async def test_dispatch_notifications_telegram(mock_log):
 
 @pytest.mark.asyncio
 @patch("pricerecon.core.notifications._log_notification")
-async def test_dispatch_notifications_discord(mock_log):
+async def test_dispatch_notifications_discord(mock_log: Mock) -> None:
     """Test dispatching Discord notifications."""
     with respx.mock:
         route = respx.post("https://discord.com/api/webhooks/123/test").mock(
@@ -346,13 +348,13 @@ async def test_dispatch_notifications_discord(mock_log):
 
 @pytest.mark.asyncio
 @patch("pricerecon.core.notifications._log_notification")
-async def test_dispatch_notifications_missing_config(mock_log):
+async def test_dispatch_notifications_missing_config(mock_log: Mock) -> None:
     """Test dispatching notifications with missing channel config."""
     watch_notifications = {
         "events": ["new_listing"],
         "channels": ["telegram"],
     }
-    global_config = {}  # No telegram config
+    global_config: dict[str, Any] = {}  # No telegram config
 
     result = await dispatch_notifications(
         watch_id=1,
@@ -377,13 +379,13 @@ async def test_dispatch_notifications_missing_config(mock_log):
 
 
 @pytest.mark.asyncio
-async def test_dispatch_notifications_event_not_enabled():
+async def test_dispatch_notifications_event_not_enabled() -> None:
     """Test that notifications are not sent for disabled event types."""
     watch_notifications = {
         "events": ["price_drop"],  # Only price_drop enabled
         "channels": ["telegram"],
     }
-    global_config = {}
+    global_config: dict[str, Any] = {}
 
     result = await dispatch_notifications(
         watch_id=1,
@@ -407,7 +409,7 @@ async def test_dispatch_notifications_event_not_enabled():
 @pytest.mark.asyncio
 @patch("pricerecon.core.notifications.get_global_notification_config")
 @patch("pricerecon.core.notifications.dispatch_notifications")
-async def test_dispatch_for_event(mock_dispatch, mock_get_config):
+async def test_dispatch_for_event(mock_dispatch: Mock, mock_get_config: Mock) -> None:
     """Test dispatch_for_event convenience function."""
     mock_get_config.return_value = {"defaults": []}
     mock_dispatch.return_value = ["telegram"]
@@ -438,7 +440,7 @@ async def test_dispatch_for_event(mock_dispatch, mock_get_config):
 
 @pytest.mark.asyncio
 @patch("pricerecon.core.notifications._log_notification")
-async def test_dispatch_notifications_per_watch_override(mock_log):
+async def test_dispatch_notifications_per_watch_override(mock_log: Mock) -> None:
     """Test per-watch override for specific event."""
     with respx.mock:
         route = respx.post("https://discord.com/api/webhooks/123/test").mock(
@@ -455,7 +457,7 @@ async def test_dispatch_notifications_per_watch_override(mock_log):
                 }
             ],
         }
-        global_config = {
+        global_config: dict[str, Any] = {
             "telegram_bot_token": "123:ABC",
             "telegram_chat_id": "7957100664",
             "discord_webhook_url": "https://discord.com/api/webhooks/123/test",
@@ -484,7 +486,7 @@ async def test_dispatch_notifications_per_watch_override(mock_log):
 
 @pytest.mark.asyncio
 @patch("pricerecon.core.notifications._log_notification")
-async def test_dispatch_notifications_global_defaults(mock_log):
+async def test_dispatch_notifications_global_defaults(mock_log: Mock) -> None:
     """Test global defaults when watch has no channel config."""
     with respx.mock:
         route = respx.post("https://discord.com/api/webhooks/123/test").mock(
@@ -495,7 +497,7 @@ async def test_dispatch_notifications_global_defaults(mock_log):
             "events": ["new_listing"],
             "channels": [],  # No channels configured
         }
-        global_config = {
+        global_config: dict[str, Any] = {
             "defaults": [
                 {
                     "event": "new_listing",

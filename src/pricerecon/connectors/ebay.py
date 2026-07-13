@@ -221,7 +221,7 @@ class eBayConnector(BaseConnector):
                 else:
                     params["filter"] = f"condition:{condition_map[condition]}"
 
-        response = await self._client.get(url, headers=headers, params=params)
+        response = await self._client.get(url, headers=headers, params=params)  # type: ignore[union-attr, arg-type]
         response.raise_for_status()
 
         data = response.json()
@@ -233,6 +233,11 @@ class eBayConnector(BaseConnector):
         for item in items:
             try:
                 price = item.get("price", {})
+                seller_data = item.get("seller", {})
+                availability_data = item.get("availability", {}).get(
+                    "shipToLocationAvailability", {}
+                )
+                feedback_pct_val = seller_data.get("feedbackPercentage")
                 listing = NormalizedListing(
                     source="ebay",
                     source_type=self.source_role,
@@ -242,17 +247,26 @@ class eBayConnector(BaseConnector):
                     currency=price.get("currency", "GBP"),
                     url=item.get("itemWebUrl", ""),
                     timestamp_seen=datetime.utcnow(),
-                    seller_or_store=item.get("seller", {}).get("username"),
-                    seller_feedback_score=item.get("seller", {}).get("feedbackScore"),
+                    product_normalized=None,
+                    variant_normalized=None,
+                    condition=None,
+                    condition_raw=None,
+                    shipping_cost=None,
+                    total_landed_cost=None,
+                    seller_or_store=seller_data.get("username"),
+                    seller_feedback_score=seller_data.get("feedbackScore"),
                     seller_feedback_pct=(
-                        float(item.get("seller", {}).get("feedbackPercentage"))
-                        if item.get("seller", {}).get("feedbackPercentage")
-                        else None
+                        Decimal(str(feedback_pct_val)) if feedback_pct_val else None
                     ),
-                    in_stock=item.get("availability", {})
-                    .get("shipToLocationAvailability", {})
-                    .get("quantity", 1)
-                    > 0,
+                    location=None,
+                    in_stock=availability_data.get("quantity", 1) > 0,
+                    stock_state=None,
+                    image_url=item.get("itemWebUrl"),
+                    exact_variant_confirmed=None,
+                    variant_match_confidence=None,
+                    mismatch_flags=None,
+                    risk_flags=None,
+                    category=None,
                 )
                 listings.append(listing)
             except Exception as exc:

@@ -69,7 +69,7 @@ class TokenBucket:
             # Proportional refill for partial windows
             # Refill rate: capacity tokens / window_seconds
             tokens_to_add = (elapsed / self.window_seconds) * self.capacity
-            self.tokens = min(self.capacity, self.tokens + tokens_to_add)
+            self.tokens = int(min(self.capacity, self.tokens + tokens_to_add))
             self.last_refill_time = now
 
     def try_acquire(self, tokens: int = 1) -> bool:
@@ -127,7 +127,7 @@ class TokenBucket:
 class ConnectorRateLimiter:
     """Per-connector rate limiter using token bucket algorithm."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the rate limiter."""
         self._buckets: dict[str, TokenBucket] = {}
         self._configs: dict[str, RateLimitConfig] = {}

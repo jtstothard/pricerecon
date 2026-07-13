@@ -24,7 +24,7 @@ from pricerecon.db.schema import DB_PATH
 from pricerecon.models import EventType, NormalizedListing, Watch
 
 
-def get_db():
+def get_db() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
@@ -125,7 +125,11 @@ def apply_post_normalization_filters(
     filter_dict = filters.model_dump() if hasattr(filters, "model_dump") else filters
     price_max = filter_dict.get("price_max")
     if price_max:
-        filtered = [lst for lst in filtered if lst.price <= Decimal(str(price_max))]
+        filtered = [
+            lst
+            for lst in filtered
+            if lst.price is not None and lst.price <= Decimal(str(price_max))
+        ]
     condition_filter = filter_dict.get("condition_filter", {})
     conditions = condition_filter.get("conditions")
     if conditions:
@@ -350,7 +354,7 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
             if event_ids:
                 event_ids.pop(0)
 
-    result = {
+    result: dict[str, Any] = {
         "success": True,
         "watch_id": watch_id,
         "first_run": first_run,
@@ -363,13 +367,13 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
         "notifications_sent": len(notifications_dispatched),
     }
 
+    events: list[dict[str, Any]] = result["events"]
+
     if not first_run and diff_result.has_events:
         for event in diff_result.new_listings:
-            result["events"].append(
-                {"type": EventType.NEW_LISTING.value, "listing": event["listing"]}
-            )
+            events.append({"type": EventType.NEW_LISTING.value, "listing": event["listing"]})
         for event in diff_result.price_drops:
-            result["events"].append(
+            events.append(
                 {
                     "type": EventType.PRICE_DROP.value,
                     "listing": event["listing"],
@@ -379,7 +383,7 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
                 }
             )
         for event in diff_result.stock_changes:
-            result["events"].append(
+            events.append(
                 {
                     "type": EventType.STOCK_CHANGE.value,
                     "listing": event["listing"],
