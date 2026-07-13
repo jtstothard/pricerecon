@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
+import { useData } from '../../context/DataContext'
 
 interface MobileNavProps {
   isOpen: boolean
@@ -7,19 +8,19 @@ interface MobileNavProps {
 }
 
 function MobileNav({ isOpen, onClose }: MobileNavProps) {
-  if (!isOpen) return null
+  const { metrics, loading } = useData()
 
   const sections = [
-    { to: '/', label: 'Watch queue', metric: '38 watches' },
-    { to: '/events', label: 'Event stream', metric: '12 recent' },
-    { to: '/connectors', label: 'Connectors', metric: '9 online' },
+    { to: '/', label: 'Watch queue', metricKey: 'totalWatches' as const },
+    { to: '/events', label: 'Event stream', metricKey: 'totalEvents' as const },
+    { to: '/connectors', label: 'Connectors', metricKey: 'healthySources' as const },
   ]
 
   const ops = [
-    'Notifications',
-    'Runs & history',
-    'Exports',
-    'Settings',
+    { to: '/notifications', label: 'Notifications' },
+    { to: '/runs', label: 'Runs & history' },
+    { to: '/exports', label: 'Exports' },
+    { to: '/settings', label: 'Settings' },
   ]
 
   return (
@@ -55,15 +56,22 @@ function MobileNav({ isOpen, onClose }: MobileNavProps) {
                 <span className="sidebar-nav__dot" />
                 {item.label}
               </span>
-              <span className="sidebar-nav__metric">{item.metric}</span>
+              <span className="sidebar-nav__metric">
+                {loading ? '—' : String(metrics[item.metricKey])}
+              </span>
             </NavLink>
           ))}
 
           <div className="sidebar-nav__section">Operations</div>
-          {ops.map(label => (
-            <a key={label} href="/" onClick={onClose} className="sidebar-nav__link">
-              <span className="sidebar-nav__link-label">{label}</span>
-            </a>
+          {ops.map(item => (
+            <NavLink
+              key={item.label}
+              to={item.to}
+              onClick={onClose}
+              className={({ isActive }) => `sidebar-nav__link${isActive ? ' is-active' : ''}`}
+            >
+              <span className="sidebar-nav__link-label">{item.label}</span>
+            </NavLink>
           ))}
         </nav>
       </div>
