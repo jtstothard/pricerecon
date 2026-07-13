@@ -607,6 +607,7 @@ a:focus-visible {
   background: linear-gradient(180deg, rgba(17, 23, 35, 0.98), rgba(11, 15, 20, 0.98));
   color: var(--text);
   box-shadow: 0 32px 96px rgba(0, 0, 0, 0.45);
+  padding: 20px;
 }
 
 .pr-dialog-content [data-slot="dialog-footer"] {

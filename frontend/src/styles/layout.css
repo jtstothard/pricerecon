@@ -143,6 +143,10 @@
   margin-bottom: 18px;
 }
 
+.app-shell__topbar > * {
+  position: static;
+}
+
 .page-title {
   display: grid;
   gap: 6px;
@@ -387,7 +391,7 @@
     margin-bottom: 16px;
   }
 
-  .app-shell__topbar > :not(.mobile-nav-toggle) {
+  .app-shell__topbar > :not(.mobile-nav-toggle):not(.mobile-nav-panel):not(.mobile-nav-overlay) {
     display: none;
   }
 
@@ -412,9 +416,30 @@
     flex: 1 1 100%;
     min-width: 0;
     width: 100%;
-    height: 42px;
+    height: 42px !important;
+    max-height: 42px;
     line-height: 1.2;
     padding: 10px 12px;
+    box-sizing: border-box;
+  }
+
+  .toolbar.watch-toolbar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .toolbar.watch-toolbar .toolbar__search {
+    flex: 1 1 100%;
+  }
+
+  .toolbar.watch-toolbar .watch-filter-group {
+    flex: 1 1 45%;
+    min-width: 0;
+  }
+
+  .toolbar.watch-toolbar .watch-filter-group .toolbar__filter-select {
+    width: 100%;
   }
 
   .inline-actions,
