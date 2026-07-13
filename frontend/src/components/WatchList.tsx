@@ -9,6 +9,7 @@ import Toast, { ToastVariant } from './ui/toast'
 import type { SourceSummary, WatchSummary } from './watchTypes'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { formatSourceName } from '../lib/sourceNames'
+import { formatCategory } from '../lib/categoryUtils'
 import { formatDateTime } from '../lib/dateUtils'
 
 interface PaginatedResponse<T> {
@@ -50,7 +51,7 @@ const formatWatchMeta = (watch: WatchSummary) => {
   const category = watch.category?.trim()
   const query = dedupeTrailingTokens(watch.query).trim()
 
-  if (category) parts.push(category)
+  if (category) parts.push(formatCategory(category))
   if (query && query.toLowerCase() !== watch.name.trim().toLowerCase()) {
     parts.push(query)
   }

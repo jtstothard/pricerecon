@@ -8,6 +8,7 @@ import EmptyState from './ui/EmptyState'
 import Toast, { ToastVariant } from './ui/toast'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { formatSourceName } from '../lib/sourceNames'
+import { formatCategory } from '../lib/categoryUtils'
 
 interface Watch {
   id: number
@@ -148,7 +149,7 @@ export default function WatchDetail() {
 
   const lastCheck = formatDateTime(watch.last_check_at)
   const schedule = watch.schedule?.interval || '—'
-  const category = watch.category || '—'
+  const category = formatCategory(watch.category)
 
   return (
     <div className="detail-page">
@@ -178,7 +179,7 @@ export default function WatchDetail() {
               {watch.enabled ? 'Active' : 'Paused'}
             </StatusBadge>
             <StatusBadge variant="neutral">Watch #{watch.id}</StatusBadge>
-            <StatusBadge variant="accent">{watch.category ? watch.category : 'Uncategorized'}</StatusBadge>
+            <StatusBadge variant="accent">{formatCategory(watch.category)}</StatusBadge>
           </div>
 
           <div className="detail-meta">
