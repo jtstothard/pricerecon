@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import EmptyState from './ui/EmptyState'
 import StatusBadge from './ui/StatusBadge'
+import { formatDateTime } from '../lib/dateUtils'
 
 interface Event {
   id: number
@@ -69,7 +70,7 @@ export default function EventLog({ watchId }: { watchId: number }) {
         <div key={event.id} className={`event-item event-item--${severityVariant(event.severity)}`}>
           <div className="event-item__header">
             <StatusBadge variant={severityVariant(event.severity)}>{event.event_type}</StatusBadge>
-            <span className="event-item__time">{new Date(event.created_at).toLocaleString()}</span>
+            <span className="event-item__time">{formatDateTime(event.created_at)}</span>
           </div>
           <pre className="event-item__data">{formatEventData(event.data)}</pre>
         </div>
