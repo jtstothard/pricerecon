@@ -48,6 +48,21 @@ const CONDITIONS = [
   { value: 'used_fair', label: 'Used Fair' },
 ]
 
+const SOURCE_GROUP_ORDER = ['marketplace', 'retailer', 'community', 'aggregator'] as const
+
+const SOURCE_GROUP_LABELS: Record<string, string> = {
+  marketplace: 'Marketplaces',
+  retailer: 'Retailers',
+  community: 'Community & Deals',
+  aggregator: 'Aggregators',
+}
+
+function getSourceGroup(sourceType?: string): string {
+  if (!sourceType) return 'aggregator'
+  if (['ebay', 'aliexpress', 'amazon_uk', 'facebook_marketplace'].includes(sourceType)) return 'marketplace'
+  return sourceType in SOURCE_GROUP_LABELS ? sourceType : 'retailer'
+}
+
 function SourceMultiSelect({ sources, selected, onToggle, disabled }: {
   sources: SourceSummary[]
   selected: string[]
@@ -152,23 +167,43 @@ function SourceMultiSelect({ sources, selected, onToggle, disabled }: {
             {filtered.length === 0 ? (
               <div className="source-multiselect__empty">No sources found</div>
             ) : (
-              filtered.map(source => {
-                const isSelected = selected.includes(source.connector)
-                const name = formatSourceName(source.name || source.connector)
-                return (
-                  <button
-                    key={source.connector}
-                    type="button"
-                    className={`source-multiselect__option${isSelected ? ' is-selected' : ''}`}
-                    onClick={() => onToggle(source.connector)}
-                  >
-                    <span className={`source-multiselect__check${isSelected ? ' is-checked' : ''}`}>
-                      {isSelected ? '✓' : ''}
-                    </span>
-                    {name}
-                  </button>
-                )
-              })
+              (() => {
+                const groups = new Map<string, SourceSummary[]>()
+                for (const s of filtered) {
+                  const g = getSourceGroup(s.source_type)
+                  if (!groups.has(g)) groups.set(g, [])
+                  groups.get(g)!.push(s)
+                }
+                const orderedGroups = [...groups.entries()].sort((a, b) => {
+                  const ai = SOURCE_GROUP_ORDER.indexOf(a[0] as typeof SOURCE_GROUP_ORDER[number])
+                  const bi = SOURCE_GROUP_ORDER.indexOf(b[0] as typeof SOURCE_GROUP_ORDER[number])
+                  return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
+                })
+                return orderedGroups.map(([group, items]) => (
+                  <div key={group} className="source-multiselect__group">
+                    <div className="source-multiselect__group-label">
+                      {SOURCE_GROUP_LABELS[group] || group}
+                    </div>
+                    {items.map(source => {
+                      const isSelected = selected.includes(source.connector)
+                      const name = formatSourceName(source.name || source.connector)
+                      return (
+                        <button
+                          key={source.connector}
+                          type="button"
+                          className={`source-multiselect__option${isSelected ? ' is-selected' : ''}`}
+                          onClick={() => onToggle(source.connector)}
+                        >
+                          <span className={`source-multiselect__check${isSelected ? ' is-checked' : ''}`}>
+                            {isSelected ? '✓' : ''}
+                          </span>
+                          {name}
+                        </button>
+                      )
+                    })}
+                  </div>
+                ))
+              })()
             )}
           </div>
         </div>,
