@@ -1,17 +1,4 @@
-import * as React from "react"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "./ui/dialog"
-import { Button } from "./ui/button"
-import { Label } from "./ui/label"
-import { Input } from "./ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { Checkbox } from "./ui/checkbox"
+import { useState, useEffect } from 'react'
 import { formatSourceName } from '../lib/sourceNames'
 import type { WatchSummary, SourceSummary } from './watchTypes'
 
@@ -34,8 +21,34 @@ interface WatchFormProps {
   onCreated: (watch: WatchSummary) => void
 }
 
+const CATEGORIES = [
+  { value: 'gpu', label: 'GPU' },
+  { value: 'cpu', label: 'CPU' },
+  { value: 'ram', label: 'RAM' },
+  { value: 'storage', label: 'Storage' },
+  { value: 'motherboard', label: 'Motherboard' },
+  { value: 'other', label: 'Other' },
+]
+
+const INTERVALS = [
+  { value: '1h', label: 'Every hour' },
+  { value: '4h', label: 'Every 4 hours' },
+  { value: '8h', label: 'Every 8 hours' },
+  { value: '12h', label: 'Every 12 hours' },
+  { value: '1d', label: 'Every day' },
+]
+
+const CONDITIONS = [
+  { value: 'new', label: 'New' },
+  { value: 'new_open_box', label: 'New Open Box' },
+  { value: 'refurbished', label: 'Refurbished' },
+  { value: 'used_like_new', label: 'Used Like New' },
+  { value: 'used_good', label: 'Used Good' },
+  { value: 'used_fair', label: 'Used Fair' },
+]
+
 export default function WatchForm({ open, onClose, onCreated }: WatchFormProps) {
-  const [formData, setFormData] = React.useState<WatchFormData>({
+  const [formData, setFormData] = useState<WatchFormData>({
     name: '',
     query: '',
     category: 'gpu',
@@ -47,14 +60,12 @@ export default function WatchForm({ open, onClose, onCreated }: WatchFormProps) 
       condition: ['new', 'refurbished', 'used_like_new'],
     },
   })
-  const [loading, setLoading] = React.useState(false)
-  const [error, setError] = React.useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [availableSources, setAvailableSources] = useState<SourceSummary[]>([])
+  const [sourcesLoading, setSourcesLoading] = useState(true)
 
-  // Fetch available sources
-  const [availableSources, setAvailableSources] = React.useState<SourceSummary[]>([])
-  const [sourcesLoading, setSourcesLoading] = React.useState(true)
-
-  React.useEffect(() => {
+  useEffect(() => {
     fetch('/api/sources')
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch sources')
@@ -63,19 +74,24 @@ export default function WatchForm({ open, onClose, onCreated }: WatchFormProps) 
       .then((data: SourceSummary[]) => {
         setAvailableSources(Array.isArray(data) ? data : [])
       })
-      .catch(err => {
-        console.error('Failed to load sources:', err)
-      })
-      .finally(() => {
-        setSourcesLoading(false)
-      })
+      .catch(() => {})
+      .finally(() => setSourcesLoading(false))
   }, [])
+
+  // Lock body scroll when open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [open])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
-
     try {
       const payload = {
         ...formData,
@@ -84,18 +100,15 @@ export default function WatchForm({ open, onClose, onCreated }: WatchFormProps) 
           price_max: formData.filters.price_max ? parseFloat(formData.filters.price_max) : null,
         },
       }
-
       const response = await fetch('/api/watches', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
-
       if (!response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.detail || 'Failed to create watch')
       }
-
       const newWatch: WatchSummary = await response.json()
       onCreated(newWatch)
       onClose()
@@ -127,36 +140,28 @@ export default function WatchForm({ open, onClose, onCreated }: WatchFormProps) 
     }))
   }
 
-  const handleCategoryChange = (value: string | null) => {
-    if (value) setFormData(prev => ({ ...prev, category: value }))
-  }
-
-  const handleIntervalChange = (value: string | null) => {
-    if (value) setFormData(prev => ({ ...prev, interval: value }))
-  }
+  if (!open) return null
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Create watch</DialogTitle>
-          <DialogDescription>
-            Configure a new watch to track prices across your selected sources.
-          </DialogDescription>
-        </DialogHeader>
-
-        {error && (
-          <div className="p-3 text-sm text-destructive-foreground bg-destructive/10 rounded-lg border border-destructive/20">
-            {error}
+    <div className="watch-form-overlay" onClick={onClose}>
+      <div className="watch-form-modal" onClick={e => e.stopPropagation()}>
+        <div className="watch-form-header">
+          <div>
+            <h2 className="watch-form-title">Create watch</h2>
+            <p className="watch-form-subtitle">Track prices across your selected sources.</p>
           </div>
-        )}
+          <button type="button" className="watch-form-close" onClick={onClose} aria-label="Close">✕</button>
+        </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
+        {error && <div className="watch-form-error">{error}</div>}
+
+        <form onSubmit={handleSubmit} className="watch-form-body">
+          <div className="watch-form-grid">
+            <div className="watch-form-field">
+              <label htmlFor="name">Name</label>
+              <input
                 id="name"
+                type="text"
                 value={formData.name}
                 onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="My GPU watch"
@@ -165,10 +170,11 @@ export default function WatchForm({ open, onClose, onCreated }: WatchFormProps) 
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="query">Query</Label>
-              <Input
+            <div className="watch-form-field">
+              <label htmlFor="query">Query</label>
+              <input
                 id="query"
+                type="text"
                 value={formData.query}
                 onChange={e => setFormData(prev => ({ ...prev, query: e.target.value }))}
                 placeholder="RTX 4090 24GB"
@@ -177,100 +183,33 @@ export default function WatchForm({ open, onClose, onCreated }: WatchFormProps) 
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Select
+            <div className="watch-form-field">
+              <label htmlFor="category">Category</label>
+              <select
+                id="category"
                 value={formData.category}
-                onValueChange={handleCategoryChange}
+                onChange={e => setFormData(prev => ({ ...prev, category: e.target.value }))}
                 disabled={loading}
               >
-                <SelectTrigger id="category">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="gpu">GPU</SelectItem>
-                  <SelectItem value="cpu">CPU</SelectItem>
-                  <SelectItem value="ram">RAM</SelectItem>
-                  <SelectItem value="storage">Storage</SelectItem>
-                  <SelectItem value="motherboard">Motherboard</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
+                {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="interval">Check Interval</Label>
-              <Select
+            <div className="watch-form-field">
+              <label htmlFor="interval">Check interval</label>
+              <select
+                id="interval"
                 value={formData.interval}
-                onValueChange={handleIntervalChange}
+                onChange={e => setFormData(prev => ({ ...prev, interval: e.target.value }))}
                 disabled={loading}
               >
-                <SelectTrigger id="interval">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1h">Every hour</SelectItem>
-                  <SelectItem value="4h">Every 4 hours</SelectItem>
-                  <SelectItem value="8h">Every 8 hours</SelectItem>
-                  <SelectItem value="12h">Every 12 hours</SelectItem>
-                  <SelectItem value="1d">Every day</SelectItem>
-                </SelectContent>
-              </Select>
+                {INTERVALS.map(i => <option key={i.value} value={i.value}>{i.label}</option>)}
+              </select>
             </div>
 
-            <div className="col-span-2 space-y-2">
-              <Label>Sources</Label>
-              <div className="space-y-2">
-                <div className="text-xs text-muted-foreground">
-                  Select the sources you want to check:
-                </div>
-                {sourcesLoading ? (
-                  <div className="text-sm text-muted-foreground">Loading sources...</div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2">
-                    {availableSources.map(source => (
-                      <label key={source.connector} className="flex items-center space-x-2 cursor-pointer">
-                        <Checkbox
-                          checked={formData.sources.includes(source.connector)}
-                          onCheckedChange={() => toggleSource(source.connector)}
-                          disabled={loading}
-                        />
-                        <span className="text-sm">
-                          {formatSourceName(source.name || source.connector)}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-                {formData.sources.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {formData.sources.map(connector => {
-                      const source = availableSources.find(s => s.connector === connector)
-                      return (
-                        <span
-                          key={connector}
-                          className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2 py-0.5 text-xs"
-                        >
-                          {formatSourceName(source?.name || connector)}
-                          <button
-                            type="button"
-                            onClick={() => toggleSource(connector)}
-                            className="ml-1 hover:text-primary-foreground"
-                            aria-label={`Remove ${formatSourceName(source?.name || connector)}`}
-                          >
-                            ×
-                          </button>
-                        </span>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="price_max">Max Price (optional)</Label>
-              <Input
+            <div className="watch-form-field watch-form-field--full">
+              <label>Max price (optional)</label>
+              <input
                 id="price_max"
                 type="number"
                 step="0.01"
@@ -284,39 +223,61 @@ export default function WatchForm({ open, onClose, onCreated }: WatchFormProps) 
               />
             </div>
 
-            <div className="col-span-2 space-y-2">
-              <Label>Condition</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {[{ value: 'new', label: 'New' }, { value: 'new_open_box', label: 'New Open Box' }, { value: 'refurbished', label: 'Refurbished' }, { value: 'used_like_new', label: 'Used Like New' }, { value: 'used_good', label: 'Used Good' }, { value: 'used_fair', label: 'Used Fair' }].map(cond => (
-                  <div key={cond.value} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`condition-${cond.value}`}
-                      checked={formData.filters.condition.includes(cond.value)}
-                      onCheckedChange={() => toggleCondition(cond.value)}
+            <div className="watch-form-field watch-form-field--full">
+              <label>Sources</label>
+              {sourcesLoading ? (
+                <p className="watch-form-hint">Loading sources…</p>
+              ) : (
+                <div className="watch-form-chips">
+                  {availableSources.map(source => {
+                    const selected = formData.sources.includes(source.connector)
+                    return (
+                      <button
+                        key={source.connector}
+                        type="button"
+                        className={`watch-chip${selected ? ' watch-chip--active' : ''}`}
+                        onClick={() => toggleSource(source.connector)}
+                        disabled={loading}
+                      >
+                        {formatSourceName(source.name || source.connector)}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="watch-form-field watch-form-field--full">
+              <label>Condition</label>
+              <div className="watch-form-chips">
+                {CONDITIONS.map(cond => {
+                  const selected = formData.filters.condition.includes(cond.value)
+                  return (
+                    <button
+                      key={cond.value}
+                      type="button"
+                      className={`watch-chip${selected ? ' watch-chip--active' : ''}`}
+                      onClick={() => toggleCondition(cond.value)}
                       disabled={loading}
-                    />
-                    <Label
-                      htmlFor={`condition-${cond.value}`}
-                      className="text-sm font-normal cursor-pointer"
                     >
                       {cond.label}
-                    </Label>
-                  </div>
-                ))}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>
+          <div className="watch-form-actions">
+            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={loading}>
               Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Watch'}
-            </Button>
-          </DialogFooter>
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? 'Creating…' : 'Create watch'}
+            </button>
+          </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   )
 }
