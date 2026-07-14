@@ -6,7 +6,9 @@ port: 8000
 log_level: info
 
 # FlareSolverr endpoint (optional, for Cloudflare-protected retailers)
-flaresolverr_url: "http://docker-app-vm:8191/v1"
+# See docs/FLARESOLVERR_DEPLOYMENT.md for deployment instructions
+# Default: http://localhost:8191 (standalone Docker) or http://flaresolverr:8191 (Docker Compose)
+flaresolverr_url: "http://localhost:8191"
 
 # Connector-specific settings (optional)
 connectors:

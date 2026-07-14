@@ -91,6 +91,7 @@ TELEGRAM_BOT_TOKEN=your-telegram-bot-token
 DISCORD_WEBHOOK_URL=your-discord-webhook-url
 
 # Optional browser / anti-bot services
+# See docs/FLARESOLVERR_DEPLOYMENT.md for deployment instructions
 FLARESOLVERR_URL=http://localhost:8191
 ```
 
@@ -100,6 +101,7 @@ See [`.env.example`](.env.example) for all available options.
 
 | Source | Type | Auth | Notes |
 |--------|------|------|-------|
+| **Google Shopping** | Marketplace | Browser | Browser-based scraping (no official API available) |
 | **eBay** | Marketplace | OAuth 2.0 | Browse API, official API |
 | **Amazon** | Retailer | curl_cffi | TLS fingerprint impersonation |
 | **CeX** | Marketplace | None | Algolia proxy API |
@@ -117,6 +119,8 @@ See [`.env.example`](.env.example) for all available options.
 | **Aria** | Retailer | FlareSolverr | Anti-bot bypass |
 | **Shopify** | Retailer | None | Store-specific storefronts; requires `base_url` per watch or an intentional single-store default |
 | **HTML Generic** | Retailer | None | CSS selector-based scrapers |
+
+**Note:** See [docs/CONNECTOR_REQUIREMENTS.md](docs/CONNECTOR_REQUIREMENTS.md) for a complete breakdown of connector dependencies (FlareSolverr, auth, browser-assisted) and deployment instructions for FlareSolverr at [docs/FLARESOLVERR_DEPLOYMENT.md](docs/FLARESOLVERR_DEPLOYMENT.md).
 
 ### Source Types
 
@@ -210,7 +214,7 @@ Response:
 ```bash
 curl -X POST http://localhost:8000/api/watches \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Authorization: Bearer ***" \
   -d '{
     "query": "RTX 3090",
     "filters": {"price_max": 700, "region": "UK"},
@@ -222,7 +226,7 @@ curl -X POST http://localhost:8000/api/watches \
 
 ```bash
 curl http://localhost:8000/api/events?watch_id=1 \
-  -H "Authorization: Bearer YOUR_API_KEY"
+  -H "Authorization: Bearer ***"
 ```
 
 ## Database Schema
@@ -243,8 +247,11 @@ PriceRecon uses SQLite by default. All data is stored in `pricerecon.db`:
 
 ## Documentation
 
+- **[FlareSolverr Deployment Guide](docs/FLARESOLVERR_DEPLOYMENT.md)** — Deploy FlareSolverr for anti-bot protected connectors
+- **[Connector Requirements](docs/CONNECTOR_REQUIREMENTS.md)** — Which connectors need FlareSolverr, auth, or browser access
 - **[Connector Development Guide](docs/connector-development.md)** — Build connectors, understand the diff engine
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** — Contribution guidelines and PR checklist
+- **[CHANGELOG](CHANGELOG.md)** — Version history and notable changes
 
 ## License
 
