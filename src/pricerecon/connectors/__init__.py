@@ -52,6 +52,8 @@ def discover_connectors() -> dict[str, type[BaseConnector]]:
         "laptopsdirect",
         "argos",
         "musicmagpie",
+        "vinted",
+        "gumtree",
     ]
 
     for module_name in fallback_modules:
