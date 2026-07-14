@@ -106,7 +106,7 @@ See [`.env.example`](.env.example) for all available options.
 | **Amazon** | Retailer | curl_cffi | TLS fingerprint impersonation |
 | **CeX** | Marketplace | None | Algolia proxy API |
 | **Facebook Marketplace** | Marketplace | Session cookies | Playwright + stealth (see caveat below) |
-| **AliExpress** | Marketplace | API + optional DS/browser | Affiliate search, DS detail, manual PID/browser fallback |
+| **AliExpress** | Marketplace | API + optional DS/browser | Affiliate search, DS detail, manual PID/browser fallback. See [docs/ALIEXPRESS_CONTRACT.md](docs/ALIEXPRESS_CONTRACT.md) for supported modes and contract. |
 | **Reddit** | Signal | None | RSS feeds |
 
 | **Box** | Retailer | FlareSolverr | Anti-bot bypass |
