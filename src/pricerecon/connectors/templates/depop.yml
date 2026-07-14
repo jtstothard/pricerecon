@@ -1,0 +1,14 @@
+name: depop
+source_type: marketplace
+base_url: https://www.depop.com
+search_url: https://www.depop.com/products/search?q={query}
+use_flare_solverr: true
+selectors:
+  card: article, .product, .product-card, .item-card
+  title: a[href] h3, a[href] .title, h3, .product-title
+  price: .price, .product-price, [data-testid="price"], [data-price]
+  url: a[href]
+  stock: .stock, .availability, .product-stock
+  image: img
+  id: a[href]
+category: gpu

@@ -612,6 +612,12 @@ async def test_search_with_filters(connector, respx_mock):
     await connector.cleanup()
 ```
 
+## Advanced Integration Patterns
+
+For connectors requiring anti-bot bypass, browser automation, or authentication, see:
+
+- [Connector Integration Patterns](connector-integration-patterns.md) — FlareSolverr, Camofox, and auth field patterns
+
 ## Best Practices
 
 1. **Error Handling**: Log warnings for individual parse failures, but don't fail the entire search

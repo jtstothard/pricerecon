@@ -1,0 +1,14 @@
+name: laptopsdirect
+source_type: retailer
+base_url: https://www.laptopsdirect.co.uk
+search_url: https://www.laptopsdirect.co.uk/ct/pcs/geforce-rtx-5070
+use_flare_solverr: false
+selectors:
+  card: div[aria-label="found product"]
+  title: a[title]
+  price: data-cnstrc-item-price
+  url: a[href]
+  stock: null
+  image: img.offerImage
+  id: data-cnstrc-item-id
+category: gpu
