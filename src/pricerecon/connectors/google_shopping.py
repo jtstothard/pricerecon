@@ -163,7 +163,13 @@ class GoogleShoppingConnector(BaseConnector):
                 # Extract seller/retailer info - check class attributes first
                 retailer = "Google Shopping"
                 for elem in card.find_all(["div", "span"]):
-                    elem_class = elem.get("class", [])
+                    elem_class_value = elem.get("class")
+                    if isinstance(elem_class_value, str):
+                        elem_class = [elem_class_value]
+                    elif elem_class_value is None:
+                        elem_class = []
+                    else:
+                        elem_class = [str(value) for value in elem_class_value]
                     elem_class_str = " ".join(elem_class).lower()
                     if "seller" in elem_class_str or "store" in elem_class_str:
                         retailer = elem.get_text(strip=True)
