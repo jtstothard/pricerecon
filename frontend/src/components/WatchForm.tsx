@@ -1,20 +1,8 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { formatSourceName } from '../lib/sourceNames'
+import { buildWatchCreatePayload, type WatchFormData } from '../lib/watchPayload'
 import type { WatchSummary, SourceSummary } from './watchTypes'
-
-interface WatchFormData {
-  name: string
-  query: string
-  category: string
-  interval: string
-  enabled: boolean
-  sources: string[]
-  filters: {
-    price_max: string
-    condition: string[]
-  }
-}
 
 interface WatchFormProps {
   open: boolean
@@ -262,13 +250,8 @@ export default function WatchForm({ open, onClose, onCreated }: WatchFormProps) 
     setLoading(true)
     setError(null)
     try {
-      const payload = {
-        ...formData,
-        filters: {
-          ...formData.filters,
-          price_max: formData.filters.price_max ? parseFloat(formData.filters.price_max) : null,
-        },
-      }
+      const payload = buildWatchCreatePayload(formData)
+
       const response = await fetch('/api/watches', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
