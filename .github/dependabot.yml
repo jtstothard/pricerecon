@@ -1,0 +1,65 @@
+version: 2
+updates:
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    open-pull-requests-limit: 5
+
+  # Enable version updates for pip (Python dependencies)
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "python"
+    open-pull-requests-limit: 10
+    # Allow direct updates for patch versions to reduce noise
+    versioning-strategy: increase
+    # Group updates by dependency type for easier review
+    groups:
+      web-dependencies:
+        patterns:
+          - "fastapi*"
+          - "uvicorn*"
+          - "httpx*"
+          - "pydantic*"
+      testing-dependencies:
+        patterns:
+          - "pytest*"
+          - "respx*"
+      scraping-dependencies:
+        patterns:
+          - "selectolax*"
+          - "beautifulsoup4*"
+          - "curl-cffi*"
+          - "playwright*"
+
+  # Enable version updates for npm (frontend dependencies)
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "javascript"
+    open-pull-requests-limit: 10
+    versioning-strategy: increase
+    groups:
+      react-dependencies:
+        patterns:
+          - "react*"
+          - "@types/react*"
+      build-dependencies:
+        patterns:
+          - "vite*"
+          - "typescript*"
+          - "eslint*"

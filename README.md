@@ -250,7 +250,10 @@ PriceRecon uses SQLite by default. All data is stored in `pricerecon.db`:
 - **[FlareSolverr Deployment Guide](docs/FLARESOLVERR_DEPLOYMENT.md)** — Deploy FlareSolverr for anti-bot protected connectors
 - **[Connector Requirements](docs/CONNECTOR_REQUIREMENTS.md)** — Which connectors need FlareSolverr, auth, or browser access
 - **[Connector Development Guide](docs/connector-development.md)** — Build connectors, understand the diff engine
+- **[Engineering Standard](docs/engineering-standard.md)** — PriceRecon-specific engineering bar and quality expectations
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** — Contribution guidelines and PR checklist
+- **[SECURITY.md](SECURITY.md)** — Security policy and vulnerability reporting
+- **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** — Community guidelines
 - **[CHANGELOG](CHANGELOG.md)** — Version history and notable changes
 
 ## License
