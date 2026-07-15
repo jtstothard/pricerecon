@@ -7,7 +7,11 @@ from decimal import Decimal
 from typing import Any, Optional
 
 from pricerecon.connectors.base import BaseConnector
-from pricerecon.connectors.browser_client import BrowserClient, BrowserSessionConfig, browser_context
+from pricerecon.connectors.browser_client import (
+    BrowserClient,
+    BrowserSessionConfig,
+    browser_context,
+)
 from pricerecon.models import NormalizedListing, SourceType, Condition
 
 logger = logging.getLogger(__name__)
@@ -192,7 +196,9 @@ class VintedConnector(BaseConnector):
                     seller = seller_elem.get_text(strip=True)
 
                 # Try to find location info
-                location_elem = card.find(["span", "div"], class_=re.compile(r"location|city", re.I))
+                location_elem = card.find(
+                    ["span", "div"], class_=re.compile(r"location|city", re.I)
+                )
                 if location_elem:
                     location = location_elem.get_text(strip=True)
 

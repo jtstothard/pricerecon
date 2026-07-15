@@ -55,7 +55,9 @@ class LaptopsDirectConnector(BaseConnector):
         }
 
         query_lower = query.lower()
-        url = search_urls.get(query_lower, "https://www.laptopsdirect.co.uk/ct/graphics-cards/nvidia-geforce")
+        url = search_urls.get(
+            query_lower, "https://www.laptopsdirect.co.uk/ct/graphics-cards/nvidia-geforce"
+        )
 
         async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
             response = await client.get(

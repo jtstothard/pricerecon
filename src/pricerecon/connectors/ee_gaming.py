@@ -5,7 +5,11 @@ from decimal import Decimal
 from typing import Any, Optional
 
 from pricerecon.connectors.base import BaseConnector
-from pricerecon.connectors.browser_client import BrowserClient, BrowserSessionConfig, browser_context
+from pricerecon.connectors.browser_client import (
+    BrowserClient,
+    BrowserSessionConfig,
+    browser_context,
+)
 from pricerecon.models import NormalizedListing, SourceType
 
 logger = logging.getLogger(__name__)
@@ -80,7 +84,9 @@ class EEGamingConnector(BaseConnector):
                     await page.wait_for_timeout(1000)
 
                     # Type query into search input
-                    search_input = page.locator("input[type='search'], input[placeholder*='search'], input[placeholder*='Search']").first
+                    search_input = page.locator(
+                        "input[type='search'], input[placeholder*='search'], input[placeholder*='Search']"
+                    ).first
                     await search_input.fill(query)
                     await page.wait_for_timeout(1000)
                     await search_input.press("Enter")
@@ -150,7 +156,7 @@ class EEGamingConnector(BaseConnector):
                 for elem in card.find_all(["span", "div", "strong", "p"]):
                     text = elem.get_text(strip=True)
                     # Look for GBP currency patterns (e.g., £59.99, £34.00)
-                    if re.match(r'^[£]?\s?\d+\.\d{2}$', text):
+                    if re.match(r"^[£]?\s?\d+\.\d{2}$", text):
                         price_text = text.replace("£", "").replace(",", "").strip()
                         try:
                             price = Decimal(price_text)

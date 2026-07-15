@@ -20,7 +20,7 @@ async def test_connectors_structure():
     ]
 
     print("Validating connector structure:")
-    print("="*60)
+    print("=" * 60)
 
     for connector_id, class_name, expected_type in expected_connectors:
         if connector_id not in connectors:
@@ -36,6 +36,7 @@ async def test_connectors_structure():
 
         # Check source type
         from pricerecon.models import SourceType
+
         if expected_type == "marketplace" and connector.source_role != SourceType.MARKETPLACE:
             print(f"✗ {connector_id}: wrong source type (expected marketplace)")
             continue
@@ -44,7 +45,7 @@ async def test_connectors_structure():
             continue
 
         # Check template loaded
-        if not hasattr(connector, 'template') or not connector.template:
+        if not hasattr(connector, "template") or not connector.template:
             print(f"✗ {connector_id}: template not loaded")
             continue
 
@@ -64,7 +65,7 @@ async def test_connectors_structure():
         print(f"  - Search URL: {connector.template.search_url}")
         print(f"  - FlareSolverr: enabled")
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print(f"All {len(expected_connectors)} connectors validated successfully")
 
 
