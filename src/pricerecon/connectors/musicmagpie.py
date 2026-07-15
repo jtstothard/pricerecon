@@ -12,6 +12,7 @@ from pricerecon.connectors.browser_client import (
     browser_context,
 )
 from pricerecon.models import NormalizedListing, SourceType
+from pricerecon.models.listings import Condition
 
 logger = logging.getLogger(__name__)
 
@@ -216,7 +217,7 @@ class MusicMagpieConnector(BaseConnector):
                     url=url,
                     in_stock=in_stock,
                     image_url=image_url,
-                    condition="refurbished",  # MusicMagpie only sells refurbished
+                    condition=Condition.REFURBISHED,  # MusicMagpie only sells refurbished
                     condition_raw="Refurbished",
                     seller_or_store="MusicMagpie",
                     # Optional fields with None defaults

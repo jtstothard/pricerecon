@@ -9,6 +9,7 @@ from pricerecon.models.listings import (
     VariantMatchConfidence,
 )
 from pricerecon.models.watches import (
+    ConditionFilter,
     Event,
     EventType,
     PriceHistory,
@@ -34,6 +35,7 @@ __all__ = [
     "SourceType",
     "StockState",
     "VariantMatchConfidence",
+    "ConditionFilter",
     "Event",
     "EventType",
     "PriceHistory",
