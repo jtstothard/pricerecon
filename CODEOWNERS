@@ -1,0 +1,10 @@
+# Codeowners file for PriceRecon
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default codeowner (all files)
+* @jtstothard
+
+# Specific areas may have different reviewers in the future
+# For example:
+# /src/pricerecon/connectors/ @connector-expert
+# /frontend/ @frontend-expert

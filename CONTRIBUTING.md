@@ -10,7 +10,14 @@ For the repo-native engineering standard, start with [docs/engineering-standard.
 2. Create a feature branch (`git checkout -b feature/my-connector`)
 3. Make your changes
 4. Add tests
-5. Submit a pull request
+5. Ensure the quality gate passes: `python -m pricerecon.quality_gate`
+6. Submit a pull request
+
+## Security and Licensing
+
+- **Security vulnerabilities**: Do **not** open public issues. Report security issues privately to jtstothard@gmail.com. See [SECURITY.md](SECURITY.md) for details.
+- **License**: By contributing, you agree that your contributions will be licensed under the MIT License, matching the project's existing license.
+- **Sensitive data**: Never commit API keys, credentials, or secrets. Use environment variables for all sensitive configuration.
 
 ## Engineering standard
 
