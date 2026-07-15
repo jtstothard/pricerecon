@@ -6,8 +6,6 @@ from typing import Any, Optional
 
 from pricerecon.connectors.base import BaseConnector
 from pricerecon.connectors.browser_client import (
-    BrowserClient,
-    BrowserSessionConfig,
     browser_context,
 )
 from pricerecon.models import NormalizedListing, SourceType
@@ -137,7 +135,7 @@ class GameDigitalConnector(BaseConnector):
                         try:
                             price = Decimal(price_text)
                             break
-                        except:
+                        except ValueError:
                             continue
 
                 # Extract image

@@ -11,7 +11,7 @@ from pricerecon.connectors.browser_client import (
     BrowserSessionConfig,
     browser_context,
 )
-from pricerecon.models import NormalizedListing, SourceType, Condition
+from pricerecon.models import NormalizedListing, SourceType
 
 logger = logging.getLogger(__name__)
 
