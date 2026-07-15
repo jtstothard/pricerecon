@@ -6,7 +6,11 @@ from decimal import Decimal
 from typing import Any, Optional
 
 from pricerecon.connectors.base import BaseConnector
-from pricerecon.connectors.browser_client import BrowserClient, BrowserSessionConfig, browser_context
+from pricerecon.connectors.browser_client import (
+    BrowserClient,
+    BrowserSessionConfig,
+    browser_context,
+)
 from pricerecon.models import NormalizedListing, SourceType, Condition
 
 logger = logging.getLogger(__name__)
@@ -166,7 +170,9 @@ class MusicMagpieConnector(BaseConnector):
                 # Alternatively, look for specific price elements
                 # MusicMagpie often has price in a class like "price" or "product-price"
                 if not price_text:
-                    for elem in card.find_all(["span", "div", "p"], class_=re.compile(r"price", re.I)):
+                    for elem in card.find_all(
+                        ["span", "div", "p"], class_=re.compile(r"price", re.I)
+                    ):
                         elem_text = elem.get_text(strip=True)
                         price_match = re.search(r"£?(\d+\.\d{2})", elem_text)
                         if price_match:
@@ -182,7 +188,11 @@ class MusicMagpieConnector(BaseConnector):
                 # Extract stock availability
                 in_stock = True
                 card_text_lower = card.get_text().lower()
-                if "out of stock" in card_text_lower or "unavailable" in card_text_lower or "sold out" in card_text_lower:
+                if (
+                    "out of stock" in card_text_lower
+                    or "unavailable" in card_text_lower
+                    or "sold out" in card_text_lower
+                ):
                     in_stock = False
 
                 # Extract image

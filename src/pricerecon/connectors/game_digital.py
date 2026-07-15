@@ -5,7 +5,11 @@ from decimal import Decimal
 from typing import Any, Optional
 
 from pricerecon.connectors.base import BaseConnector
-from pricerecon.connectors.browser_client import BrowserClient, BrowserSessionConfig, browser_context
+from pricerecon.connectors.browser_client import (
+    BrowserClient,
+    BrowserSessionConfig,
+    browser_context,
+)
 from pricerecon.models import NormalizedListing, SourceType
 
 logger = logging.getLogger(__name__)
@@ -128,7 +132,7 @@ class GameDigitalConnector(BaseConnector):
                 for elem in card.find_all(["span", "div", "strong"]):
                     text = elem.get_text(strip=True)
                     # Look for GBP currency patterns (e.g., £59.99)
-                    if re.match(r'^[£]?\s?\d+\.\d{2}$', text):
+                    if re.match(r"^[£]?\s?\d+\.\d{2}$", text):
                         price_text = text.replace("£", "").replace(",", "").strip()
                         try:
                             price = Decimal(price_text)

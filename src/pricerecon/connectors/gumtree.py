@@ -7,7 +7,11 @@ from decimal import Decimal
 from typing import Any, Optional
 
 from pricerecon.connectors.base import BaseConnector
-from pricerecon.connectors.browser_client import BrowserClient, BrowserSessionConfig, browser_context
+from pricerecon.connectors.browser_client import (
+    BrowserClient,
+    BrowserSessionConfig,
+    browser_context,
+)
 from pricerecon.models import NormalizedListing, SourceType, Condition
 
 logger = logging.getLogger(__name__)
@@ -159,7 +163,9 @@ class GumtreeConnector(BaseConnector):
 
                 # Gumtree often has price in specific elements
                 if not price_text:
-                    for elem in card.find_all(["span", "div"], class_=re.compile(r"price|ad-price", re.I)):
+                    for elem in card.find_all(
+                        ["span", "div"], class_=re.compile(r"price|ad-price", re.I)
+                    ):
                         elem_text = elem.get_text(strip=True)
                         price_match = re.search(r"£?(\d+\.?\d*)", elem_text)
                         if price_match:
@@ -187,12 +193,16 @@ class GumtreeConnector(BaseConnector):
                 location = None
 
                 # Try to find seller info
-                seller_elem = card.find(["span", "div"], class_=re.compile(r"seller|user|advertiser", re.I))
+                seller_elem = card.find(
+                    ["span", "div"], class_=re.compile(r"seller|user|advertiser", re.I)
+                )
                 if seller_elem:
                     seller = seller_elem.get_text(strip=True)
 
                 # Try to find location info
-                location_elem = card.find(["span", "div"], class_=re.compile(r"location|area|city", re.I))
+                location_elem = card.find(
+                    ["span", "div"], class_=re.compile(r"location|area|city", re.I)
+                )
                 if location_elem:
                     location = location_elem.get_text(strip=True)
 

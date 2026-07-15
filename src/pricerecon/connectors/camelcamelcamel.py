@@ -40,6 +40,7 @@ class CamelCamelCamelConnector(BaseConnector):
 
         # Get API key from config or environment
         import os
+
         self.api_key = self.config.get("api_key") or os.getenv(self.API_KEY_ENV_VAR)
 
         if not self.api_key:
@@ -134,9 +135,7 @@ class CamelCamelCamelConnector(BaseConnector):
 
         return None
 
-    async def _fetch_product_data(
-        self, asin: str, domain: str
-    ) -> Optional[dict[str, Any]]:
+    async def _fetch_product_data(self, asin: str, domain: str) -> Optional[dict[str, Any]]:
         """Fetch product data from CamelCamelCamel API.
 
         Args:

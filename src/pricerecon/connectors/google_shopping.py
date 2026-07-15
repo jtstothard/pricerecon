@@ -5,7 +5,11 @@ from decimal import Decimal
 from typing import Any, Optional
 
 from pricerecon.connectors.base import BaseConnector
-from pricerecon.connectors.browser_client import BrowserClient, BrowserSessionConfig, browser_context
+from pricerecon.connectors.browser_client import (
+    BrowserClient,
+    BrowserSessionConfig,
+    browser_context,
+)
 from pricerecon.models import NormalizedListing, SourceType
 
 logger = logging.getLogger(__name__)
@@ -145,8 +149,11 @@ class GoogleShoppingConnector(BaseConnector):
                     text = elem.get_text(strip=True)
                     # Look for currency patterns (e.g., £599.99, $999.99)
                     import re
-                    if re.match(r'^[£$€]?\s?\d+[.,]\d{2}$', text):
-                        price_text = text.replace("£", "").replace("$", "").replace("€", "").replace(",", "")
+
+                    if re.match(r"^[£$€]?\s?\d+[.,]\d{2}$", text):
+                        price_text = (
+                            text.replace("£", "").replace("$", "").replace("€", "").replace(",", "")
+                        )
                         try:
                             price = Decimal(price_text)
                             break
@@ -169,7 +176,9 @@ class GoogleShoppingConnector(BaseConnector):
                         if "sold by" in text:
                             retailer = elem.get_text(strip=True)
                             # Clean up seller name: remove "Sold by:", "sold by", etc.
-                            retailer = retailer.replace("Sold by:", "").replace("sold by", "").strip()
+                            retailer = (
+                                retailer.replace("Sold by:", "").replace("sold by", "").strip()
+                            )
                             break
 
                 # Extract availability
