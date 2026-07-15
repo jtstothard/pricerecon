@@ -1,10 +1,8 @@
 """Tests for CamelCamelCamel connector."""
 
-from typing import Any
-
 import pytest
 from decimal import Decimal
-from unittest.mock import Mock, AsyncMock, MagicMock
+from unittest.mock import Mock, AsyncMock
 
 from pricerecon.connectors.camelcamelcamel import CamelCamelCamelConnector
 from pricerecon.models import Condition, SourceType
