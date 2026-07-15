@@ -1,6 +1,5 @@
 """Tests for Vinted connector."""
 
-from decimal import Decimal
 import pytest
 
 from pricerecon.connectors.vinted import VintedConnector

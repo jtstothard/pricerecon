@@ -1,6 +1,5 @@
 """Vinted connector using browser-assisted HTML parsing."""
 
-import hashlib
 import logging
 import re
 from decimal import Decimal

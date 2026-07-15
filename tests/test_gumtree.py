@@ -1,6 +1,5 @@
 """Tests for Gumtree connector."""
 
-from decimal import Decimal
 import pytest
 
 from pricerecon.connectors.gumtree import GumtreeConnector

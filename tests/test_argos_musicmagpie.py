@@ -1,12 +1,11 @@
 """Tests for Argos and MusicMagpie connectors."""
 
 from decimal import Decimal
-from typing import Any, cast
 
 import pytest
 from pricerecon.connectors.argos import ArgosConnector
 from pricerecon.connectors.musicmagpie import MusicMagpieConnector
-from pricerecon.models import NormalizedListing, SourceType
+from pricerecon.models import SourceType
 
 
 @pytest.mark.asyncio
