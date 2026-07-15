@@ -157,7 +157,7 @@ class GoogleShoppingConnector(BaseConnector):
                         try:
                             price = Decimal(price_text)
                             break
-                        except:
+                        except ValueError:
                             continue
 
                 # Extract seller/retailer info - check class attributes first

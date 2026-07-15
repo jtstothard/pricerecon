@@ -200,7 +200,7 @@ def test_handles_malformed_html():
     # Should skip malformed entries but keep valid ones
     assert len(listings) >= 1
     # Check that at least the valid product is included
-    valid_listing = next((l for l in listings if l.source_listing_id == "111111"), None)
+    valid_listing = next((item for item in listings if item.source_listing_id == "111111"), None)
     assert valid_listing is not None
     assert valid_listing.price is not None
     assert float(valid_listing.price) == 599.99

@@ -49,7 +49,7 @@ class CamelCamelCamelConnector(BaseConnector):
                 "Connector will use public access only (rate limited)."
             )
 
-        session: Optional[httpx.AsyncClient] = None  # type: ignore[valid-type]
+        self.session: Optional[httpx.AsyncClient] = None  # type: ignore[valid-type]
 
     @property
     def source_role(self) -> SourceType:

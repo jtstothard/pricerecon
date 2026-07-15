@@ -63,7 +63,7 @@ async def test_connectors_structure():
         print(f"  - Type: {expected_type}")
         print(f"  - Base URL: {connector.template.base_url}")
         print(f"  - Search URL: {connector.template.search_url}")
-        print(f"  - FlareSolverr: enabled")
+        print("  - FlareSolverr: enabled")
 
     print("\n" + "=" * 60)
     print(f"All {len(expected_connectors)} connectors validated successfully")
