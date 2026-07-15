@@ -115,7 +115,7 @@ async def test_extract_price_history(connector: CamelCamelCamelConnector) -> Non
 @pytest.mark.asyncio
 async def test_extract_price_history_empty(connector: CamelCamelCamelConnector) -> None:
     """Test price history extraction with empty data."""
-    data = {"prices": {}}
+    data: dict[str, object] = {"prices": {}}
     history = connector._extract_price_history(data)
     assert history == {}
 
