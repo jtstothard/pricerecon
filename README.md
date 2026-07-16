@@ -108,7 +108,6 @@ See [`.env.example`](.env.example) for all available options.
 | **Facebook Marketplace** | Marketplace | Session cookies | Playwright + stealth (see caveat below) |
 | **AliExpress** | Marketplace | API + optional DS/browser | Affiliate search, DS detail, manual PID/browser fallback. See [docs/ALIEXPRESS_CONTRACT.md](docs/ALIEXPRESS_CONTRACT.md) for supported modes and contract. |
 | **Reddit** | Signal | None | RSS feeds |
-
 | **Box** | Retailer | FlareSolverr | Anti-bot bypass |
 | **Currys** | Retailer | FlareSolverr | Anti-bot bypass |
 | **Ebuyer** | Retailer | FlareSolverr | Anti-bot bypass |
@@ -216,9 +215,33 @@ curl -X POST http://localhost:8000/api/watches \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ***" \
   -d '{
+    "name": "RTX 3090 Watch",
     "query": "RTX 3090",
-    "filters": {"price_max": 700, "region": "UK"},
-    "sources": ["ebay", "cex", "amazon"]
+    "category": "gpu",
+    "sources": [
+      {"connector": "ebay", "enabled": true},
+      {"connector": "cex", "enabled": true},
+      {"connector": "amazon_uk", "enabled": true}
+    ],
+    "schedule": {
+      "interval": "4h",
+      "timezone": "UTC"
+    },
+    "filters": {
+      "price_max": 700,
+      "condition_filter": {
+        "conditions": ["new", "refurbished"],
+        "dedup_enabled": false
+      },
+      "currency": "GBP",
+      "exclude_patterns": [],
+      "spec_match": {}
+    },
+    "grouping": {"enabled": false},
+    "notifications": {
+      "events": ["new_listing", "price_drop", "stock_change"],
+      "channels": ["webhook"]
+    }
   }'
 ```
 
