@@ -147,6 +147,8 @@ class CamelCamelCamelConnector(BaseConnector):
         """
         if not self.session:
             await self.initialize()
+            if not self.session:
+                return None
 
         # Construct API URL
         # CamelCamelCamel API endpoints:
@@ -160,7 +162,7 @@ class CamelCamelCamelConnector(BaseConnector):
                 raise RuntimeError("Session not initialized")
             response = await self.session.get(url, params=params)
             response.raise_for_status()
-            data: dict[str, Any] | None = response.json()
+            data: dict[str, Any] = response.json()
             return data
         except httpx.HTTPStatusError as e:
             logger.error(f"HTTP error fetching product {asin}: {e}")
