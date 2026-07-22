@@ -1,13 +1,15 @@
 """Shared browser client utilities for browser-based connectors.
 
-Supports either a local Playwright browser or a remote Camofox REST backend.
+Supports either a local Playwright browser, a remote Camofox REST backend,
+or the CloakBrowser patched Chromium binary (anti-bot bypass).
 """
 
 from __future__ import annotations
 
+import glob
 import os
 from contextlib import asynccontextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, AsyncIterator
 
 import httpx
@@ -31,6 +33,113 @@ except Exception:  # pragma: no cover - optional dependency
     stealth_async = None  # type: ignore[assignment]
 
 
+# ---------------------------------------------------------------------------
+# CloakBrowser binary resolution
+# ---------------------------------------------------------------------------
+
+def resolve_cloakbrowser_binary() -> str | None:
+    """Return the path to the CloakBrowser Chromium binary, or None.
+
+    Resolution order:
+    1. ``PRICERECON_CLOAKBROWSER_CHROME`` env var (absolute path).
+    2. Glob ``~/.cloakbrowser/chromium-*/chrome``, highest semver wins.
+    3. ``None`` — CloakBrowser unavailable; callers must degrade gracefully.
+    """
+    env_path = os.environ.get("PRICERECON_CLOAKBROWSER_CHROME", "").strip()
+    if env_path and os.path.isfile(env_path):
+        return env_path
+
+    pattern = os.path.expanduser("~/.cloakbrowser/chromium-*/chrome")
+    candidates = glob.glob(pattern)
+    if not candidates:
+        return None
+
+    def _version_key(path: str) -> tuple[int, ...]:
+        # Extract version numbers from the directory name
+        dirname = os.path.basename(os.path.dirname(path))
+        # dirname is like "chromium-146.0.7680.177.5"
+        version_str = dirname.replace("chromium-", "")
+        try:
+            return tuple(int(x) for x in version_str.split("."))
+        except ValueError:
+            return (0,)
+
+    candidates.sort(key=_version_key, reverse=True)
+    best = candidates[0]
+    if os.path.isfile(best):
+        return best
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Block detection
+# ---------------------------------------------------------------------------
+
+def is_blocked(html: str, title: str, status: int = 200) -> bool:
+    """Detect anti-bot block signals in page content.
+
+    Args:
+        html: Page HTML content.
+        title: Page title.
+        status: HTTP status code (if available).
+
+    Returns:
+        True if a block / challenge is detected.
+
+    Note:
+        Real eBay pages sometimes contain the word "captcha" inside hidden
+        elements (e.g. accessibility labels or script payloads).  This
+        function will still return True in that case — callers that want to
+        distinguish a blocked page from a real results page should additionally
+        check for presence of ``s-item`` or ``srp-results`` in the HTML, and
+        should NOT rely solely on ``is_blocked`` as a success signal.
+    """
+    if status in (401, 403):
+        return True
+
+    html_lower = html.lower()
+    title_lower = title.lower()
+
+    # Cloudflare
+    cloudflare_patterns = [
+        "cf-challenge",
+        "cf-turnstile",
+        "challenge-platform",
+        "jschl_answer",
+    ]
+    if any(p in html_lower for p in cloudflare_patterns):
+        return True
+
+    # DataDome
+    if "datadome" in html_lower:
+        return True
+
+    # Generic error / block pages
+    if (
+        "error page" in title_lower
+        or "something went wrong on our end" in html_lower
+        or "access denied" in html_lower
+        or "you have been blocked" in html_lower
+    ):
+        return True
+
+    # CAPTCHA indicators
+    captcha_patterns = [
+        "captcha",
+        "verify it",
+        "verify you are human",
+        "are you a robot",
+    ]
+    if any(p in html_lower for p in captcha_patterns):
+        return True
+
+    return False
+
+
+# ---------------------------------------------------------------------------
+# Config
+# ---------------------------------------------------------------------------
+
 @dataclass(slots=True)
 class BrowserSessionConfig:
     headless: bool = True
@@ -44,7 +153,28 @@ class BrowserSessionConfig:
     camofox_session_key: str | None = None
     camofox_api_key: str | None = None
     camofox_access_key: str | None = None
+    # CloakBrowser backend
+    use_cloakbrowser: bool = field(default=False)
+    cloakbrowser_fallback: bool = field(default=True)
 
+    def __post_init__(self) -> None:
+        # env-var overrides for CloakBrowser flags
+        env_use = os.environ.get("PRICERECON_CLOAKBROWSER_USE", "").strip().lower()
+        if env_use in ("1", "true", "yes"):
+            self.use_cloakbrowser = True
+        elif env_use in ("0", "false", "no"):
+            self.use_cloakbrowser = False
+
+        env_fb = os.environ.get("PRICERECON_CLOAKBROWSER_FALLBACK", "").strip().lower()
+        if env_fb in ("0", "false", "no"):
+            self.cloakbrowser_fallback = False
+        elif env_fb in ("1", "true", "yes"):
+            self.cloakbrowser_fallback = True
+
+
+# ---------------------------------------------------------------------------
+# Remote Camofox backend (unchanged)
+# ---------------------------------------------------------------------------
 
 class _RemoteCamofoxPage:
     def __init__(self, context: "_RemoteCamofoxContext") -> None:
@@ -165,14 +295,19 @@ class _RemoteCamofoxContext:
         self._pages.clear()
 
 
+# ---------------------------------------------------------------------------
+# BrowserClient
+# ---------------------------------------------------------------------------
+
 class BrowserClient:
-    """Owns either a Playwright browser or a remote Camofox session."""
+    """Owns either a Playwright browser, the CloakBrowser patched binary, or a remote Camofox session."""
 
     def __init__(self, *, config: BrowserSessionConfig | None = None) -> None:
         self.config = config or BrowserSessionConfig()
         self._playwright: Any = None
         self._browser: Any = None
         self._remote_client: httpx.AsyncClient | None = None
+        self._using_cloakbrowser: bool = False
 
     def _uses_camofox(self) -> bool:
         return bool((self.config.camofox_url or "").strip())
@@ -187,7 +322,23 @@ class BrowserClient:
         if self._browser is not None:
             return
         self._playwright = await async_playwright().start()
-        self._browser = await self._playwright.chromium.launch(headless=self.config.headless)
+
+        cloakbrowser_path: str | None = None
+        if self.config.use_cloakbrowser:
+            cloakbrowser_path = resolve_cloakbrowser_binary()
+            if cloakbrowser_path is None:
+                # Binary missing — degrade silently to plain Playwright
+                pass
+
+        if cloakbrowser_path:
+            self._browser = await self._playwright.chromium.launch(
+                headless=self.config.headless,
+                executable_path=cloakbrowser_path,
+            )
+            self._using_cloakbrowser = True
+        else:
+            self._browser = await self._playwright.chromium.launch(headless=self.config.headless)
+            self._using_cloakbrowser = False
 
     async def close(self) -> None:
         if self._browser is not None:
@@ -199,6 +350,7 @@ class BrowserClient:
         if self._remote_client is not None:
             await self._remote_client.aclose()
             self._remote_client = None
+        self._using_cloakbrowser = False
 
     def _fingerprint_kwargs(self) -> dict[str, Any]:
         if FingerprintGenerator is None:
@@ -233,18 +385,130 @@ class BrowserClient:
             "locale": self.config.locale,
             "timezone_id": self.config.timezone_id,
         }
-        context_kwargs.update(self._fingerprint_kwargs())
-        if self.config.user_agent:
-            context_kwargs["user_agent"] = self.config.user_agent
+        if not self._using_cloakbrowser:
+            # CloakBrowser handles its own fingerprinting — do NOT override user_agent
+            # when using the patched binary, as that breaks the anti-bot bypass.
+            context_kwargs.update(self._fingerprint_kwargs())
+            if self.config.user_agent:
+                context_kwargs["user_agent"] = self.config.user_agent
         context = await self._browser.new_context(**context_kwargs)
         if cookies:
             await context.add_cookies(cookies)
-        if stealth_async is not None:
+        if stealth_async is not None and not self._using_cloakbrowser:
             try:
                 await stealth_async(context)
             except Exception:
                 pass
         return context
+
+    async def fetch_with_fallback(
+        self,
+        url: str,
+        *,
+        wait_ms: int = 8000,
+        nav_timeout: int = 45000,
+    ) -> dict[str, Any]:
+        """Fetch ``url``, falling back to CloakBrowser if the plain browser is blocked.
+
+        Mirrors the Node helper's ``fetchWithFallback`` semantics in pure Python.
+        Only active when ``config.cloakbrowser_fallback`` is True and the
+        CloakBrowser binary is available.
+
+        Returns a dict with keys: ``html``, ``title``, ``status``,
+        ``used_cloakbrowser`` (bool), ``blocked`` (bool).
+        """
+        import asyncio
+
+        async def _navigate(context: Any) -> tuple[str, str, int]:
+            page = await context.new_page()
+            status: int = 200
+
+            def _on_response(response: Any) -> None:
+                nonlocal status
+                try:
+                    if response.url == url:
+                        status = response.status
+                except Exception:
+                    pass
+
+            page.on("response", _on_response)
+            page.set_default_navigation_timeout(nav_timeout)
+            await page.goto(url, wait_until="domcontentloaded")
+            await asyncio.sleep(wait_ms / 1000.0)
+            title = await page.title()
+            html = await page.content()
+            await context.close()
+            return html, title, status
+
+        # Try plain browser first
+        await self.start()
+        try:
+            context = await self.new_context()
+            html, title, status = await _navigate(context)
+        except Exception:
+            html, title, status = "", "", 0
+
+        blocked = is_blocked(html, title, status)
+
+        if not blocked:
+            return {
+                "html": html,
+                "title": title,
+                "status": status,
+                "used_cloakbrowser": self._using_cloakbrowser,
+                "blocked": False,
+            }
+
+        # Blocked — try CloakBrowser fallback if available
+        if not self.config.cloakbrowser_fallback:
+            return {
+                "html": html,
+                "title": title,
+                "status": status,
+                "used_cloakbrowser": False,
+                "blocked": True,
+            }
+
+        cloak_path = resolve_cloakbrowser_binary()
+        if cloak_path is None:
+            return {
+                "html": html,
+                "title": title,
+                "status": status,
+                "used_cloakbrowser": False,
+                "blocked": True,
+            }
+
+        # Close existing browser, reopen with CloakBrowser binary
+        await self.close()
+        assert self._playwright is None
+        if async_playwright is None:
+            raise RuntimeError(f"Playwright is unavailable: {_PLAYWRIGHT_IMPORT_ERROR}")
+        self._playwright = await async_playwright().start()
+        self._browser = await self._playwright.chromium.launch(
+            headless=self.config.headless,
+            executable_path=cloak_path,
+        )
+        self._using_cloakbrowser = True
+
+        context = await self._browser.new_context(
+            viewport={
+                "width": self.config.viewport_width,
+                "height": self.config.viewport_height,
+            },
+            locale=self.config.locale,
+            timezone_id=self.config.timezone_id,
+        )
+        html, title, status = await _navigate(context)
+        blocked_after = is_blocked(html, title, status)
+
+        return {
+            "html": html,
+            "title": title,
+            "status": status,
+            "used_cloakbrowser": True,
+            "blocked": blocked_after,
+        }
 
 
 @asynccontextmanager
