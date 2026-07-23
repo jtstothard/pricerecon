@@ -95,7 +95,10 @@ def watch_row_to_model(row: sqlite3.Row) -> Watch:
         id=row["id"],
         name=row["name"],
         query=row["query"],
+        display_title=config.get("display_title"),
         category=row["category"],
+        synonym_groups=config.get("synonym_groups", []),
+        source_queries=config.get("source_queries", {}),
         sources=config.get("sources", []),
         filters=config.get("filters", {}),
         schedule=config.get("schedule", {}),
@@ -156,6 +159,9 @@ async def create_watch(watch_create: WatchCreate) -> Watch:
     try:
         # Build config JSON
         config = {
+            "display_title": watch_create.display_title,
+            "synonym_groups": watch_create.synonym_groups,
+            "source_queries": watch_create.source_queries,
             "sources": [s.model_dump(mode="json") for s in watch_create.sources],
             "filters": watch_create.filters.model_dump(mode="json"),
             "schedule": watch_create.schedule.model_dump(mode="json"),
@@ -243,6 +249,9 @@ async def update_watch(watch_id: int, watch_update: WatchUpdate) -> Watch:
     try:
         # Build config JSON
         config = {
+            "display_title": watch_update.display_title,
+            "synonym_groups": watch_update.synonym_groups,
+            "source_queries": watch_update.source_queries,
             "sources": [s.model_dump(mode="json") for s in watch_update.sources],
             "filters": watch_update.filters.model_dump(mode="json"),
             "schedule": watch_update.schedule.model_dump(mode="json"),

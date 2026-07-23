@@ -44,7 +44,10 @@ def get_watch(watch_id: int) -> Optional[Watch]:
         id=row["id"],
         name=row["name"],
         query=row["query"],
+        display_title=config.get("display_title"),
         category=row["category"],
+        synonym_groups=config.get("synonym_groups", []),
+        source_queries=config.get("source_queries", {}),
         sources=config.get("sources", []),
         filters=config.get("filters", {}),
         schedule=config.get("schedule", {}),
@@ -82,22 +85,22 @@ def _storage_gb_from_specs(specs: dict[str, Any]) -> int | None:
     return storage_value
 
 
-def _spec_matches_listing(listing: NormalizedListing, spec_match: Any) -> bool:
+def _spec_matches_listing(listing: NormalizedListing, spec_match: Any, watch_synonym_groups: list[list[str]] | None = None) -> bool:
+    from pricerecon.core.title_matching import matches_watch_spec
+
     match_dict = (
         spec_match.model_dump() if hasattr(spec_match, "model_dump") else (spec_match or {})
     )
     if not match_dict:
         return True
 
+    # Use new token-based title matching
+    if not matches_watch_spec(listing.title_raw, spec_match, watch_synonym_groups):
+        return False
+
+    # Spec field matching (ram, storage, cpu, gpu)
     specs = _normalized_listing_specs(listing)
     title_lower = listing.title_raw.lower()
-
-    required_terms = match_dict.get("required_title_terms", []) or []
-    if required_terms and not all(str(term).casefold() in title_lower for term in required_terms):
-        return False
-    excluded_terms = match_dict.get("excluded_title_terms", []) or []
-    if any(str(term).casefold() in title_lower for term in excluded_terms):
-        return False
 
     ram_gb = match_dict.get("ram_gb")
     if ram_gb is not None:
@@ -127,7 +130,7 @@ def _spec_matches_listing(listing: NormalizedListing, spec_match: Any) -> bool:
 
 
 def apply_post_normalization_filters(
-    listings: list[NormalizedListing], filters: Any
+    listings: list[NormalizedListing], filters: Any, watch_synonym_groups: list[list[str]] | None = None
 ) -> list[NormalizedListing]:
     filtered = listings
     filter_dict = filters.model_dump() if hasattr(filters, "model_dump") else filters
@@ -144,7 +147,7 @@ def apply_post_normalization_filters(
         filtered = [lst for lst in filtered if lst.condition and lst.condition in conditions]
     spec_match = filter_dict.get("spec_match", {})
     if spec_match:
-        filtered = [lst for lst in filtered if _spec_matches_listing(lst, spec_match)]
+        filtered = [lst for lst in filtered if _spec_matches_listing(lst, spec_match, watch_synonym_groups)]
     if condition_filter.get("dedup_enabled", False):
         dedup_keys = {}
         for lst in filtered:
@@ -186,27 +189,12 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
     )
 
     all_listings = []
-    route = route_for_query(watch.query)
-    effective_filters = watch.filters.model_copy(deep=True)
-    if route:
-        # Route rules are safety constraints, not connector hints. Always add
-        # them even when an old watch was created with only a broad query.
-        spec = effective_filters.spec_match
-        spec.required_title_terms = list(dict.fromkeys([
-            *spec.required_title_terms,
-            *route.required_terms,
-        ]))
-        spec.excluded_title_terms = list(dict.fromkeys([
-            *spec.excluded_title_terms,
-            *route.excluded_terms,
-        ]))
+
     for source in watch.sources:
         if not source.enabled:
             continue
         connector_id = source.connector
         if not connector_id:
-            continue
-        if route and connector_id not in route.allowed_sources:
             continue
         connector = None
         try:
@@ -272,7 +260,9 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
             connector_filters = {}
             if watch.filters.price_max:
                 connector_filters["price_max"] = watch.filters.price_max
-            listings = await connector.search(watch.query, connector_filters)
+            # Use per-connector query if available, otherwise fall back to watch.query
+            effective_query = watch.source_queries.get(connector_id, watch.query)
+            listings = await connector.search(effective_query, connector_filters)
             all_listings.extend(listings)
             upsert_connector_health(connector_id, "ok", details={"listing_count": len(listings)})
         except ConnectorDegradedError as exc:
@@ -306,14 +296,11 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
                 except Exception:
                     pass
 
-    filtered_listings = apply_post_normalization_filters(all_listings, effective_filters)
-    if route:
-        # Keep this explicit route check in addition to the generic filter so
-        # callers cannot accidentally weaken route semantics by changing the
-        # filter model shape.
-        filtered_listings = [
-            listing for listing in filtered_listings if route_title_matches(listing.title_raw, route)
-        ]
+    filtered_listings = apply_post_normalization_filters(
+        all_listings,
+        watch.filters,
+        watch.synonym_groups if watch.synonym_groups else None
+    )
     first_run, diff_result, event_ids = run_check(watch_id, filtered_listings)
 
     conn = get_db()

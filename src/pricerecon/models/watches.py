@@ -60,17 +60,23 @@ class ConditionFilter(BaseModel):
 class SpecMatch(BaseModel):
     """Spec matching configuration.
 
-    ``required_title_terms`` and ``excluded_title_terms`` are intentionally
+    ``synonym_groups`` and ``excluded_title_terms`` are intentionally
     title-level rules: marketplace connectors often do not expose structured
     specs, and a storage-only query must not admit a different product family.
+
+    synonym_groups: OR-within-group, AND-across-groups. A listing must match
+    at least one term from each group to pass. Replaces required_title_terms.
     """
 
     gpu_model: Optional[str] = None
     ram_gb: Optional[int] = None
     storage_gb: Optional[int] = None
     cpu_model: Optional[str] = None
-    required_title_terms: list[str] = Field(default_factory=list)
+    synonym_groups: list[list[str]] = Field(default_factory=list)
     excluded_title_terms: list[str] = Field(default_factory=list)
+
+    # Legacy field for migration - deprecated, use synonym_groups instead
+    required_title_terms: list[str] = Field(default_factory=list, deprecated=True)
 
 
 class WatchFilters(BaseModel):
@@ -154,7 +160,16 @@ class WatchBase(BaseModel):
 
     name: str = Field(..., min_length=1, description="Watch name")
     query: str = Field(..., min_length=1, description="Search query")
+    display_title: Optional[str] = Field(None, description="Human-readable display title for UI")
     category: Optional[str] = Field(None, description="Product category (e.g., 'gpu', 'cpu')")
+    synonym_groups: list[list[str]] = Field(
+        default_factory=list,
+        description="OR-within-group, AND-across-groups title matching rules"
+    )
+    source_queries: dict[str, str] = Field(
+        default_factory=dict,
+        description="Per-connector query overrides (connector_id -> raw query)"
+    )
     sources: list[SourceConfig] = Field(
         default_factory=lambda: [SourceConfig(connector="ebay")],
         description="Source configurations",
