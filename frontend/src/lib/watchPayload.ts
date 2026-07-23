@@ -12,8 +12,9 @@ export interface WatchFormData {
   display_title: string
   synonym_groups: string[][]
   excluded_terms: string[]
-  source_queries: Record<string, string>
-  advancedMode: boolean
+  /** Optional so callers using the pre-advanced form shape remain valid. */
+  source_queries?: Record<string, string>
+  advancedMode?: boolean
 }
 
 export function validateWatchForm(formData: WatchFormData): string | null {
@@ -22,15 +23,6 @@ export function validateWatchForm(formData: WatchFormData): string | null {
   if (formData.sources.length === 0) return 'Select at least one source.'
   if (formData.synonym_groups.some(group => group.some(term => !term.trim()))) {
     return 'Complete or remove every synonym term.'
-  }
-  // Validate per-connector queries in advanced mode
-  if (formData.advancedMode) {
-    for (const connector of formData.sources) {
-      const connectorQuery = formData.source_queries[connector]
-      if (connectorQuery !== undefined && !connectorQuery.trim()) {
-        return `Connector "${connector}" has an empty custom query. Either enter a query or clear the field to use the default.`
-      }
-    }
   }
   return null
 }
@@ -68,7 +60,17 @@ export interface WatchCreatePayload {
 }
 
 export function buildWatchCreatePayload(formData: WatchFormData): WatchCreatePayload {
-  const { sources, interval, filters, display_title, synonym_groups, excluded_terms, source_queries = {}, ...rest } = formData
+  const {
+    sources,
+    interval,
+    filters,
+    display_title,
+    synonym_groups,
+    excluded_terms,
+    source_queries = {},
+    advancedMode = false,
+    ...rest
+  } = formData
   const normalizedSynonymGroups = synonym_groups
     .map(group => group.map(term => term.trim()).filter(Boolean))
     .filter(group => group.length > 0)
@@ -77,8 +79,8 @@ export function buildWatchCreatePayload(formData: WatchFormData): WatchCreatePay
   // Clean up source_queries: only include non-empty values for enabled connectors.
   // Raw strings are intentionally not trimmed so connector syntax is preserved exactly.
   const cleanedSourceQueries: Record<string, string> = {}
-  for (const [connector, query] of Object.entries(source_queries || {})) {
-    if (sources.includes(connector) && query && query.trim()) {
+  for (const [connector, query] of Object.entries(advancedMode ? source_queries : {})) {
+    if (sources.includes(connector) && query.trim()) {
       cleanedSourceQueries[connector] = query
     }
   }
