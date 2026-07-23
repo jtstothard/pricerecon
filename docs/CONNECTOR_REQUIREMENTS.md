@@ -41,7 +41,7 @@ These sites work with direct HTTP requests and do not require FlareSolverr.
 | Laptops Direct | laptopsdirect.co.uk | None | Direct HTTP works |
 | Music Magpie | musicmagpie.co.uk | None | Direct HTTP works |
 | Novatech | novatech.co.uk | None | Direct HTTP works |
-| Reddit | reddit.com | None | RSS feed (no HTTP scraping) |
+| Reddit | reddit.com | Reddit API credentials (approved app) or optional browser | RSS is attempted first; on 403/429 the connector tries the approved API, then opt-in Camofox/Playwright. |
 | HotUKDeals | hotukdeals.com | None | RSS feed (no HTTP scraping) |
 | Shopify | *.myshopify.com | None | Generic Shopify scraping |
 | Dell UK | dell.co.uk | None | Direct HTTP works |

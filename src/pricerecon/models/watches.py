@@ -58,12 +58,19 @@ class ConditionFilter(BaseModel):
 
 
 class SpecMatch(BaseModel):
-    """Spec matching configuration."""
+    """Spec matching configuration.
+
+    ``required_title_terms`` and ``excluded_title_terms`` are intentionally
+    title-level rules: marketplace connectors often do not expose structured
+    specs, and a storage-only query must not admit a different product family.
+    """
 
     gpu_model: Optional[str] = None
     ram_gb: Optional[int] = None
     storage_gb: Optional[int] = None
     cpu_model: Optional[str] = None
+    required_title_terms: list[str] = Field(default_factory=list)
+    excluded_title_terms: list[str] = Field(default_factory=list)
 
 
 class WatchFilters(BaseModel):
