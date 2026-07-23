@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 import httpx
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from pricerecon.connectors.base import BaseConnector
 from pricerecon.models import NormalizedListing, SourceType
@@ -22,6 +22,19 @@ class eBayOAuthToken(BaseModel):
     expires_in: int
     refresh_token: Optional[str] = None
     expires_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    @field_validator("expires_at")
+    @classmethod
+    def ensure_utc_expiry(cls, value: datetime) -> datetime:
+        """Keep persisted expiry values comparable with the UTC clock.
+
+        Older rows may contain an ISO timestamp without an offset. Treat those
+        values as UTC rather than allowing a naive/aware comparison to fail and
+        silently discard an otherwise usable token.
+        """
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc)
 
 
 class eBayTokenStore:
@@ -151,6 +164,8 @@ class eBayConnector(BaseConnector):
     async def ensure_token(self) -> str:
         token = self.token_store.get_token()
         if token:
+            # Clear stale auth_failed health when a valid cached token is used
+            self._clear_health_error()
             return token.access_token
 
         logger.info("Fetching new eBay OAuth token")

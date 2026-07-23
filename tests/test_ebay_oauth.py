@@ -145,6 +145,25 @@ class TestEBayTokenStore:
         assert token is not None
         assert token.access_token == "valid_token"
 
+    def test_naive_expiry_is_normalized_to_utc(self, temp_db):
+        """Legacy offset-less expiry timestamps are interpreted as UTC."""
+        store = eBayTokenStore(str(temp_db))
+        expires_at = (datetime.now(timezone.utc) + timedelta(hours=2)).replace(tzinfo=None)
+        token = eBayOAuthToken(
+            access_token="legacy_token",
+            expires_in=7200,
+            expires_at=expires_at,
+        )
+
+        assert token.expires_at.tzinfo is not None
+        assert token.expires_at.utcoffset() == timedelta(0)
+        store.save_token(token)
+
+        restored = store.get_token()
+        assert restored is not None
+        assert restored.expires_at.tzinfo is not None
+        assert restored.expires_at.utcoffset() == timedelta(0)
+
 
 class TestEBayConnectorSearch401Retry:
     """Test eBay connector 401 retry behavior."""
@@ -183,20 +202,24 @@ class TestEBayConnectorSearch401Retry:
 
     @pytest.fixture
     def connector(self, temp_db):
-        """Create an eBay connector instance."""
+        """Create an eBay connector instance with health DB calls isolated."""
+        patcher = patch("pricerecon.core.connector_health.get_db")
+        mock_get_db = patcher.start()
 
-        # Patch DB_PATH to point to our temp DB
-        with patch('pricerecon.core.connector_health.get_db') as mock_get_db:
-            # Create a real connection to our temp DB
-            real_conn = sqlite3.connect(temp_db)
-            real_conn.row_factory = sqlite3.Row
-            mock_get_db.return_value = real_conn
+        def open_temp_db(*_args, **_kwargs):
+            conn = sqlite3.connect(temp_db)
+            conn.row_factory = sqlite3.Row
+            return conn
 
-            return eBayConnector(
+        mock_get_db.side_effect = open_temp_db
+        try:
+            yield eBayConnector(
                 app_id="test_app_id",
                 cert_id="test_cert_id",
                 db_path=str(temp_db),
             )
+        finally:
+            patcher.stop()
 
     @pytest.mark.asyncio
     async def test_search_401_triggers_refresh_and_retry(self, connector, temp_db):
@@ -271,6 +294,82 @@ class TestEBayConnectorSearch401Retry:
         # Verify that we fetched a new token
         assert mock_client.post.call_count == 1
 
+    @pytest.mark.asyncio
+    async def test_expired_cached_token_is_replaced_before_search(self, connector, temp_db):
+        """An expired cached token is not sent to Browse API."""
+        conn = sqlite3.connect(temp_db)
+        cursor = conn.cursor()
+        expired_token = eBayOAuthToken(
+            access_token="expired_token",
+            token_type="Bearer",
+            expires_in=7200,
+            expires_at=datetime.now(timezone.utc) - timedelta(minutes=1),
+        )
+        cursor.execute(
+            "INSERT INTO connector_configs (connector_id, config_json) VALUES ('ebay', ?)",
+            (json.dumps({"oauth_token": expired_token.model_dump(mode="json")}),),
+        )
+        conn.commit()
+        conn.close()
+
+        mock_client = AsyncMock()
+        response_token = MagicMock(status_code=200)
+        response_token.json.return_value = {
+            "access_token": "fresh_token",
+            "token_type": "Bearer",
+            "expires_in": 7200,
+        }
+        response_success = MagicMock(status_code=200)
+        response_success.json.return_value = {"itemSummaries": []}
+        mock_client.post.return_value = response_token
+        mock_client.get.return_value = response_success
+
+        with patch.object(connector, "_client", mock_client):
+            assert await connector.search("expired token query") == []
+
+        assert mock_client.post.call_count == 1
+        assert mock_client.get.call_count == 1
+        assert "fresh_token" in mock_client.get.call_args.kwargs["headers"]["Authorization"]
+
+    @pytest.mark.asyncio
+    async def test_repeated_401_does_not_retry_indefinitely(self, connector, temp_db):
+        """A refreshed token gets exactly one Browse API retry."""
+        conn = sqlite3.connect(temp_db)
+        cursor = conn.cursor()
+        token = eBayOAuthToken(
+            access_token="revoked_token",
+            token_type="Bearer",
+            expires_in=7200,
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=2),
+        )
+        cursor.execute(
+            "INSERT INTO connector_configs (connector_id, config_json) VALUES ('ebay', ?)",
+            (json.dumps({"oauth_token": token.model_dump(mode="json")}),),
+        )
+        conn.commit()
+        conn.close()
+
+        mock_client = AsyncMock()
+        response_401 = MagicMock(status_code=401)
+        response_401.raise_for_status.side_effect = httpx.HTTPStatusError(
+            "401 Unauthorized", request=MagicMock(), response=response_401
+        )
+        response_token = MagicMock(status_code=200)
+        response_token.json.return_value = {
+            "access_token": "replacement_token",
+            "token_type": "Bearer",
+            "expires_in": 7200,
+        }
+        mock_client.post.return_value = response_token
+        mock_client.get.side_effect = [response_401, response_401]
+
+        with patch.object(connector, "_client", mock_client):
+            with pytest.raises(httpx.HTTPStatusError):
+                await connector.search("still unauthorized")
+
+        assert mock_client.get.call_count == 2
+        assert mock_client.post.call_count == 1
+
 
 class TestEBayConnectorHealthRecovery:
     """Test eBay connector health recovery."""
@@ -309,20 +408,24 @@ class TestEBayConnectorHealthRecovery:
 
     @pytest.fixture
     def connector(self, temp_db):
-        """Create an eBay connector instance."""
+        """Create an eBay connector instance with health DB calls isolated."""
+        patcher = patch("pricerecon.core.connector_health.get_db")
+        mock_get_db = patcher.start()
 
-        # Patch DB_PATH to point to our temp DB
-        with patch('pricerecon.core.connector_health.get_db') as mock_get_db:
-            # Create a real connection to our temp DB
-            real_conn = sqlite3.connect(temp_db)
-            real_conn.row_factory = sqlite3.Row
-            mock_get_db.return_value = real_conn
+        def open_temp_db(*_args, **_kwargs):
+            conn = sqlite3.connect(temp_db)
+            conn.row_factory = sqlite3.Row
+            return conn
 
-            return eBayConnector(
+        mock_get_db.side_effect = open_temp_db
+        try:
+            yield eBayConnector(
                 app_id="test_app_id",
                 cert_id="test_cert_id",
                 db_path=str(temp_db),
             )
+        finally:
+            patcher.stop()
 
     @pytest.mark.asyncio
     async def test_connector_with_auth_failed_health_state_is_retried(self, connector, temp_db):
@@ -378,8 +481,14 @@ class TestEBayConnectorHealthRecovery:
         mock_client.post.return_value = response_token
         mock_client.get.return_value = response_search
 
-        with patch.object(connector, "_client", mock_client):
-            listings = await connector.search("test query")
+        def mock_get_db(path=None):
+            db_conn = sqlite3.connect(temp_db)
+            db_conn.row_factory = sqlite3.Row
+            return db_conn
+
+        with patch("pricerecon.core.connector_health.get_db", side_effect=mock_get_db):
+            with patch.object(connector, "_client", mock_client):
+                listings = await connector.search("test query")
 
         # Verify that we got listings (connector was not skipped)
         assert len(listings) == 1

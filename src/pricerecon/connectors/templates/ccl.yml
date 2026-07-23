@@ -10,4 +10,5 @@ selectors:
   stock: .stock, .availability, .product-stock, [data-testid="stock"]
   image: img
   id: a[href]
+use_flare_solverr: true
 category: gpu

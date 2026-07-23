@@ -7,6 +7,7 @@ from decimal import Decimal
 from unittest.mock import Mock, MagicMock
 
 from pricerecon.connectors.amazon import AmazonConnector
+from pricerecon.connectors.status import ConnectorDegradedError
 from pricerecon.models import Condition, SourceType
 
 
@@ -59,16 +60,26 @@ def test_cleanup(connector: Any) -> None:
 @pytest.mark.asyncio
 async def test_search_basic(connector: Any, mock_session: Any) -> None:
     """Test basic search."""
-    # Mock response with HTML containing ASINs and prices
+    # Mock response with realistic Amazon HTML containing ASINs and prices
     mock_response = Mock()
     mock_response.text = """
-        <div data-asin="B0C123ABC1">
-            <span class="a-offscreen">£599.99</span>
-            <h2>RTX 4090</h2>
+        <div data-component-type="s-search-result">
+            <div data-asin="B0C123ABC1">
+                <span class="a-size-base-plus a-color-base a-text-normal">
+                    RTX 4090
+                </span>
+                <span class="a-offscreen">£599.99</span>
+                <h2>RTX 4090</h2>
+            </div>
         </div>
-        <div data-asin="B0C456DEF2">
-            <span class="a-offscreen">£649.99</span>
-            <h2>RTX 4090 OC</h2>
+        <div data-component-type="s-search-result">
+            <div data-asin="B0C456DEF2">
+                <span class="a-size-base-plus a-color-base a-text-normal">
+                    RTX 4090 OC
+                </span>
+                <span class="a-offscreen">£649.99</span>
+                <h2>RTX 4090 OC</h2>
+            </div>
         </div>
         <a href="/dp/B0C789GHI3">Another product</a>
     """
@@ -98,11 +109,17 @@ async def test_search_basic(connector: Any, mock_session: Any) -> None:
 @pytest.mark.asyncio
 async def test_search_with_refurbished_filter(connector: Any, mock_session: Any) -> None:
     """Test search with refurbished condition filter."""
-    # Mock response
+    # Mock response with realistic Amazon HTML
     mock_response = Mock()
     mock_response.text = """
-        <div data-asin="B0C123ABC1">
-            <span class="a-offscreen">£499.99</span>
+        <div data-component-type="s-search-result">
+            <div data-asin="B0C123ABC1">
+                <span class="a-size-base-plus a-color-base a-text-normal">
+                    Refurbished RTX 4090
+                </span>
+                <span class="a-offscreen">£499.99</span>
+                <h2>Refurbished RTX 4090</h2>
+            </div>
         </div>
     """
     mock_response.raise_for_status = Mock()
@@ -127,9 +144,9 @@ async def test_search_error_handling(connector: Any, mock_session: Any) -> None:
     # Mock request failure
     mock_session.get.side_effect = Exception("Network error")
 
-    # Search should return empty list on error
-    listings = await connector.search("RTX 4090")
-    assert listings == []
+    # Search should raise ConnectorDegradedError on error
+    with pytest.raises(ConnectorDegradedError):
+        await connector.search("RTX 4090")
 
 
 @pytest.mark.asyncio
@@ -170,18 +187,37 @@ def test_parse_search_results_no_prices(connector: Any) -> None:
 
     listings = connector._parse_search_results(html, "test query", {})
 
-    # Should still create listing with zero price
-    assert len(listings) >= 1
-    assert listings[0].price == Decimal("0.00")
-    assert not listings[0].in_stock
+    # Should return empty list when all listings have no prices
+    assert listings == []
 
 
 def test_parse_search_results_duplicate_asins(connector: Any) -> None:
     """Test deduplication of duplicate ASINs."""
     html = """
-        <a href="/dp/B0C123ABC1">Product 1</a>
-        <a href="/dp/B0C123ABC1">Product 1 duplicate</a>
-        <a href="/dp/B0C456DEF2">Product 2</a>
+        <div data-component-type="s-search-result">
+            <div data-asin="B0C123ABC1">
+                <span class="a-size-base-plus a-color-base a-text-normal">
+                    Product 1
+                </span>
+                <span class="a-offscreen">£99.99</span>
+            </div>
+        </div>
+        <div data-component-type="s-search-result">
+            <div data-asin="B0C123ABC1">
+                <span class="a-size-base-plus a-color-base a-text-normal">
+                    Product 1 duplicate
+                </span>
+                <span class="a-offscreen">£99.99</span>
+            </div>
+        </div>
+        <div data-component-type="s-search-result">
+            <div data-asin="B0C456DEF2">
+                <span class="a-size-base-plus a-color-base a-text-normal">
+                    Product 2
+                </span>
+                <span class="a-offscreen">£199.99</span>
+            </div>
+        </div>
     """
 
     listings = connector._parse_search_results(html, "test query", {})

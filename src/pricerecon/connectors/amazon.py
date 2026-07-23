@@ -6,6 +6,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any, Optional
 
 from pricerecon.connectors.base import BaseConnector
+from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 from pricerecon.models import Condition, NormalizedListing, SourceType
 
 logger = logging.getLogger(__name__)
@@ -80,7 +81,22 @@ class AmazonConnector(BaseConnector):
             response.raise_for_status()
         except Exception as e:
             logger.error(f"Amazon search failed: {e}")
-            return []
+            raise ConnectorDegradedError(
+                ConnectorStatus.unknown_error,
+                f"Amazon search request failed: {e}",
+                self.CONNECTOR_ID,
+                {"error": str(e), "error_type": type(e).__name__},
+            ) from e
+
+        # Check if we got a captcha/blocked page
+        if self._is_blocked_page(response.text):
+            logger.warning("Amazon returned a captcha or blocked page")
+            raise ConnectorDegradedError(
+                ConnectorStatus.bot_blocked,
+                "Amazon returned a captcha or blocked page",
+                self.CONNECTOR_ID,
+                {"status_code": getattr(response, "status_code", None)},
+            )
 
         # Parse search results
         listings = self._parse_search_results(response.text, query, filters)
@@ -88,10 +104,34 @@ class AmazonConnector(BaseConnector):
 
         return listings
 
+    def _is_blocked_page(self, html: str) -> bool:
+        """Check if the response is a captcha or blocked page.
+
+        Args:
+            html: HTML response
+
+        Returns:
+            True if blocked, False otherwise
+        """
+        captcha_indicators = [
+            "captcha",
+            "Type the characters you see below",
+            "security measure",
+            "enter the characters you see",
+            "Amazon is blocking your request",
+            "robot check",
+            "Sorry, something went wrong",
+            "access denied",
+            "temporarily blocked",
+            "Please verify you are human",
+        ]
+        html_lower = html.lower()
+        return any(indicator.lower() in html_lower for indicator in captcha_indicators)
+
     def _parse_search_results(
         self, html: str, query: str, filters: dict[str, Any]
     ) -> list[NormalizedListing]:
-        """Parse Amazon search results HTML.
+        """Parse Amazon search results HTML by extracting product blocks.
 
         Args:
             html: HTML response
@@ -102,66 +142,128 @@ class AmazonConnector(BaseConnector):
             List of normalized listings
         """
         listings = []
+        seen_asins: set[str] = set()
 
-        # Extract search result blocks
-        # Each block has ASIN and price information
-        # ASINs can be in URL pattern or data-asin attribute
-        asin_pattern = r"/dp/([A-Z0-9]{10})"
-        data_asin_pattern = r'data-asin="([A-Z0-9]{10})"'
-        price_pattern = r'<span class="a-offscreen">([^<]+)</span>'
+        # Find all product result blocks using data-component-type="s-search-result"
+        # These are top-level result divs; extract the full div block.
+        product_block_pattern = r'<div[^>]*data-component-type="s-search-result"[^>]*>(.*?)</div>\s*</div>\s*</div>\s*</div>'
+        blocks = re.finditer(product_block_pattern, html, re.DOTALL)
 
-        # Find all product blocks - check both patterns
-        url_asins = re.findall(asin_pattern, html)
-        data_asins = re.findall(data_asin_pattern, html)
-        asins = list(set(url_asins + data_asins))  # Deduplicate
+        for block_match in blocks:
+            block_html = block_match.group(0)
 
-        price_matches = re.finditer(price_pattern, html)
-        prices = [match.group(1) for match in price_matches]
+            listing = self._parse_product_block(block_html, query, filters)
+            if listing and listing.source_listing_id not in seen_asins:
+                seen_asins.add(listing.source_listing_id)
+                listings.append(listing)
 
-        # Match ASINs with prices
-        # This is a simple approach; in reality, prices are nested within product blocks
-        # For now, we'll create basic listings from what we can extract
+        # Fallback: if the structured pattern matched nothing, try the simpler
+        # data-asin div pattern that older Amazon markup uses.
+        if not listings:
+            simple_pattern = r'<div[^>]*data-asin="([A-Z0-9]{10})"[^>]*>(.*?)</div>'
+            for m in re.finditer(simple_pattern, html, re.DOTALL):
+                asin = m.group(1)
+                if asin in seen_asins:
+                    continue
+                listing = self._parse_product_block(m.group(0), query, filters)
+                if listing:
+                    seen_asins.add(asin)
+                    listings.append(listing)
 
-        seen_asins = set()
-        for i, asin in enumerate(asins):
-            if asin in seen_asins:
-                continue
-            seen_asins.add(asin)
+        return listings
 
-            # Get price if available
-            price = Decimal("0.00")
-            if i < len(prices):
-                try:
-                    # Strip prefixes like "Was:", "RRP:" and extract just the price
-                    raw = prices[i].replace("£", "").replace(",", "").strip()
-                    # Take only the numeric portion (last token after spaces)
-                    price_str = raw.split()[-1] if raw.split() else raw
-                    price = Decimal(price_str)
-                except (ValueError, IndexError, InvalidOperation):
-                    pass
+    def _parse_product_block(
+        self, block_html: str, query: str, filters: dict[str, Any]
+    ) -> Optional[NormalizedListing]:
+        """Parse a single product result block.
 
-            # Determine condition from filters or default to new
-            condition = Condition.NEW
-            if filters.get("condition") == "refurbished":
-                condition = Condition.REFURBISHED
+        Args:
+            block_html: HTML for a single product block
+            query: Original search query
+            filters: Search filters
 
-            # Create normalized listing with keyword-only args
+        Returns:
+            NormalizedListing or None if block is invalid
+        """
+        # Extract ASIN from data-asin attribute
+        asin_match = re.search(r'data-asin="([A-Z0-9]{10})"', block_html)
+        if not asin_match:
+            return None
+
+        asin = asin_match.group(1)
+
+        # Extract title - look for the product link/span
+        title_patterns = [
+            r'<h2[^>]*class="[^"]*a-size-base-plus[^"]*"[^>]*>\s*<span[^>]*>([^<]+)</span>',
+            r'<span class="a-size-base-plus a-color-base a-text-normal">\s*([^<]+)\s*</span>',
+            r'<h2[^>]*>\s*<span[^>]*>([^<]+)</span>',
+        ]
+
+        title = None
+        for pattern in title_patterns:
+            match = re.search(pattern, block_html)
+            if match:
+                title = match.group(1).strip()
+                break
+
+        if not title:
+            # No valid title found - this is not a real product
+            return None
+
+        # Check if this might be a sponsored/ad item
+        # Sponsored items have different structure and often lack reliable pricing
+        is_sponsored = "Sponsored" in block_html or "sponsored" in block_html.lower()
+        if is_sponsored:
+            logger.debug(f"Skipping sponsored item: {asin}")
+            return None
+
+        # Extract price from a-offscreen span
+        price_match = re.search(r'<span class="a-offscreen">([^<]+)</span>', block_html)
+        if not price_match:
+            # No price found — this is not a real purchasable product
+            return None
+
+        try:
+            price_str = price_match.group(1).replace("£", "").replace(",", "").strip()
+            # Handle cases like "Was: £100 £79.99" - take the last price
+            price_parts = price_str.split()
+            if price_parts:
+                price_str = price_parts[-1]
+            price = Decimal(price_str)
+        except (ValueError, IndexError, InvalidOperation):
+            return None
+
+        # Reject zero-priced listings — they are not real purchasable products
+        if price <= Decimal("0.00"):
+            return None
+
+        # Determine condition from filters or default to new
+        condition = Condition.NEW
+        if filters.get("condition") == "refurbished":
+            condition = Condition.REFURBISHED
+
+        # Determine stock status
+        in_stock = True
+
+        # Create normalized listing
+        try:
             listing = NormalizedListing.model_validate(
                 {
                     "source": self.CONNECTOR_ID,
                     "source_type": self.source_role,
                     "source_listing_id": asin,
-                    "title_raw": query,  # Full title requires fetching product page
+                    "title_raw": title,
                     "price": price,
                     "currency": "GBP",
                     "url": f"{self.BASE_URL}/dp/{asin}",
                     "condition": condition,
-                    "in_stock": price > Decimal("0.00"),
+                    "in_stock": in_stock,
                 }
             )
-
-            listings.append(listing)
-        return listings
+            return listing
+        except Exception as e:
+            logger.warning(f"Failed to create listing for ASIN {asin}: {e}")
+            return None
 
     async def get_product_page(self, asin: str) -> dict[str, Any]:
         """Fetch and parse Amazon product page.
@@ -179,7 +281,22 @@ class AmazonConnector(BaseConnector):
             response.raise_for_status()
         except Exception as e:
             logger.error(f"Failed to fetch product page for {asin}: {e}")
-            return {}
+            raise ConnectorDegradedError(
+                ConnectorStatus.unknown_error,
+                f"Amazon product page request failed: {e}",
+                self.CONNECTOR_ID,
+                {"asin": asin, "error": str(e)},
+            ) from e
+
+        # Check if blocked
+        if self._is_blocked_page(response.text):
+            logger.warning(f"Blocked when fetching product page for {asin}")
+            raise ConnectorDegradedError(
+                ConnectorStatus.bot_blocked,
+                f"Amazon blocked product page for {asin}",
+                self.CONNECTOR_ID,
+                {"asin": asin},
+            )
 
         return self._parse_product_page(response.text)
 
