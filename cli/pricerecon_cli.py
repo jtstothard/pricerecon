@@ -16,17 +16,26 @@ import sqlite3
 
 from pricerecon.db.schema import DB_PATH, init_db
 from pricerecon.core.watch_executor import execute_watch, get_watch_results, get_watch_events
-from pricerecon.models import SourceConfig, WatchFilters, WatchSchedule, WatchGrouping, WatchNotification
+from pricerecon.models import (
+    SourceConfig,
+    WatchFilters,
+    WatchSchedule,
+    WatchGrouping,
+    WatchNotification,
+    ConditionFilter,
+    SpecMatch,
+    EventType,
+)
 
 
-def get_db():
+def get_db() -> sqlite3.Connection:
     """Get database connection."""
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
 
-def ensure_db():
+def ensure_db() -> None:
     """Ensure database exists and is initialized."""
     if not DB_PATH.exists():
         click.echo(f"Initializing database at {DB_PATH}")
@@ -34,7 +43,7 @@ def ensure_db():
 
 
 @click.group()
-def cli():
+def cli() -> None:
     """PriceRecon CLI - monitor prices across multiple sources."""
     ensure_db()
 
@@ -45,7 +54,7 @@ def cli():
 
 
 @cli.group()
-def watch():
+def watch() -> None:
     """Watch management commands."""
     pass
 
@@ -64,7 +73,7 @@ def watch_add(
     sources: tuple,
     price_max: Optional[float],
     interval: str,
-):
+) -> None:
     """Add a new watch."""
     conn = get_db()
     cursor = conn.cursor()
@@ -76,7 +85,15 @@ def watch_add(
     source_configs = [SourceConfig(connector=s) for s in sources]
 
     # Build filters
-    filters = WatchFilters()
+    filters = WatchFilters(
+        price_max=None,
+        currency="GBP",
+        condition_filter=ConditionFilter(),
+        exclude_patterns=[],
+        spec_match=SpecMatch(),
+        min_seller_feedback=None,
+        min_seller_feedback_pct=None,
+    )
     if price_max:
         from decimal import Decimal
         filters.price_max = Decimal(str(price_max))
@@ -90,7 +107,14 @@ def watch_add(
         "filters": filters.model_dump(mode='json'),
         "schedule": schedule.model_dump(mode='json'),
         "grouping": WatchGrouping(enabled=False, product_key=None).model_dump(mode='json'),
-        "notifications": WatchNotification().model_dump(mode='json'),
+        "notifications": WatchNotification(
+            events=[EventType.NEW_LISTING, EventType.PRICE_DROP, EventType.STOCK_CHANGE],
+            channels=["webhook"],
+            webhook_url=None,
+            telegram_bot_token=None,
+            telegram_chat_id=None,
+            discord_webhook_url=None,
+        ).model_dump(mode='json'),
         "enabled": True,
         "status": "active",
     }
@@ -128,7 +152,7 @@ def watch_add(
 
 @watch.command("list")
 @click.option("--limit", default=20, help="Maximum watches to show")
-def watch_list(limit: int):
+def watch_list(limit: int) -> None:
     """List all watches."""
     conn = get_db()
     cursor = conn.cursor()
@@ -173,7 +197,7 @@ def watch_list(limit: int):
 
 @watch.command("check")
 @click.argument("watch_id", type=int)
-def watch_check(watch_id: int):
+def watch_check(watch_id: int) -> None:
     """Run a watch check immediately."""
     click.echo(f"Running check for watch {watch_id}...")
 
@@ -185,7 +209,7 @@ def watch_check(watch_id: int):
         sys.exit(1)
 
     click.echo()
-    click.echo(f"✓ Check completed")
+    click.echo("✓ Check completed")
     click.echo(f"  Listings found: {result['listings_found']}")
 
     if result["first_run"]:
@@ -231,7 +255,7 @@ def watch_check(watch_id: int):
 
 @watch.command("results")
 @click.argument("watch_id", type=int)
-def watch_results(watch_id: int):
+def watch_results(watch_id: int) -> None:
     """Show current listings for a watch."""
     result = get_watch_results(watch_id)
 
@@ -254,7 +278,7 @@ def watch_results(watch_id: int):
 @watch.command("events")
 @click.argument("watch_id", type=int)
 @click.option("--limit", default=20, help="Maximum events to show")
-def watch_events(watch_id: int, limit: int):
+def watch_events(watch_id: int, limit: int) -> None:
     """Show events for a watch."""
     result = get_watch_events(watch_id, limit)
 

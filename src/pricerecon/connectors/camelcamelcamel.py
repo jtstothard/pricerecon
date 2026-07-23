@@ -158,6 +158,8 @@ class CamelCamelCamelConnector(BaseConnector):
         params = {"format": "json", "domain": domain}
 
         try:
+            if self.session is None:
+                raise RuntimeError("Session not initialized")
             response = await self.session.get(url, params=params)
             response.raise_for_status()
             data: dict[str, Any] = response.json()
