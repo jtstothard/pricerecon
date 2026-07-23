@@ -1,13 +1,14 @@
 name: novatech
 source_type: retailer
 base_url: https://www.novatech.co.uk
-search_url: https://www.novatech.co.uk/search?keyword={query}
+# The site search form currently submits GET /search.html?search=...
+search_url: https://www.novatech.co.uk/search.html?search={query}
 selectors:
-  card: article, .product, .product-item, .search-result
-  title: a[href] h3, a[href] .title, h3, .product-title
-  price: .price, .product-price, [data-testid="price"]
-  url: a[href]
-  stock: .stock, .availability, .product-stock, [data-testid="stock"]
-  image: img
-  id: a[href]
+  card: .search-box-liner.search-box-results
+  title: .search-box-title h2 a
+  price: .newspec-price
+  url: .search-box-title h2 a
+  stock: .search-box-stock-status
+  image: img.rsp-list-image
+  id: .search-box-title h2 a
 category: gpu
