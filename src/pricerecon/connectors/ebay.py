@@ -2,7 +2,7 @@
 
 import logging
 from decimal import Decimal
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 import httpx
@@ -21,7 +21,7 @@ class eBayOAuthToken(BaseModel):
     token_type: str = "Bearer"
     expires_in: int
     refresh_token: Optional[str] = None
-    expires_at: datetime = Field(default_factory=datetime.utcnow)
+    expires_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class eBayTokenStore:
@@ -61,7 +61,7 @@ class eBayTokenStore:
                 return None
 
             token = eBayOAuthToken(**token_data)
-            if token.expires_at > datetime.utcnow() + timedelta(minutes=5):
+            if token.expires_at > datetime.now(timezone.utc) + timedelta(minutes=5):
                 return token
         except Exception as e:
             logger.warning(f"Failed to parse stored token: {e}")
@@ -69,7 +69,7 @@ class eBayTokenStore:
         return None
 
     def save_token(self, token: eBayOAuthToken) -> None:
-        """Save token to database."""
+        """Save token to database, preserving existing config keys."""
         import sqlite3
         import json
         from pathlib import Path
@@ -95,7 +95,20 @@ class eBayTokenStore:
         conn = sqlite3.connect(db)
         cursor = conn.cursor()
 
-        config_json = json.dumps({"oauth_token": token.model_dump(mode="json")})
+        # Read existing config to preserve other keys
+        cursor.execute("SELECT config_json FROM connector_configs WHERE connector_id = 'ebay'")
+        row = cursor.fetchone()
+
+        existing_config = {}
+        if row:
+            try:
+                existing_config = json.loads(row[0])
+            except Exception as e:
+                logger.warning(f"Failed to parse existing config: {e}")
+
+        # Merge the new token data
+        existing_config["oauth_token"] = token.model_dump(mode="json")
+        config_json = json.dumps(existing_config)
 
         cursor.execute(
             """
@@ -150,6 +163,44 @@ class eBayConnector(BaseConnector):
             self._mark_health_error(str(exc))
             raise
 
+    def _delete_cached_token(self) -> None:
+        """Delete the cached token from the database."""
+        import sqlite3
+        from pathlib import Path
+
+        db = Path(self.db_path)
+        if not db.exists():
+            return
+
+        conn = sqlite3.connect(db)
+        cursor = conn.cursor()
+
+        # Remove oauth_token from config
+        cursor.execute("SELECT config_json FROM connector_configs WHERE connector_id = 'ebay'")
+        row = cursor.fetchone()
+
+        if row:
+            try:
+                import json
+                config = json.loads(row[0])
+                if "oauth_token" in config:
+                    del config["oauth_token"]
+                    config_json = json.dumps(config)
+                    cursor.execute(
+                        """
+                        UPDATE connector_configs
+                        SET config_json = ?, updated_at = CURRENT_TIMESTAMP
+                        WHERE connector_id = 'ebay'
+                    """,
+                        (config_json,),
+                    )
+                    conn.commit()
+                    logger.info("Deleted cached eBay OAuth token")
+            except Exception as e:
+                logger.warning(f"Failed to delete cached token: {e}")
+
+        conn.close()
+
     async def _fetch_token(self) -> eBayOAuthToken:
         url = "https://api.ebay.com/identity/v1/oauth2/token"
 
@@ -170,7 +221,7 @@ class eBayConnector(BaseConnector):
         response.raise_for_status()
 
         token_data = response.json()
-        expires_at = datetime.utcnow() + timedelta(seconds=token_data["expires_in"])
+        expires_at = datetime.now(timezone.utc) + timedelta(seconds=token_data["expires_in"])
 
         return eBayOAuthToken(
             access_token=token_data["access_token"],
@@ -248,8 +299,24 @@ class eBayConnector(BaseConnector):
                 else:
                     params["filter"] = f"condition:{condition_map[condition]}"
 
-        response = await self._client.get(url, headers=headers, params=params)  # type: ignore[union-attr, arg-type]
-        response.raise_for_status()
+        # Try the search, retry once on 401 with token refresh
+        try:
+            response = await self._client.get(url, headers=headers, params=params)  # type: ignore[union-attr, arg-type]
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code == 401:
+                logger.warning("Got 401 from eBay API, forcing token refresh and retrying")
+                # Delete cached token to force refresh
+                self._delete_cached_token()
+                # Get fresh token
+                new_access_token = await self.ensure_token()
+                # Update headers with new token
+                headers["Authorization"] = f"Bearer {new_access_token}"
+                # Retry the request once
+                response = await self._client.get(url, headers=headers, params=params)  # type: ignore[union-attr, arg-type]
+                response.raise_for_status()
+            else:
+                raise
 
         data = response.json()
         return self._parse_listings(data.get("itemSummaries", []))
@@ -273,7 +340,7 @@ class eBayConnector(BaseConnector):
                     price=Decimal(str(price.get("value", 0))),
                     currency=price.get("currency", "GBP"),
                     url=item.get("itemWebUrl", ""),
-                    timestamp_seen=datetime.utcnow(),
+                    timestamp_seen=datetime.now(timezone.utc),
                     product_normalized=None,
                     variant_normalized=None,
                     condition=None,
