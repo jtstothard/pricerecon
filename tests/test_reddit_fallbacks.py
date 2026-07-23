@@ -79,3 +79,36 @@ def test_browser_snapshot_parser_normalizes_post_identity() -> None:
     assert entries[0].id
     assert entries[0].link == "https://www.reddit.com/r/hardwareswapuk/comments/abc/post/"
     assert entries[0].title == "[H] RTX 4090 [W] £900"
+
+
+@pytest.mark.asyncio
+async def test_api_unexpected_error_does_not_prevent_browser_fallback(monkeypatch: Any) -> None:
+    connector = RedditHardwareSwapUKConnector()
+
+    async def blocked(*args: Any, **kwargs: Any) -> list[Any]:
+        raise ConnectorDegradedError(ConnectorStatus.bot_blocked, "RSS blocked", connector.connector_id)
+
+    async def api(*args: Any, **kwargs: Any) -> list[Any]:
+        raise ValueError("malformed API payload")
+
+    async def browser(*args: Any, **kwargs: Any) -> list[Any]:
+        return [connector._api_post_to_listing({"id": "browser", "title": "RTX 4090", "url": "https://www.reddit.com/r/hardwareswapuk/comments/browser/post"})]
+
+    monkeypatch.setattr(TemplateConnector, "search", blocked)
+    monkeypatch.setenv("PRICERECON_REDDIT_API_ENABLED", "true")
+    monkeypatch.setenv("REDDIT_CLIENT_ID", "id")
+    monkeypatch.setenv("REDDIT_CLIENT_SECRET", "secret")
+    monkeypatch.setenv("REDDIT_USER_AGENT", "PriceRecon/test")
+    monkeypatch.setenv("PRICERECON_REDDIT_BROWSER_ENABLED", "true")
+    monkeypatch.setattr(connector, "_search_api", api)
+    monkeypatch.setattr(connector, "_search_browser", browser)
+
+    listings = await connector.search("RTX 4090")
+    assert len(listings) == 1
+    assert listings[0].url.endswith("/comments/browser/post")
+
+
+def test_browser_block_page_is_not_treated_as_empty_results() -> None:
+    from pricerecon.connectors.reddit import _looks_blocked
+
+    assert _looks_blocked("Access denied. Verify you are human to continue.")
