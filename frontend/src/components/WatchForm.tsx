@@ -580,11 +580,11 @@ export default function WatchForm({ open, onClose, onSaved, editingWatch }: Watc
                         <input
                           id={`query-${connector}`}
                           type="text"
-                          value={formData.source_queries[connector] || ''}
+                          value={formData.source_queries?.[connector] || ''}
                           onChange={e => setFormData(prev => ({
                             ...prev,
                             source_queries: {
-                              ...prev.source_queries,
+                              ...(prev.source_queries ?? {}),
                               [connector]: e.target.value,
                             },
                           }))}

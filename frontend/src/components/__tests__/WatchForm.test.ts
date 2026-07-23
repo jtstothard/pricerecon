@@ -356,7 +356,7 @@ describe('WatchForm payload transformation', () => {
     expect(payload.source_queries).toEqual({})
   })
 
-  it('validates advanced mode: rejects empty per-connector query', () => {
+  it('validates advanced mode: allows an empty per-connector query to use the default', () => {
     const formData = {
       name: 'Test Watch',
       query: 'RTX 4090',
@@ -379,8 +379,7 @@ describe('WatchForm payload transformation', () => {
     }
 
     const error = validateWatchForm(formData)
-    expect(error).toContain('cex')
-    expect(error).toContain('empty custom query')
+    expect(error).toBeNull()
   })
 
   it('validates advanced mode: allows empty field to use default query', () => {
