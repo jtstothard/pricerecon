@@ -137,12 +137,18 @@ class _RedditConnector(TemplateConnector):
                 return self._finalize(await self._search_api(query, filters), query)
             except ConnectorDegradedError as exc:
                 fallback_errors.append(f"api:{exc.status.value}")
+            except Exception as exc:
+                # A malformed upstream response or transport-library error must
+                # not abort the chain before the browser fallback gets a chance.
+                fallback_errors.append(f"api:{type(exc).__name__}")
 
         if self._browser_is_configured():
             try:
                 return self._finalize(await self._search_browser(query, filters), query)
             except ConnectorDegradedError as exc:
                 fallback_errors.append(f"browser:{exc.status.value}")
+            except Exception as exc:
+                fallback_errors.append(f"browser:{type(exc).__name__}")
 
         # Do not turn an upstream 403/429 (or a failed configured fallback)
         # into a misleading successful empty search.
@@ -229,17 +235,26 @@ class _RedditConnector(TemplateConnector):
             camofox_session_key=os.getenv("CAMOFOX_SESSION_KEY"),
         )
         self._browser_client = self._browser_client or BrowserClient(config=config)
-        context = await self._browser_client.new_context()
-        page = await context.new_page()
         url = f"https://www.reddit.com/r/{self.SUBREDDIT}/new/?q={quote_plus(query)}&restrict_sr=1"
+        context: Any = None
+        content = ""
         try:
+            context = await self._browser_client.new_context()
+            page = await context.new_page()
             await page.goto(url, wait_until="domcontentloaded", timeout=45000)
             await page.wait_for_timeout(2500)
             content = await page.content()
         except Exception as exc:
             raise ConnectorDegradedError(ConnectorStatus.bot_blocked, "Reddit browser acquisition failed", self.connector_id, {"error": str(exc)}) from exc
         finally:
-            await context.close()
+            if context is not None:
+                await context.close()
+        if _looks_blocked(content):
+            raise ConnectorDegradedError(
+                ConnectorStatus.bot_blocked,
+                "Reddit browser page is blocked or human-gated",
+                self.connector_id,
+            )
         entries = _parse_browser_posts(content, self.SUBREDDIT, int(filters.get("limit") or 25))
         if not entries:
             # A blocked RSS request followed by an unparseable browser page is
