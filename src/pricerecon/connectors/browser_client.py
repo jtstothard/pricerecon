@@ -6,13 +6,19 @@ or the CloakBrowser patched Chromium binary (anti-bot bypass).
 
 from __future__ import annotations
 
+import asyncio
 import glob
+import json
+import logging
 import os
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, AsyncIterator
 
 import httpx
+
+logger = logging.getLogger(__name__)
 
 try:
     from browserforge.fingerprints import FingerprintGenerator  # type: ignore
@@ -69,6 +75,76 @@ def resolve_cloakbrowser_binary() -> str | None:
     if os.path.isfile(best):
         return best
     return None
+
+
+class CloakBrowserBridgeUnavailable(RuntimeError):
+    """The optional Node/CloakBrowser bridge could not be started or used."""
+
+
+async def run_cloakbrowser_bridge(
+    url: str,
+    *,
+    wait_ms: int = 8000,
+    nav_timeout_ms: int = 45_000,
+    timeout_ms: int | None = None,
+) -> dict[str, Any]:
+    """Fetch one URL through the pinned Node CloakBrowser SDK bridge.
+
+    The bridge is deliberately a one-request subprocess. This keeps browser
+    lifecycle ownership unambiguous: success, timeout, malformed output, and
+    every startup/error path terminate the child and fail closed.
+    """
+    bridge = Path(__file__).parents[3] / "tools" / "cloakbrowser-bridge" / "bridge.mjs"
+    node = os.environ.get("PRICERECON_NODE", "node")
+    result: dict[str, Any] = {
+        "status": 0, "title": "", "html": "", "content": "",
+        "blocked": True, "used_cloakbrowser": True, "timing_ms": 0,
+    }
+    process: Any = None
+    effective_timeout = timeout_ms if timeout_ms is not None else nav_timeout_ms + wait_ms + 10_000
+    try:
+        process = await asyncio.create_subprocess_exec(
+            node, str(bridge), "--stdio",
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
+        request = json.dumps({
+            "url": url,
+            "options": {"wait_ms": wait_ms, "nav_timeout_ms": nav_timeout_ms},
+        }).encode() + b"\n"
+        assert process.stdin is not None
+        process.stdin.write(request)
+        await process.stdin.drain()
+        process.stdin.close()
+        assert process.stdout is not None
+        raw = await asyncio.wait_for(process.stdout.readline(), effective_timeout / 1000)
+        if not raw:
+            raise CloakBrowserBridgeUnavailable("bridge returned no response")
+        decoded = json.loads(raw)
+        if not isinstance(decoded, dict):
+            raise CloakBrowserBridgeUnavailable("bridge response was not an object")
+        result.update(decoded)
+    except FileNotFoundError as exc:
+        result["error"] = CloakBrowserBridgeUnavailable(f"Node runtime unavailable: {exc}")
+    except (TimeoutError, asyncio.TimeoutError) as exc:
+        result["error"] = CloakBrowserBridgeUnavailable(f"CloakBrowser bridge timed out: {exc}")
+    except (json.JSONDecodeError, OSError, CloakBrowserBridgeUnavailable) as exc:
+        result["error"] = CloakBrowserBridgeUnavailable(str(exc))
+    except Exception as exc:  # Fail closed for optional anti-bot infrastructure.
+        result["error"] = CloakBrowserBridgeUnavailable(str(exc))
+    finally:
+        if process is not None:
+            try:
+                if process.returncode is None:
+                    process.kill()
+                await process.wait()
+            except ProcessLookupError:
+                pass  # already gone
+            except Exception as exc:
+                logger.warning(f"CloakBrowser bridge cleanup failed: {exc}")
+    result["blocked"] = bool(result.get("blocked", True))
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -148,6 +224,8 @@ class BrowserSessionConfig:
     user_agent: str | None = None
     locale: str = "en-GB"
     timezone_id: str = "Europe/London"
+    navigation_timeout_ms: int = 45_000
+    wait_after_navigation_ms: int = 2_500
     camofox_url: str | None = None
     camofox_user_id: str | None = None
     camofox_session_key: str | None = None
@@ -158,6 +236,12 @@ class BrowserSessionConfig:
     cloakbrowser_fallback: bool = field(default=True)
 
     def __post_init__(self) -> None:
+        env_timeout = os.environ.get("PRICERECON_BROWSER_NAV_TIMEOUT_MS", "").strip()
+        if env_timeout.isdigit() and int(env_timeout) > 0:
+            self.navigation_timeout_ms = int(env_timeout)
+        env_wait = os.environ.get("PRICERECON_BROWSER_WAIT_MS", "").strip()
+        if env_wait.isdigit() and int(env_wait) >= 0:
+            self.wait_after_navigation_ms = int(env_wait)
         # env-var overrides for CloakBrowser flags
         env_use = os.environ.get("PRICERECON_CLOAKBROWSER_USE", "").strip().lower()
         if env_use in ("1", "true", "yes"):
@@ -322,23 +406,10 @@ class BrowserClient:
         if self._browser is not None:
             return
         self._playwright = await async_playwright().start()
-
-        cloakbrowser_path: str | None = None
-        if self.config.use_cloakbrowser:
-            cloakbrowser_path = resolve_cloakbrowser_binary()
-            if cloakbrowser_path is None:
-                # Binary missing — degrade silently to plain Playwright
-                pass
-
-        if cloakbrowser_path:
-            self._browser = await self._playwright.chromium.launch(
-                headless=self.config.headless,
-                executable_path=cloakbrowser_path,
-            )
-            self._using_cloakbrowser = True
-        else:
-            self._browser = await self._playwright.chromium.launch(headless=self.config.headless)
-            self._using_cloakbrowser = False
+        # Playwright is always the primary browser. CloakBrowser is isolated in
+        # the optional Node bridge and is only selected after block detection.
+        self._browser = await self._playwright.chromium.launch(headless=self.config.headless)
+        self._using_cloakbrowser = False
 
     async def close(self) -> None:
         if self._browser is not None:
@@ -457,57 +528,36 @@ class BrowserClient:
                 "status": status,
                 "used_cloakbrowser": self._using_cloakbrowser,
                 "blocked": False,
+                "primary_blocked": False,
+                "primary_status": status,
             }
 
         # Blocked — try CloakBrowser fallback if available
         if not self.config.cloakbrowser_fallback:
             return {
-                "html": html,
-                "title": title,
-                "status": status,
-                "used_cloakbrowser": False,
-                "blocked": True,
+                "html": html, "title": title, "status": status,
+                "used_cloakbrowser": False, "blocked": True,
+                "primary_blocked": True, "primary_status": status,
             }
 
-        cloak_path = resolve_cloakbrowser_binary()
-        if cloak_path is None:
-            return {
-                "html": html,
-                "title": title,
-                "status": status,
-                "used_cloakbrowser": False,
-                "blocked": True,
-            }
-
-        # Close existing browser, reopen with CloakBrowser binary
-        await self.close()
-        assert self._playwright is None
-        if async_playwright is None:
-            raise RuntimeError(f"Playwright is unavailable: {_PLAYWRIGHT_IMPORT_ERROR}")
-        self._playwright = await async_playwright().start()
-        self._browser = await self._playwright.chromium.launch(
-            headless=self.config.headless,
-            executable_path=cloak_path,
+        # The SDK bridge is optional and fail-closed. It is never selected
+        # before the primary Playwright response is classified as blocked.
+        bridge_result = await run_cloakbrowser_bridge(
+            url,
+            wait_ms=wait_ms,
+            nav_timeout_ms=nav_timeout,
         )
-        self._using_cloakbrowser = True
-
-        context = await self._browser.new_context(
-            viewport={
-                "width": self.config.viewport_width,
-                "height": self.config.viewport_height,
-            },
-            locale=self.config.locale,
-            timezone_id=self.config.timezone_id,
-        )
-        html, title, status = await _navigate(context)
-        blocked_after = is_blocked(html, title, status)
-
         return {
-            "html": html,
-            "title": title,
-            "status": status,
+            "html": str(bridge_result.get("html", "")),
+            "content": str(bridge_result.get("content", "")),
+            "title": str(bridge_result.get("title", "")),
+            "status": int(bridge_result.get("status", 0)),
             "used_cloakbrowser": True,
-            "blocked": blocked_after,
+            "blocked": bool(bridge_result.get("blocked", True)),
+            "primary_blocked": True,
+            "primary_status": status,
+            "timing_ms": int(bridge_result.get("timing_ms", 0)),
+            **({"error": bridge_result["error"]} if "error" in bridge_result else {}),
         }
 
 

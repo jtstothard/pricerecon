@@ -8,7 +8,10 @@ raises the original structured degraded error.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
+import json
+import logging
 import os
 import re
 from datetime import datetime, timezone
@@ -28,6 +31,9 @@ from pricerecon.connectors.rss import (
 )
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 from pricerecon.models import NormalizedListing, SourceType
+
+
+logger = logging.getLogger(__name__)
 
 
 def _load_template_or_default(
@@ -90,6 +96,7 @@ class _RedditConnector(TemplateConnector):
         super().__init__(template)
         self._api_client: httpx.AsyncClient | None = None
         self._browser_client: BrowserClient | None = None
+        self._last_rate_limit_info: dict[str, Any] | None = None
 
     async def cleanup(self) -> None:
         await super().cleanup()
@@ -102,11 +109,27 @@ class _RedditConnector(TemplateConnector):
 
     def _api_is_approved(self) -> bool:
         enabled = os.getenv(self.API_ENABLED_ENV, "").strip().lower()
-        return enabled in {"1", "true", "yes"} and bool(
-            os.getenv("REDDIT_CLIENT_ID")
-            and os.getenv("REDDIT_CLIENT_SECRET")
-            and os.getenv("REDDIT_USER_AGENT")
-        )
+        if enabled not in {"1", "true", "yes"}:
+            return False
+        # Check either env vars or credential file
+        if os.getenv("REDDIT_CLIENT_ID") and os.getenv("REDDIT_CLIENT_SECRET") and os.getenv("REDDIT_USER_AGENT"):
+            return True
+        cred_file = os.getenv("REDDIT_CREDENTIAL_FILE")
+        if cred_file and os.path.exists(cred_file):
+            return self._validate_credential_file(cred_file)
+        return False
+
+    def _validate_credential_file(self, cred_file: str) -> bool:
+        """Validate that a credential file has the required fields."""
+        try:
+            with open(cred_file, "r") as f:
+                creds = json.load(f)
+            if not isinstance(creds, dict):
+                return False
+            return bool(creds.get("client_id") and creds.get("client_secret"))
+        except (json.JSONDecodeError, OSError, ValueError):
+            logger.warning(f"Reddit credential file is malformed: {cred_file}")
+            return False
 
     def _browser_is_configured(self) -> bool:
         # Camofox is explicit; local Playwright can be opted into separately so
@@ -123,32 +146,74 @@ class _RedditConnector(TemplateConnector):
     ) -> list[NormalizedListing]:
         filters = filters or {}
         rss_error: ConnectorDegradedError | None = None
+        stage_events: list[dict[str, Any]] = []
+
+        def record_stage(stage: str, outcome: str, **details: Any) -> None:
+            event = {
+                "connector": self.connector_id,
+                "stage": stage,
+                "outcome": outcome,
+                **details,
+            }
+            stage_events.append({key: value for key, value in event.items() if key != "connector"})
+            logger.info("reddit_fallback_stage", extra=event)
+
+        record_stage("rss", "attempted", query=query)
         try:
             listings = await super().search(query, filters)
-            return self._finalize(listings, query)
+            finalized = self._finalize(listings, query)
+            record_stage("rss", "succeeded", listing_count=len(finalized))
+            return finalized
         except ConnectorDegradedError as exc:
-            if exc.status not in {ConnectorStatus.bot_blocked, ConnectorStatus.rate_limited}:
-                raise
             rss_error = exc
+            record_stage("rss", "failed", status=exc.status.value, error=exc.message)
+        except Exception as exc:
+            # Transport and parser errors are also eligible for fallback.  Letting
+            # these escape here was the reason browser fallback was never reached.
+            rss_error = ConnectorDegradedError(
+                ConnectorStatus.unknown_error,
+                "Reddit RSS acquisition failed",
+                self.connector_id,
+                {"error": str(exc), "error_type": type(exc).__name__},
+            )
+            record_stage("rss", "failed", status=rss_error.status.value, error=str(exc))
 
         fallback_errors: list[str] = []
-        if self._api_is_approved():
+        api_enabled = os.getenv(self.API_ENABLED_ENV, "").strip().lower() in {"1", "true", "yes"}
+        api_approved = self._api_is_approved()
+        if api_enabled and api_approved:
+            record_stage("api", "attempted")
             try:
-                return self._finalize(await self._search_api(query, filters), query)
+                finalized = self._finalize(await self._search_api(query, filters), query)
+                record_stage("api", "succeeded", listing_count=len(finalized))
+                return finalized
             except ConnectorDegradedError as exc:
                 fallback_errors.append(f"api:{exc.status.value}")
+                record_stage("api", "failed", status=exc.status.value, error=exc.message)
             except Exception as exc:
                 # A malformed upstream response or transport-library error must
-                # not abort the chain before the browser fallback gets a chance.
+                # abort the chain before the browser fallback gets a chance.
                 fallback_errors.append(f"api:{type(exc).__name__}")
+                record_stage("api", "failed", status="unknown_error", error=str(exc))
+        else:
+            reason = "disabled" if not api_enabled else "not_approved"
+            record_stage("api", "skipped", reason=reason)
 
-        if self._browser_is_configured():
+        browser_configured = self._browser_is_configured()
+        if browser_configured:
+            record_stage("browser", "attempted")
             try:
-                return self._finalize(await self._search_browser(query, filters), query)
+                finalized = self._finalize(await self._search_browser(query, filters), query)
+                record_stage("browser", "succeeded", listing_count=len(finalized))
+                return finalized
             except ConnectorDegradedError as exc:
                 fallback_errors.append(f"browser:{exc.status.value}")
+                record_stage("browser", "failed", status=exc.status.value, error=exc.message)
             except Exception as exc:
                 fallback_errors.append(f"browser:{type(exc).__name__}")
+                record_stage("browser", "failed", status="unknown_error", error=str(exc))
+        else:
+            record_stage("browser", "skipped", reason="not_configured")
 
         # Do not turn an upstream 403/429 (or a failed configured fallback)
         # into a misleading successful empty search.
@@ -156,7 +221,8 @@ class _RedditConnector(TemplateConnector):
         detail = dict(rss_error.detail or {})
         if fallback_errors:
             detail["fallback_errors"] = fallback_errors
-        detail["fallbacks_attempted"] = bool(self._api_is_approved() or self._browser_is_configured())
+        detail["fallbacks_attempted"] = bool((api_enabled and api_approved) or browser_configured)
+        detail["fallback_stages"] = stage_events
         raise ConnectorDegradedError(
             status=rss_error.status,
             message=f"{self.connector_id} unavailable after RSS fallback chain",
@@ -173,12 +239,15 @@ class _RedditConnector(TemplateConnector):
     async def _search_api(self, query: str, filters: dict[str, Any]) -> list[NormalizedListing]:
         if self._api_client is None:
             self._api_client = httpx.AsyncClient(timeout=30.0)
-        user_agent = os.environ["REDDIT_USER_AGENT"]
+
+        # Load credentials from environment or credential file
+        client_id, client_secret, user_agent = self._load_api_credentials()
+
         try:
             token_response = await self._api_client.post(
                 "https://www.reddit.com/api/v1/access_token",
                 data={"grant_type": "client_credentials"},
-                auth=(os.environ["REDDIT_CLIENT_ID"], os.environ["REDDIT_CLIENT_SECRET"]),
+                auth=(client_id, client_secret),
                 headers={"User-Agent": user_agent},
             )
         except httpx.HTTPError as exc:
@@ -207,8 +276,55 @@ class _RedditConnector(TemplateConnector):
         if response.status_code == 429:
             raise ConnectorDegradedError(ConnectorStatus.rate_limited, "Reddit API rate limited", self.connector_id)
         response.raise_for_status()
+
+        # Extract and store rate limit information
+        rate_limit_info = self._extract_rate_limit_info(dict(response.headers))
+        if rate_limit_info:
+            self._last_rate_limit_info = rate_limit_info
+
         children = response.json().get("data", {}).get("children", [])
         return [self._api_post_to_listing(child.get("data", {})) for child in children if child.get("data")]
+
+    def _load_api_credentials(self) -> tuple[str, str, str]:
+        """Load API credentials from environment or credential file.
+
+        Returns:
+            Tuple of (client_id, client_secret, user_agent)
+        """
+        cred_file = os.getenv("REDDIT_CREDENTIAL_FILE")
+        if cred_file and os.path.exists(cred_file):
+            import json
+            with open(cred_file, "r") as f:
+                creds = json.load(f)
+            return (
+                creds.get("client_id", ""),
+                creds.get("client_secret", ""),
+                creds.get("user_agent", "PriceRecon/1.0"),
+            )
+
+        return (
+            os.getenv("REDDIT_CLIENT_ID", ""),
+            os.getenv("REDDIT_CLIENT_SECRET", ""),
+            os.getenv("REDDIT_USER_AGENT", "PriceRecon/1.0"),
+        )
+
+    def _extract_rate_limit_info(self, headers: dict[str, str]) -> dict[str, Any] | None:
+        """Extract rate limit information from Reddit API response headers.
+
+        Args:
+            headers: HTTP response headers
+
+        Returns:
+            Dict with rate limit info or None if not available
+        """
+        info = {}
+        if "x-ratelimit-remaining" in headers:
+            info["remaining"] = headers["x-ratelimit-remaining"]
+        if "x-ratelimit-used" in headers:
+            info["used"] = headers["x-ratelimit-used"]
+        if "x-ratelimit-reset" in headers:
+            info["reset"] = headers["x-ratelimit-reset"]
+        return info if info else None
 
     def _api_post_to_listing(self, data: dict[str, Any]) -> NormalizedListing:
         permalink = str(data.get("permalink") or "")
@@ -235,17 +351,38 @@ class _RedditConnector(TemplateConnector):
             camofox_session_key=os.getenv("CAMOFOX_SESSION_KEY"),
         )
         self._browser_client = self._browser_client or BrowserClient(config=config)
-        url = f"https://www.reddit.com/r/{self.SUBREDDIT}/new/?q={quote_plus(query)}&restrict_sr=1"
+        url = f"https://old.reddit.com/r/{self.SUBREDDIT}/new.json?raw_json=1&q={quote_plus(query)}&restrict_sr=1"
         context: Any = None
         content = ""
         try:
             context = await self._browser_client.new_context()
             page = await context.new_page()
-            await page.goto(url, wait_until="domcontentloaded", timeout=45000)
-            await page.wait_for_timeout(2500)
+            response = await page.goto(url, wait_until="domcontentloaded", timeout=config.navigation_timeout_ms)
+            await page.wait_for_timeout(config.wait_after_navigation_ms)
             content = await page.content()
+            status_code = getattr(response, "status", None) if response is not None else None
+            if callable(status_code):
+                status_code = status_code()
+            if status_code in {403, 429}:
+                status = ConnectorStatus.bot_blocked if status_code == 403 else ConnectorStatus.rate_limited
+                raise ConnectorDegradedError(
+                    status, f"Reddit browser returned HTTP {status_code}", self.connector_id,
+                    {"requested_url": url, "status_code": status_code},
+                )
+        except ConnectorDegradedError:
+            raise
+        except (TimeoutError, asyncio.TimeoutError) as exc:
+            raise ConnectorDegradedError(
+                ConnectorStatus.timeout, "Reddit browser navigation timed out", self.connector_id,
+                {"requested_url": url, "timeout_ms": config.navigation_timeout_ms},
+            ) from exc
         except Exception as exc:
-            raise ConnectorDegradedError(ConnectorStatus.bot_blocked, "Reddit browser acquisition failed", self.connector_id, {"error": str(exc)}) from exc
+            if "timeout" in str(exc).lower():
+                raise ConnectorDegradedError(
+                    ConnectorStatus.timeout, "Reddit browser navigation timed out", self.connector_id,
+                    {"requested_url": url, "timeout_ms": config.navigation_timeout_ms, "error": str(exc)},
+                ) from exc
+            raise ConnectorDegradedError(ConnectorStatus.unknown_error, "Reddit browser acquisition failed", self.connector_id, {"error": str(exc)}) from exc
         finally:
             if context is not None:
                 await context.close()
@@ -302,7 +439,36 @@ def _looks_blocked(content: str) -> bool:
 
 
 def _parse_browser_posts(content: str, subreddit: str, limit: int) -> list[FeedEntry]:
-    """Parse both Reddit HTML and Camofox text snapshots conservatively."""
+    """Parse Reddit JSON listings, HTML, and Camofox text snapshots."""
+    try:
+        payload = json.loads(content)
+    except (TypeError, ValueError):
+        payload = None
+    children = payload.get("data", {}).get("children", []) if isinstance(payload, dict) else []
+    if isinstance(children, list):
+        entries: list[FeedEntry] = []
+        for child in children[:limit]:
+            data = child.get("data", {}) if isinstance(child, dict) else {}
+            if not isinstance(data, dict):
+                continue
+            permalink = str(data.get("permalink") or "")
+            link = str(data.get("url") or (f"https://www.reddit.com{permalink}" if permalink else ""))
+            if not link or not data.get("title"):
+                continue
+            created = data.get("created_utc")
+            try:
+                published = datetime.fromtimestamp(float(created), tz=timezone.utc) if created else None
+            except (TypeError, ValueError, OverflowError):
+                published = None
+            entries.append(FeedEntry(
+                id=str(data.get("id") or hashlib.sha1(link.encode()).hexdigest()),
+                title=str(data.get("title") or ""), link=link,
+                content=str(data.get("selftext") or ""), author=str(data.get("author") or "") or None,
+                published_at=published,
+            ))
+        if entries:
+            return entries
+
     parser = HTMLParser(content)
     entries: list[FeedEntry] = []
     seen: set[str] = set()
@@ -315,7 +481,8 @@ def _parse_browser_posts(content: str, subreddit: str, limit: int) -> list[FeedE
         if link in seen:
             continue
         seen.add(link)
-        entries.append(FeedEntry(id=hashlib.sha1(link.encode()).hexdigest(), title=title, link=link))
+        body = anchor.parent.text(strip=True) if anchor.parent is not None else ""
+        entries.append(FeedEntry(id=hashlib.sha1(link.encode()).hexdigest(), title=title, link=link, content=body))
         if len(entries) >= limit:
             break
     # Camofox's text snapshot can omit anchor markup; retain only recognizable

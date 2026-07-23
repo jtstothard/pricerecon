@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from pricerecon.connectors.browser_client import (
+    BrowserClient,
     BrowserSessionConfig,
+    CloakBrowserBridgeUnavailable,
     is_blocked,
     resolve_cloakbrowser_binary,
+    run_cloakbrowser_bridge,
 )
 
 
@@ -196,3 +199,132 @@ class TestResolveCloakbrowserBinary:
         with patch("glob.glob", return_value=[]):
             result = resolve_cloakbrowser_binary()
         assert result is None
+
+
+class _FakeStream:
+    def __init__(self, data: bytes) -> None:
+        self.data = data
+
+    async def read(self, *_args: object) -> bytes:
+        return self.data
+
+    async def readline(self) -> bytes:
+        return self.data
+
+    def write(self, _data: bytes) -> None:
+        return None
+
+    async def drain(self) -> None:
+        return None
+
+    def close(self) -> None:
+        return None
+
+
+class _FakeProcess:
+    def __init__(self, stdout: bytes) -> None:
+        self.stdout = _FakeStream(stdout)
+        self.stdin = _FakeStream(b"")
+        self.returncode: int | None = 0
+        self.kill = MagicMock()
+        self.wait = AsyncMock()
+
+
+class _FakePage:
+    def __init__(self, html: str, title: str) -> None:
+        self.html, self.title_value = html, title
+
+    def on(self, *_args: object) -> None:
+        return None
+
+    def set_default_navigation_timeout(self, _timeout: int) -> None:
+        return None
+
+    async def goto(self, *_args: object, **_kwargs: object) -> None:
+        return None
+
+    async def title(self) -> str:
+        return self.title_value
+
+    async def content(self) -> str:
+        return self.html
+
+
+class _FakeContext:
+    def __init__(self, html: str, title: str) -> None:
+        self.page = _FakePage(html, title)
+        self.closed = False
+
+    async def new_page(self) -> _FakePage:
+        return self.page
+
+    async def close(self) -> None:
+        self.closed = True
+
+
+class TestCloakBrowserBridge:
+    async def test_protocol_returns_structured_json(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        process = _FakeProcess(
+            b'{"status":200,"title":"eBay","html":"<li class=\\"s-item\\">x</li>",'
+            b'"content":"x","blocked":false,"timing_ms":12}\n'
+        )
+        create = AsyncMock(return_value=process)
+        monkeypatch.setattr("asyncio.create_subprocess_exec", create)
+
+        result = await run_cloakbrowser_bridge("https://www.ebay.co.uk/sch/i.html?_nkw=x")
+
+        assert result["status"] == 200
+        assert result["title"] == "eBay"
+        assert result["blocked"] is False
+        assert create.await_args.args[0] == "node"
+        assert create.await_args.args[1].endswith("tools/cloakbrowser-bridge/bridge.mjs")
+        assert create.await_args.args[2] == "--stdio"
+
+    async def test_timeout_kills_process_and_fails_closed(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        process = _FakeProcess(b"")
+        process.returncode = None
+        create = AsyncMock(return_value=process)
+        monkeypatch.setattr("asyncio.create_subprocess_exec", create)
+
+        async def timeout(_awaitable: object, **_kwargs: object) -> None:
+            # Simulate timeout by properly handling the coroutine
+            # Close coroutine to avoid RuntimeWarning
+            close_method = getattr(_awaitable, "close", None)
+            if close_method is not None and callable(close_method):
+                close_method()
+            raise TimeoutError
+
+        monkeypatch.setattr("asyncio.wait_for", timeout)
+        result = await run_cloakbrowser_bridge("https://example.test", timeout_ms=10)
+
+        assert result["blocked"] is True
+        assert result["status"] == 0
+        process.kill.assert_called_once()
+        process.wait.assert_awaited_once()
+
+    async def test_unavailable_runtime_fails_closed(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        async def unavailable(*_args: object, **_kwargs: object) -> None:
+            raise FileNotFoundError("node")
+
+        monkeypatch.setattr("asyncio.create_subprocess_exec", unavailable)
+        result = await run_cloakbrowser_bridge("https://example.test")
+
+        assert result["blocked"] is True
+        assert result["status"] == 0
+        assert isinstance(result["error"], CloakBrowserBridgeUnavailable)
+
+    async def test_bridge_is_selected_only_after_primary_block(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        client = BrowserClient(config=BrowserSessionConfig(cloakbrowser_fallback=True))
+        primary_context = _FakeContext("<html>Access denied</html>", "Access denied")
+        client.start = AsyncMock()
+        client.new_context = AsyncMock(return_value=primary_context)
+        bridge = AsyncMock(return_value={
+            "status": 200, "title": "eBay", "html": '<li class="s-item">x</li>',
+            "content": "x", "blocked": False, "timing_ms": 10,
+        })
+        monkeypatch.setattr("pricerecon.connectors.browser_client.run_cloakbrowser_bridge", bridge)
+
+        result = await client.fetch_with_fallback("https://example.test", wait_ms=0)
+
+        assert result["used_cloakbrowser"] is True
+        bridge.assert_awaited_once()
