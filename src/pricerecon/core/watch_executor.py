@@ -18,6 +18,7 @@ from pricerecon.connectors.browser_client import BrowserClient, BrowserSessionCo
 from pricerecon.core.connector_health import upsert_connector_health
 from pricerecon.core.diff_engine import run_check
 from pricerecon.core.notifications import dispatch_for_event
+from pricerecon.core.hardware_routes import route_for_query, route_title_matches
 from pricerecon.connectors.specs import extract_specs
 from pricerecon.connectors.status import ConnectorDegradedError
 from pricerecon.db.schema import DB_PATH
@@ -90,6 +91,13 @@ def _spec_matches_listing(listing: NormalizedListing, spec_match: Any) -> bool:
 
     specs = _normalized_listing_specs(listing)
     title_lower = listing.title_raw.lower()
+
+    required_terms = match_dict.get("required_title_terms", []) or []
+    if required_terms and not all(str(term).casefold() in title_lower for term in required_terms):
+        return False
+    excluded_terms = match_dict.get("excluded_title_terms", []) or []
+    if any(str(term).casefold() in title_lower for term in excluded_terms):
+        return False
 
     ram_gb = match_dict.get("ram_gb")
     if ram_gb is not None:
@@ -178,11 +186,27 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
     )
 
     all_listings = []
+    route = route_for_query(watch.query)
+    effective_filters = watch.filters.model_copy(deep=True)
+    if route:
+        # Route rules are safety constraints, not connector hints. Always add
+        # them even when an old watch was created with only a broad query.
+        spec = effective_filters.spec_match
+        spec.required_title_terms = list(dict.fromkeys([
+            *spec.required_title_terms,
+            *route.required_terms,
+        ]))
+        spec.excluded_title_terms = list(dict.fromkeys([
+            *spec.excluded_title_terms,
+            *route.excluded_terms,
+        ]))
     for source in watch.sources:
         if not source.enabled:
             continue
         connector_id = source.connector
         if not connector_id:
+            continue
+        if route and connector_id not in route.allowed_sources:
             continue
         connector = None
         try:
@@ -282,7 +306,14 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
                 except Exception:
                     pass
 
-    filtered_listings = apply_post_normalization_filters(all_listings, watch.filters)
+    filtered_listings = apply_post_normalization_filters(all_listings, effective_filters)
+    if route:
+        # Keep this explicit route check in addition to the generic filter so
+        # callers cannot accidentally weaken route semantics by changing the
+        # filter model shape.
+        filtered_listings = [
+            listing for listing in filtered_listings if route_title_matches(listing.title_raw, route)
+        ]
     first_run, diff_result, event_ids = run_check(watch_id, filtered_listings)
 
     conn = get_db()
