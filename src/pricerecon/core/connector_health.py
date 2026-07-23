@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +25,7 @@ def upsert_connector_health(
     last_error: str | None = None,
     details: dict[str, Any] | None = None,
 ) -> None:
+    from datetime import timezone
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute(
@@ -42,7 +43,7 @@ def upsert_connector_health(
             status,
             last_error,
             json.dumps(details or {}),
-            datetime.utcnow().isoformat(),
+            datetime.now(timezone.utc).isoformat(),
         ),
     )
     conn.commit()
@@ -85,3 +86,37 @@ def source_status(
         "last_error": state.get("last_error"),
         "config": state.get("details", {}),
     }
+
+
+def is_health_stale(connector_id: str, stale_threshold_seconds: int = 3600) -> bool:
+    """Check if connector health state is stale and should be retried.
+
+    A health state is considered stale if:
+    - It's marked as auth_failed or error
+    - It hasn't been updated in the last stale_threshold_seconds (default 1 hour)
+
+    This allows transient failures to auto-recover after a cooldown period.
+    """
+    state = list_connector_health().get(connector_id, {})
+    status = state.get("status")
+
+    # If status is healthy, not stale
+    if status in (None, "ok", "healthy"):
+        return False
+
+    # Check when the health state was last updated
+    updated_at = state.get("updated_at")
+    if not updated_at:
+        # No timestamp, consider it stale
+        return True
+
+    try:
+        updated_dt = datetime.fromisoformat(updated_at)
+        now = datetime.now(timezone.utc)
+        age = now - updated_dt
+
+        # Stale if older than threshold
+        return age.total_seconds() > stale_threshold_seconds
+    except Exception:
+        # Failed to parse timestamp, consider it stale
+        return True

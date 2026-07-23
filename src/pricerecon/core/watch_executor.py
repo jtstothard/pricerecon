@@ -6,8 +6,9 @@ Orchestrates connector calls, diff engine, and event emission.
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any, Optional
 
@@ -18,11 +19,13 @@ from pricerecon.connectors.browser_client import BrowserClient, BrowserSessionCo
 from pricerecon.core.connector_health import upsert_connector_health
 from pricerecon.core.diff_engine import run_check
 from pricerecon.core.notifications import dispatch_for_event
-from pricerecon.core.hardware_routes import route_for_query, route_title_matches
 from pricerecon.connectors.specs import extract_specs
 from pricerecon.connectors.status import ConnectorDegradedError
 from pricerecon.db.schema import DB_PATH
 from pricerecon.models import EventType, NormalizedListing, Watch
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_db() -> sqlite3.Connection:
@@ -196,8 +199,26 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
         connector_id = source.connector
         if not connector_id:
             continue
+
+        # Check health state: skip connectors with fresh auth_failed errors
+        from pricerecon.core.connector_health import is_health_stale, list_connector_health
+
+        health_state = list_connector_health().get(connector_id, {})
+        if health_state.get("status") == "auth_failed":
+            if not is_health_stale(connector_id):
+                logger.warning(
+                    "watch_connector_skipped_fresh_auth_failed",
+                    extra={"watch_id": watch_id, "connector": connector_id}
+                )
+                continue
+            logger.info(
+                "watch_connector_retrying_stale_auth_failed",
+                extra={"watch_id": watch_id, "connector": connector_id}
+            )
+
         connector = None
         try:
+            logger.info("watch_connector_start", extra={"watch_id": watch_id, "connector": connector_id})
             # Use entry-point registry to resolve connector_id -> class
             from pricerecon.connectors import discover_connectors
 
@@ -264,8 +285,10 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
             effective_query = watch.source_queries.get(connector_id, watch.query)
             listings = await connector.search(effective_query, connector_filters)
             all_listings.extend(listings)
+            logger.info("watch_connector_result", extra={"watch_id": watch_id, "connector": connector_id, "listing_count": len(listings)})
             upsert_connector_health(connector_id, "ok", details={"listing_count": len(listings)})
         except ConnectorDegradedError as exc:
+            logger.warning("watch_connector_degraded", extra={"watch_id": watch_id, "connector": connector_id, "status": exc.status.value, "error": exc.message, "detail": exc.detail})
             last_error = exc.message.strip() if exc.message else exc.status.value
             upsert_connector_health(
                 connector_id, exc.status.value, last_error=last_error, details=exc.detail
@@ -288,7 +311,7 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
                 last_error=message,
                 details={"error": message, "error_type": exc.__class__.__name__},
             )
-            print(f"Error running connector {connector_id}: {exc}")
+            logger.exception("watch_connector_error", extra={"watch_id": watch_id, "connector": connector_id})
         finally:
             if connector is not None:
                 try:
@@ -307,7 +330,7 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
     cursor = conn.cursor()
     cursor.execute(
         "UPDATE watches SET last_check_at = ? WHERE id = ?",
-        (datetime.utcnow().isoformat(), watch_id),
+        (datetime.now(timezone.utc).isoformat(), watch_id),
     )
     conn.commit()
     conn.close()
