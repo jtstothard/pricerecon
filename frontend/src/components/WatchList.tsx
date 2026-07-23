@@ -93,6 +93,7 @@ export default function WatchList() {
   const [watches, setWatches] = useState<WatchSummary[]>(() => dashboardCache?.watches ?? [])
   const [sources, setSources] = useState<SourceSummary[]>(() => dashboardCache?.sources ?? [])
   const [showForm, setShowForm] = useState(false)
+  const [editingWatch, setEditingWatch] = useState<WatchSummary | null>(null)
   const [loading, setLoading] = useState(() => dashboardCache === null)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -174,9 +175,20 @@ export default function WatchList() {
     }
   }
 
-  const handleWatchCreated = (watch: WatchSummary) => {
-    setWatches(prev => [watch, ...prev])
+  const handleWatchSaved = (watch: WatchSummary) => {
+    setWatches(prev => editingWatch ? prev.map(item => item.id === watch.id ? watch : item) : [watch, ...prev])
     setShowForm(false)
+    setEditingWatch(null)
+  }
+
+  const openCreateForm = () => {
+    setEditingWatch(null)
+    setShowForm(true)
+  }
+
+  const openEditForm = (watch: WatchSummary) => {
+    setEditingWatch(watch)
+    setShowForm(true)
   }
 
   const handleExport = () => {
@@ -191,6 +203,9 @@ export default function WatchList() {
         body: JSON.stringify({
           name: watch.name,
           query: watch.query,
+          display_title: watch.display_title ?? null,
+          synonym_groups: watch.synonym_groups ?? [],
+          source_queries: watch.source_queries ?? {},
           category: watch.category,
           sources: watch.sources.map(source => ({
             connector: source.connector,
@@ -198,10 +213,13 @@ export default function WatchList() {
             config: {},
           })),
           filters: {
-            price_max: null,
+            price_max: watch.filters?.price_max ?? null,
             currency: 'GBP',
-            condition_filter: { conditions: [], dedup_enabled: false },
-            exclude_patterns: [],
+            condition_filter: {
+              conditions: watch.filters?.condition_filter?.conditions ?? [],
+              dedup_enabled: false,
+            },
+            exclude_patterns: watch.filters?.exclude_patterns ?? [],
             spec_match: {},
             min_seller_feedback: null,
             min_seller_feedback_pct: null,
@@ -364,7 +382,7 @@ export default function WatchList() {
             <button className="btn btn-secondary" onClick={handleExport}>
               Export
             </button>
-            <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+            <button className="btn btn-primary" onClick={openCreateForm}>
               + New watch
             </button>
           </>
@@ -435,7 +453,7 @@ export default function WatchList() {
             <EmptyState
               title="No watches match the current filters"
               description="Broaden the search or switch the source-health filter to reveal more watches."
-              action={<button className="btn btn-primary" onClick={() => setShowForm(true)} aria-label="Create new watch">Create watch</button>}
+              action={<button className="btn btn-primary" onClick={openCreateForm} aria-label="Create new watch">Create watch</button>}
             />
           ) : (
             <div className="table-scroll">
@@ -514,6 +532,15 @@ export default function WatchList() {
                           <button
                             type="button"
                             className="btn btn-secondary btn--icon"
+                            onClick={() => openEditForm(watch)}
+                            aria-label={`Edit watch ${displayName}`}
+                            title="Edit"
+                          >
+                            ✎
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn--icon"
                             onClick={() => toggleWatch(watch)}
                             aria-label={watch.enabled ? `Pause watch ${displayName}` : `Resume watch ${displayName}`}
                             title={watch.enabled ? 'Pause' : 'Resume'}
@@ -562,7 +589,7 @@ export default function WatchList() {
 
       <button
         className="mobile-fab"
-        onClick={() => setShowForm(true)}
+        onClick={openCreateForm}
         aria-label="Create new watch"
         title="Create new watch"
       >
@@ -571,8 +598,9 @@ export default function WatchList() {
 
       <WatchForm
         open={showForm}
-        onClose={() => setShowForm(false)}
-        onCreated={handleWatchCreated}
+        onClose={() => { setShowForm(false); setEditingWatch(null) }}
+        onSaved={handleWatchSaved}
+        editingWatch={editingWatch}
       />
     </div>
   )

@@ -1,14 +1,51 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { formatSourceName } from '../lib/sourceNames'
-import { buildWatchCreatePayload, type WatchFormData } from '../lib/watchPayload'
+import { buildWatchCreatePayload, validateWatchForm, type WatchFormData } from '../lib/watchPayload'
 import type { WatchSummary, SourceSummary } from './watchTypes'
 
 interface WatchFormProps {
   open: boolean
   onClose: () => void
-  onCreated: (watch: WatchSummary) => void
+  onSaved: (watch: WatchSummary) => void
+  editingWatch?: WatchSummary | null
 }
+
+const emptyFormData = (): WatchFormData => ({
+  name: '',
+  query: '',
+  category: 'gpu',
+  interval: '4h',
+  enabled: true,
+  sources: ['ebay', 'cex'],
+  filters: {
+    price_max: '',
+    condition: ['new', 'refurbished', 'used_like_new'],
+  },
+  display_title: '',
+  synonym_groups: [],
+  excluded_terms: [],
+  source_queries: {},
+  advancedMode: false,
+})
+
+const formDataFromWatch = (watch: WatchSummary): WatchFormData => ({
+  name: watch.name,
+  query: watch.query,
+  category: watch.category || 'other',
+  interval: watch.schedule?.interval || '4h',
+  enabled: watch.enabled,
+  sources: watch.sources.filter(source => source.enabled !== false).map(source => source.connector),
+  filters: {
+    price_max: watch.filters?.price_max == null ? '' : String(watch.filters.price_max),
+    condition: watch.filters?.condition_filter?.conditions || [],
+  },
+  display_title: watch.display_title || '',
+  synonym_groups: watch.synonym_groups || [],
+  excluded_terms: watch.filters?.exclude_patterns || [],
+  source_queries: watch.source_queries || {},
+  advancedMode: watch.source_queries != null && Object.keys(watch.source_queries).length > 0,
+})
 
 const CATEGORIES = [
   { value: 'gpu', label: 'GPU' },
@@ -204,23 +241,18 @@ function SourceMultiSelect({ sources, selected, onToggle, disabled }: {
   )
 }
 
-export default function WatchForm({ open, onClose, onCreated }: WatchFormProps) {
-  const [formData, setFormData] = useState<WatchFormData>({
-    name: '',
-    query: '',
-    category: 'gpu',
-    interval: '4h',
-    enabled: true,
-    sources: ['ebay', 'cex'],
-    filters: {
-      price_max: '',
-      condition: ['new', 'refurbished', 'used_like_new'],
-    },
-  })
+export default function WatchForm({ open, onClose, onSaved, editingWatch }: WatchFormProps) {
+  const [formData, setFormData] = useState<WatchFormData>(emptyFormData)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [availableSources, setAvailableSources] = useState<SourceSummary[]>([])
   const [sourcesLoading, setSourcesLoading] = useState(true)
+
+  useEffect(() => {
+    if (!open) return
+    setFormData(editingWatch ? formDataFromWatch(editingWatch) : emptyFormData())
+    setError(null)
+  }, [open, editingWatch])
 
   useEffect(() => {
     fetch('/api/sources')
@@ -247,25 +279,29 @@ export default function WatchForm({ open, onClose, onCreated }: WatchFormProps) 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    const validationError = validateWatchForm(formData)
+    if (validationError) {
+      setError(validationError)
+      return
+    }
     setLoading(true)
     setError(null)
     try {
       const payload = buildWatchCreatePayload(formData)
-
-      const response = await fetch('/api/watches', {
-        method: 'POST',
+      const response = await fetch(editingWatch ? `/api/watches/${editingWatch.id}` : '/api/watches', {
+        method: editingWatch ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.detail || 'Failed to create watch')
+        throw new Error(errorData.detail || `Failed to ${editingWatch ? 'update' : 'create'} watch`)
       }
-      const newWatch: WatchSummary = await response.json()
-      onCreated(newWatch)
+      const savedWatch: WatchSummary = await response.json()
+      onSaved(savedWatch)
       onClose()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create watch')
+      setError(err instanceof Error ? err.message : `Failed to ${editingWatch ? 'update' : 'create'} watch`)
     } finally {
       setLoading(false)
     }
@@ -299,8 +335,8 @@ export default function WatchForm({ open, onClose, onCreated }: WatchFormProps) 
       <div className="watch-form-modal" onClick={e => e.stopPropagation()}>
         <div className="watch-form-header">
           <div>
-            <h2 className="watch-form-title">Create watch</h2>
-            <p className="watch-form-subtitle">Track prices across your selected sources.</p>
+            <h2 className="watch-form-title">{editingWatch ? 'Edit watch' : 'Create watch'}</h2>
+            <p className="watch-form-subtitle">{editingWatch ? 'Update how this watch matches and displays listings.' : 'Track prices across your selected sources.'}</p>
           </div>
           <button type="button" className="watch-form-close" onClick={onClose} aria-label="Close">✕</button>
         </div>
@@ -333,6 +369,134 @@ export default function WatchForm({ open, onClose, onCreated }: WatchFormProps) 
                 required
                 disabled={loading}
               />
+            </div>
+
+            <div className="watch-form-field">
+              <label htmlFor="display_title">Display title (optional)</label>
+              <input
+                id="display_title"
+                type="text"
+                value={formData.display_title}
+                onChange={e => setFormData(prev => ({ ...prev, display_title: e.target.value }))}
+                placeholder="Custom display name in UI"
+                disabled={loading}
+              />
+            </div>
+
+            <div className="watch-form-field watch-form-field--full">
+              <label>Synonym groups</label>
+              <p className="watch-form-hint">Add groups of alternative terms. A listing must match at least one term from each group.</p>
+              {formData.synonym_groups.map((group, groupIndex) => (
+                <div key={groupIndex} className="synonym-group-row">
+                  <div className="synonym-group-inputs">
+                    {group.map((term, termIndex) => (
+                      <div key={termIndex} className="synonym-term-wrapper">
+                        <input
+                          type="text"
+                          value={term}
+                          onChange={e => {
+                            const newGroups = [...formData.synonym_groups]
+                            newGroups[groupIndex][termIndex] = e.target.value
+                            setFormData(prev => ({ ...prev, synonym_groups: newGroups }))
+                          }}
+                          placeholder={`Term ${termIndex + 1}`}
+                          disabled={loading}
+                        />
+                        <button
+                          type="button"
+                          className="synonym-term-remove"
+                          onClick={() => {
+                            const newGroups = [...formData.synonym_groups]
+                            newGroups[groupIndex] = newGroups[groupIndex].filter((_, i) => i !== termIndex)
+                            setFormData(prev => ({ ...prev, synonym_groups: newGroups }))
+                          }}
+                          disabled={loading}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => {
+                        const newGroups = [...formData.synonym_groups]
+                        newGroups[groupIndex] = [...newGroups[groupIndex], '']
+                        setFormData(prev => ({ ...prev, synonym_groups: newGroups }))
+                      }}
+                      disabled={loading}
+                    >
+                      + Add term
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    className="synonym-group-remove"
+                    onClick={() => {
+                      const newGroups = formData.synonym_groups.filter((_, i) => i !== groupIndex)
+                      setFormData(prev => ({ ...prev, synonym_groups: newGroups }))
+                    }}
+                    disabled={loading}
+                    aria-label="Remove synonym group"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => {
+                  setFormData(prev => ({ ...prev, synonym_groups: [...prev.synonym_groups, ['']] }))
+                }}
+                disabled={loading}
+              >
+                + Add synonym group
+              </button>
+            </div>
+
+            <div className="watch-form-field watch-form-field--full">
+              <label>Excluded terms</label>
+              <p className="watch-form-hint">Listings containing any of these terms will be filtered out.</p>
+              <div className="excluded-terms-container">
+                {formData.excluded_terms.map((term, index) => (
+                  <div key={index} className="excluded-term-wrapper">
+                    <input
+                      type="text"
+                      value={term}
+                      onChange={e => {
+                        const newTerms = [...formData.excluded_terms]
+                        newTerms[index] = e.target.value
+                        setFormData(prev => ({ ...prev, excluded_terms: newTerms }))
+                      }}
+                      placeholder={`Excluded term ${index + 1}`}
+                      disabled={loading}
+                    />
+                    <button
+                      type="button"
+                      className="excluded-term-remove"
+                      onClick={() => {
+                        const newTerms = formData.excluded_terms.filter((_, i) => i !== index)
+                        setFormData(prev => ({ ...prev, excluded_terms: newTerms }))
+                      }}
+                      disabled={loading}
+                      aria-label="Remove excluded term"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, excluded_terms: [...prev.excluded_terms, ''] }))
+                  }}
+                  disabled={loading}
+                >
+                  + Add excluded term
+                </button>
+              </div>
             </div>
 
             <div className="watch-form-field">
@@ -390,6 +554,51 @@ export default function WatchForm({ open, onClose, onCreated }: WatchFormProps) 
             </div>
 
             <div className="watch-form-field watch-form-field--full">
+              <div className="watch-form-advanced-header">
+                <label htmlFor="advanced-mode">Advanced mode</label>
+                <input
+                  id="advanced-mode"
+                  type="checkbox"
+                  checked={formData.advancedMode}
+                  onChange={e => setFormData(prev => ({ ...prev, advancedMode: e.target.checked }))}
+                  disabled={loading}
+                />
+              </div>
+              <p className="watch-form-hint">
+                Enable to set custom raw queries per connector. Empty fields use the default query above.
+              </p>
+              {formData.advancedMode && (
+                <div className="watch-form-advanced-queries">
+                  {formData.sources.map(connector => {
+                    const source = availableSources.find(s => s.connector === connector)
+                    const sourceName = source ? formatSourceName(source.name || source.connector) : connector
+                    return (
+                      <div key={connector} className="watch-form-connector-query">
+                        <label htmlFor={`query-${connector}`}>
+                          {sourceName} query <span className="watch-form-connector-id">({connector})</span>
+                        </label>
+                        <input
+                          id={`query-${connector}`}
+                          type="text"
+                          value={formData.source_queries[connector] || ''}
+                          onChange={e => setFormData(prev => ({
+                            ...prev,
+                            source_queries: {
+                              ...prev.source_queries,
+                              [connector]: e.target.value,
+                            },
+                          }))}
+                          placeholder="Leave empty to use default query"
+                          disabled={loading}
+                        />
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="watch-form-field watch-form-field--full">
               <label>Condition</label>
               <div className="watch-form-chips">
                 {CONDITIONS.map(cond => {
@@ -415,7 +624,7 @@ export default function WatchForm({ open, onClose, onCreated }: WatchFormProps) 
               Cancel
             </button>
             <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Creating…' : 'Create watch'}
+              {loading ? (editingWatch ? 'Saving…' : 'Creating…') : (editingWatch ? 'Save changes' : 'Create watch')}
             </button>
           </div>
         </form>
