@@ -2,7 +2,6 @@
 
 import logging
 import asyncio
-import time
 import threading
 from decimal import Decimal
 from datetime import datetime, timedelta, timezone
@@ -345,12 +344,12 @@ class _EBayTokenFetchCoordinator:
                     backoff *= 2  # Exponential backoff
                 elif status_code == 401:
                     # 401 on token endpoint suggests invalid credentials, don't retry
-                    logger.error(f"Token fetch failed with 401: invalid credentials")
+                    logger.error("Token fetch failed with 401: invalid credentials")
                     _track_token_fetch_call(
                         "FATAL_401_ERROR", cache_key, "invalid_credentials - will not retry"
                     )
                     raise RuntimeError(
-                        f"eBay OAuth token fetch failed with 401: invalid credentials. "
+                        "eBay OAuth token fetch failed with 401: invalid credentials. "
                         "Check EBAY_APP_ID and EBAY_CERT_ID environment variables."
                     ) from exc
                 else:

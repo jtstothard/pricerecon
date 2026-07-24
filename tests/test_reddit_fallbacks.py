@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 import unittest.mock as mock
 
 import httpx
@@ -407,10 +407,10 @@ class TestRedditAPISuccess:
 
         with mock.patch.object(
             httpx.AsyncClient, "post", new_callable=AsyncMock, return_value=token_mock
-        ) as mock_post:
+        ):
             with mock.patch.object(
                 httpx.AsyncClient, "get", new_callable=AsyncMock, return_value=data_mock
-            ) as mock_get:
+            ):
                 listings = await connector._search_api("RTX", {"limit": 25})
 
                 assert len(listings) == 2
@@ -684,11 +684,11 @@ class TestRedditAPINormalization:
                 listings = await connector._search_api("RTX", {})
 
                 # Verify all expected fields are present
-                assert all(hasattr(l, "title_raw") for l in listings)
-                assert all(hasattr(l, "price") for l in listings)
-                assert all(hasattr(l, "url") for l in listings)
-                assert all(hasattr(l, "timestamp_seen") for l in listings)
-                assert all(hasattr(l, "source") for l in listings)
+                assert all(hasattr(listing, "title_raw") for listing in listings)
+                assert all(hasattr(listing, "price") for listing in listings)
+                assert all(hasattr(listing, "url") for listing in listings)
+                assert all(hasattr(listing, "timestamp_seen") for listing in listings)
+                assert all(hasattr(listing, "source") for listing in listings)
 
                 # Verify data types
                 assert isinstance(listings[0].title_raw, str)

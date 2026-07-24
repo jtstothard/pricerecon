@@ -1,8 +1,14 @@
-"""Connectors package."""
+"""Connectors package with enabled source discovery."""
+
+from __future__ import annotations
+
+import sqlite3
+from typing import Any
 
 from pricerecon.connectors.base import BaseConnector
+from pricerecon.db.schema import DB_PATH
 
-__all__ = ["BaseConnector", "discover_connectors"]
+__all__ = ["BaseConnector", "discover_connectors", "get_enabled_connectors"]
 
 
 # Historical source rows used ``john_lewis`` before the connector was
@@ -81,8 +87,51 @@ def discover_connectors() -> dict[str, type[BaseConnector]]:
                 and attr is not BaseConnector
             ):
                 connector_id = getattr(attr, "CONNECTOR_ID", None) or attr_name.lower().replace(
-                    "connector", ""
+                    "connector",
+                    "",
                 )
                 connectors[str(connector_id)] = attr
 
     return connectors
+
+
+def get_enabled_connectors() -> list[dict[str, Any]]:
+    """Get all enabled connector sources from the database.
+
+    Returns:
+        List of dicts with connector_id, config, and connector_class for each enabled source
+    """
+    import json
+
+    # Get all connectors first
+    connectors = discover_connectors()
+
+    # Query enabled sources from database
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT connector_id, config_json FROM sources WHERE enabled = 1")
+    rows = cursor.fetchall()
+
+    enabled_sources = []
+    for row in rows:
+        connector_id = row["connector_id"]
+        config = json.loads(row["config_json"])
+
+        # Get the connector class
+        connector_class = connectors.get(connector_id)
+        if connector_class is None:
+            print(f"Warning: connector class not found for {connector_id}")
+            continue
+
+        enabled_sources.append(
+            {
+                "connector_id": connector_id,
+                "config": config,
+                "connector_class": connector_class,
+            }
+        )
+
+    conn.close()
+    return enabled_sources
