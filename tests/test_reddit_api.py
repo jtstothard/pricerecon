@@ -306,7 +306,9 @@ class TestRedditAPINormalization:
 
                 # Verify data types
                 assert isinstance(listings[0].title_raw, str)
-                assert isinstance(listings[0].price, (int, float, type(None)))
+                from decimal import Decimal
+
+                assert isinstance(listings[0].price, (int, float, Decimal, type(None)))
                 assert isinstance(listings[0].url, str)
                 assert isinstance(listings[0].timestamp_seen, datetime)
                 assert listings[0].timestamp_seen.tzinfo == timezone.utc
@@ -451,7 +453,7 @@ class TestRedditAPIRateLimitExtraction:
     def test_extract_rate_limit_info_no_headers(
         self, connector: RedditHardwareSwapUKConnector
     ) -> None:
-        headers = {}
+        headers: dict[str, str] = {}
 
         info = connector._extract_rate_limit_info(headers)
 

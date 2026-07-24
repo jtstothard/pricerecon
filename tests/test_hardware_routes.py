@@ -16,6 +16,24 @@ def listing(title: str) -> NormalizedListing:
         currency="GBP",
         url="https://example.test/item",
         timestamp_seen=datetime.utcnow(),
+        product_normalized=None,
+        variant_normalized=None,
+        condition=None,
+        condition_raw=None,
+        shipping_cost=None,
+        total_landed_cost=None,
+        seller_or_store=None,
+        seller_feedback_score=None,
+        seller_feedback_pct=None,
+        location=None,
+        in_stock=None,
+        stock_state=None,
+        image_url=None,
+        exact_variant_confirmed=None,
+        variant_match_confidence=None,
+        mismatch_flags=None,
+        risk_flags=None,
+        category=None,
     )
 
 
@@ -57,7 +75,10 @@ def test_title_terms_are_applied_by_post_normalization_filter() -> None:
         spec_match=SpecMatch(
             required_title_terms=["strix", "halo", "128gb"],
             excluded_title_terms=["192gb", "iphone"],
-        )
+        ),
+        price_max=None,
+        min_seller_feedback=None,
+        min_seller_feedback_pct=None,
     )
     results = apply_post_normalization_filters(
         [

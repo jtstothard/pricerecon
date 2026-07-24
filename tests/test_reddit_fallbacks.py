@@ -848,7 +848,7 @@ class TestRedditAPIRateLimitExtraction:
     def test_extract_rate_limit_info_no_headers(self, monkeypatch: Any) -> None:
         connector = RedditHardwareSwapUKConnector()
 
-        headers = {}
+        headers: dict[str, str] = {}
 
         info = connector._extract_rate_limit_info(headers)
 

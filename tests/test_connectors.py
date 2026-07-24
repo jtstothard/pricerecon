@@ -127,6 +127,7 @@ async def test_watch_executor_filters_by_spec_match_ram(monkeypatch: Any) -> Non
         id=99,
         name="RAM floor watch",
         query="laptop",
+        display_title=None,
         category="laptop",
         sources=[SourceConfig(connector="aliexpress", config={})],
         filters=WatchFilters(
@@ -1154,6 +1155,7 @@ async def test_watch_executor_records_non_empty_timeout_health(monkeypatch: Any)
         id=42,
         name="Overclockers GPU watch",
         query="RTX 5070",
+        display_title=None,
         category="gpu",
         sources=[SourceConfig(connector="overclockers", config={})],
         filters=WatchFilters(

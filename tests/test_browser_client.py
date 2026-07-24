@@ -280,6 +280,7 @@ class TestCloakBrowserBridge:
         assert result["status"] == 200
         assert result["title"] == "eBay"
         assert result["blocked"] is False
+        assert create.await_args is not None
         assert create.await_args.args[0] == "node"
         assert create.await_args.args[1].endswith("tools/cloakbrowser-bridge/bridge.mjs")
         assert create.await_args.args[2] == "--stdio"
@@ -324,8 +325,6 @@ class TestCloakBrowserBridge:
     ) -> None:
         client = BrowserClient(config=BrowserSessionConfig(cloakbrowser_fallback=True))
         primary_context = _FakeContext("<html>Access denied</html>", "Access denied")
-        client.start = AsyncMock()
-        client.new_context = AsyncMock(return_value=primary_context)
         bridge = AsyncMock(
             return_value={
                 "status": 200,
@@ -337,6 +336,9 @@ class TestCloakBrowserBridge:
             }
         )
         monkeypatch.setattr("pricerecon.connectors.browser_client.run_cloakbrowser_bridge", bridge)
+        # Use monkeypatch to mock methods instead of direct assignment
+        monkeypatch.setattr(client, "start", AsyncMock())
+        monkeypatch.setattr(client, "new_context", AsyncMock(return_value=primary_context))
 
         result = await client.fetch_with_fallback("https://example.test", wait_ms=0)
 
