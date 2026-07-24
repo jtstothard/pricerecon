@@ -10,5 +10,9 @@ selectors:
   stock: .stock, .availability, .product-stock, [data-testid="stock"]
   image: img
   id: a[href]
+# The configured /search?q= endpoint currently returns the site's Not Found
+# page (HTTP 404), so do not report an empty successful result set.
+disabled: true
+disabled_reason: "configured search endpoint returns the Ebuyer Not Found page (HTTP 404)"
 use_flare_solverr: true
 category: gpu

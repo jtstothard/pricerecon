@@ -31,6 +31,8 @@ class TemplateDefinition:
     use_flare_solverr: bool = False
     flaresolverr_url: str | None = None
     category: str | None = None
+    disabled: bool = False
+    disabled_reason: str | None = None
 
 
 class TemplateConnector(BaseConnector):
@@ -55,6 +57,8 @@ class TemplateConnector(BaseConnector):
                 or template_config.get("flaresolverr_url")
             ),
             category=template_config.get("category"),
+            disabled=bool(template_config.get("disabled", False)),
+            disabled_reason=template_config.get("disabled_reason"),
         )
         self._client = httpx.AsyncClient(timeout=30.0)
 
@@ -121,6 +125,14 @@ class TemplateConnector(BaseConnector):
     async def search(
         self, query: str, filters: dict[str, Any] | None = None
     ) -> list[NormalizedListing]:
+        if self.template.disabled:
+            reason = self.template.disabled_reason or "connector is disabled pending revalidation"
+            raise ConnectorDegradedError(
+                status=ConnectorStatus.disabled,
+                message=f"{self.connector_id} is disabled: {reason}",
+                connector_id=self.connector_id,
+                detail={"reason": reason, "base_url": self.template.base_url},
+            )
         html = await self._fetch_html(self._format_search_url(query))
         return parse_listings_from_html(
             html,

@@ -4,6 +4,8 @@ base_url: https://www.aria.co.uk
 # Aria's former search endpoint is retired. The live site now serves a
 # customer-closure message and has no product/search listings; retain the
 # homepage as the only live URL rather than issuing requests to the old 404.
+disabled: true
+disabled_reason: "Aria's customer-closure page confirms product listings are no longer available"
 search_url: https://www.aria.co.uk/
 selectors:
   card: article, .product, .product-item, .search-result
