@@ -51,6 +51,17 @@ target-version = ["py312"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+exclude = [
+    "cli",
+    "docs",
+    "scripts",
+    "test_scheduler.py",
+    "test_scheduler_debug.py",
+    ".worktrees",
+    ".venv",
+    "venv",
+    "frontend",
+]
 
 [tool.mypy]
 python_version = "3.12"
