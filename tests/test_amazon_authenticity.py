@@ -7,10 +7,20 @@ Verifies that:
 4. Price matching is per-product, not positional
 """
 
+import os
+
 import pytest
 from pricerecon.connectors.amazon import AmazonConnector
 
+# These tests make real HTTP requests to Amazon and are only run when explicitly
+# enabled via the RUN_LIVE_CONNECTOR_TESTS env var (e.g. in live-verification CI).
+live_amazon = pytest.mark.skipif(
+    not os.environ.get("RUN_LIVE_CONNECTOR_TESTS"),
+    reason="Live Amazon tests require RUN_LIVE_CONNECTOR_TESTS=1",
+)
 
+
+@live_amazon
 @pytest.mark.asyncio
 async def test_no_fake_asins_from_promo_banners():
     """Fake ASINs from promo banners (like B0GZHRXGG7) should not appear in results."""
@@ -28,6 +38,7 @@ async def test_no_fake_asins_from_promo_banners():
     assert not overlap, f"Found fake ASINs in results: {overlap}"
 
 
+@live_amazon
 @pytest.mark.asyncio
 async def test_every_listing_has_title():
     """Every listing must have a non-empty title extracted from the page."""
@@ -64,6 +75,7 @@ async def test_captcha_page_returns_empty():
     await connector.cleanup()
 
 
+@live_amazon
 @pytest.mark.asyncio
 async def test_prices_are_per_product_not_positional():
     """Prices should be matched per product, not by array position.
@@ -88,6 +100,7 @@ async def test_prices_are_per_product_not_positional():
         )
 
 
+@live_amazon
 @pytest.mark.asyncio
 async def test_sponsored_items_filtered_or_labeled():
     """Sponsored items should either be filtered or clearly labeled."""
