@@ -560,7 +560,7 @@ def _parse_browser_posts(content: str, subreddit: str, limit: int) -> list[FeedE
             return entries
 
     parser = HTMLParser(content)
-    entries: list[FeedEntry] = []
+    entries = []
     seen: set[str] = set()
     for anchor in parser.css("a[href*='/comments/']"):
         href = anchor.attributes.get("href", "")
