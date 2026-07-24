@@ -528,7 +528,7 @@ def _parse_browser_posts(content: str, subreddit: str, limit: int) -> list[FeedE
         payload = None
     children = payload.get("data", {}).get("children", []) if isinstance(payload, dict) else []
     if isinstance(children, list):
-        entries: list[FeedEntry] = []
+        json_entries: list[FeedEntry] = []
         for child in children[:limit]:
             data = child.get("data", {}) if isinstance(child, dict) else {}
             if not isinstance(data, dict):
@@ -546,7 +546,7 @@ def _parse_browser_posts(content: str, subreddit: str, limit: int) -> list[FeedE
                 )
             except (TypeError, ValueError, OverflowError):
                 published = None
-            entries.append(
+            json_entries.append(
                 FeedEntry(
                     id=str(data.get("id") or hashlib.sha1(link.encode()).hexdigest()),
                     title=str(data.get("title") or ""),
@@ -556,8 +556,8 @@ def _parse_browser_posts(content: str, subreddit: str, limit: int) -> list[FeedE
                     published_at=published,
                 )
             )
-        if entries:
-            return entries
+        if json_entries:
+            return json_entries
 
     parser = HTMLParser(content)
     entries: list[FeedEntry] = []

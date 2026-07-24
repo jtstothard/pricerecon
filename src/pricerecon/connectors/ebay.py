@@ -16,7 +16,7 @@ from pricerecon.models import NormalizedListing, SourceType
 logger = logging.getLogger(__name__)
 
 # Token fetch call tracking for startup burst investigation
-_token_fetch_calls = {}
+_token_fetch_calls: dict[str, dict[str, Any]] = {}
 _token_fetch_lock = threading.Lock()
 
 
@@ -171,7 +171,7 @@ class _EBayTokenFetchCoordinator:
     """
 
     _instance: Optional["_EBayTokenFetchCoordinator"] = None
-    _active_fetches: dict[str, asyncio.Task] = {}
+    _active_fetches: dict[str, asyncio.Task[eBayOAuthToken]] = {}
     _active_fetches_lock: asyncio.Lock = asyncio.Lock()
 
     def __new__(cls) -> "_EBayTokenFetchCoordinator":
@@ -275,7 +275,7 @@ class _EBayTokenFetchCoordinator:
 
         url = "https://api.ebay.com/identity/v1/oauth2/token"
         backoff = initial_backoff
-        last_error = None
+        last_error: Exception | None = None
 
         for attempt in range(max_retries):
             try:
