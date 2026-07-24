@@ -1,10 +1,5 @@
-"""Scan connector using FlareSolverr + HTML parsing."""
+"""Scan connector with truthful WAF-blocked fail-fast behavior."""
 
-from __future__ import annotations
+from pricerecon.connectors.timeout_retailers import ScanConnector
 
-from pricerecon.connectors.template_connector import TemplateConnector
-
-
-class ScanConnector(TemplateConnector):
-    template_name = "scan"
-    connector_id_override = "scan"
+__all__ = ["ScanConnector"]

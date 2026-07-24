@@ -1,10 +1,5 @@
-"""Currys connector using FlareSolverr + HTML parsing."""
+"""Currys connector with truthful WAF-blocked fail-fast behavior."""
 
-from __future__ import annotations
+from pricerecon.connectors.timeout_retailers import CurrysConnector
 
-from pricerecon.connectors.template_connector import TemplateConnector
-
-
-class CurrysConnector(TemplateConnector):
-    template_name = "currys"
-    connector_id_override = "currys"
+__all__ = ["CurrysConnector"]
