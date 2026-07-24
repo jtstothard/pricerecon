@@ -5,6 +5,18 @@ from pricerecon.connectors.base import BaseConnector
 __all__ = ["BaseConnector", "discover_connectors"]
 
 
+# Historical source rows used ``john_lewis`` before the connector was
+# registered under its canonical id.  Keep the alias in one place so database
+# migrations and runtime callers agree on the identifier that the registry
+# exposes.
+CONNECTOR_ID_ALIASES = {"john_lewis": "johnlewis"}
+
+
+def canonical_connector_id(connector_id: str) -> str:
+    """Return the registry id for a legacy or canonical connector id."""
+    return CONNECTOR_ID_ALIASES.get(connector_id, connector_id)
+
+
 def discover_connectors() -> dict[str, type[BaseConnector]]:
     """Discover all connectors via entry points, with source-tree fallback.
 
