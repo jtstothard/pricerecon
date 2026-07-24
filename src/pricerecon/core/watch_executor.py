@@ -245,7 +245,12 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
             if connector_id == "ebay":
                 import os
 
-                connector_kwargs.setdefault("app_id", os.environ.get("EBAY_APP_ID", ""))
+                # A persisted config may contain a null app_id (for example, when
+                # a watch was created before credentials were configured). Treat
+                # null/empty values as unset so the deployed environment remains
+                # the source of truth for the OAuth client id.
+                if not connector_kwargs.get("app_id"):
+                    connector_kwargs["app_id"] = os.environ.get("EBAY_APP_ID", "")
                 connector_kwargs.setdefault("cert_id", os.environ.get("EBAY_CERT_ID"))
             elif connector_id == "aliexpress":
                 import os
