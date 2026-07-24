@@ -41,7 +41,7 @@ def _phrase_matches(phrase: str, title_tokens: list[str]) -> bool:
     # Find first token, then check if rest follow contiguously
     for i, token in enumerate(title_tokens):
         if token == phrase_tokens[0]:
-            if title_tokens[i:i+len(phrase_tokens)] == phrase_tokens:
+            if title_tokens[i : i + len(phrase_tokens)] == phrase_tokens:
                 return True
     return False
 

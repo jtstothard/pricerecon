@@ -12,6 +12,7 @@ import pytest
 
 # Add src to path
 import sys
+
 sys.path.insert(0, "/home/hermes/pricerecon/src")
 
 from pricerecon.connectors.ebay import eBayConnector, eBayOAuthToken, eBayTokenStore
@@ -272,7 +273,11 @@ class TestEBayConnectorSearch401Retry:
                     "title": "Test Item",
                     "price": {"value": "10.00", "currency": "GBP"},
                     "itemWebUrl": "https://example.com/item/123",
-                    "seller": {"username": "test_seller", "feedbackScore": 100, "feedbackPercentage": 99.5},
+                    "seller": {
+                        "username": "test_seller",
+                        "feedbackScore": 100,
+                        "feedbackPercentage": 99.5,
+                    },
                     "availability": {"shipToLocationAvailability": {"quantity": 1}},
                 }
             ]
@@ -472,7 +477,11 @@ class TestEBayConnectorHealthRecovery:
                     "title": "Test Item",
                     "price": {"value": "10.00", "currency": "GBP"},
                     "itemWebUrl": "https://example.com/item/123",
-                    "seller": {"username": "test_seller", "feedbackScore": 100, "feedbackPercentage": 99.5},
+                    "seller": {
+                        "username": "test_seller",
+                        "feedbackScore": 100,
+                        "feedbackPercentage": 99.5,
+                    },
                     "availability": {"shipToLocationAvailability": {"quantity": 1}},
                 }
             ]

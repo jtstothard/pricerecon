@@ -3,6 +3,7 @@
 These routes deliberately prefer false negatives over returning a plausible-looking
 but wrong device (for example CeX's broad storage-only matches).
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -37,31 +38,53 @@ ROUTES: tuple[HardwareRoute, ...] = (
         name="strix-halo-128gb",
         required_terms=("strix", "halo", "128gb"),
         excluded_terms=("192gb", "64gb", "256gb", "macbook", "mac studio", *_COMMON_EXCLUDES),
-        allowed_sources=frozenset({"ebay", "cex", "facebook_marketplace", "gumtree", "reddit_hardwareswapuk"}),
+        allowed_sources=frozenset(
+            {"ebay", "cex", "facebook_marketplace", "gumtree", "reddit_hardwareswapuk"}
+        ),
     ),
     HardwareRoute(
         name="strix-halo-192gb",
         required_terms=("strix", "halo", "192gb"),
         excluded_terms=("128gb", "64gb", "256gb", "macbook", "mac studio", *_COMMON_EXCLUDES),
-        allowed_sources=frozenset({"ebay", "cex", "facebook_marketplace", "gumtree", "reddit_hardwareswapuk"}),
+        allowed_sources=frozenset(
+            {"ebay", "cex", "facebook_marketplace", "gumtree", "reddit_hardwareswapuk"}
+        ),
     ),
     HardwareRoute(
         name="strix-halo-128-or-192gb",
         required_terms=("strix", "halo"),
         required_any_terms=("128gb", "192gb"),
         excluded_terms=("64gb", "256gb", "macbook", "mac studio", *_COMMON_EXCLUDES),
-        allowed_sources=frozenset({"ebay", "cex", "facebook_marketplace", "gumtree", "reddit_hardwareswapuk"}),
+        allowed_sources=frozenset(
+            {"ebay", "cex", "facebook_marketplace", "gumtree", "reddit_hardwareswapuk"}
+        ),
     ),
     HardwareRoute(
         name="mac-studio-ultra-256gb",
         required_terms=("mac studio", "ultra", "256gb"),
-        excluded_terms=("128gb", "192gb", "512gb", "macbook", "imac", "mac mini", *_COMMON_EXCLUDES),
+        excluded_terms=(
+            "128gb",
+            "192gb",
+            "512gb",
+            "macbook",
+            "imac",
+            "mac mini",
+            *_COMMON_EXCLUDES,
+        ),
         allowed_sources=frozenset({"ebay", "cex", "gumtree", "facebook_marketplace"}),
     ),
     HardwareRoute(
         name="mac-studio-ultra-512gb",
         required_terms=("mac studio", "ultra", "512gb"),
-        excluded_terms=("128gb", "192gb", "256gb", "macbook", "imac", "mac mini", *_COMMON_EXCLUDES),
+        excluded_terms=(
+            "128gb",
+            "192gb",
+            "256gb",
+            "macbook",
+            "imac",
+            "mac mini",
+            *_COMMON_EXCLUDES,
+        ),
         allowed_sources=frozenset({"ebay", "cex", "gumtree", "facebook_marketplace"}),
     ),
     HardwareRoute(
@@ -74,7 +97,16 @@ ROUTES: tuple[HardwareRoute, ...] = (
     HardwareRoute(
         name="macbook-pro-m5-max-128gb",
         required_terms=("macbook", "pro", "m5", "max", "128gb"),
-        excluded_terms=("m4", "m3", "m2", "air", "imac", "mac mini", "mac studio", *_COMMON_EXCLUDES),
+        excluded_terms=(
+            "m4",
+            "m3",
+            "m2",
+            "air",
+            "imac",
+            "mac mini",
+            "mac studio",
+            *_COMMON_EXCLUDES,
+        ),
         allowed_sources=frozenset({"ebay", "cex", "gumtree", "facebook_marketplace"}),
     ),
 )
@@ -94,12 +126,16 @@ def route_for_query(query: str) -> HardwareRoute | None:
     # Queries such as "256/512GB" describe an either/or watch. Resolve them
     # before the single-capacity routes, whose terms may otherwise substring
     # match the final capacity.
-    if "mac studio" in normalized and "ultra" in normalized and (
-        "256/512gb" in compact or "512/256gb" in compact
+    if (
+        "mac studio" in normalized
+        and "ultra" in normalized
+        and ("256/512gb" in compact or "512/256gb" in compact)
     ):
         return next(route for route in ROUTES if route.name == "mac-studio-ultra-256-or-512gb")
-    if "strix" in normalized and "halo" in normalized and (
-        "128/192gb" in compact or "192/128gb" in compact
+    if (
+        "strix" in normalized
+        and "halo" in normalized
+        and ("128/192gb" in compact or "192/128gb" in compact)
     ):
         return next(route for route in ROUTES if route.name == "strix-halo-128-or-192gb")
     for route in ROUTES:

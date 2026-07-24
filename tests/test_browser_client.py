@@ -16,10 +16,10 @@ from pricerecon.connectors.browser_client import (
     run_cloakbrowser_bridge,
 )
 
-
 # ---------------------------------------------------------------------------
 # is_blocked — detection signals
 # ---------------------------------------------------------------------------
+
 
 class TestIsBlocked:
     def test_clean_page_not_blocked(self) -> None:
@@ -105,7 +105,7 @@ class TestIsBlocked:
         html = (
             "<html><body>"
             # hidden captcha reference that appears in real pages
-            '<script>window.__captchaEnabled=false;</script>'
+            "<script>window.__captchaEnabled=false;</script>"
             '<ul class="srp-results"><li class="s-item">RTX 4090</li></ul>'
             "</body></html>"
         )
@@ -121,6 +121,7 @@ class TestIsBlocked:
 # ---------------------------------------------------------------------------
 # BrowserSessionConfig — env-var loading
 # ---------------------------------------------------------------------------
+
 
 class TestBrowserSessionConfigEnv:
     def test_defaults(self) -> None:
@@ -164,6 +165,7 @@ class TestBrowserSessionConfigEnv:
 # resolve_cloakbrowser_binary — path resolution
 # ---------------------------------------------------------------------------
 
+
 class TestResolveCloakbrowserBinary:
     def test_env_var_takes_priority(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         fake_chrome = tmp_path / "chrome"
@@ -179,7 +181,9 @@ class TestResolveCloakbrowserBinary:
             result = resolve_cloakbrowser_binary()
         assert result is None
 
-    def test_glob_picks_highest_version(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    def test_glob_picks_highest_version(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
         monkeypatch.delenv("PRICERECON_CLOAKBROWSER_CHROME", raising=False)
         # Create fake versioned chrome binaries
         v1 = tmp_path / "chromium-145.0.0.0" / "chrome"
@@ -280,7 +284,9 @@ class TestCloakBrowserBridge:
         assert create.await_args.args[1].endswith("tools/cloakbrowser-bridge/bridge.mjs")
         assert create.await_args.args[2] == "--stdio"
 
-    async def test_timeout_kills_process_and_fails_closed(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    async def test_timeout_kills_process_and_fails_closed(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         process = _FakeProcess(b"")
         process.returncode = None
         create = AsyncMock(return_value=process)
@@ -313,15 +319,23 @@ class TestCloakBrowserBridge:
         assert result["status"] == 0
         assert isinstance(result["error"], CloakBrowserBridgeUnavailable)
 
-    async def test_bridge_is_selected_only_after_primary_block(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    async def test_bridge_is_selected_only_after_primary_block(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         client = BrowserClient(config=BrowserSessionConfig(cloakbrowser_fallback=True))
         primary_context = _FakeContext("<html>Access denied</html>", "Access denied")
         client.start = AsyncMock()
         client.new_context = AsyncMock(return_value=primary_context)
-        bridge = AsyncMock(return_value={
-            "status": 200, "title": "eBay", "html": '<li class="s-item">x</li>',
-            "content": "x", "blocked": False, "timing_ms": 10,
-        })
+        bridge = AsyncMock(
+            return_value={
+                "status": 200,
+                "title": "eBay",
+                "html": '<li class="s-item">x</li>',
+                "content": "x",
+                "blocked": False,
+                "timing_ms": 10,
+            }
+        )
         monkeypatch.setattr("pricerecon.connectors.browser_client.run_cloakbrowser_bridge", bridge)
 
         result = await client.fetch_with_fallback("https://example.test", wait_ms=0)

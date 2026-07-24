@@ -43,6 +43,7 @@ except Exception:  # pragma: no cover - optional dependency
 # CloakBrowser binary resolution
 # ---------------------------------------------------------------------------
 
+
 def resolve_cloakbrowser_binary() -> str | None:
     """Return the path to the CloakBrowser Chromium binary, or None.
 
@@ -97,22 +98,34 @@ async def run_cloakbrowser_bridge(
     bridge = Path(__file__).parents[3] / "tools" / "cloakbrowser-bridge" / "bridge.mjs"
     node = os.environ.get("PRICERECON_NODE", "node")
     result: dict[str, Any] = {
-        "status": 0, "title": "", "html": "", "content": "",
-        "blocked": True, "used_cloakbrowser": True, "timing_ms": 0,
+        "status": 0,
+        "title": "",
+        "html": "",
+        "content": "",
+        "blocked": True,
+        "used_cloakbrowser": True,
+        "timing_ms": 0,
     }
     process: Any = None
     effective_timeout = timeout_ms if timeout_ms is not None else nav_timeout_ms + wait_ms + 10_000
     try:
         process = await asyncio.create_subprocess_exec(
-            node, str(bridge), "--stdio",
+            node,
+            str(bridge),
+            "--stdio",
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.DEVNULL,
         )
-        request = json.dumps({
-            "url": url,
-            "options": {"wait_ms": wait_ms, "nav_timeout_ms": nav_timeout_ms},
-        }).encode() + b"\n"
+        request = (
+            json.dumps(
+                {
+                    "url": url,
+                    "options": {"wait_ms": wait_ms, "nav_timeout_ms": nav_timeout_ms},
+                }
+            ).encode()
+            + b"\n"
+        )
         assert process.stdin is not None
         process.stdin.write(request)
         await process.stdin.drain()
@@ -150,6 +163,7 @@ async def run_cloakbrowser_bridge(
 # ---------------------------------------------------------------------------
 # Block detection
 # ---------------------------------------------------------------------------
+
 
 def is_blocked(html: str, title: str, status: int = 200) -> bool:
     """Detect anti-bot block signals in page content.
@@ -216,6 +230,7 @@ def is_blocked(html: str, title: str, status: int = 200) -> bool:
 # Config
 # ---------------------------------------------------------------------------
 
+
 @dataclass(slots=True)
 class BrowserSessionConfig:
     headless: bool = True
@@ -259,6 +274,7 @@ class BrowserSessionConfig:
 # ---------------------------------------------------------------------------
 # Remote Camofox backend (unchanged)
 # ---------------------------------------------------------------------------
+
 
 class _RemoteCamofoxPage:
     def __init__(self, context: "_RemoteCamofoxContext") -> None:
@@ -382,6 +398,7 @@ class _RemoteCamofoxContext:
 # ---------------------------------------------------------------------------
 # BrowserClient
 # ---------------------------------------------------------------------------
+
 
 class BrowserClient:
     """Owns either a Playwright browser, the CloakBrowser patched binary, or a remote Camofox session."""
@@ -535,9 +552,13 @@ class BrowserClient:
         # Blocked — try CloakBrowser fallback if available
         if not self.config.cloakbrowser_fallback:
             return {
-                "html": html, "title": title, "status": status,
-                "used_cloakbrowser": False, "blocked": True,
-                "primary_blocked": True, "primary_status": status,
+                "html": html,
+                "title": title,
+                "status": status,
+                "used_cloakbrowser": False,
+                "blocked": True,
+                "primary_blocked": True,
+                "primary_status": status,
             }
 
         # The SDK bridge is optional and fail-closed. It is never selected

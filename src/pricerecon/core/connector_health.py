@@ -24,9 +24,11 @@ def upsert_connector_health(
     *,
     last_error: str | None = None,
     details: dict[str, Any] | None = None,
+    path: Path | None = None,
 ) -> None:
     from datetime import timezone
-    conn = get_db()
+
+    conn = get_db(path)
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -50,8 +52,8 @@ def upsert_connector_health(
     conn.close()
 
 
-def list_connector_health() -> dict[str, dict[str, Any]]:
-    conn = get_db()
+def list_connector_health(path: Path | None = None) -> dict[str, dict[str, Any]]:
+    conn = get_db(path)
     cursor = conn.cursor()
     cursor.execute(
         "SELECT connector_id, status, last_error, details_json, updated_at FROM connector_health"
@@ -88,7 +90,9 @@ def source_status(
     }
 
 
-def is_health_stale(connector_id: str, stale_threshold_seconds: int = 3600) -> bool:
+def is_health_stale(
+    connector_id: str, stale_threshold_seconds: int = 3600, path: Path | None = None
+) -> bool:
     """Check if connector health state is stale and should be retried.
 
     A health state is considered stale if:
@@ -97,7 +101,7 @@ def is_health_stale(connector_id: str, stale_threshold_seconds: int = 3600) -> b
 
     This allows transient failures to auto-recover after a cooldown period.
     """
-    state = list_connector_health().get(connector_id, {})
+    state = list_connector_health(path).get(connector_id, {})
     status = state.get("status")
 
     # If status is healthy, not stale

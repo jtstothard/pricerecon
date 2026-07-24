@@ -21,6 +21,7 @@ from pricerecon.models import (
 
 class FakeDiffResult:
     """Mock diff result for testing."""
+
     has_events = False
     new_listings: list[Any] = []
     price_drops: list[Any] = []
@@ -415,12 +416,16 @@ async def test_source_queries_mixed_connectors(monkeypatch: Any) -> None:
         async def cleanup(self) -> Any:
             return await self._inner.cleanup()
 
-        return type(f"{connector_id.title()}Connector", (), {
-            "__init__": __init__,
-            "initialize": initialize,
-            "search": search,
-            "cleanup": cleanup,
-        })
+        return type(
+            f"{connector_id.title()}Connector",
+            (),
+            {
+                "__init__": __init__,
+                "initialize": initialize,
+                "search": search,
+                "cleanup": cleanup,
+            },
+        )
 
     watch = Watch(
         id=4,
@@ -469,7 +474,9 @@ async def test_source_queries_mixed_connectors(monkeypatch: Any) -> None:
 
     monkeypatch.setattr(
         "pricerecon.connectors.discover_connectors",
-        lambda: {cid: make_connector_class(cid) for cid in ["ebay", "aliexpress", "cex", "johnlewis"]},
+        lambda: {
+            cid: make_connector_class(cid) for cid in ["ebay", "aliexpress", "cex", "johnlewis"]
+        },
     )
 
     health_records: list[tuple[str, str, str | None, dict[str, object] | None]] = []
@@ -520,12 +527,16 @@ async def test_source_queries_raw_strings_passed_unchanged(monkeypatch: Any) -> 
         async def cleanup(self) -> Any:
             return await self._inner.cleanup()
 
-        return type(f"{connector_id.title()}Connector", (), {
-            "__init__": __init__,
-            "initialize": initialize,
-            "search": search,
-            "cleanup": cleanup,
-        })
+        return type(
+            f"{connector_id.title()}Connector",
+            (),
+            {
+                "__init__": __init__,
+                "initialize": initialize,
+                "search": search,
+                "cleanup": cleanup,
+            },
+        )
 
     watch = Watch(
         id=5,
@@ -610,12 +621,16 @@ async def test_source_queries_with_price_max_filter(monkeypatch: Any) -> None:
         async def cleanup(self) -> Any:
             return await self._inner.cleanup()
 
-        return type(f"{connector_id.title()}Connector", (), {
-            "__init__": __init__,
-            "initialize": initialize,
-            "search": search,
-            "cleanup": cleanup,
-        })
+        return type(
+            f"{connector_id.title()}Connector",
+            (),
+            {
+                "__init__": __init__,
+                "initialize": initialize,
+                "search": search,
+                "cleanup": cleanup,
+            },
+        )
 
     watch = Watch(
         id=6,

@@ -163,12 +163,11 @@ class WatchBase(BaseModel):
     display_title: Optional[str] = Field(None, description="Human-readable display title for UI")
     category: Optional[str] = Field(None, description="Product category (e.g., 'gpu', 'cpu')")
     synonym_groups: list[list[str]] = Field(
-        default_factory=list,
-        description="OR-within-group, AND-across-groups title matching rules"
+        default_factory=list, description="OR-within-group, AND-across-groups title matching rules"
     )
     source_queries: dict[str, str] = Field(
         default_factory=dict,
-        description="Per-connector query overrides (connector_id -> raw query)"
+        description="Per-connector query overrides (connector_id -> raw query)",
     )
     sources: list[SourceConfig] = Field(
         default_factory=lambda: [SourceConfig(connector="ebay")],

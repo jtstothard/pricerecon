@@ -196,7 +196,7 @@ class AmazonConnector(BaseConnector):
         title_patterns = [
             r'<h2[^>]*class="[^"]*a-size-base-plus[^"]*"[^>]*>\s*<span[^>]*>([^<]+)</span>',
             r'<span class="a-size-base-plus a-color-base a-text-normal">\s*([^<]+)\s*</span>',
-            r'<h2[^>]*>\s*<span[^>]*>([^<]+)</span>',
+            r"<h2[^>]*>\s*<span[^>]*>([^<]+)</span>",
         ]
 
         title = None

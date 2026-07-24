@@ -14,11 +14,16 @@ from pricerecon.core.title_matching import (
 def test_normalize_title():
     """Title normalization to tokens."""
     assert _normalize_title("AMD Ryzen AI Max+ 395 128GB Mini PC") == [
-        "amd", "ryzen", "ai", "max+", "395", "128gb", "mini", "pc"
+        "amd",
+        "ryzen",
+        "ai",
+        "max+",
+        "395",
+        "128gb",
+        "mini",
+        "pc",
     ]
-    assert _normalize_title("Mac Studio Ultra 256GB") == [
-        "mac", "studio", "ultra", "256gb"
-    ]
+    assert _normalize_title("Mac Studio Ultra 256GB") == ["mac", "studio", "ultra", "256gb"]
     # "128 GB" -> "128gb"
     assert _normalize_title("128 GB") == ["128gb"]
     # Hyphen -> space
@@ -78,7 +83,9 @@ def test_synonym_groups_match_basic():
     excluded_terms = ["iphone", "ipad"]
 
     # Matches: one term from each group
-    assert synonym_groups_match("AMD Ryzen AI Max+ 395 128GB Mini PC", synonym_groups, excluded_terms)
+    assert synonym_groups_match(
+        "AMD Ryzen AI Max+ 395 128GB Mini PC", synonym_groups, excluded_terms
+    )
     assert synonym_groups_match("Strix Halo 128GB", synonym_groups, excluded_terms)
 
     # Fails: missing 128gb
@@ -188,7 +195,9 @@ def test_complex_strix_halo_example():
     excluded_terms = ["iphone", "ipad", "android", "galaxy", "pixel", "phone", "tablet"]
 
     # Real matches (chipset name, not marketing name)
-    assert synonym_groups_match("AMD Ryzen AI Max+ 395 128GB Mini PC", synonym_groups, excluded_terms)
+    assert synonym_groups_match(
+        "AMD Ryzen AI Max+ 395 128GB Mini PC", synonym_groups, excluded_terms
+    )
     assert synonym_groups_match("Strix Halo 128GB", synonym_groups, excluded_terms)
 
     # False positives prevented
@@ -196,7 +205,9 @@ def test_complex_strix_halo_example():
     assert not synonym_groups_match("Galaxy S23 128GB", synonym_groups, excluded_terms)
 
     # Wrong capacity
-    assert not synonym_groups_match("AMD Ryzen AI Max+ 395 192GB Mini PC", synonym_groups, excluded_terms)
+    assert not synonym_groups_match(
+        "AMD Ryzen AI Max+ 395 192GB Mini PC", synonym_groups, excluded_terms
+    )
 
 
 def test_mac_studio_ultra_example():
