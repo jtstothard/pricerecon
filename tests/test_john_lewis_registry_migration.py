@@ -13,8 +13,7 @@ def test_legacy_john_lewis_id_is_canonicalized():
 def test_init_db_repairs_legacy_source_and_watch_ids(tmp_path):
     db_path = tmp_path / "registry.db"
     conn = sqlite3.connect(db_path)
-    conn.executescript(
-        """
+    conn.executescript("""
         CREATE TABLE sources (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             connector_id TEXT NOT NULL UNIQUE,
@@ -37,8 +36,7 @@ def test_init_db_repairs_legacy_source_and_watch_ids(tmp_path):
         VALUES ('john_lewis', 'retailer', '{"name":"john_lewis"}');
         INSERT INTO watches (name, query, config_json)
         VALUES ('legacy', 'laptop', '{"sources":[{"connector":"john_lewis"}],"source_queries":{"john_lewis":"laptop"}}');
-        """
-    )
+        """)
     conn.commit()
     conn.close()
 

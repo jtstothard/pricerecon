@@ -85,8 +85,7 @@ async def test_prices_are_per_product_not_positional():
         prices = {listing.price for listing in listings}
         # At least 3 distinct prices should be found for a "watch" search
         assert len(prices) >= 3, (
-            f"Only {len(prices)} distinct prices found - "
-            "suspicious for a diverse product search"
+            f"Only {len(prices)} distinct prices found - " "suspicious for a diverse product search"
         )
 
 
@@ -112,10 +111,10 @@ async def test_blocked_page_detection():
     connector = AmazonConnector()
 
     blocked_pages = [
-        '<html><body>Type the characters you see below</body></html>',
+        "<html><body>Type the characters you see below</body></html>",
         '<html><body><span class="a-alert-heading">CAPTCHA</span></body></html>',
-        '<html><body>Amazon is blocking your request</body></html>',
-        '<html><body>security measure</body></html>',
+        "<html><body>Amazon is blocking your request</body></html>",
+        "<html><body>security measure</body></html>",
     ]
 
     for html in blocked_pages:
@@ -131,6 +130,8 @@ async def test_blocked_page_detection():
     </html>
     """
 
-    assert not connector._is_blocked_page(normal_html), "Normal page should not be detected as blocked"
+    assert not connector._is_blocked_page(
+        normal_html
+    ), "Normal page should not be detected as blocked"
 
     await connector.cleanup()

@@ -103,7 +103,12 @@ async def test_reddit_block_is_not_silently_converted_to_empty(monkeypatch: Any)
     connector = RedditHardwareSwapUKConnector()
 
     async def blocked(*args: Any, **kwargs: Any) -> list[Any]:
-        raise ConnectorDegradedError(ConnectorStatus.rate_limited, "RSS limited", connector.connector_id, {"status_code": 429})
+        raise ConnectorDegradedError(
+            ConnectorStatus.rate_limited,
+            "RSS limited",
+            connector.connector_id,
+            {"status_code": 429},
+        )
 
     monkeypatch.setattr(TemplateConnector, "search", blocked)
     with pytest.raises(ConnectorDegradedError) as raised:
@@ -113,8 +118,7 @@ async def test_reddit_block_is_not_silently_converted_to_empty(monkeypatch: Any)
     assert raised.value.detail["status_code"] == 429
     assert raised.value.detail["fallbacks_attempted"] is False
     assert [
-        (stage["stage"], stage["outcome"])
-        for stage in raised.value.detail["fallback_stages"]
+        (stage["stage"], stage["outcome"]) for stage in raised.value.detail["fallback_stages"]
     ] == [("rss", "attempted"), ("rss", "failed"), ("api", "skipped"), ("browser", "skipped")]
 
 
@@ -135,13 +139,23 @@ async def test_api_unexpected_error_does_not_prevent_browser_fallback(monkeypatc
     connector = RedditHardwareSwapUKConnector()
 
     async def blocked(*args: Any, **kwargs: Any) -> list[Any]:
-        raise ConnectorDegradedError(ConnectorStatus.bot_blocked, "RSS blocked", connector.connector_id)
+        raise ConnectorDegradedError(
+            ConnectorStatus.bot_blocked, "RSS blocked", connector.connector_id
+        )
 
     async def api(*args: Any, **kwargs: Any) -> list[Any]:
         raise ValueError("malformed API payload")
 
     async def browser(*args: Any, **kwargs: Any) -> list[Any]:
-        return [connector._api_post_to_listing({"id": "browser", "title": "RTX 4090", "url": "https://www.reddit.com/r/hardwareswapuk/comments/browser/post"})]
+        return [
+            connector._api_post_to_listing(
+                {
+                    "id": "browser",
+                    "title": "RTX 4090",
+                    "url": "https://www.reddit.com/r/hardwareswapuk/comments/browser/post",
+                }
+            )
+        ]
 
     monkeypatch.setattr(TemplateConnector, "search", blocked)
     monkeypatch.setenv("PRICERECON_REDDIT_API_ENABLED", "true")
@@ -167,7 +181,8 @@ def test_browser_json_parser_extracts_body_and_timestamp() -> None:
     entries = _parse_browser_posts(
         '{"data":{"children":[{"data":{"id":"abc","title":"RTX 4090","selftext":"Like new",'
         '"permalink":"/r/hardwareswapuk/comments/abc/post/","created_utc":1700000000}}]}}',
-        "hardwareswapuk", 25,
+        "hardwareswapuk",
+        25,
     )
     assert len(entries) == 1
     assert entries[0].content == "Like new"
@@ -198,20 +213,34 @@ async def test_rss_transport_failure_reaches_api(monkeypatch: Any) -> None:
 
 
 @pytest.mark.asyncio
-async def test_api_failure_reaches_browser(monkeypatch: Any, caplog: pytest.LogCaptureFixture) -> None:
+async def test_api_failure_reaches_browser(
+    monkeypatch: Any, caplog: pytest.LogCaptureFixture
+) -> None:
     connector = RedditHardwareSwapUKConnector()
     calls: list[str] = []
 
     async def rss(*args: Any, **kwargs: Any) -> list[Any]:
-        raise ConnectorDegradedError(ConnectorStatus.bot_blocked, "RSS blocked", connector.connector_id)
+        raise ConnectorDegradedError(
+            ConnectorStatus.bot_blocked, "RSS blocked", connector.connector_id
+        )
 
     async def api(*args: Any, **kwargs: Any) -> list[Any]:
         calls.append("api")
-        raise ConnectorDegradedError(ConnectorStatus.auth_failed, "API unavailable", connector.connector_id)
+        raise ConnectorDegradedError(
+            ConnectorStatus.auth_failed, "API unavailable", connector.connector_id
+        )
 
     async def browser(*args: Any, **kwargs: Any) -> list[Any]:
         calls.append("browser")
-        return [connector._api_post_to_listing({"id": "browser", "title": "RTX 4090", "url": "https://www.reddit.com/r/hardwareswapuk/comments/browser/post"})]
+        return [
+            connector._api_post_to_listing(
+                {
+                    "id": "browser",
+                    "title": "RTX 4090",
+                    "url": "https://www.reddit.com/r/hardwareswapuk/comments/browser/post",
+                }
+            )
+        ]
 
     monkeypatch.setattr(TemplateConnector, "search", rss)
     monkeypatch.setenv("PRICERECON_REDDIT_API_ENABLED", "true")
@@ -245,10 +274,17 @@ async def test_browser_failure_returns_structured_degraded_error(monkeypatch: An
     connector = RedditHardwareSwapUKConnector()
 
     async def rss(*args: Any, **kwargs: Any) -> list[Any]:
-        raise ConnectorDegradedError(ConnectorStatus.rate_limited, "RSS limited", connector.connector_id)
+        raise ConnectorDegradedError(
+            ConnectorStatus.rate_limited, "RSS limited", connector.connector_id
+        )
 
     async def browser(*args: Any, **kwargs: Any) -> list[Any]:
-        raise ConnectorDegradedError(ConnectorStatus.timeout, "browser timeout", connector.connector_id, {"timeout_ms": 30000})
+        raise ConnectorDegradedError(
+            ConnectorStatus.timeout,
+            "browser timeout",
+            connector.connector_id,
+            {"timeout_ms": 30000},
+        )
 
     monkeypatch.setattr(TemplateConnector, "search", rss)
     monkeypatch.delenv("PRICERECON_REDDIT_API_ENABLED", raising=False)
@@ -262,8 +298,7 @@ async def test_browser_failure_returns_structured_degraded_error(monkeypatch: An
     assert raised.value.detail["fallback_errors"] == ["browser:timeout"]
     assert raised.value.detail["fallbacks_attempted"] is True
     assert [
-        (stage["stage"], stage["outcome"])
-        for stage in raised.value.detail["fallback_stages"]
+        (stage["stage"], stage["outcome"]) for stage in raised.value.detail["fallback_stages"]
     ] == [
         ("rss", "attempted"),
         ("rss", "failed"),
@@ -342,7 +377,10 @@ class TestRedditAPISuccess:
 
     @pytest.mark.asyncio
     async def test_api_success_returns_listings(
-        self, mock_api_response: dict[str, Any], mock_token_response: dict[str, Any], monkeypatch: Any
+        self,
+        mock_api_response: dict[str, Any],
+        mock_token_response: dict[str, Any],
+        monkeypatch: Any,
     ) -> None:
         monkeypatch.setenv("PRICERECON_REDDIT_API_ENABLED", "true")
         monkeypatch.setenv("REDDIT_CLIENT_ID", "id")
@@ -367,19 +405,28 @@ class TestRedditAPISuccess:
         }
         data_mock.raise_for_status = MagicMock()
 
-        with mock.patch.object(httpx.AsyncClient, "post", new_callable=AsyncMock, return_value=token_mock) as mock_post:
-            with mock.patch.object(httpx.AsyncClient, "get", new_callable=AsyncMock, return_value=data_mock) as mock_get:
+        with mock.patch.object(
+            httpx.AsyncClient, "post", new_callable=AsyncMock, return_value=token_mock
+        ) as mock_post:
+            with mock.patch.object(
+                httpx.AsyncClient, "get", new_callable=AsyncMock, return_value=data_mock
+            ) as mock_get:
                 listings = await connector._search_api("RTX", {"limit": 25})
 
                 assert len(listings) == 2
                 assert listings[0].title_raw == "[H] RTX 4090 [W] £900"
                 assert listings[0].price == 900
                 assert listings[0].url.endswith("/comments/abc123/post/")
-                assert listings[0].timestamp_seen == datetime.fromtimestamp(1_700_000_000, tz=timezone.utc)
+                assert listings[0].timestamp_seen == datetime.fromtimestamp(
+                    1_700_000_000, tz=timezone.utc
+                )
 
     @pytest.mark.asyncio
     async def test_api_stores_rate_limit_info(
-        self, mock_api_response: dict[str, Any], mock_token_response: dict[str, Any], monkeypatch: Any
+        self,
+        mock_api_response: dict[str, Any],
+        mock_token_response: dict[str, Any],
+        monkeypatch: Any,
     ) -> None:
         monkeypatch.setenv("PRICERECON_REDDIT_API_ENABLED", "true")
         monkeypatch.setenv("REDDIT_CLIENT_ID", "id")
@@ -404,11 +451,19 @@ class TestRedditAPISuccess:
         }
         data_mock.raise_for_status = MagicMock()
 
-        with mock.patch.object(httpx.AsyncClient, "post", new_callable=AsyncMock, return_value=token_mock):
-            with mock.patch.object(httpx.AsyncClient, "get", new_callable=AsyncMock, return_value=data_mock):
+        with mock.patch.object(
+            httpx.AsyncClient, "post", new_callable=AsyncMock, return_value=token_mock
+        ):
+            with mock.patch.object(
+                httpx.AsyncClient, "get", new_callable=AsyncMock, return_value=data_mock
+            ):
                 await connector._search_api("RTX", {"limit": 25})
 
-                assert connector._last_rate_limit_info == {"remaining": "599", "used": "1", "reset": "100"}
+                assert connector._last_rate_limit_info == {
+                    "remaining": "599",
+                    "used": "1",
+                    "reset": "100",
+                }
 
 
 class TestRedditAPIAuthFailure:
@@ -427,7 +482,9 @@ class TestRedditAPIAuthFailure:
         token_mock.status_code = 403
         token_mock.headers = {}
 
-        with mock.patch.object(httpx.AsyncClient, "post", new_callable=AsyncMock, return_value=token_mock):
+        with mock.patch.object(
+            httpx.AsyncClient, "post", new_callable=AsyncMock, return_value=token_mock
+        ):
             with pytest.raises(ConnectorDegradedError) as exc:
                 await connector._search_api("RTX", {})
 
@@ -448,7 +505,9 @@ class TestRedditAPIAuthFailure:
         token_mock.status_code = 401
         token_mock.headers = {}
 
-        with mock.patch.object(httpx.AsyncClient, "post", new_callable=AsyncMock, return_value=token_mock):
+        with mock.patch.object(
+            httpx.AsyncClient, "post", new_callable=AsyncMock, return_value=token_mock
+        ):
             with pytest.raises(ConnectorDegradedError) as exc:
                 await connector._search_api("RTX", {})
 
@@ -456,7 +515,9 @@ class TestRedditAPIAuthFailure:
             assert "authentication failed" in exc.value.message.lower()
 
     @pytest.mark.asyncio
-    async def test_api_no_token_raises_auth_error(self, mock_token_response: dict[str, Any], monkeypatch: Any) -> None:
+    async def test_api_no_token_raises_auth_error(
+        self, mock_token_response: dict[str, Any], monkeypatch: Any
+    ) -> None:
         monkeypatch.setenv("PRICERECON_REDDIT_API_ENABLED", "true")
         monkeypatch.setenv("REDDIT_CLIENT_ID", "id")
         monkeypatch.setenv("REDDIT_CLIENT_SECRET", "secret")
@@ -471,7 +532,9 @@ class TestRedditAPIAuthFailure:
         token_mock.headers = {}
         token_mock.raise_for_status = MagicMock()
 
-        with mock.patch.object(httpx.AsyncClient, "post", new_callable=AsyncMock, return_value=token_mock):
+        with mock.patch.object(
+            httpx.AsyncClient, "post", new_callable=AsyncMock, return_value=token_mock
+        ):
             with pytest.raises(ConnectorDegradedError) as exc:
                 await connector._search_api("RTX", {})
 
@@ -495,7 +558,9 @@ class TestRedditAPIRateLimit:
         token_mock.status_code = 429
         token_mock.headers = {}
 
-        with mock.patch.object(httpx.AsyncClient, "post", new_callable=AsyncMock, return_value=token_mock):
+        with mock.patch.object(
+            httpx.AsyncClient, "post", new_callable=AsyncMock, return_value=token_mock
+        ):
             with pytest.raises(ConnectorDegradedError) as exc:
                 await connector._search_api("RTX", {})
 
@@ -503,7 +568,9 @@ class TestRedditAPIRateLimit:
             assert "rate limited" in exc.value.message.lower()
 
     @pytest.mark.asyncio
-    async def test_api_429_on_data_request_raises_rate_limit(self, mock_token_response: dict[str, Any], monkeypatch: Any) -> None:
+    async def test_api_429_on_data_request_raises_rate_limit(
+        self, mock_token_response: dict[str, Any], monkeypatch: Any
+    ) -> None:
         monkeypatch.setenv("PRICERECON_REDDIT_API_ENABLED", "true")
         monkeypatch.setenv("REDDIT_CLIENT_ID", "id")
         monkeypatch.setenv("REDDIT_CLIENT_SECRET", "secret")
@@ -521,8 +588,12 @@ class TestRedditAPIRateLimit:
         data_mock.status_code = 429
         data_mock.headers = {}
 
-        with mock.patch.object(httpx.AsyncClient, "post", new_callable=AsyncMock, return_value=token_mock):
-            with mock.patch.object(httpx.AsyncClient, "get", new_callable=AsyncMock, return_value=data_mock):
+        with mock.patch.object(
+            httpx.AsyncClient, "post", new_callable=AsyncMock, return_value=token_mock
+        ):
+            with mock.patch.object(
+                httpx.AsyncClient, "get", new_callable=AsyncMock, return_value=data_mock
+            ):
                 with pytest.raises(ConnectorDegradedError) as exc:
                     await connector._search_api("RTX", {})
 
@@ -542,7 +613,12 @@ class TestRedditAPITransportErrors:
 
         connector = RedditHardwareSwapUKConnector()
 
-        with mock.patch.object(httpx.AsyncClient, "post", new_callable=AsyncMock, side_effect=httpx.TimeoutException("Request timeout")):
+        with mock.patch.object(
+            httpx.AsyncClient,
+            "post",
+            new_callable=AsyncMock,
+            side_effect=httpx.TimeoutException("Request timeout"),
+        ):
             with pytest.raises(ConnectorDegradedError) as exc:
                 await connector._search_api("RTX", {})
 
@@ -558,7 +634,12 @@ class TestRedditAPITransportErrors:
 
         connector = RedditHardwareSwapUKConnector()
 
-        with mock.patch.object(httpx.AsyncClient, "post", new_callable=AsyncMock, side_effect=httpx.ConnectError("Connection refused")):
+        with mock.patch.object(
+            httpx.AsyncClient,
+            "post",
+            new_callable=AsyncMock,
+            side_effect=httpx.ConnectError("Connection refused"),
+        ):
             with pytest.raises(ConnectorDegradedError) as exc:
                 await connector._search_api("RTX", {})
 
@@ -570,7 +651,10 @@ class TestRedditAPINormalization:
 
     @pytest.mark.asyncio
     async def test_api_normalization_produces_correct_fields(
-        self, mock_api_response: dict[str, Any], mock_token_response: dict[str, Any], monkeypatch: Any
+        self,
+        mock_api_response: dict[str, Any],
+        mock_token_response: dict[str, Any],
+        monkeypatch: Any,
     ) -> None:
         monkeypatch.setenv("PRICERECON_REDDIT_API_ENABLED", "true")
         monkeypatch.setenv("REDDIT_CLIENT_ID", "id")
@@ -591,8 +675,12 @@ class TestRedditAPINormalization:
         data_mock.headers = {}
         data_mock.raise_for_status = MagicMock()
 
-        with mock.patch.object(httpx.AsyncClient, "post", new_callable=AsyncMock, return_value=token_mock):
-            with mock.patch.object(httpx.AsyncClient, "get", new_callable=AsyncMock, return_value=data_mock):
+        with mock.patch.object(
+            httpx.AsyncClient, "post", new_callable=AsyncMock, return_value=token_mock
+        ):
+            with mock.patch.object(
+                httpx.AsyncClient, "get", new_callable=AsyncMock, return_value=data_mock
+            ):
                 listings = await connector._search_api("RTX", {})
 
                 # Verify all expected fields are present
@@ -604,13 +692,17 @@ class TestRedditAPINormalization:
 
                 # Verify data types
                 assert isinstance(listings[0].title_raw, str)
-                from decimal import Decimal; assert isinstance(listings[0].price, (Decimal, type(None)))
+                from decimal import Decimal
+
+                assert isinstance(listings[0].price, (Decimal, type(None)))
                 assert isinstance(listings[0].url, str)
                 assert isinstance(listings[0].timestamp_seen, datetime)
                 assert listings[0].timestamp_seen.tzinfo == timezone.utc
 
     @pytest.mark.asyncio
-    async def test_api_empty_results_list_does_not_raise(self, mock_token_response: dict[str, Any], monkeypatch: Any) -> None:
+    async def test_api_empty_results_list_does_not_raise(
+        self, mock_token_response: dict[str, Any], monkeypatch: Any
+    ) -> None:
         """Empty results (genuinely no posts) should return empty list, not raise."""
         monkeypatch.setenv("PRICERECON_REDDIT_API_ENABLED", "true")
         monkeypatch.setenv("REDDIT_CLIENT_ID", "id")
@@ -632,8 +724,12 @@ class TestRedditAPINormalization:
         data_mock.headers = {}
         data_mock.raise_for_status = MagicMock()
 
-        with mock.patch.object(httpx.AsyncClient, "post", new_callable=AsyncMock, return_value=token_mock):
-            with mock.patch.object(httpx.AsyncClient, "get", new_callable=AsyncMock, return_value=data_mock):
+        with mock.patch.object(
+            httpx.AsyncClient, "post", new_callable=AsyncMock, return_value=token_mock
+        ):
+            with mock.patch.object(
+                httpx.AsyncClient, "get", new_callable=AsyncMock, return_value=data_mock
+            ):
                 listings = await connector._search_api("RTX", {})
 
                 assert listings == []
@@ -659,7 +755,11 @@ class TestRedditAPICredentialLoading:
         import json
 
         cred_file = tmp_path / "reddit_creds.json"
-        cred_data = {"client_id": "file_id", "client_secret": "file_secret", "user_agent": "file_ua"}
+        cred_data = {
+            "client_id": "file_id",
+            "client_secret": "file_secret",
+            "user_agent": "file_ua",
+        }
         cred_file.write_text(json.dumps(cred_data))
         monkeypatch.setenv("REDDIT_CREDENTIAL_FILE", str(cred_file))
         # Ensure env vars are not set

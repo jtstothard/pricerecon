@@ -32,7 +32,6 @@ from pricerecon.connectors.rss import (
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 from pricerecon.models import NormalizedListing, SourceType
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -112,7 +111,11 @@ class _RedditConnector(TemplateConnector):
         if enabled not in {"1", "true", "yes"}:
             return False
         # Check either env vars or credential file
-        if os.getenv("REDDIT_CLIENT_ID") and os.getenv("REDDIT_CLIENT_SECRET") and os.getenv("REDDIT_USER_AGENT"):
+        if (
+            os.getenv("REDDIT_CLIENT_ID")
+            and os.getenv("REDDIT_CLIENT_SECRET")
+            and os.getenv("REDDIT_USER_AGENT")
+        ):
             return True
         cred_file = os.getenv("REDDIT_CREDENTIAL_FILE")
         if cred_file and os.path.exists(cred_file):
@@ -252,19 +255,30 @@ class _RedditConnector(TemplateConnector):
             )
         except httpx.HTTPError as exc:
             raise ConnectorDegradedError(
-                ConnectorStatus.unknown_error, "Reddit API token request failed", self.connector_id, {"error": str(exc)}
+                ConnectorStatus.unknown_error,
+                "Reddit API token request failed",
+                self.connector_id,
+                {"error": str(exc)},
             ) from exc
         if token_response.status_code in {401, 403}:
             raise ConnectorDegradedError(
-                ConnectorStatus.auth_failed, "Reddit API authentication failed", self.connector_id,
+                ConnectorStatus.auth_failed,
+                "Reddit API authentication failed",
+                self.connector_id,
                 {"status_code": token_response.status_code},
             )
         if token_response.status_code == 429:
-            raise ConnectorDegradedError(ConnectorStatus.rate_limited, "Reddit API rate limited", self.connector_id)
+            raise ConnectorDegradedError(
+                ConnectorStatus.rate_limited, "Reddit API rate limited", self.connector_id
+            )
         token_response.raise_for_status()
         token = token_response.json().get("access_token")
         if not token:
-            raise ConnectorDegradedError(ConnectorStatus.auth_failed, "Reddit API returned no access token", self.connector_id)
+            raise ConnectorDegradedError(
+                ConnectorStatus.auth_failed,
+                "Reddit API returned no access token",
+                self.connector_id,
+            )
         url = f"https://oauth.reddit.com/r/{self.SUBREDDIT}/new.json"
         response = await self._api_client.get(
             url,
@@ -272,9 +286,16 @@ class _RedditConnector(TemplateConnector):
             headers={"Authorization": f"bearer {token}", "User-Agent": user_agent},
         )
         if response.status_code in {401, 403}:
-            raise ConnectorDegradedError(ConnectorStatus.auth_failed, "Reddit API rejected the request", self.connector_id, {"status_code": response.status_code})
+            raise ConnectorDegradedError(
+                ConnectorStatus.auth_failed,
+                "Reddit API rejected the request",
+                self.connector_id,
+                {"status_code": response.status_code},
+            )
         if response.status_code == 429:
-            raise ConnectorDegradedError(ConnectorStatus.rate_limited, "Reddit API rate limited", self.connector_id)
+            raise ConnectorDegradedError(
+                ConnectorStatus.rate_limited, "Reddit API rate limited", self.connector_id
+            )
         response.raise_for_status()
 
         # Extract and store rate limit information
@@ -283,7 +304,11 @@ class _RedditConnector(TemplateConnector):
             self._last_rate_limit_info = rate_limit_info
 
         children = response.json().get("data", {}).get("children", [])
-        return [self._api_post_to_listing(child.get("data", {})) for child in children if child.get("data")]
+        return [
+            self._api_post_to_listing(child.get("data", {}))
+            for child in children
+            if child.get("data")
+        ]
 
     def _load_api_credentials(self) -> tuple[str, str, str]:
         """Load API credentials from environment or credential file.
@@ -294,6 +319,7 @@ class _RedditConnector(TemplateConnector):
         cred_file = os.getenv("REDDIT_CREDENTIAL_FILE")
         if cred_file and os.path.exists(cred_file):
             import json
+
             with open(cred_file, "r") as f:
                 creds = json.load(f)
             return (
@@ -335,7 +361,11 @@ class _RedditConnector(TemplateConnector):
             link=url,
             content=str(data.get("selftext") or ""),
             author=str(data.get("author") or "") or None,
-            published_at=datetime.fromtimestamp(float(data["created_utc"]), tz=timezone.utc) if data.get("created_utc") else None,
+            published_at=(
+                datetime.fromtimestamp(float(data["created_utc"]), tz=timezone.utc)
+                if data.get("created_utc")
+                else None
+            ),
         )
         return self._entry_to_listing(entry)
 
@@ -357,32 +387,53 @@ class _RedditConnector(TemplateConnector):
         try:
             context = await self._browser_client.new_context()
             page = await context.new_page()
-            response = await page.goto(url, wait_until="domcontentloaded", timeout=config.navigation_timeout_ms)
+            response = await page.goto(
+                url, wait_until="domcontentloaded", timeout=config.navigation_timeout_ms
+            )
             await page.wait_for_timeout(config.wait_after_navigation_ms)
             content = await page.content()
             status_code = getattr(response, "status", None) if response is not None else None
             if callable(status_code):
                 status_code = status_code()
             if status_code in {403, 429}:
-                status = ConnectorStatus.bot_blocked if status_code == 403 else ConnectorStatus.rate_limited
+                status = (
+                    ConnectorStatus.bot_blocked
+                    if status_code == 403
+                    else ConnectorStatus.rate_limited
+                )
                 raise ConnectorDegradedError(
-                    status, f"Reddit browser returned HTTP {status_code}", self.connector_id,
+                    status,
+                    f"Reddit browser returned HTTP {status_code}",
+                    self.connector_id,
                     {"requested_url": url, "status_code": status_code},
                 )
         except ConnectorDegradedError:
             raise
         except (TimeoutError, asyncio.TimeoutError) as exc:
             raise ConnectorDegradedError(
-                ConnectorStatus.timeout, "Reddit browser navigation timed out", self.connector_id,
+                ConnectorStatus.timeout,
+                "Reddit browser navigation timed out",
+                self.connector_id,
                 {"requested_url": url, "timeout_ms": config.navigation_timeout_ms},
             ) from exc
         except Exception as exc:
             if "timeout" in str(exc).lower():
                 raise ConnectorDegradedError(
-                    ConnectorStatus.timeout, "Reddit browser navigation timed out", self.connector_id,
-                    {"requested_url": url, "timeout_ms": config.navigation_timeout_ms, "error": str(exc)},
+                    ConnectorStatus.timeout,
+                    "Reddit browser navigation timed out",
+                    self.connector_id,
+                    {
+                        "requested_url": url,
+                        "timeout_ms": config.navigation_timeout_ms,
+                        "error": str(exc),
+                    },
                 ) from exc
-            raise ConnectorDegradedError(ConnectorStatus.unknown_error, "Reddit browser acquisition failed", self.connector_id, {"error": str(exc)}) from exc
+            raise ConnectorDegradedError(
+                ConnectorStatus.unknown_error,
+                "Reddit browser acquisition failed",
+                self.connector_id,
+                {"error": str(exc)},
+            ) from exc
         finally:
             if context is not None:
                 await context.close()
@@ -409,7 +460,14 @@ class RedditHardwareSwapUKConnector(_RedditConnector):
     SUBREDDIT = "hardwareswapuk"
 
     def __init__(self) -> None:
-        super().__init__(_load_template_or_default(self.CONNECTOR_ID, display_name="Reddit hardwareswapuk", source_role=SourceType.MARKETPLACE, endpoint_url="https://www.reddit.com/r/hardwareswapuk/new/.rss?limit={limit}&restrict_sr=1"))
+        super().__init__(
+            _load_template_or_default(
+                self.CONNECTOR_ID,
+                display_name="Reddit hardwareswapuk",
+                source_role=SourceType.MARKETPLACE,
+                endpoint_url="https://www.reddit.com/r/hardwareswapuk/new/.rss?limit={limit}&restrict_sr=1",
+            )
+        )
 
 
 class RedditBapcSalesUKConnector(_RedditConnector):
@@ -417,16 +475,32 @@ class RedditBapcSalesUKConnector(_RedditConnector):
     SUBREDDIT = "bapcsalesuk"
 
     def __init__(self) -> None:
-        super().__init__(_load_template_or_default(self.CONNECTOR_ID, display_name="Reddit bapcsalesuk", source_role=SourceType.MARKETPLACE, endpoint_url="https://www.reddit.com/r/bapcsalesuk/new/.rss?limit={limit}&restrict_sr=1"))
+        super().__init__(
+            _load_template_or_default(
+                self.CONNECTOR_ID,
+                display_name="Reddit bapcsalesuk",
+                source_role=SourceType.MARKETPLACE,
+                endpoint_url="https://www.reddit.com/r/bapcsalesuk/new/.rss?limit={limit}&restrict_sr=1",
+            )
+        )
 
 
 class HotUKDealsConnector(TemplateConnector):
     CONNECTOR_ID = "hotukdeals"
 
     def __init__(self) -> None:
-        super().__init__(_load_template_or_default(self.CONNECTOR_ID, display_name="HotUKDeals", source_role=SourceType.SIGNAL, endpoint_url="https://www.hotukdeals.com/rss/new"))
+        super().__init__(
+            _load_template_or_default(
+                self.CONNECTOR_ID,
+                display_name="HotUKDeals",
+                source_role=SourceType.SIGNAL,
+                endpoint_url="https://www.hotukdeals.com/rss/new",
+            )
+        )
 
-    async def search(self, query: str, filters: Optional[dict[str, Any]] = None) -> list[NormalizedListing]:
+    async def search(
+        self, query: str, filters: Optional[dict[str, Any]] = None
+    ) -> list[NormalizedListing]:
         listings = _filter_listings_by_query(await super().search(query, filters), query)
         for listing in listings:
             listing.in_stock = None
@@ -435,7 +509,15 @@ class HotUKDealsConnector(TemplateConnector):
 
 def _looks_blocked(content: str) -> bool:
     lowered = content.lower()
-    return any(marker in lowered for marker in ("robot check", "verify you are human", "access denied", "temporarily blocked"))
+    return any(
+        marker in lowered
+        for marker in (
+            "robot check",
+            "verify you are human",
+            "access denied",
+            "temporarily blocked",
+        )
+    )
 
 
 def _parse_browser_posts(content: str, subreddit: str, limit: int) -> list[FeedEntry]:
@@ -452,20 +534,28 @@ def _parse_browser_posts(content: str, subreddit: str, limit: int) -> list[FeedE
             if not isinstance(data, dict):
                 continue
             permalink = str(data.get("permalink") or "")
-            link = str(data.get("url") or (f"https://www.reddit.com{permalink}" if permalink else ""))
+            link = str(
+                data.get("url") or (f"https://www.reddit.com{permalink}" if permalink else "")
+            )
             if not link or not data.get("title"):
                 continue
             created = data.get("created_utc")
             try:
-                published = datetime.fromtimestamp(float(created), tz=timezone.utc) if created else None
+                published = (
+                    datetime.fromtimestamp(float(created), tz=timezone.utc) if created else None
+                )
             except (TypeError, ValueError, OverflowError):
                 published = None
-            entries.append(FeedEntry(
-                id=str(data.get("id") or hashlib.sha1(link.encode()).hexdigest()),
-                title=str(data.get("title") or ""), link=link,
-                content=str(data.get("selftext") or ""), author=str(data.get("author") or "") or None,
-                published_at=published,
-            ))
+            entries.append(
+                FeedEntry(
+                    id=str(data.get("id") or hashlib.sha1(link.encode()).hexdigest()),
+                    title=str(data.get("title") or ""),
+                    link=link,
+                    content=str(data.get("selftext") or ""),
+                    author=str(data.get("author") or "") or None,
+                    published_at=published,
+                )
+            )
         if entries:
             return entries
 
@@ -482,18 +572,31 @@ def _parse_browser_posts(content: str, subreddit: str, limit: int) -> list[FeedE
             continue
         seen.add(link)
         body = anchor.parent.text(strip=True) if anchor.parent is not None else ""
-        entries.append(FeedEntry(id=hashlib.sha1(link.encode()).hexdigest(), title=title, link=link, content=body))
+        entries.append(
+            FeedEntry(
+                id=hashlib.sha1(link.encode()).hexdigest(), title=title, link=link, content=body
+            )
+        )
         if len(entries) >= limit:
             break
     # Camofox's text snapshot can omit anchor markup; retain only recognizable
     # Reddit post URLs and use the surrounding line as a title.
     if not entries:
-        for match in re.finditer(r"(?P<title>.{5,200}?)\s+(?P<link>https?://(?:www\.)?reddit\.com/r/[^\s]+/comments/[^\s]+)", content):
+        for match in re.finditer(
+            r"(?P<title>.{5,200}?)\s+(?P<link>https?://(?:www\.)?reddit\.com/r/[^\s]+/comments/[^\s]+)",
+            content,
+        ):
             link = match.group("link").rstrip(".,)")
             if link in seen:
                 continue
             seen.add(link)
-            entries.append(FeedEntry(id=hashlib.sha1(link.encode()).hexdigest(), title=re.sub(r"\s+", " ", match.group("title")).strip(), link=link))
+            entries.append(
+                FeedEntry(
+                    id=hashlib.sha1(link.encode()).hexdigest(),
+                    title=re.sub(r"\s+", " ", match.group("title")).strip(),
+                    link=link,
+                )
+            )
             if len(entries) >= limit:
                 break
     return entries

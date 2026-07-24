@@ -81,9 +81,11 @@ def test_regression_cex_iphone_excluded_from_strix_halo_128gb() -> None:
     assert route is not None, "Route should exist for Strix Halo 128GB"
 
     # iPhone listing should be excluded
-    assert not route_title_matches("Apple iPhone 12 Pro Max 128GB", route), \
-        "iPhone listing should be excluded from Strix Halo 128GB watch"
+    assert not route_title_matches(
+        "Apple iPhone 12 Pro Max 128GB", route
+    ), "iPhone listing should be excluded from Strix Halo 128GB watch"
 
     # Genuine Strix Halo listing should be included
-    assert route_title_matches("GMKtec Strix Halo 128GB mini PC", route), \
-        "Genuine Strix Halo listing should be included"
+    assert route_title_matches(
+        "GMKtec Strix Halo 128GB mini PC", route
+    ), "Genuine Strix Halo listing should be included"

@@ -24,7 +24,6 @@ from pricerecon.connectors.status import ConnectorDegradedError
 from pricerecon.db.schema import DB_PATH
 from pricerecon.models import EventType, NormalizedListing, Watch
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -88,7 +87,9 @@ def _storage_gb_from_specs(specs: dict[str, Any]) -> int | None:
     return storage_value
 
 
-def _spec_matches_listing(listing: NormalizedListing, spec_match: Any, watch_synonym_groups: list[list[str]] | None = None) -> bool:
+def _spec_matches_listing(
+    listing: NormalizedListing, spec_match: Any, watch_synonym_groups: list[list[str]] | None = None
+) -> bool:
     from pricerecon.core.title_matching import matches_watch_spec
 
     match_dict = (
@@ -133,7 +134,9 @@ def _spec_matches_listing(listing: NormalizedListing, spec_match: Any, watch_syn
 
 
 def apply_post_normalization_filters(
-    listings: list[NormalizedListing], filters: Any, watch_synonym_groups: list[list[str]] | None = None
+    listings: list[NormalizedListing],
+    filters: Any,
+    watch_synonym_groups: list[list[str]] | None = None,
 ) -> list[NormalizedListing]:
     filtered = listings
     filter_dict = filters.model_dump() if hasattr(filters, "model_dump") else filters
@@ -150,7 +153,9 @@ def apply_post_normalization_filters(
         filtered = [lst for lst in filtered if lst.condition and lst.condition in conditions]
     spec_match = filter_dict.get("spec_match", {})
     if spec_match:
-        filtered = [lst for lst in filtered if _spec_matches_listing(lst, spec_match, watch_synonym_groups)]
+        filtered = [
+            lst for lst in filtered if _spec_matches_listing(lst, spec_match, watch_synonym_groups)
+        ]
     if condition_filter.get("dedup_enabled", False):
         dedup_keys = {}
         for lst in filtered:
@@ -210,17 +215,19 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
             if not is_health_stale(connector_id):
                 logger.warning(
                     "watch_connector_skipped_fresh_auth_failed",
-                    extra={"watch_id": watch_id, "connector": connector_id}
+                    extra={"watch_id": watch_id, "connector": connector_id},
                 )
                 continue
             logger.info(
                 "watch_connector_retrying_stale_auth_failed",
-                extra={"watch_id": watch_id, "connector": connector_id}
+                extra={"watch_id": watch_id, "connector": connector_id},
             )
 
         connector = None
         try:
-            logger.info("watch_connector_start", extra={"watch_id": watch_id, "connector": connector_id})
+            logger.info(
+                "watch_connector_start", extra={"watch_id": watch_id, "connector": connector_id}
+            )
             # Use entry-point registry to resolve connector_id -> class
             from pricerecon.connectors import discover_connectors
 
@@ -287,10 +294,26 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
             effective_query = watch.source_queries.get(connector_id, watch.query)
             listings = await connector.search(effective_query, connector_filters)
             all_listings.extend(listings)
-            logger.info("watch_connector_result", extra={"watch_id": watch_id, "connector": connector_id, "listing_count": len(listings)})
+            logger.info(
+                "watch_connector_result",
+                extra={
+                    "watch_id": watch_id,
+                    "connector": connector_id,
+                    "listing_count": len(listings),
+                },
+            )
             upsert_connector_health(connector_id, "ok", details={"listing_count": len(listings)})
         except ConnectorDegradedError as exc:
-            logger.warning("watch_connector_degraded", extra={"watch_id": watch_id, "connector": connector_id, "status": exc.status.value, "error": exc.message, "detail": exc.detail})
+            logger.warning(
+                "watch_connector_degraded",
+                extra={
+                    "watch_id": watch_id,
+                    "connector": connector_id,
+                    "status": exc.status.value,
+                    "error": exc.message,
+                    "detail": exc.detail,
+                },
+            )
             last_error = exc.message.strip() if exc.message else exc.status.value
             upsert_connector_health(
                 connector_id, exc.status.value, last_error=last_error, details=exc.detail
@@ -313,7 +336,9 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
                 last_error=message,
                 details={"error": message, "error_type": exc.__class__.__name__},
             )
-            logger.exception("watch_connector_error", extra={"watch_id": watch_id, "connector": connector_id})
+            logger.exception(
+                "watch_connector_error", extra={"watch_id": watch_id, "connector": connector_id}
+            )
         finally:
             if connector is not None:
                 try:
@@ -322,9 +347,7 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
                     pass
 
     filtered_listings = apply_post_normalization_filters(
-        all_listings,
-        watch.filters,
-        watch.synonym_groups if watch.synonym_groups else None
+        all_listings, watch.filters, watch.synonym_groups if watch.synonym_groups else None
     )
     first_run, diff_result, event_ids = run_check(watch_id, filtered_listings)
 
