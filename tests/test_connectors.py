@@ -1058,36 +1058,16 @@ async def test_aliexpress_connector_continues_when_affiliate_lane_fails(
 
 
 @pytest.mark.asyncio
-async def test_overclockers_uses_runtime_flaresolverr_url_and_surfaces_timeout(
-    monkeypatch: Any,
-) -> None:
-    monkeypatch.setenv("PRICERECON_FLARESOLVERR_URL", "http://runtime.test/v1")
-
-    captured: dict[str, str] = {}
-
-    class DummyFlareSolverrClient:
-        def __init__(self, endpoint: str, timeout: float = 90.0) -> None:
-            captured["endpoint"] = endpoint
-            self.endpoint = endpoint
-
-        async def request_html(self, url: str, *, max_timeout: int = 60000) -> str:
-            raise httpx.ConnectTimeout(
-                "connect timed out", request=httpx.Request("POST", self.endpoint)
-            )
-
-    monkeypatch.setattr(
-        "pricerecon.connectors.template_connector.FlareSolverrClient", DummyFlareSolverrClient
-    )
+async def test_overclockers_fails_fast_with_truthful_bot_blocked_status() -> None:
     connector = OverclockersConnector()
     with pytest.raises(ConnectorDegradedError) as exc_info:
         await connector.search("RTX 5070")
     err = exc_info.value
-    assert err.status == ConnectorStatus.timeout
+    assert err.status == ConnectorStatus.bot_blocked
     assert err.connector_id == "overclockers"
-    assert captured["endpoint"] == "http://runtime.test/v1"
     detail = cast(dict[str, Any], err.detail)
-    assert detail["endpoint"] == "http://runtime.test/v1"
-    assert "flaresolverr" in err.message.lower()
+    assert detail["url"] == "https://www.overclockers.co.uk"
+    assert "WAF" in err.message
     await connector.cleanup()
 
 

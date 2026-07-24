@@ -1,10 +1,5 @@
-"""Box connector using FlareSolverr + HTML parsing."""
+"""Box connector with truthful WAF-blocked fail-fast behavior."""
 
-from __future__ import annotations
+from pricerecon.connectors.timeout_retailers import BoxConnector
 
-from pricerecon.connectors.template_connector import TemplateConnector
-
-
-class BoxConnector(TemplateConnector):
-    template_name = "box"
-    connector_id_override = "box"
+__all__ = ["BoxConnector"]
