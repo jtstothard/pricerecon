@@ -48,6 +48,63 @@ def _seed_sources(conn: sqlite3.Connection) -> None:
         print(f"Warning: failed to seed sources: {e}")
 
 
+def _migrate_connector_ids(conn: sqlite3.Connection) -> None:
+    """Repair persisted source/watch ids that predate registry naming fixes."""
+    from pricerecon.connectors import CONNECTOR_ID_ALIASES
+
+    cursor = conn.cursor()
+    for legacy_id, canonical_id in CONNECTOR_ID_ALIASES.items():
+        # ``sources.connector_id`` is unique.  If the canonical row already
+        # exists, the legacy duplicate can be removed; otherwise rename it.
+        cursor.execute("SELECT 1 FROM sources WHERE connector_id = ?", (canonical_id,))
+        canonical_exists = cursor.fetchone() is not None
+        if canonical_exists:
+            cursor.execute("DELETE FROM sources WHERE connector_id = ?", (legacy_id,))
+        else:
+            cursor.execute(
+                "UPDATE sources SET connector_id = ? WHERE connector_id = ?",
+                (canonical_id, legacy_id),
+            )
+        # Keep the display/config name aligned with the persisted registry id.
+        cursor.execute("SELECT config_json FROM sources WHERE connector_id = ?", (canonical_id,))
+        source_row = cursor.fetchone()
+        if source_row:
+            try:
+                source_config = json.loads(source_row[0])
+            except (TypeError, json.JSONDecodeError):
+                source_config = {}
+            if isinstance(source_config, dict) and source_config.get("name") == legacy_id:
+                source_config["name"] = canonical_id
+                cursor.execute(
+                    "UPDATE sources SET config_json = ? WHERE connector_id = ?",
+                    (json.dumps(source_config), canonical_id),
+                )
+
+        # Watches embed source ids in JSON, so repair those records as well.
+        cursor.execute("SELECT id, config_json FROM watches")
+        for watch_id, config_json in cursor.fetchall():
+            try:
+                config = json.loads(config_json)
+            except (TypeError, json.JSONDecodeError):
+                continue
+            changed = False
+            for source in config.get("sources", []):
+                if isinstance(source, dict) and source.get("connector") == legacy_id:
+                    source["connector"] = canonical_id
+                    changed = True
+            source_queries = config.get("source_queries")
+            if isinstance(source_queries, dict) and legacy_id in source_queries:
+                if canonical_id not in source_queries:
+                    source_queries[canonical_id] = source_queries[legacy_id]
+                del source_queries[legacy_id]
+                changed = True
+            if changed:
+                cursor.execute(
+                    "UPDATE watches SET config_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                    (json.dumps(config), watch_id),
+                )
+
+
 def init_db(path: Path | None = None) -> None:
     """Initialize the SQLite database with all required tables.
 
@@ -198,5 +255,6 @@ def init_db(path: Path | None = None) -> None:
 
     conn.commit()
     _seed_sources(conn)
+    _migrate_connector_ids(conn)
     conn.commit()
     conn.close()

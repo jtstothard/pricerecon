@@ -196,7 +196,9 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
     for source in watch.sources:
         if not source.enabled:
             continue
-        connector_id = source.connector
+        from pricerecon.connectors import canonical_connector_id
+
+        connector_id = canonical_connector_id(source.connector)
         if not connector_id:
             continue
 
