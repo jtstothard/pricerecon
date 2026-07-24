@@ -1,11 +1,9 @@
 """Unit tests for eBay connector OAuth self-healing."""
 
-import asyncio
 import json
 import sqlite3
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch, Mock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest

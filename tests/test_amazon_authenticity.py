@@ -9,7 +9,6 @@ Verifies that:
 
 import pytest
 from pricerecon.connectors.amazon import AmazonConnector
-from pricerecon.models import Condition
 
 
 @pytest.mark.asyncio
