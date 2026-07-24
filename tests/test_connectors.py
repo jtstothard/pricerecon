@@ -1085,12 +1085,12 @@ async def test_dell_uk_connector_parses_visible_listing_cards_and_registers_entr
         <p>13th Gen Intel Core i5-1334U, 16 GB DDR5, 512 GB SSD, 15.6-in. display Full HD</p>
         <img src="/img/dell15.jpg" />
       </article>
-      <article>
-        <h3><a href="//www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-16-plus-laptop/spd/dell-db16250-laptop/cndb1625006sc_noac?ref=variantstack">Dell 16 Plus Laptop</a></h3>
+      <div data-testid="product-tile">
+        <div data-testid="product-title"><a href="//www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-16-plus-laptop/spd/dell-db16250-laptop/cndb1625006sc_noac?ref=variantstack">Dell 16 Plus Laptop</a></div>
         <p>Order Code cndb1625006sc_noac</p>
         <p>Base model from £599.00</p>
         <p>Intel Core Ultra 7 256V, 16 GB LPDDR5X, 512 GB SSD, 16.0-in. display 2.5K</p>
-      </article>
+      </div>
     </body></html>
     """
 

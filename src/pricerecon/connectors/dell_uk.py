@@ -118,7 +118,13 @@ class DellUKConnector(BaseConnector):
         listings: list[NormalizedListing] = []
         seen_ids: set[str] = set()
 
-        for card in parser.css("article"):
+        # Dell has used both semantic articles and product-tile divs.  Keep the
+        # fallback selectors narrow enough to avoid treating navigation cards as
+        # products; the title and price checks below remain authoritative.
+        for card in parser.css(
+            "article, [data-testid*='product-tile'], [data-testid*='product-card'], "
+            ".ps-product-tile, .product-tile"
+        ):
             card_text = re.sub(r"\s+", " ", card.text(separator=" ", strip=True)).strip()
             if not card_text:
                 continue
@@ -186,6 +192,10 @@ class DellUKConnector(BaseConnector):
             "h3 a[href]",
             "a[href*='/spd/']",
             "a[href*='/shop/laptops-2-in-1-pcs/']",
+            "[data-testid='product-title'] a[href]",
+            "[data-testid='product-title'][href]",
+            ".ps-product-tile__title a[href]",
+            ".ps-product-tile__title[href]",
         ):
             node = card.css_first(selector)
             if node is not None:
