@@ -102,11 +102,13 @@ async def test_source_queries_override_per_connector(monkeypatch: Any) -> None:
     """Each connector receives its override from source_queries[connector_id]."""
     now = datetime.now(timezone.utc)
 
-    # Track connector instances
+    # Track connector instances and constructor arguments for the live eBay path.
     connector_instances: dict[str, FakeConnector] = {}
+    ebay_constructor_kwargs: dict[str, Any] = {}
 
     class EbayConnectorClass:
         def __init__(self, **kwargs: Any) -> None:
+            ebay_constructor_kwargs.update(kwargs)
             connector_instances["ebay"] = FakeConnector("ebay")
             self._inner = connector_instances["ebay"]
 
@@ -145,7 +147,9 @@ async def test_source_queries_override_per_connector(monkeypatch: Any) -> None:
             "aliexpress": "aliexpress-specific query",
         },
         sources=[
-            SourceConfig(connector="ebay", config={}),
+            # Reproduce a deployed watch with a stale null app_id. The
+            # environment credential must still reach the OAuth constructor.
+            SourceConfig(connector="ebay", config={"app_id": None}),
             SourceConfig(connector="aliexpress", config={}),
         ],
         filters=WatchFilters(
@@ -189,10 +193,12 @@ async def test_source_queries_override_per_connector(monkeypatch: Any) -> None:
             (connector_id, status, last_error, details)
         ),
     )
+    monkeypatch.setenv("EBAY_APP_ID", "configured-live-app-id")
 
     result = await watch_executor.execute_watch(1)
 
     assert result["success"] is True
+    assert ebay_constructor_kwargs["app_id"] == "configured-live-app-id"
     assert len(health_records) == 2
 
     # Verify each connector got its specific query
