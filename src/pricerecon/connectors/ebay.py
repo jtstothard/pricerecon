@@ -519,6 +519,7 @@ class eBayConnector(BaseConnector):
             status="ok",
             last_error=None,
             details={"token_refreshed": True},
+            checked_at=None,  # Token refresh is not a verified connector operation
         )
 
     def _mark_health_error(self, error: str) -> None:
@@ -530,6 +531,7 @@ class eBayConnector(BaseConnector):
             status="auth_failed",
             last_error=error,
             details={"error": error, "error_type": "TokenRefreshError"},
+            checked_at=None,  # Token refresh is not a verified connector operation
         )
 
     async def search(
