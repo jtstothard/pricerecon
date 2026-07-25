@@ -981,6 +981,7 @@ class AliExpressConnector(BaseConnector):
         *,
         app_key: str | None = None,
         app_secret: str | None = None,
+        sign_method: str = "md5",
     ) -> dict[str, str]:
         key = str(
             app_key or self.config.get("ds_app_key") or self.config.get("app_key") or ""
@@ -1005,7 +1006,7 @@ class AliExpressConnector(BaseConnector):
         request_params: dict[str, str] = {
             "app_key": key,
             "method": method,
-            "sign_method": "md5",
+            "sign_method": sign_method,
             "timestamp": self._top_timestamp(),
             "v": "2.0",
             "format": "json",
@@ -1014,7 +1015,11 @@ class AliExpressConnector(BaseConnector):
             if value is None:
                 continue
             request_params[name] = self._top_value(value)
-        request_params["sign"] = self._top_sign(request_params, secret)
+        
+        if sign_method == "sha256":
+            request_params["sign"] = self._top_sign_hmac_sha256(request_params, secret)
+        else:
+            request_params["sign"] = self._top_sign(request_params, secret)
         return request_params
 
     def _top_timestamp(self) -> str:
@@ -1035,7 +1040,17 @@ class AliExpressConnector(BaseConnector):
             pieces.append(key)
             pieces.append(params[key])
         pieces.append(secret)
-        digest = hashlib.md5("".join(pieces).encode("utf-8")).hexdigest().upper()
+        base = "".join(pieces).encode("utf-8")
+        digest = hashlib.md5(base).hexdigest().upper()
+        return digest
+
+    def _top_sign_hmac_sha256(self, params: dict[str, str], secret: str) -> str:
+        pieces = []
+        for key in sorted(k for k in params if k != "sign"):
+            pieces.append(key)
+            pieces.append(params[key])
+        base = "".join(pieces).encode("utf-8")
+        digest = hmac.new(secret.encode("utf-8"), base, hashlib.sha256).hexdigest().upper()
         return digest
 
     def _ds_system_sign(self, api_path: str, params: dict[str, str], secret: str) -> str:
@@ -1050,6 +1065,19 @@ class AliExpressConnector(BaseConnector):
 
     def _extract_top_response_payload(self, payload: Any) -> Any:
         if isinstance(payload, dict):
+            # Check for error_response first - this indicates an API error
+            if "error_response" in payload:
+                error = payload["error_response"]
+                error_code = error.get("code", "unknown")
+                error_msg = error.get("msg", error.get("message", "Unknown error"))
+                # Raise immediately to surface the error instead of swallowing it
+                raise ConnectorDegradedError(
+                    status=ConnectorStatus.auth_failed if error_code == "IncompleteSignature" else ConnectorStatus.unknown_error,
+                    message=f"AliExpress API error: {error_code} - {error_msg}",
+                    connector_id=self.connector_id,
+                    detail={"error_response": error},
+                )
+            
             for key in (
                 "aliexpress_affiliate_product_query_response",
                 "aliexpress_affiliate_productdetail_get_response",
