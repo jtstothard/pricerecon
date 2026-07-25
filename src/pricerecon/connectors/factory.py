@@ -34,7 +34,8 @@ def validate_and_create_connector(
 
     # If the class doesn't define its own __init__ (inherits object.__init__),
     # it accepts no constructor arguments — create the instance directly.
-    if connector_class.__init__ is object.__init__:
+    # Use getattr on the type to satisfy mypy (direct .__init__ access is unsound).
+    if getattr(connector_class, "__init__", None) is object.__init__:
         return connector_class()
 
     try:
