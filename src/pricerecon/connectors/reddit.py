@@ -15,7 +15,7 @@ import logging
 import os
 import re
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any, Optional, Callable
 from urllib.parse import quote_plus
 
 import httpx
@@ -96,6 +96,55 @@ class _RedditConnector(TemplateConnector):
         self._api_client: httpx.AsyncClient | None = None
         self._browser_client: BrowserClient | None = None
         self._last_rate_limit_info: dict[str, Any] | None = None
+        # Load retry configuration from environment or use defaults
+        self._rss_max_retries = int(os.getenv("PRICERECON_REDDIT_RSS_MAX_RETRIES", "2"))
+        self._api_max_retries = int(os.getenv("PRICERECON_REDDIT_API_MAX_RETRIES", "2"))
+        self._browser_max_retries = int(os.getenv("PRICERECON_REDDIT_BROWSER_MAX_RETRIES", "1"))
+
+    async def _retry_with_backoff(
+        self,
+        func: Callable[..., Any],
+        max_retries: int,
+        stage_name: str,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Any:
+        """Execute a function with exponential backoff retries.
+
+        Args:
+            func: Async function to execute
+            max_retries: Maximum number of retry attempts (excluding initial attempt)
+            stage_name: Name of the stage (for logging)
+            *args: Positional arguments to pass to func
+            **kwargs: Keyword arguments to pass to func
+
+        Returns:
+            Result of func call
+
+        Raises:
+            Exception: The last exception encountered if all retries fail
+        """
+        last_exception: Exception | None = None
+        for attempt in range(max_retries + 1):
+            try:
+                return await func(*args, **kwargs)
+            except Exception as exc:
+                last_exception = exc
+                if attempt < max_retries:
+                    # Exponential backoff: 1s, 2s, 4s, ...
+                    backoff_seconds = 2 ** attempt
+                    logger.warning(
+                        f"{stage_name} attempt {attempt + 1}/{max_retries + 1} failed: {exc}. "
+                        f"Retrying in {backoff_seconds}s..."
+                    )
+                    await asyncio.sleep(backoff_seconds)
+                else:
+                    logger.error(
+                        f"{stage_name} failed after {max_retries + 1} attempts: {exc}"
+                    )
+        # All retries exhausted
+        assert last_exception is not None
+        raise last_exception
 
     async def cleanup(self) -> None:
         await super().cleanup()
@@ -163,7 +212,13 @@ class _RedditConnector(TemplateConnector):
 
         record_stage("rss", "attempted", query=query)
         try:
-            listings = await super().search(query, filters)
+            listings = await self._retry_with_backoff(
+                super().search,
+                self._rss_max_retries,
+                f"{self.connector_id}_rss",
+                query,
+                filters,
+            )
             finalized = self._finalize(listings, query)
             record_stage("rss", "succeeded", listing_count=len(finalized))
             return finalized
@@ -187,7 +242,14 @@ class _RedditConnector(TemplateConnector):
         if api_enabled and api_approved:
             record_stage("api", "attempted")
             try:
-                finalized = self._finalize(await self._search_api(query, filters), query)
+                finalized = self._finalize(
+                    await self._retry_with_backoff(
+                        lambda: self._search_api(query, filters),
+                        self._api_max_retries,
+                        f"{self.connector_id}_api",
+                    ),
+                    query,
+                )
                 record_stage("api", "succeeded", listing_count=len(finalized))
                 return finalized
             except ConnectorDegradedError as exc:
@@ -206,7 +268,14 @@ class _RedditConnector(TemplateConnector):
         if browser_configured:
             record_stage("browser", "attempted")
             try:
-                finalized = self._finalize(await self._search_browser(query, filters), query)
+                finalized = self._finalize(
+                    await self._retry_with_backoff(
+                        lambda: self._search_browser(query, filters),
+                        self._browser_max_retries,
+                        f"{self.connector_id}_browser",
+                    ),
+                    query,
+                )
                 record_stage("browser", "succeeded", listing_count=len(finalized))
                 return finalized
             except ConnectorDegradedError as exc:

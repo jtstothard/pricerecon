@@ -78,6 +78,9 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 python_files = "test_*.py"
 python_functions = "test_*"
+markers = [
+    "live: marks tests as live integration tests (deselect with '-m \"not live\"')"
+]
 
 [project.entry-points."pricerecon.connectors"]
 ebay = "pricerecon.connectors.ebay:eBayConnector"

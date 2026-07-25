@@ -218,6 +218,13 @@ async def test_api_failure_reaches_browser(
 ) -> None:
     connector = RedditHardwareSwapUKConnector()
     calls: list[str] = []
+    
+    # Disable retries for this test to verify fallback chain logic
+    monkeypatch.setenv("PRICERECON_REDDIT_RSS_MAX_RETRIES", "0")
+    monkeypatch.setenv("PRICERECON_REDDIT_API_MAX_RETRIES", "0")
+    monkeypatch.setenv("PRICERECON_REDDIT_BROWSER_MAX_RETRIES", "0")
+    # Re-instantiate connector to pick up new env vars
+    connector = RedditHardwareSwapUKConnector()
 
     async def rss(*args: Any, **kwargs: Any) -> list[Any]:
         raise ConnectorDegradedError(
@@ -853,6 +860,209 @@ class TestRedditAPIRateLimitExtraction:
         info = connector._extract_rate_limit_info(headers)
 
         assert info is None
+
+
+class TestRedditFallbackFullChain:
+    """Test full fallback chain progression through all tiers."""
+
+    @pytest.mark.asyncio
+    async def test_rss_403_to_api_429_to_browser_success(self, monkeypatch: Any, caplog: pytest.LogCaptureFixture) -> None:
+        """Test RSS-403 → API-429 → browser-success progression."""
+        # Disable retries to simplify test
+        monkeypatch.setenv("PRICERECON_REDDIT_RSS_MAX_RETRIES", "0")
+        monkeypatch.setenv("PRICERECON_REDDIT_API_MAX_RETRIES", "0")
+        monkeypatch.setenv("PRICERECON_REDDIT_BROWSER_MAX_RETRIES", "0")
+        
+        connector = RedditHardwareSwapUKConnector()
+        calls: list[str] = []
+
+        async def rss(*args: Any, **kwargs: Any) -> list[Any]:
+            calls.append("rss")
+            raise ConnectorDegradedError(
+                ConnectorStatus.bot_blocked, "RSS blocked", connector.connector_id, {"status_code": 403}
+            )
+
+        async def api(*args: Any, **kwargs: Any) -> list[Any]:
+            calls.append("api")
+            raise ConnectorDegradedError(
+                ConnectorStatus.rate_limited, "API rate limited", connector.connector_id, {"status_code": 429}
+            )
+
+        async def browser(*args: Any, **kwargs: Any) -> list[Any]:
+            calls.append("browser")
+            return [
+                connector._api_post_to_listing(
+                    {
+                        "id": "browser_fallback",
+                        "title": "[H] RTX 4090 [W] £950",
+                        "selftext": "Fresh from browser",
+                        "url": "https://www.reddit.com/r/hardwareswapuk/comments/browser_fallback/",
+                        "created_utc": 1_700_000_200,
+                        "author": "browser_seller",
+                    }
+                )
+            ]
+
+        monkeypatch.setattr(TemplateConnector, "search", rss)
+        monkeypatch.setenv("PRICERECON_REDDIT_API_ENABLED", "true")
+        monkeypatch.setenv("REDDIT_CLIENT_ID", "id")
+        monkeypatch.setenv("REDDIT_CLIENT_SECRET", "secret")
+        monkeypatch.setenv("REDDIT_USER_AGENT", "PriceRecon/test")
+        monkeypatch.setenv("PRICERECON_REDDIT_BROWSER_ENABLED", "true")
+        monkeypatch.setattr(connector, "_search_api", api)
+        monkeypatch.setattr(connector, "_search_browser", browser)
+
+        with caplog.at_level("INFO", logger=reddit_module.__name__):
+            listings = await connector.search("RTX 4090")
+
+        # Verify correct tier progression (no retries)
+        assert calls == ["rss", "api", "browser"]
+        assert len(listings) == 1
+        assert listings[0].title_raw == "[H] RTX 4090 [W] £950"
+        assert listings[0].price == 950
+
+        # Verify stage logging
+        stages = [
+            (getattr(record, "stage"), getattr(record, "outcome"))
+            for record in caplog.records
+            if record.name == reddit_module.__name__ and record.msg == "reddit_fallback_stage"
+        ]
+        assert stages == [
+            ("rss", "attempted"),
+            ("rss", "failed"),
+            ("api", "attempted"),
+            ("api", "failed"),
+            ("browser", "attempted"),
+            ("browser", "succeeded"),
+        ]
+
+    @pytest.mark.asyncio
+    async def test_all_tiers_fail_with_complete_error_summary(self, monkeypatch: Any, caplog: pytest.LogCaptureFixture) -> None:
+        """Test all tiers fail and error includes complete summary of attempts."""
+        # Disable retries to simplify test
+        monkeypatch.setenv("PRICERECON_REDDIT_RSS_MAX_RETRIES", "0")
+        monkeypatch.setenv("PRICERECON_REDDIT_API_MAX_RETRIES", "0")
+        monkeypatch.setenv("PRICERECON_REDDIT_BROWSER_MAX_RETRIES", "0")
+        
+        connector = RedditHardwareSwapUKConnector()
+
+        async def rss(*args: Any, **kwargs: Any) -> list[Any]:
+            raise ConnectorDegradedError(
+                ConnectorStatus.bot_blocked, "RSS blocked", connector.connector_id, {"status_code": 403}
+            )
+
+        async def api(*args: Any, **kwargs: Any) -> list[Any]:
+            raise ConnectorDegradedError(
+                ConnectorStatus.auth_failed, "API auth failed", connector.connector_id, {"status_code": 401}
+            )
+
+        async def browser(*args: Any, **kwargs: Any) -> list[Any]:
+            raise ConnectorDegradedError(
+                ConnectorStatus.timeout, "Browser timeout", connector.connector_id, {"timeout_ms": 30000}
+            )
+
+        monkeypatch.setattr(TemplateConnector, "search", rss)
+        monkeypatch.setenv("PRICERECON_REDDIT_API_ENABLED", "true")
+        monkeypatch.setenv("REDDIT_CLIENT_ID", "id")
+        monkeypatch.setenv("REDDIT_CLIENT_SECRET", "secret")
+        monkeypatch.setenv("REDDIT_USER_AGENT", "PriceRecon/test")
+        monkeypatch.setenv("PRICERECON_REDDIT_BROWSER_ENABLED", "true")
+        monkeypatch.setattr(connector, "_search_api", api)
+        monkeypatch.setattr(connector, "_search_browser", browser)
+
+        with caplog.at_level("INFO", logger=reddit_module.__name__):
+            with pytest.raises(ConnectorDegradedError) as exc_info:
+                await connector.search("RTX 4090")
+
+        error = exc_info.value
+        assert error.status is ConnectorStatus.bot_blocked
+        assert "unavailable after rss fallback chain" in error.message.lower()
+        assert error.detail is not None
+
+        # Verify error contains complete fallback summary
+        assert error.detail["fallback_errors"] == ["api:auth_failed", "browser:timeout"]
+        assert error.detail["fallbacks_attempted"] is True
+
+        # Verify all stages logged
+        stages = [
+            {getattr(record, "stage"): getattr(record, "outcome")}
+            for record in caplog.records
+            if record.name == reddit_module.__name__ and record.msg == "reddit_fallback_stage"
+        ]
+        assert stages == [
+            {"rss": "attempted"},
+            {"rss": "failed"},
+            {"api": "attempted"},
+            {"api": "failed"},
+            {"browser": "attempted"},
+            {"browser": "failed"},
+        ]
+
+    @pytest.mark.asyncio
+    async def test_retry_configuration_from_environment(self, monkeypatch: Any) -> None:
+        """Verify retry limits are configurable via environment variables."""
+        monkeypatch.setenv("PRICERECON_REDDIT_RSS_MAX_RETRIES", "3")
+        monkeypatch.setenv("PRICERECON_REDDIT_API_MAX_RETRIES", "4")
+        monkeypatch.setenv("PRICERECON_REDDIT_BROWSER_MAX_RETRIES", "2")
+
+        connector = RedditHardwareSwapUKConnector()
+
+        assert connector._rss_max_retries == 3
+        assert connector._api_max_retries == 4
+        assert connector._browser_max_retries == 2
+
+    @pytest.mark.asyncio
+    async def test_retry_uses_defaults_when_env_not_set(self, monkeypatch: Any) -> None:
+        """Verify default retry limits when environment variables are not set."""
+        # Clear env vars
+        monkeypatch.delenv("PRICERECON_REDDIT_RSS_MAX_RETRIES", raising=False)
+        monkeypatch.delenv("PRICERECON_REDDIT_API_MAX_RETRIES", raising=False)
+        monkeypatch.delenv("PRICERECON_REDDIT_BROWSER_MAX_RETRIES", raising=False)
+
+        connector = RedditHardwareSwapUKConnector()
+
+        # Verify defaults: RSS=2, API=2, Browser=1
+        assert connector._rss_max_retries == 2
+        assert connector._api_max_retries == 2
+        assert connector._browser_max_retries == 1
+
+    @pytest.mark.asyncio
+    async def test_retries_with_backoff_on_recoverable_errors(self, monkeypatch: Any, caplog: pytest.LogCaptureFixture) -> None:
+        """Test that retries use exponential backoff on recoverable errors."""
+        monkeypatch.setenv("PRICERECON_REDDIT_RSS_MAX_RETRIES", "2")
+        monkeypatch.setenv("PRICERECON_REDDIT_API_ENABLED", "false")
+        monkeypatch.setenv("PRICERECON_REDDIT_BROWSER_ENABLED", "false")
+        
+        connector = RedditHardwareSwapUKConnector()
+        call_count = 0
+
+        async def rss(*args: Any, **kwargs: Any) -> list[Any]:
+            nonlocal call_count
+            call_count += 1
+            if call_count < 3:  # Fail first 2 attempts
+                raise ConnectorDegradedError(
+                    ConnectorStatus.bot_blocked, "RSS blocked", connector.connector_id, {"status_code": 403}
+                )
+            return []
+
+        monkeypatch.setattr(TemplateConnector, "search", rss)
+
+        with caplog.at_level("WARNING", logger=reddit_module.__name__):
+            listings = await connector.search("RTX")
+
+        # Verify 3 attempts total (1 initial + 2 retries)
+        assert call_count == 3
+        assert listings == []
+        
+        # Verify retry logs show backoff pattern
+        retry_logs = [
+            record.message
+            for record in caplog.records
+            if "failed:" in record.message and "Retrying" in record.message
+        ]
+        assert len(retry_logs) == 2  # First retry logs "Retrying in 1s", second logs "Retrying in 2s"
+        assert "Retrying in 1s" in retry_logs[0]
+        assert "Retrying in 2s" in retry_logs[1]
 
 
 # TODO: Add integration test with live credentials once available
