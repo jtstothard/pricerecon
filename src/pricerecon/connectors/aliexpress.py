@@ -910,12 +910,15 @@ class AliExpressConnector(BaseConnector):
                 },
             )
 
+        # Build IOP-compliant params per official SDK contract:
+        # System params: app_key, format, sign_method, timestamp (ms)
+        # Business params: refresh_token (only business param for this endpoint)
         params = {
             "app_key": str(app_key),
             "refresh_token": str(self._ds_refresh_token),
             "timestamp": str(int(datetime.now().timestamp() * 1000)),
             "sign_method": "sha256",
-            "simplify": "true",
+            "format": "json",
         }
         params["sign"] = self._ds_system_sign("/auth/token/refresh", params, str(app_secret))
         try:
@@ -934,6 +937,18 @@ class AliExpressConnector(BaseConnector):
                 connector_id=self.connector_id,
                 detail={"error": str(exc)},
             ) from exc
+
+        # Handle error_response structure from IOP API
+        if "error_response" in data:
+            error = data["error_response"]
+            error_code = error.get("code", "unknown")
+            error_msg = error.get("msg", error.get("message", "Unknown error"))
+            raise ConnectorDegradedError(
+                status=ConnectorStatus.auth_failed,
+                message=f"AliExpress DS token refresh failed: {error_code} - {error_msg}",
+                connector_id=self.connector_id,
+                detail={"error_response": error},
+            )
 
         if str(data.get("code") or "") != "0" or not (
             data.get("access_token") or data.get("accessToken")

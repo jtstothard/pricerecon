@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any, cast
 
@@ -679,7 +680,17 @@ async def test_aliexpress_connector_uses_top_sync_endpoint_and_signed_requests()
     refresh_params = refresh_calls[0].get("params")
     assert isinstance(refresh_params, dict)
     assert refresh_calls[0].get("method") == "GET"
+    # IOP system params: app_key, format, sign_method, timestamp
+    # Business param: refresh_token (only business param for /auth/token/refresh)
     assert refresh_params["sign_method"] == "sha256"
+    assert refresh_params["format"] == "json"
+    assert "app_key" in refresh_params
+    assert "refresh_token" in refresh_params
+    assert "timestamp" in refresh_params
+    assert "sign" in refresh_params
+    # Verify signing uses the IOP contract (no 'simplify' param)
+    assert "simplify" not in refresh_params
+    # Verify sign matches IOP signing over all params except sign itself
     assert refresh_params["sign"] == connector._ds_system_sign(
         "/auth/token/refresh", refresh_params, "app-secret"
     )
@@ -1003,10 +1014,95 @@ async def test_aliexpress_connector_surfaces_ds_auth_failure() -> None:
     assert len(refresh_calls) == 1
     refresh_params = refresh_calls[0]["params"]
     assert isinstance(refresh_params, dict)
+    # IOP system params: app_key, format, sign_method, timestamp
+    # Business param: refresh_token (only business param for /auth/token/refresh)
     assert refresh_params["sign_method"] == "sha256"
+    assert refresh_params["format"] == "json"
+    assert "app_key" in refresh_params
+    assert "refresh_token" in refresh_params
+    assert "timestamp" in refresh_params
+    assert "sign" in refresh_params
+    # Verify signing uses the IOP contract (no 'simplify' param)
+    assert "simplify" not in refresh_params
+    # Verify sign matches IOP signing over all params except sign itself
     assert refresh_params["sign"] == connector._ds_system_sign(
         "/auth/token/refresh", refresh_params, "app-secret"
     )
+    await connector.cleanup()
+
+
+@pytest.mark.asyncio
+async def test_aliexpress_ds_token_refresh_populates_token_and_expiry() -> None:
+    """Regression test: successful token refresh populates _ds_access_token and _ds_expires_at."""
+    calls: list[dict[str, Any]] = []
+
+    class SuccessClient:
+        async def get(
+            self, url: Any, params: Any = None, headers: Any = None, timeout: Any = None
+        ) -> Any:
+            calls.append({"url": url, "params": params, "method": "GET"})
+            assert url == "https://api-sg.aliexpress.com/rest/auth/token/refresh"
+            
+            class MockResponse:
+                status_code = 200
+                
+                def raise_for_status(self) -> None:
+                    pass
+                
+                def json(self) -> dict[str, Any]:
+                    return {
+                        "code": "0",
+                        "access_token": "new-access-token",
+                        "refresh_token": "new-refresh-token",
+                        "expires_in": 3600,
+                    }
+            
+            return MockResponse()
+
+        async def post(
+            self, url: Any, json: Any = None, headers: Any = None, data: Any = None
+        ) -> Any:
+            raise AssertionError("No POST calls expected in this test")
+
+        async def aclose(self) -> Any:
+            return None
+
+    connector = AliExpressConnector(
+        {
+            "ds_refresh_token": "old-refresh-token",
+            "ds_app_key": "app-key",
+            "ds_app_secret": "app-secret",
+        },
+        http_client=cast(Any, SuccessClient()),
+    )
+
+    # Force a token refresh
+    token = await connector._refresh_ds_token(force=True)
+
+    assert token == "new-access-token"
+    assert connector._ds_access_token == "new-access-token"
+    assert connector._ds_refresh_token == "new-refresh-token"
+    assert connector._ds_expires_at is not None
+    # Verify expiry is approximately 1 hour from now (within 10 seconds tolerance)
+    expected_expiry = datetime.now(timezone.utc) + timedelta(seconds=3600)
+    diff = abs((connector._ds_expires_at - expected_expiry).total_seconds())
+    assert diff < 10, f"Expiry diff {diff}s exceeds tolerance"
+
+    # Verify IOP contract params
+    assert len(calls) == 1
+    refresh_params = calls[0]["params"]
+    assert isinstance(refresh_params, dict)
+    # Verify IOP system params are present
+    assert "app_key" in refresh_params
+    assert "format" in refresh_params
+    assert refresh_params["format"] == "json"
+    assert "sign_method" in refresh_params
+    assert refresh_params["sign_method"] == "sha256"
+    assert "timestamp" in refresh_params
+    assert "sign" in refresh_params
+    # Verify 'simplify' is NOT in params (old broken behavior)
+    assert "simplify" not in refresh_params
+
     await connector.cleanup()
 
 
