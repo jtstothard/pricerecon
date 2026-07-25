@@ -20,7 +20,7 @@ from pricerecon.core.connector_health import upsert_connector_health
 from pricerecon.core.diff_engine import run_check
 from pricerecon.core.notifications import dispatch_for_event
 from pricerecon.connectors.specs import extract_specs
-from pricerecon.connectors.status import ConnectorDegradedError
+from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 from pricerecon.db.schema import DB_PATH
 from pricerecon.models import EventType, NormalizedListing, Watch
 
@@ -288,9 +288,18 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
                 if browser_client is not None:
                     connector_kwargs["browser_client"] = browser_client
             try:
-                connector = connector_class(**connector_kwargs)
-            except TypeError:
-                connector = connector_class()
+                from pricerecon.connectors.factory import validate_and_create_connector
+
+                connector = validate_and_create_connector(
+                    connector_class, connector_id, connector_kwargs
+                )
+            except Exception as exc:
+                raise ConnectorDegradedError(
+                    status=ConnectorStatus.unknown_error,
+                    message=f"Failed to create connector '{connector_id}': {exc}",
+                    connector_id=connector_id,
+                    detail={"error": str(exc), "error_type": exc.__class__.__name__},
+                ) from exc
             await connector.initialize()
             connector_filters = {}
             if watch.filters.price_max:
@@ -307,7 +316,11 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
                     "listing_count": len(listings),
                 },
             )
-            upsert_connector_health(connector_id, "ok", details={"listing_count": len(listings)})
+            upsert_connector_health(
+                connector_id,
+                "ok",
+                details={"listing_count": len(listings), "inference_source": "watch"},
+            )
         except ConnectorDegradedError as exc:
             logger.warning(
                 "watch_connector_degraded",
@@ -320,8 +333,10 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
                 },
             )
             last_error = exc.message.strip() if exc.message else exc.status.value
+            details = dict(exc.detail) if exc.detail else {}
+            details["inference_source"] = "watch"
             upsert_connector_health(
-                connector_id, exc.status.value, last_error=last_error, details=exc.detail
+                connector_id, exc.status.value, last_error=last_error, details=details
             )
             continue
         except httpx.TimeoutException as exc:
@@ -330,7 +345,11 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
                 connector_id,
                 "timeout",
                 last_error=message,
-                details={"error": message, "error_type": exc.__class__.__name__},
+                details={
+                    "error": message,
+                    "error_type": exc.__class__.__name__,
+                    "inference_source": "watch",
+                },
             )
             continue
         except Exception as exc:
@@ -339,7 +358,11 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
                 connector_id,
                 "unknown_error",
                 last_error=message,
-                details={"error": message, "error_type": exc.__class__.__name__},
+                details={
+                    "error": message,
+                    "error_type": exc.__class__.__name__,
+                    "inference_source": "watch",
+                },
             )
             logger.exception(
                 "watch_connector_error", extra={"watch_id": watch_id, "connector": connector_id}

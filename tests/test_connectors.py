@@ -259,7 +259,7 @@ async def test_watch_executor_filters_by_spec_match_ram(monkeypatch: Any) -> Non
     monkeypatch.setattr(
         watch_executor,
         "upsert_connector_health",
-        lambda connector_id, status, last_error=None, details=None: recorded.append(
+        lambda connector_id, status, last_error=None, details=None, checked_at=None, **_kw: recorded.append(
             (connector_id, status, last_error, details)
         ),
     )
@@ -1228,7 +1228,7 @@ async def test_watch_executor_records_non_empty_timeout_health(monkeypatch: Any)
     monkeypatch.setattr(
         watch_executor,
         "upsert_connector_health",
-        lambda connector_id, status, last_error=None, details=None: recorded.append(
+        lambda connector_id, status, last_error=None, details=None, checked_at=None, **_kw: recorded.append(
             (connector_id, status, last_error, details)
         ),
     )

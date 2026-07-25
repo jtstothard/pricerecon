@@ -105,6 +105,33 @@ def _migrate_connector_ids(conn: sqlite3.Connection) -> None:
                 )
 
 
+def _apply_migrations(conn: sqlite3.Connection) -> None:
+    """Apply pending schema migrations in version order."""
+    cursor = conn.cursor()
+
+    # Check if migrations table exists and has any data
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='schema_migrations'")
+    if cursor.fetchone() is None:
+        return
+
+    # Get applied migrations
+    cursor.execute("SELECT version FROM schema_migrations ORDER BY version")
+    applied = {row[0] for row in cursor.fetchall()}
+
+    # Migration 1.1: Add checked_at column to connector_health
+    if "1.1" not in applied:
+        cursor.execute("PRAGMA table_info(connector_health)")
+        columns = {row[1] for row in cursor.fetchall()}
+        if "checked_at" not in columns:
+            cursor.execute("ALTER TABLE connector_health ADD COLUMN checked_at TEXT")
+            cursor.execute(
+                "INSERT INTO schema_migrations (version, description) VALUES (?, ?)",
+                ("1.1", "Add checked_at column to connector_health"),
+            )
+
+    conn.commit()
+
+
 def init_db(path: Path | None = None) -> None:
     """Initialize the SQLite database with all required tables.
 
@@ -256,5 +283,5 @@ def init_db(path: Path | None = None) -> None:
     conn.commit()
     _seed_sources(conn)
     _migrate_connector_ids(conn)
-    conn.commit()
+    _apply_migrations(conn)
     conn.close()
