@@ -7,6 +7,37 @@ on:
     branches: [main, develop]
 
 jobs:
+  secret-scan:
+    runs-on: ubuntu-latest
+    name: Secret scanning (gitleaks)
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history for accurate secret scanning
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2.2.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+        with:
+          # Pin to gitleaks v8.21.2 for reproducibility (matches local binary at /tmp/gitleaks)
+          # Scan the entire repository history
+          # Generate SARIF report for GitHub code scanning integration
+          # The action fails automatically on any findings (exit code non-zero)
+          # .gitleaksignore is respected automatically to suppress known false positives
+          report-format: sarif
+          report-path: gitleaks-report.sarif
+
+      - name: Upload SARIF to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: gitleaks-report.sarif
+          category: gitleaks
+
   quality-gate:
     runs-on: ubuntu-latest
 
