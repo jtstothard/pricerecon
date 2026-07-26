@@ -11,6 +11,7 @@ access lane have been revalidated and its fixture is updated.
 | `aria` | `https://www.aria.co.uk/` serves a customer-closure message; the former search route is retired. | `disabled` |
 | `ccl` | `https://www.cclonline.com/search/RTX%205090` returned Cloudflare HTTP 403. | `disabled` |
 | `ebuyer` | `https://www.ebuyer.com/search?q=RTX%205090` returned the site's Not Found page (HTTP 404). | `disabled` |
+| `dell_uk` | Dell UK search returned an Akamai Access Denied document (HTTP 403), including an `errors.edgesuite.net` reference. The response is preserved in `tests/fixtures/dell_uk/access_denied.html`. | `bot_blocked` |
 
 This is a registry/template policy, not a health-check bypass: the disabled
 status is persisted by the normal watch executor and remains visible through
