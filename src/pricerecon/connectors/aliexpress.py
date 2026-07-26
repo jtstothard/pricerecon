@@ -835,12 +835,11 @@ class AliExpressConnector(BaseConnector):
         return enriched
 
     async def _fetch_ds_detail(self, pid: str) -> dict[str, Any]:
-        token = await self._ensure_ds_access_token()
+        await self._ensure_ds_access_token()
         payload = {
             "product_id": pid,
             "ship_to_country": self.config.get("ds_ship_to_country", "GB"),
             "target_currency": self._affiliate_currency,
-            "access_token": token,
         }
         try:
             response = await self._top_post("aliexpress.ds.product.get", payload)
@@ -987,7 +986,12 @@ class AliExpressConnector(BaseConnector):
         app_secret: str | None = None,
     ) -> httpx.Response:
         signed = self._build_top_request(method, params, app_key=app_key, app_secret=app_secret)
-        return await self._client.post(self._affiliate_endpoint, data=signed)
+        # DS sync endpoints must use the /sync endpoint, not affiliate endpoint
+        if method.startswith("aliexpress.ds."):
+            endpoint = self._ds_product_endpoint
+        else:
+            endpoint = self._affiliate_endpoint
+        return await self._client.post(endpoint, data=signed)
 
     def _build_top_request(
         self,
@@ -1018,35 +1022,33 @@ class AliExpressConnector(BaseConnector):
                 },
             )
 
-        # DS sync endpoints use IOP signing (SHA256, millisecond timestamp, /sync api_path)
-        # Other endpoints use TOP signing (MD5, formatted timestamp, secret bookends)
+        # All TOP endpoints (affiliate + DS sync) use the classic TOP signing
+        # contract: MD5 with secret bookends, formatted timestamp, v=2.0.
+        # DS sync endpoints additionally require the access token as the
+        # `session` system param. (Verified live 2026-07-26: MD5-bookends
+        # returns real product data; SHA256/IOP signing yields IncompleteSignature.)
         is_ds_method = method.startswith("aliexpress.ds.")
 
         request_params: dict[str, str] = {
             "app_key": key,
             "method": method,
             "format": "json",
+            "sign_method": sign_method,
+            "timestamp": self._top_timestamp(),
+            "v": "2.0",
         }
 
-        if is_ds_method:
-            # IOP signing for DS sync endpoints (matches refresh endpoint pattern)
-            request_params["sign_method"] = "sha256"
-            request_params["timestamp"] = str(int(datetime.now(timezone.utc).timestamp() * 1000))
-        else:
-            # TOP signing for affiliate and other endpoints
-            request_params["sign_method"] = sign_method
-            request_params["timestamp"] = self._top_timestamp()
-            request_params["v"] = "2.0"
+        # DS sync endpoints require access_token as the `session` system param
+        if is_ds_method and self._ds_access_token:
+            request_params["session"] = self._ds_access_token
 
         for name, value in params.items():
             if value is None:
                 continue
             request_params[name] = self._top_value(value)
 
-        # Calculate sign based on endpoint type
-        if is_ds_method:
-            request_params["sign"] = self._ds_system_sign("/sync", request_params, secret)
-        elif sign_method == "sha256":
+        # Calculate sign: MD5 with secret bookends (classic TOP signing)
+        if sign_method == "sha256":
             request_params["sign"] = self._top_sign_hmac_sha256(request_params, secret)
         else:
             request_params["sign"] = self._top_sign(request_params, secret)
