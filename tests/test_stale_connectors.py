@@ -4,7 +4,6 @@ import pytest
 
 from pricerecon.connectors.aria import AriaConnector
 from pricerecon.connectors.ccl import CclConnector
-from pricerecon.connectors.ebuyer import EbuyerConnector
 from pricerecon.connectors.ao import AOConnector
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 
@@ -14,7 +13,6 @@ from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
     [
         (AriaConnector, "aria"),
         (CclConnector, "ccl"),
-        (EbuyerConnector, "ebuyer"),
         (AOConnector, "ao"),
     ],
 )

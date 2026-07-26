@@ -138,10 +138,8 @@ class TemplateConnector(BaseConnector):
             )
         html = await self._fetch_html(self._format_search_url(query))
         # Ebuyer: parse client-side productImpressions JSON data
-        html_for_json = html
-        # Fallback selector mapping for Ebuyer JSON-derived URLs
-        # Note: disabled - can't map '73468903-2267377' IDs to real product URLs
-        # url_selector = a[data-product-line-item-name-value]
+        if self.connector_id == "ebuyer":
+            return self._parse_ebuyer_json(html)
         return parse_listings_from_html(
             html,
             base_url=self.template.base_url,
@@ -152,7 +150,12 @@ class TemplateConnector(BaseConnector):
         )
 
     def _parse_ebuyer_json(self, html: str) -> list[NormalizedListing]:
-        """Parse Ebuyer's client-side productImpressions search data."""
+        """Parse Ebuyer's client-side productImpressions search data.
+
+        NOTE: product_id format (e.g., '73468903-2267377') does not map to real product URLs.
+        Current best-effort: report base search URL in url field. A proper fix requires
+        mapping product codes to their detail pages, which selectors cannot provide.
+        """
         match = re.search(r"var ecommerceData = ({.*?});", html, re.DOTALL)
         if not match:
             return []
@@ -178,7 +181,7 @@ class TemplateConnector(BaseConnector):
                 title_raw=name,
                 price=price,
                 currency="GBP",
-                url=f"{self.template.base_url}/{product_id}",
+                url=f"{self.template.base_url}/searchresults?descriptionfilter={quote_plus(name)}",  # fallback to search query
                 product_normalized=None,
                 variant_normalized=None,
                 condition=None,
@@ -202,6 +205,3 @@ class TemplateConnector(BaseConnector):
 
     async def initialize(self) -> None:
         return None
-
-    async def cleanup(self) -> None:
-        await self._client.aclose()
