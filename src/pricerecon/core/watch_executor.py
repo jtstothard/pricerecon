@@ -95,7 +95,11 @@ def _spec_matches_listing(
     match_dict = (
         spec_match.model_dump() if hasattr(spec_match, "model_dump") else (spec_match or {})
     )
-    if not match_dict:
+    # Watch-level synonym groups are an independent safety-net: they must run
+    # even when a watch has no structured ``spec_match`` fields.  In
+    # particular, do not let an empty/default SpecMatch bypass configured
+    # title groups.
+    if not match_dict and not watch_synonym_groups:
         return True
 
     # Use new token-based title matching

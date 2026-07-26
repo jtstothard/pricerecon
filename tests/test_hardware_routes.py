@@ -91,6 +91,44 @@ def test_title_terms_are_applied_by_post_normalization_filter() -> None:
     assert [item.title_raw for item in results] == ["Strix Halo 128GB mini PC"]
 
 
+def test_glm_watch_synonym_groups_are_applied_without_legacy_routes() -> None:
+    """Watch-level groups accept chipset naming and reject unsafe variants."""
+    filters = {
+        "spec_match": {
+            "excluded_title_terms": ["iphone", "ipad", "android", "galaxy", "pixel", "phone", "tablet"]
+        }
+    }
+    groups = [["strix halo", "ryzen ai max", "ai max+ 395", "395+"], ["128gb"]]
+    results = apply_post_normalization_filters(
+        [
+            listing("AMD Ryzen AI Max+ 395 128GB Mini PC"),
+            listing("GMKtec EVO-X2 AMD Ryzen AI Max+ 395 128GB"),
+            listing("GMKtec Strix Halo 128GB Mini PC"),
+            listing("AMD Ryzen AI Max+ 395 192GB Mini PC"),
+            listing("AMD Ryzen AI Max+ 395 1280GB Mini PC"),
+            listing("iPhone 15 128GB"),
+        ],
+        filters,
+        groups,
+    )
+    assert [item.title_raw for item in results] == [
+        "AMD Ryzen AI Max+ 395 128GB Mini PC",
+        "GMKtec EVO-X2 AMD Ryzen AI Max+ 395 128GB",
+        "GMKtec Strix Halo 128GB Mini PC",
+    ]
+
+
+def test_glm_watch_exclusions_stay_active_with_watch_synonym_groups() -> None:
+    filters = {"spec_match": {"excluded_title_terms": ["iphone", "phone", "tablet"]}}
+    groups = [["strix halo", "ryzen ai max", "ai max+ 395", "395+"], ["128gb"]]
+    results = apply_post_normalization_filters(
+        [listing("AMD Ryzen AI Max+ 395 128GB Mini PC"), listing("iPhone 15 128GB")],
+        filters,
+        groups,
+    )
+    assert [item.title_raw for item in results] == ["AMD Ryzen AI Max+ 395 128GB Mini PC"]
+
+
 def test_regression_cex_iphone_excluded_from_strix_halo_128gb() -> None:
     """Regression test: CeX iPhone should be excluded from Strix Halo 128GB watch.
 

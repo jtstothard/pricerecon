@@ -1,7 +1,9 @@
-"""Strict matching and source routing for GLM hardware watches.
+"""Legacy GLM route helpers retained for configuration/test compatibility.
 
-These routes deliberately prefer false negatives over returning a plausible-looking
-but wrong device (for example CeX's broad storage-only matches).
+Runtime watch execution deliberately does not import or call this module. New
+matching belongs in persisted ``Watch.synonym_groups`` configuration, using
+OR-within-groups and AND-across-groups; query-derived source allowlists and
+literal route terms are retired per ADR 0001.
 """
 
 from __future__ import annotations
