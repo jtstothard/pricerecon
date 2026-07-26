@@ -9,7 +9,6 @@ from pricerecon.connectors.base import BaseConnector
 from pricerecon.connectors.browser_client import (
     BrowserClient,
     BrowserSessionConfig,
-    browser_context,
 )
 from pricerecon.models import NormalizedListing, SourceType
 
@@ -77,11 +76,15 @@ class ArgosConnector(BaseConnector):
             # Build search URL
             url_with_params = f"{self.SEARCH_URL}/{query}"
 
-            # Fetch page with browser
-            async with browser_context() as context:
+            # Fetch page with the configured browser backend. Camofox returns
+            # an accessibility snapshot from page.content().
+            context = await self.browser_client.new_context()
+            try:
                 page = await context.new_page()
                 await page.goto(url_with_params)
                 html = await page.content()
+            finally:
+                await context.close()
 
             if not html:
                 logger.error("Failed to fetch Argos HTML")
@@ -106,6 +109,58 @@ class ArgosConnector(BaseConnector):
             List of normalized listings
         """
         from bs4 import BeautifulSoup
+
+        # Camofox exposes an accessibility snapshot rather than DOM HTML.
+        if "- main:" in html and "/url:" in html:
+            snapshot_listings: list[dict[str, str | None]] = []
+            current: dict[str, str | None] | None = None
+            for line in html.splitlines():
+                link_match = re.search(r'link \\\"(.+?)\\\"', line)
+                if link_match:
+                    if current:
+                        snapshot_listings.append(current)
+                    current = {"url": None, "title": link_match.group(1), "price": None}
+                elif current and "/url:" in line:
+                    url_match = re.search(r"/url:\s*(.+)$", line)
+                    if url_match:
+                        current["url"] = url_match.group(1).strip().strip('\\"')
+                elif current:
+                    price_match = re.search(r"£(\d+[,.]\d{2})", line)
+                    if price_match:
+                        current["price"] = price_match.group(1).replace(",", "")
+            if current:
+                snapshot_listings.append(current)
+            return [
+                NormalizedListing(
+                    source=self.connector_id,
+                    source_type=self.source_role,
+                    source_listing_id=str(re.search(r"/product/(\d+)", str(item["url"])).group(1)),
+                    title_raw=str(item["title"]),
+                    price=Decimal(str(item["price"])) if item["price"] else None,
+                    currency="GBP",
+                    url=f"https://www.argos.co.uk{item['url']}",
+                    in_stock=True,
+                    image_url=None,
+                    product_normalized=None,
+                    variant_normalized=None,
+                    condition=None,
+                    condition_raw=None,
+                    shipping_cost=None,
+                    total_landed_cost=None,
+                    seller_or_store="Argos",
+                    seller_feedback_score=None,
+                    seller_feedback_pct=None,
+                    location=None,
+                    stock_state=None,
+                    exact_variant_confirmed=None,
+                    variant_match_confidence=None,
+                    mismatch_flags=None,
+                    risk_flags=None,
+                    category=None,
+                )
+                for item in snapshot_listings
+                if item["title"] and item["url"] and re.search(r"/product/(\d+)", str(item["url"]))
+            ]
 
         listings = []
         soup = BeautifulSoup(html, "html.parser")
