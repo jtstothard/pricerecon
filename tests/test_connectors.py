@@ -702,13 +702,38 @@ async def test_aliexpress_connector_uses_top_sync_endpoint_and_signed_requests()
         body = call.get("body")
         return body.get("method") if isinstance(body, dict) else None
 
-    def body_has_sign(call: dict[str, Any]) -> bool:
+    def body_has_affiliate_sign(call: dict[str, Any]) -> bool:
         body = call.get("body")
-        return isinstance(body, dict) and body.get("sign_method") == "md5" and "sign" in body
+        # Affiliate endpoints use TOP signing: MD5, formatted timestamp, "v" param
+        return (
+            isinstance(body, dict)
+            and body.get("sign_method") == "md5"
+            and "sign" in body
+            and "v" in body
+        )
+
+    def body_has_ds_sign(call: dict[str, Any]) -> bool:
+        body = call.get("body")
+        # DS sync endpoints use IOP signing: SHA256, millisecond timestamp, no "v" param
+        return (
+            isinstance(body, dict)
+            and body.get("sign_method") == "sha256"
+            and "sign" in body
+            and "v" not in body
+        )
 
     assert any(body_method(call) == "aliexpress.affiliate.product.query" for call in api_calls)
     assert any(body_method(call) == "aliexpress.ds.product.get" for call in api_calls)
-    assert all(body_has_sign(call) for call in api_calls)
+    # Verify affiliate calls use TOP signing (MD5 with v param)
+    assert any(
+        body_method(call) == "aliexpress.affiliate.product.query" and body_has_affiliate_sign(call)
+        for call in api_calls
+    )
+    # Verify DS calls use IOP signing (SHA256 without v param)
+    assert any(
+        body_method(call) == "aliexpress.ds.product.get" and body_has_ds_sign(call)
+        for call in api_calls
+    )
     assert any("goto" == call.get("kind") for call in calls)
     assert any(listing.source_listing_id == "1005008557811111" for listing in listings)
     manual = next(
