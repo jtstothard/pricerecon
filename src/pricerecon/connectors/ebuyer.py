@@ -1,10 +1,8 @@
-"""Ebuyer connector from direct HTML fetch using selectors."""
-
-from __future__ import annotations
-
-from pricerecon.connectors.template_connector import TemplateConnector
+"""Ebuyer template connector marker."""
+from .template_connector import TemplateConnector
 
 
 class EbuyerConnector(TemplateConnector):
+    """Template connector for Ebuyer search results."""
+
     template_name = "ebuyer"
-    connector_id_override = "ebuyer"

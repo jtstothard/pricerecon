@@ -1,0 +1,21 @@
+HTTP/2 403 
+date: Sun, 26 Jul 2026 22:38:21 GMT
+content-type: text/html; charset=UTF-8
+accept-ch: Sec-CH-UA-Bitness, Sec-CH-UA-Arch, Sec-CH-UA-Full-Version, Sec-CH-UA-Mobile, Sec-CH-UA-Model, Sec-CH-UA-Platform-Version, Sec-CH-UA-Full-Version-List, Sec-CH-UA-Platform, Sec-CH-UA, UA-Bitness, UA-Arch, UA-Full-Version, UA-Mobile, UA-Model, UA-Platform-Version, UA-Platform, UA
+cf-mitigated: challenge
+x-frame-options: SAMEORIGIN
+server: cloudflare
+critical-ch: Sec-CH-UA-Bitness, Sec-CH-UA-Arch, Sec-CH-UA-Full-Version, Sec-CH-UA-Mobile, Sec-CH-UA-Model, Sec-CH-UA-Platform-Version, Sec-CH-UA-Full-Version-List, Sec-CH-UA-Platform, Sec-CH-UA, UA-Bitness, UA-Arch, UA-Full-Version, UA-Mobile, UA-Model, UA-Platform-Version, UA-Platform, UA
+cross-origin-embedder-policy: require-corp
+cross-origin-opener-policy: same-origin
+cross-origin-resource-policy: same-origin
+origin-agent-cluster: ?1
+permissions-policy: accelerometer=(),camera=(),clipboard-read=(),clipboard-write=(),geolocation=(),gyroscope=(),hid=(),magnetometer=(),microphone=(),payment=(),publickey-credentials-get=(),screen-wake-lock=(),serial=(),sync-xhr=(),usb=(),xr-spatial-tracking=*
+referrer-policy: same-origin
+server-timing: chlray;desc="a216e4e6ed9c465b"
+x-content-type-options: nosniff
+set-cookie: __cf_bm=_b8jz5dtADDbNpETnM7UjXuUJ0c19poGlmaFqKiF7k0-1785105501.261017-1.0.1.1-.GT_6vmxDuRJGZ7v_tjoe0yd.Old.ChT9sh01WOkJwtxws9POr8KSey5WJIW7FMrVGa1dp7bNR3Bl9JGVKi8W112c5C0rihmT6PkQsGdqcCgngQQCD74ihtLo9ov4nod; HttpOnly; SameSite=None; Secure; Path=/; Domain=currys.co.uk; Expires=Sun, 26 Jul 2026 23:08:21 GMT
+x-robots-tag: noindex
+content-encoding: gzip
+cf-ray: a216e4e6ed9c465b-LHR
+

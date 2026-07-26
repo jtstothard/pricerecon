@@ -1,4 +1,4 @@
-"""Box connector with truthful WAF-blocked fail-fast behavior."""
+"""Box connector with truthful WAF-blocked degraded behavior."""
 
 from pricerecon.connectors.timeout_retailers import BoxConnector
 

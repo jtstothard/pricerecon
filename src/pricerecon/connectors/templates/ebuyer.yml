@@ -1,18 +1,14 @@
 name: ebuyer
 source_type: retailer
 base_url: https://www.ebuyer.com
-search_url: https://www.ebuyer.com/search?q={query}
+search_url: https://www.ebuyer.com/searchresults?descriptionfilter={query}
 selectors:
-  card: article, .product, .product-item, .search-result
-  title: a[href] h3, a[href] .title, h3, .product-title
-  price: .price, .product-price, [data-testid="price"]
-  url: a[href]
-  stock: .stock, .availability, .product-stock, [data-testid="stock"]
-  image: img
-  id: a[href]
-# The configured /search?q= endpoint currently returns the site's Not Found
-# page (HTTP 404), so do not report an empty successful result set.
-disabled: true
-disabled_reason: "configured search endpoint returns the Ebuyer Not Found page (HTTP 404)"
+  card: .product-line-card
+  title: .product-line-card__description-name
+  price: .product-line-card__price-current, .product-line-card__price
+  url: a[data-product-line-item-name-value]
+  stock: .product-line-card__description-low-stock-message
+  image: img[data-product-line-item-image]
+  id: .product-line-card
 use_flare_solverr: true
 category: gpu

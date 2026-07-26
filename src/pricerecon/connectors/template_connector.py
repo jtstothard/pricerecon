@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import os
+import json
+import re
 from dataclasses import dataclass
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote_plus
@@ -134,6 +137,11 @@ class TemplateConnector(BaseConnector):
                 detail={"reason": reason, "base_url": self.template.base_url},
             )
         html = await self._fetch_html(self._format_search_url(query))
+        # Ebuyer: parse client-side productImpressions JSON data
+        html_for_json = html
+        # Fallback selector mapping for Ebuyer JSON-derived URLs
+        # Note: disabled - can't map '73468903-2267377' IDs to real product URLs
+        # url_selector = a[data-product-line-item-name-value]
         return parse_listings_from_html(
             html,
             base_url=self.template.base_url,
@@ -142,6 +150,55 @@ class TemplateConnector(BaseConnector):
             selector=self.template.selectors,
             category=self.template.category,
         )
+
+    def _parse_ebuyer_json(self, html: str) -> list[NormalizedListing]:
+        """Parse Ebuyer's client-side productImpressions search data."""
+        match = re.search(r"var ecommerceData = ({.*?});", html, re.DOTALL)
+        if not match:
+            return []
+        try:
+            impressions = json.loads(match.group(1)).get("ecommerce", {}).get("impressions", [])
+        except json.JSONDecodeError:
+            return []
+
+        listings: list[NormalizedListing] = []
+        for item in impressions:
+            name = str(item.get("name", "")).strip()
+            product_id = str(item.get("id", "")).strip()
+            try:
+                price = Decimal(str(item.get("price", "")).replace(",", ""))
+            except (ArithmeticError, ValueError):
+                continue
+            if not name or not product_id:
+                continue
+            listings.append(NormalizedListing(
+                source=self.connector_id,
+                source_type=self.template.source_type,
+                source_listing_id=product_id,
+                title_raw=name,
+                price=price,
+                currency="GBP",
+                url=f"{self.template.base_url}/{product_id}",
+                product_normalized=None,
+                variant_normalized=None,
+                condition=None,
+                condition_raw=None,
+                shipping_cost=None,
+                total_landed_cost=None,
+                seller_or_store=None,
+                seller_feedback_score=None,
+                seller_feedback_pct=None,
+                location=None,
+                in_stock=None,
+                stock_state=None,
+                image_url=None,
+                exact_variant_confirmed=None,
+                variant_match_confidence=None,
+                mismatch_flags=None,
+                risk_flags=None,
+                category=self.template.category,
+            ))
+        return listings
 
     async def initialize(self) -> None:
         return None
