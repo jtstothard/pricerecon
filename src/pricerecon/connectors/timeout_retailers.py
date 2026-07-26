@@ -30,6 +30,11 @@ class TimeoutRetailerConnector(BaseConnector):
     CONNECTOR_ID: str
     BASE_URL: str
     RETAILER_NAME: str
+    WAF_DESCRIPTION = "source-side WAF protection"
+    WAF_EVIDENCE = (
+        "HTTP 403 responses, JavaScript challenges, Byparr timeouts at 60s"
+    )
+    DIAGNOSIS_TASK = "***REMOVED***"
 
     @property
     def source_role(self) -> SourceType:
@@ -56,15 +61,15 @@ class TimeoutRetailerConnector(BaseConnector):
         raise ConnectorDegradedError(
             status=ConnectorStatus.bot_blocked,
             message=(
-                f"{self.RETAILER_NAME} is blocked by source-side WAF protection. "
+                f"{self.RETAILER_NAME} is blocked by {self.WAF_DESCRIPTION}. "
                 "The site returns HTTP 403 to direct requests and presents "
                 "JavaScript challenges that exceed Byparr's 60-second timeout."
             ),
             connector_id=self.connector_id,
             detail={
-                "root_cause": "WAF blocking (likely Cloudflare)",
-                "evidence": "HTTP 403 responses, JavaScript challenges, Byparr timeouts at 60s",
-                "diagnosis_task": "***REMOVED***",
+                "root_cause": self.WAF_DESCRIPTION,
+                "evidence": self.WAF_EVIDENCE,
+                "diagnosis_task": self.DIAGNOSIS_TASK,
                 "remediation": "Consider CloakBrowser integration, residential proxies, or commercial scraping services",
                 "url": self.BASE_URL,
             },
@@ -85,10 +90,16 @@ class OverclockersConnector(TimeoutRetailerConnector):
     CONNECTOR_ID = "overclockers"
     BASE_URL = "https://www.overclockers.co.uk"
     RETAILER_NAME = "Overclockers"
+    WAF_DESCRIPTION = "Cloudflare Turnstile WAF protection (HTTP 403)"
+    WAF_EVIDENCE = (
+        "Captured direct HTTP 403 and Turnstile challenge responses from "
+        "Direct HTTP, Playwright, Camofox, and CloakBrowser transport tests"
+    )
+    DIAGNOSIS_TASK = "***REMOVED***"
 
 
 class BoxConnector(TimeoutRetailerConnector):
-    """Box.co.uk connector (WAF-blocked)."""
+    """Box.co.uk connector (WAF-blocked, no functional browser route)."""
 
     CONNECTOR_ID = "box"
     BASE_URL = "https://www.box.co.uk"
