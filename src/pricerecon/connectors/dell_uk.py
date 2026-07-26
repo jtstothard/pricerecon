@@ -103,6 +103,14 @@ class DellUKConnector(BaseConnector):
                 detail={"error": str(exc), "url": url},
             ) from exc
 
+        if self._is_access_denied_page(html):
+            raise ConnectorDegradedError(
+                status=ConnectorStatus.bot_blocked,
+                message="Dell UK returned an Access Denied page",
+                connector_id=self.connector_id,
+                detail={"url": url},
+            )
+
         listings = self._parse_listings(html, query, url)
         if not listings:
             raise ConnectorDegradedError(
@@ -112,6 +120,14 @@ class DellUKConnector(BaseConnector):
                 detail={"url": url},
             )
         return listings
+
+    @staticmethod
+    def _is_access_denied_page(html: str) -> bool:
+        """Recognize Akamai's denial document before reporting a parser failure."""
+        normalized = re.sub(r"\s+", " ", html).lower()
+        return "<title>access denied</title>" in normalized or (
+            "access denied" in normalized and "errors.edgesuite.net" in normalized
+        )
 
     def _parse_listings(self, html: str, query: str, url: str) -> list[NormalizedListing]:
         parser = HTMLParser(html)
