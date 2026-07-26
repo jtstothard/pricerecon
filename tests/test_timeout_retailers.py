@@ -3,7 +3,6 @@
 import pytest
 
 from pricerecon.connectors.box import BoxConnector
-from pricerecon.connectors.currys import CurrysConnector
 from pricerecon.connectors.overclockers import OverclockersConnector
 from pricerecon.connectors.scan import ScanConnector
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
@@ -15,7 +14,6 @@ from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
         (ScanConnector, "scan"),
         (OverclockersConnector, "overclockers"),
         (BoxConnector, "box"),
-        (CurrysConnector, "currys"),
     ],
 )
 @pytest.mark.asyncio
