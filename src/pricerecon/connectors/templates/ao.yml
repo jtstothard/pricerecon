@@ -4,7 +4,7 @@ base_url: https://www.ao.com
 search_url: https://www.ao.com/uk/search?search={query}
 use_flare_solverr: true
 disabled: true
-disabled_reason: "AO.com currently returns a Cloudflare challenge (HTTP 404 challenge page) through the configured Byparr/FlareSolverr lane; re-enable after upstream access is restored."
+disabled_reason: "AO.com discovery is unavailable: direct HTTP returns Cloudflare HTTP 403 challenge; Byparr/FlareSolverr to /uk/search?search={query} returns HTTP 404 AO error page. Both routes exhausted; no working discovery path exists. See diagnosis task t_3f02d0ca."
 selectors:
   card: article, .product, .product-card, .search-result
   title: a[href] h3, a[href] .title, h3, .product-title
