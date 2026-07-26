@@ -1,13 +1,14 @@
 """Tests for Amazon UK connector."""
 
 from typing import Any
+from pathlib import Path
 
 import pytest
 from decimal import Decimal
 from unittest.mock import Mock, MagicMock
 
 from pricerecon.connectors.amazon import AmazonConnector
-from pricerecon.connectors.status import ConnectorDegradedError
+from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 from pricerecon.models import Condition, SourceType
 
 
@@ -139,6 +140,20 @@ async def test_search_with_refurbished_filter(connector: Any, mock_session: Any)
 
 
 @pytest.mark.asyncio
+async def test_search_503_is_bot_blocked(connector: Any, mock_session: Any) -> None:
+    """Amazon's automated-access 503 is reported as a truthful source block."""
+    mock_response = Mock()
+    mock_response.status_code = 503
+    mock_response.text = (Path(__file__).parent / "fixtures" / "amazon_uk" / "blocked-503.html").read_text()
+    mock_response.raise_for_status = Mock(side_effect=Exception("503"))
+    mock_session.get.return_value = mock_response
+
+    with pytest.raises(ConnectorDegradedError, match="blocked page") as exc_info:
+        await connector.search("rtx 4070")
+    assert exc_info.value.status == ConnectorStatus.bot_blocked
+
+
+@pytest.mark.asyncio
 async def test_search_error_handling(connector: Any, mock_session: Any) -> None:
     """Test search error handling."""
     # Mock request failure
@@ -189,6 +204,20 @@ def test_parse_search_results_no_prices(connector: Any) -> None:
 
     # Should return empty list when all listings have no prices
     assert listings == []
+
+
+def test_parse_real_amazon_search_fixture(connector: Any) -> None:
+    """Parse the current live Amazon result-card markup."""
+    from pathlib import Path
+
+    html = (Path(__file__).parent / "fixtures" / "amazon_uk" / "search.html").read_text()
+
+    listings = connector._parse_search_results(html, "rtx 4070", {})
+
+    assert len(listings) > 0
+    listing = next(item for item in listings if item.source_listing_id == "B0F7HZ9QSZ")
+    assert listing.price == Decimal("293.99")
+    assert "ASUS Dual GeForce RTX 5060" in listing.title_raw
 
 
 def test_parse_search_results_duplicate_asins(connector: Any) -> None:
