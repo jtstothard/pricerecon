@@ -1,0 +1,24 @@
+# Gitleaks ignore - known third-party analytics tokens in test fixtures.
+# Verified non-credentials by Hermes Agent 2026-07-26.
+# Sources: Cloudflare RUM, Segment, Printess (all public client-side).
+
+8bc6afbcb16d98efa130ce8d4f04c0cc8ec724cb:tests/fixtures/ebuyer/byparr-rtx-3080.html:jwt:2045
+8bc6afbcb16d98efa130ce8d4f04c0cc8ec724cb:tests/fixtures/ebuyer/byparr-rtx-3080.html:jwt:2295
+8bc6afbcb16d98efa130ce8d4f04c0cc8ec724cb:tests/fixtures/ebuyer/byparr-rtx-3080.html:generic-api-key:63
+8bc6afbcb16d98efa130ce8d4f04c0cc8ec724cb:tests/fixtures/ebuyer/searchresults-query.html:generic-api-key:63
+8bc6afbcb16d98efa130ce8d4f04c0cc8ec724cb:tests/fixtures/ebuyer/searchresults-query.html:jwt:2043
+8bc6afbcb16d98efa130ce8d4f04c0cc8ec724cb:tests/fixtures/ebuyer/searchresults-query.html:jwt:2293
+8bc6afbcb16d98efa130ce8d4f04c0cc8ec724cb:tests/fixtures/currys/direct.html:generic-api-key:94
+8bc6afbcb16d98efa130ce8d4f04c0cc8ec724cb:tests/fixtures/currys/direct.html:generic-api-key:95
+8bc6afbcb16d98efa130ce8d4f04c0cc8ec724cb:tests/fixtures/ebuyer/searchresults-description-0.html:jwt:2051
+8bc6afbcb16d98efa130ce8d4f04c0cc8ec724cb:tests/fixtures/ebuyer/searchresults-description-0.html:jwt:2301
+8bc6afbcb16d98efa130ce8d4f04c0cc8ec724cb:tests/fixtures/ebuyer/searchresults-description-0.html:generic-api-key:63
+8bc6afbcb16d98efa130ce8d4f04c0cc8ec724cb:tests/fixtures/ebuyer/searchresults-description-1.html:jwt:2051
+8bc6afbcb16d98efa130ce8d4f04c0cc8ec724cb:tests/fixtures/ebuyer/searchresults-description-1.html:jwt:2301
+8bc6afbcb16d98efa130ce8d4f04c0cc8ec724cb:tests/fixtures/ebuyer/searchresults-description-1.html:generic-api-key:63
+88762a72be64d25fc33f3249e12e8f25cf31170a:README.md:curl-auth-header:195
+88762a72be64d25fc33f3249e12e8f25cf31170a:README.md:curl-auth-header:208
+f48a331cf13641860f4004e29fe1cd96781af6f4:tests/fixtures/currys/RTX_3080.json:generic-api-key:1
+8bc6afbcb16d98efa130ce8d4f04c0cc8ec724cb:tests/fixtures/currys/flaresolverr.json:generic-api-key:1
+8bc6afbcb16d98efa130ce8d4f04c0cc8ec724cb:tests/fixtures/currys/RTX_4060.json:generic-api-key:1
+8bc6afbcb16d98efa130ce8d4f04c0cc8ec724cb:tests/fixtures/currys/RTX_5090.json:generic-api-key:1
