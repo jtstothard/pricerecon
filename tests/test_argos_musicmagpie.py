@@ -5,6 +5,7 @@ from decimal import Decimal
 import pytest
 from pricerecon.connectors.argos import ArgosConnector
 from pricerecon.connectors.musicmagpie import MusicMagpieConnector
+from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 from pricerecon.models import SourceType
 
 
@@ -80,6 +81,23 @@ def test_argos_deduplicates_by_product_id() -> None:
     assert len(listings) == 2
     product_ids = {listing.source_listing_id for listing in listings}
     assert product_ids == {"7631324", "3288599"}
+
+
+@pytest.mark.asyncio
+async def test_argos_real_403_fixture_fails_fast_truthfully() -> None:
+    """A live Argos response is an Akamai block, not an empty result set."""
+    from pathlib import Path
+
+    fixture = Path(__file__).parent / "fixtures" / "argos" / "airpods_403.html"
+    html = fixture.read_text()
+    assert "Access Denied" in html
+    assert ArgosConnector()._parse_search_results(html) == []
+
+    with pytest.raises(ConnectorDegradedError) as raised:
+        await ArgosConnector().search("AirPods")
+    assert raised.value.status is ConnectorStatus.bot_blocked
+    assert raised.value.connector_id == "argos"
+    assert "403" in raised.value.message
 
 
 def test_musicmagpie_parses_product_cards() -> None:

@@ -12,6 +12,7 @@ from pricerecon.connectors.browser_client import (
     browser_context,
 )
 from pricerecon.models import NormalizedListing, SourceType
+from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +69,25 @@ class ArgosConnector(BaseConnector):
         """
         filters = filters or {}
 
+        # Argos currently returns an Akamai "Access Denied" (HTTP 403) page
+        # from the production environment, including through the browser
+        # backend.  Do not report this as a healthy connector with zero
+        # results: fail fast with an observable, truthful status instead.
+        raise ConnectorDegradedError(
+            status=ConnectorStatus.bot_blocked,
+            message=(
+                "Argos is blocked by source-side access protection. "
+                "The site returns HTTP 403 Access Denied responses."
+            ),
+            connector_id=self.connector_id,
+            detail={
+                "root_cause": "source-side access protection (Akamai)",
+                "evidence": "HTTP 403 Access Denied from argos.co.uk search",
+                "url": "https://www.argos.co.uk",
+                "remediation": "Revalidate browser/proxy access before re-enabling",
+            },
+        )
+
         if self.browser_client is None:
             await self.initialize()
 
@@ -106,6 +126,61 @@ class ArgosConnector(BaseConnector):
             List of normalized listings
         """
         from bs4 import BeautifulSoup
+
+        # Camofox exposes an accessibility snapshot rather than DOM HTML.
+        # Convert its product link/text blocks into the same small HTML seam
+        # used by the normal parser; this keeps extraction deterministic.
+        if "- main:" in html and "/url:" in html:
+            snapshot_listings = []
+            lines = html.splitlines()
+            current = None
+            pending_title = None
+            for line in lines:
+                link_match = re.search(r'link .*?(/product/\d+[^\\"]*)', line)
+                if link_match:
+                    if current:
+                        snapshot_listings.append(current)
+                    current = {"url": link_match.group(1), "title": "", "price": None}
+                    title_match = re.search(r'link \\\"(.+?)\\\"', line)
+                    if title_match:
+                        current["title"] = title_match.group(1)
+                    pending_title = None
+                elif "- link " in line:
+                    title_match = re.search(r'link \\\"(.+?)\\\"', line)
+                    pending_title = title_match.group(1) if title_match else None
+                elif pending_title:
+                    url_match = re.search(r'/url: (?:\\\\")?(/product/\d+[^\\"]*)', line)
+                    if url_match:
+                        if current and not current["title"].startswith("Microsoft 365"):
+                            snapshot_listings.append(current)
+                        current = {"url": url_match.group(1), "title": pending_title, "price": None}
+                        pending_title = None
+                elif current:
+                    price_match = re.search(r"£(\d+[,.]\d{2})", line)
+                    if price_match:
+                        current["price"] = price_match.group(1).replace(",", "")
+            if current:
+                snapshot_listings.append(current)
+            parsed = []
+            for item in snapshot_listings:
+                product_match = re.search(r"/product/(\d+)", item["url"])
+                if not item["title"] or not product_match:
+                    continue
+                parsed.append(NormalizedListing(
+                    source=self.connector_id,
+                    source_type=self.source_role,
+                    source_listing_id=product_match.group(1),
+                    title_raw=item["title"],
+                    price=Decimal(item["price"]) if item["price"] else None,
+                    currency="GBP", url=f"https://www.argos.co.uk{item['url']}",
+                    in_stock=True, seller_or_store="Argos", condition=None,
+                    product_normalized=None, variant_normalized=None, condition_raw=None,
+                    shipping_cost=None, total_landed_cost=None, seller_feedback_score=None,
+                    seller_feedback_pct=None, location=None, stock_state=None,
+                    image_url=None, exact_variant_confirmed=None, variant_match_confidence=None,
+                    mismatch_flags=None, risk_flags=None, category=None,
+                ))
+            return parsed
 
         listings = []
         soup = BeautifulSoup(html, "html.parser")
