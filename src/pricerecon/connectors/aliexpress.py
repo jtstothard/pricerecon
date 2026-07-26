@@ -1018,20 +1018,35 @@ class AliExpressConnector(BaseConnector):
                 },
             )
 
+        # DS sync endpoints use IOP signing (SHA256, millisecond timestamp, /sync api_path)
+        # Other endpoints use TOP signing (MD5, formatted timestamp, secret bookends)
+        is_ds_method = method.startswith("aliexpress.ds.")
+
         request_params: dict[str, str] = {
             "app_key": key,
             "method": method,
-            "sign_method": sign_method,
-            "timestamp": self._top_timestamp(),
-            "v": "2.0",
             "format": "json",
         }
+
+        if is_ds_method:
+            # IOP signing for DS sync endpoints (matches refresh endpoint pattern)
+            request_params["sign_method"] = "sha256"
+            request_params["timestamp"] = str(int(datetime.now(timezone.utc).timestamp() * 1000))
+        else:
+            # TOP signing for affiliate and other endpoints
+            request_params["sign_method"] = sign_method
+            request_params["timestamp"] = self._top_timestamp()
+            request_params["v"] = "2.0"
+
         for name, value in params.items():
             if value is None:
                 continue
             request_params[name] = self._top_value(value)
-        
-        if sign_method == "sha256":
+
+        # Calculate sign based on endpoint type
+        if is_ds_method:
+            request_params["sign"] = self._ds_system_sign("/sync", request_params, secret)
+        elif sign_method == "sha256":
             request_params["sign"] = self._top_sign_hmac_sha256(request_params, secret)
         else:
             request_params["sign"] = self._top_sign(request_params, secret)
