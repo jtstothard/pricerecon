@@ -1,6 +1,7 @@
 """Tests for AO.com connector."""
 
 from typing import Any
+from pathlib import Path
 
 import httpx
 import pytest
@@ -11,7 +12,11 @@ from pricerecon.models import SourceType
 @pytest.fixture
 def connector() -> AOConnector:
     """Create connector instance."""
-    return AOConnector()
+    instance = AOConnector()
+    # Keep parser tests focused on fixture parsing; the production template is
+    # disabled because the live upstream currently serves a Cloudflare page.
+    instance.template.disabled = False
+    return instance
 
 
 def test_source_role(connector: AOConnector) -> None:
@@ -102,3 +107,24 @@ async def test_search_empty_results(connector: AOConnector, respx_mock: Any) -> 
     listings = await connector.search("unknown")
 
     assert len(listings) == 0
+
+
+@pytest.mark.asyncio
+async def test_ao_is_explicitly_disabled_when_upstream_returns_cloudflare_challenge(
+) -> None:
+    """AO must not report a healthy zero-result search for a bot challenge."""
+    from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
+
+    fixture = Path(__file__).parent / "fixtures" / "ao" / "cloudflare-challenge.html"
+    assert "Just a moment..." in fixture.read_text()
+
+    connector = AOConnector()
+    try:
+        with pytest.raises(ConnectorDegradedError) as raised:
+            await connector.search("washing machine")
+    finally:
+        await connector.cleanup()
+
+    assert raised.value.status is ConnectorStatus.disabled
+    assert raised.value.connector_id == "ao"
+    assert raised.value.detail and "Cloudflare" in raised.value.detail["reason"]

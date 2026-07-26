@@ -5,12 +5,18 @@ import pytest
 from pricerecon.connectors.aria import AriaConnector
 from pricerecon.connectors.ccl import CclConnector
 from pricerecon.connectors.ebuyer import EbuyerConnector
+from pricerecon.connectors.ao import AOConnector
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 
 
 @pytest.mark.parametrize(
     "connector_class, connector_id",
-    [(AriaConnector, "aria"), (CclConnector, "ccl"), (EbuyerConnector, "ebuyer")],
+    [
+        (AriaConnector, "aria"),
+        (CclConnector, "ccl"),
+        (EbuyerConnector, "ebuyer"),
+        (AOConnector, "ao"),
+    ],
 )
 @pytest.mark.asyncio
 async def test_stale_connectors_fail_explicitly_as_disabled(
