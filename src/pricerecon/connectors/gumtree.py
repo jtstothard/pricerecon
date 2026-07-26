@@ -12,6 +12,7 @@ from pricerecon.connectors.browser_client import (
     browser_context,
 )
 from pricerecon.models import NormalizedListing, SourceType, Condition
+from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 
 logger = logging.getLogger(__name__)
 
@@ -87,14 +88,32 @@ class GumtreeConnector(BaseConnector):
                 logger.error("Failed to fetch Gumtree HTML")
                 return []
 
+            # Gumtree returns a successful HTTP response containing this shell when
+            # its anti-bot check blocks the browser. Do not report false zero results.
+            if self._is_bot_challenge(html):
+                raise ConnectorDegradedError(
+                    status=ConnectorStatus.bot_blocked,
+                    message="Gumtree returned an anti-bot challenge instead of search results",
+                    connector_id=self.connector_id,
+                    detail={"root_cause": "source-side anti-bot challenge"},
+                )
+
             listings = self._parse_search_results(html)
             logger.info(f"Gumtree found {len(listings)} listings for '{query}'")
 
             return listings
 
         except Exception as e:
+            if isinstance(e, ConnectorDegradedError):
+                raise
             logger.error(f"Gumtree search failed: {e}")
             return []
+
+    @staticmethod
+    def _is_bot_challenge(html: str) -> bool:
+        """Detect Gumtree's Kramerica anti-bot response shell."""
+        lowered = html.lower()
+        return "kramericaindustries.ac_v2.lib.js" in lowered or "window.rbzns" in lowered
 
     def _parse_search_results(self, html: str) -> list[NormalizedListing]:
         """Parse Gumtree search results HTML.
