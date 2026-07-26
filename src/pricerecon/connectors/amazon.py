@@ -78,7 +78,19 @@ class AmazonConnector(BaseConnector):
         # Make request with curl_cffi
         try:
             response = self.session.get(url, params=params, timeout=30)
+            # Amazon intermittently returns a stock 503 page when automated
+            # access is throttled.  Classify it before raise_for_status so the
+            # connector reports the source-side limitation truthfully.
+            if self._is_blocked_page(response.text):
+                raise ConnectorDegradedError(
+                    ConnectorStatus.bot_blocked,
+                    "Amazon returned a captcha or blocked page",
+                    self.CONNECTOR_ID,
+                    {"status_code": getattr(response, "status_code", None)},
+                )
             response.raise_for_status()
+        except ConnectorDegradedError:
+            raise
         except Exception as e:
             logger.error(f"Amazon search failed: {e}")
             raise ConnectorDegradedError(
@@ -87,16 +99,6 @@ class AmazonConnector(BaseConnector):
                 self.CONNECTOR_ID,
                 {"error": str(e), "error_type": type(e).__name__},
             ) from e
-
-        # Check if we got a captcha/blocked page
-        if self._is_blocked_page(response.text):
-            logger.warning("Amazon returned a captcha or blocked page")
-            raise ConnectorDegradedError(
-                ConnectorStatus.bot_blocked,
-                "Amazon returned a captcha or blocked page",
-                self.CONNECTOR_ID,
-                {"status_code": getattr(response, "status_code", None)},
-            )
 
         # Parse search results
         listings = self._parse_search_results(response.text, query, filters)
@@ -124,6 +126,8 @@ class AmazonConnector(BaseConnector):
             "access denied",
             "temporarily blocked",
             "Please verify you are human",
+            "automated access to Amazon data",
+            "service unavailable error",
         ]
         html_lower = html.lower()
         return any(indicator.lower() in html_lower for indicator in captcha_indicators)
@@ -146,7 +150,10 @@ class AmazonConnector(BaseConnector):
 
         # Find all product result blocks using data-component-type="s-search-result"
         # These are top-level result divs; extract the full div block.
-        product_block_pattern = r'<div[^>]*data-component-type="s-search-result"[^>]*>(.*?)</div>\s*</div>\s*</div>\s*</div>'
+        product_block_pattern = (
+            r'<div[^>]*data-component-type="s-search-result"[^>]*>.*?'
+            r'(?=<div[^>]*data-component-type="s-search-result"|\Z)'
+        )
         blocks = re.finditer(product_block_pattern, html, re.DOTALL)
 
         for block_match in blocks:
