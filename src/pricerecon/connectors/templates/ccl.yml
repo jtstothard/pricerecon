@@ -10,9 +10,10 @@ selectors:
   stock: .stock, .availability, .product-stock, [data-testid="stock"]
   image: img
   id: a[href]
-# The configured endpoint currently returns a Cloudflare 403.  Keep the
-# connector explicit and truthful until a supported access lane is supplied.
+# The configured endpoint returns hardened Cloudflare protection that exceeds
+# Byparr bypass capabilities (direct HTTP 403 domain-wide, Byparr timeouts >120s).
+# Keep the connector explicit and truthful until a supported access lane is supplied.
 disabled: true
-disabled_reason: "search endpoint returns Cloudflare HTTP 403 from the supported request lane"
+disabled_reason: "hardened Cloudflare protection (HTTP 403 domain-wide, Byparr anti-bot route times out >120s). See diagnosis task ***REMOVED***."
 use_flare_solverr: true
 category: gpu

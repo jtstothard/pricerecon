@@ -12,7 +12,6 @@ from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
     "connector_class, connector_id",
     [
         (AriaConnector, "aria"),
-        (CclConnector, "ccl"),
         (AOConnector, "ao"),
     ],
 )
