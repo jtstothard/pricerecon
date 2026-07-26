@@ -99,11 +99,18 @@ class OverclockersConnector(TimeoutRetailerConnector):
 
 
 class BoxConnector(TimeoutRetailerConnector):
-    """Box.co.uk connector (WAF-blocked, no functional browser route)."""
+    """Box.co.uk connector (WAF-blocked, Camofox loads homepage shell but no search results)."""
 
     CONNECTOR_ID = "box"
     BASE_URL = "https://www.box.co.uk"
     RETAILER_NAME = "Box"
+    WAF_DESCRIPTION = "Cloudflare WAF protection (HTTP 403), Camofox reaches homepage shell but no search results route found"
+    WAF_EVIDENCE = (
+        "Direct HTTP returns Cloudflare 403 challenge; Camofox bypass loads "
+        "homepage shell (8KB) with navigation/search UI, but search page yields "
+        "no product cards or RTX results after multiple attempts"
+    )
+    DIAGNOSIS_TASK = "t_0344ad01"
 
 
 class CurrysConnector(TimeoutRetailerConnector):
