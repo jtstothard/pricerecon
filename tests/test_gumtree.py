@@ -1,8 +1,12 @@
 """Tests for Gumtree connector."""
 
+from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 
 from pricerecon.connectors.gumtree import GumtreeConnector
+from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 from pricerecon.models import SourceType, Condition
 
 
@@ -132,3 +136,19 @@ def test_gumtree_deduplication():
     """
     listings = connector._parse_search_results(mock_html)
     assert len(listings) == 1, f"Expected 1 deduplicated listing, got {len(listings)}"
+
+
+@pytest.mark.asyncio
+async def test_gumtree_antibot_fixture_is_reported_as_blocked():
+    """A real Gumtree anti-bot shell must not become a false healthy zero."""
+    html = Path(__file__).parent.joinpath("fixtures/gumtree/blocked-response.html").read_text()
+    connector = GumtreeConnector()
+    connector.browser_client = MagicMock()
+    page = AsyncMock()
+    page.content.return_value = html
+    context = AsyncMock()
+    context.__aenter__.return_value.new_page.return_value = page
+    with patch("pricerecon.connectors.gumtree.browser_context", return_value=context):
+        with pytest.raises(ConnectorDegradedError) as exc:
+            await connector.search("iPhone")
+    assert exc.value.status is ConnectorStatus.bot_blocked
