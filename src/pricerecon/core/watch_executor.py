@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import sqlite3
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -25,6 +26,56 @@ from pricerecon.db.schema import DB_PATH
 from pricerecon.models import EventType, NormalizedListing, Watch
 
 logger = logging.getLogger(__name__)
+
+SHADOW_FILTER_PATTERN_NAME = "P1"
+SHADOW_FILTER_PATTERN = (
+    r"\bfor\s+(?:the\s+)?(?:mac\s+studio|macbook(?:\s+pro)?|mac\s+mini|"
+    r"strix(?:\s+halo)?|ryzen\s+ai\s+max(?:\+)?\s*395)\b[^\n]{0,100}\b"
+    r"(?:ssd|solid\s*state\s*drive|pcb|circuit\s*board|nand|"
+    r"upgrade\s*(?:kit|board|module)?|expansion\s*board|enclosure|charger|"
+    r"cable|adapter|case|cover|psu|power\s*supply|heatsink|heat\s*sink|"
+    r"ram\s*stick|memory\s*module)\b"
+)
+
+
+def _shadow_title(title: str) -> str:
+    """Normalize punctuation to separators while retaining word boundaries."""
+    return re.sub(r"[^\w\n]+", " ", title.casefold()).strip()
+
+
+def evaluate_shadow_filters(
+    listings: list[NormalizedListing], filters: Any, watch_id: int
+) -> list[dict[str, Any]]:
+    """Log-only evaluation of false-positive rules; never alters listings."""
+    values = filters.model_dump() if hasattr(filters, "model_dump") else (filters or {})
+    floor = values.get("min_price_gbp")
+    pattern = values.get("component_subject_pattern") or SHADOW_FILTER_PATTERN
+    results: list[dict[str, Any]] = []
+    for listing in listings:
+        matched: list[str] = []
+        # Floors are GBP by contract. Unknown currencies are not coerced to zero;
+        # they are review-worthy and therefore logged rather than suppressed.
+        review_missing_price = listing.price is None
+        price_gbp = listing.price if listing.currency.upper() == "GBP" else None
+        if floor is not None and (review_missing_price or (price_gbp is not None and price_gbp < floor)):
+            matched.append("price_floor")
+        title = _shadow_title(listing.title_raw)
+        if pattern and re.search(pattern, title, flags=re.IGNORECASE):
+            matched.append("component_pattern")
+        if not matched:
+            continue
+        entry = {
+            "tag": "shadow_filter", "watch_id": watch_id,
+            "listing_id": listing.source_listing_id, "alert_id": None,
+            "title": listing.title_raw, "price": str(listing.price) if listing.price is not None else None,
+            "which_filter_matched": matched[0] if len(matched) == 1 else "both",
+            "floor_value": floor, "pattern_name": SHADOW_FILTER_PATTERN_NAME,
+        }
+        if review_missing_price:
+            entry["review"] = "missing_price"
+        logger.info("shadow_filter", extra=entry)
+        results.append(entry)
+    return results
 
 
 def get_db() -> sqlite3.Connection:
@@ -384,6 +435,9 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
     filtered_listings = apply_post_normalization_filters(
         all_listings, watch.filters, watch.synonym_groups if watch.synonym_groups else None
     )
+    # Evaluation only: deliberately run against the complete post-fetch set and
+    # retain every listing for the normal alert/dashboard pipeline.
+    shadow_entries = evaluate_shadow_filters(all_listings, watch.filters, watch_id)
     first_run, diff_result, event_ids = run_check(watch_id, filtered_listings)
 
     conn = get_db()
@@ -466,6 +520,7 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
         "listings_gone": len(diff_result.listings_gone),
         "events": [],
         "notifications_sent": len(notifications_dispatched),
+        "shadow_filters_logged": len(shadow_entries),
     }
 
     events: list[dict[str, Any]] = result["events"]

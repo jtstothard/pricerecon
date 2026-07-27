@@ -80,9 +80,19 @@ class SpecMatch(BaseModel):
 
 
 class WatchFilters(BaseModel):
-    """Watch filtering rules."""
+    """Watch filtering rules.
+
+    The shadow fields are deliberately observational: watch execution logs their
+    matches but does not remove listings from the result set.
+    """
 
     price_max: Optional[Decimal] = Field(None, ge=0, description="Maximum price")
+    min_price_gbp: Optional[int] = Field(
+        None, ge=0, description="Shadow/enforcement floor in GBP (currently shadow-only)"
+    )
+    component_subject_pattern: Optional[str] = Field(
+        None, description="Case-insensitive component-subject regex (currently shadow-only)"
+    )
     currency: str = Field(default="GBP", description="Currency for price_max")
     condition_filter: ConditionFilter = Field(default_factory=lambda: ConditionFilter())
     exclude_patterns: list[str] = Field(
