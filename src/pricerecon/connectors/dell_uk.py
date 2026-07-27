@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import os
 import re
 from decimal import Decimal, InvalidOperation
 from typing import Any
@@ -19,6 +20,7 @@ from selectolax.parser import HTMLParser, Node
 
 from pricerecon.connectors.base import BaseConnector
 from pricerecon.connectors.browser_client import BrowserClient
+from pricerecon.connectors.flaresolverr import FlareSolverrClient
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 from pricerecon.connectors.specs import extract_specs
 from pricerecon.models import NormalizedListing, SourceType, StockState
@@ -43,9 +45,21 @@ class DellUKConnector(BaseConnector):
     BASE_URL = "https://www.dell.com/en-uk"
     DEFAULT_LISTING_URL = "https://www.dell.com/en-uk/search/laptops"
 
-    def __init__(self, *, browser_client: BrowserClient | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        browser_client: BrowserClient | None = None,
+        flaresolverr_url: str | None = None,
+        config: dict[str, Any] | None = None,
+    ) -> None:
         self._browser_client = browser_client or BrowserClient()
         self._owns_browser_client = browser_client is None
+        settings = config or {}
+        self._flaresolverr_url = (
+            flaresolverr_url
+            or settings.get("flaresolverr_url")
+            or os.environ.get("PRICERECON_FLARESOLVERR_URL")
+        )
 
     @property
     def source_role(self) -> SourceType:
@@ -84,14 +98,17 @@ class DellUKConnector(BaseConnector):
         url = self._listing_url(query, filters)
 
         try:
-            context = await self._browser_client.new_context()
-            page = await context.new_page()
-            try:
-                await page.goto(url, wait_until="domcontentloaded", timeout=45000)
-                await page.wait_for_timeout(1500)
-                html = await page.content()
-            finally:
-                await context.close()
+            if self._flaresolverr_url:
+                html = await FlareSolverrClient(self._flaresolverr_url).request_html(url)
+            else:
+                context = await self._browser_client.new_context()
+                page = await context.new_page()
+                try:
+                    await page.goto(url, wait_until="domcontentloaded", timeout=45000)
+                    await page.wait_for_timeout(1500)
+                    html = await page.content()
+                finally:
+                    await context.close()
         except ConnectorDegradedError:
             raise
         except Exception as exc:

@@ -259,6 +259,17 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
                 if not connector_kwargs.get("app_id"):
                     connector_kwargs["app_id"] = os.environ.get("EBAY_APP_ID", "")
                 connector_kwargs.setdefault("cert_id", os.environ.get("EBAY_CERT_ID"))
+            elif connector_id == "dell_uk":
+                import os
+
+                # Dell requires serialized HTML; prefer the shared
+                # FlareSolverr/Byparr-compatible endpoint over Camofox's a11y
+                # snapshot backend. Per-watch config still takes precedence.
+                if not connector_kwargs.get("flaresolverr_url"):
+                    connector_kwargs["flaresolverr_url"] = (
+                        runtime_config.get("flaresolverr_url")
+                        or os.environ.get("PRICERECON_FLARESOLVERR_URL")
+                    )
             elif connector_id == "aliexpress":
                 import os
 
