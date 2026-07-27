@@ -54,23 +54,40 @@ class MockBraveRateLimitedResponse:
     text = ""
 
 
+class MockDirectSiteResponse:
+    status_code = 200
+    headers: dict[str, str] = {}
+    text = '''
+    <html><body>
+      <a href="https://www.aliexpress.com/item/1005001234567890.html">
+        <h2>RTX 3060 12GB Graphics Card</h2><span class="price">£189.99</span>
+      </a>
+    </body></html>
+    '''
+
+    def raise_for_status(self) -> None:
+        return None
+
+
 class MockClient:
-    """Mock HTTP client that fails on affiliate and Brave, but has DS creds available."""
+    """Mock client: affiliate and Brave fail, direct AliExpress search succeeds."""
 
     def __init__(self) -> None:
         self.post_call_count = 0
         self.get_call_count = 0
+        self.site_search_call_count = 0
 
     async def post(
         self, url: str, json: object = None, headers: object = None, data: object = None
     ) -> MockAffiliateFailingResponse:
         self.post_call_count += 1
-        # Affiliate endpoint always fails with InsufficientPermission
         return MockAffiliateFailingResponse()
 
-    async def get(self, url: str, params: object = None, headers: object = None, timeout: object = None) -> MockBraveRateLimitedResponse:
+    async def get(self, url: str, params: object = None, headers: object = None, timeout: object = None, follow_redirects: bool = False):
         self.get_call_count += 1
-        # Brave search always fails with 429
+        if "aliexpress.com/w/wholesale-" in url:
+            self.site_search_call_count += 1
+            return MockDirectSiteResponse()
         return MockBraveRateLimitedResponse()
 
     async def aclose(self) -> None:
@@ -110,9 +127,9 @@ async def test_aliexpress_returns_zero_when_affiliate_and_brave_fail() -> None:
     # Perform a generic search query
     listings = await connector.search("RTX 3060", {})
 
-    # BEFORE FIX: This assertion passes (0 listings - BUG)
-    # AFTER FIX: This assertion fails (>0 listings - FIXED)
-    assert len(listings) == 0, f"Expected 0 listings (bug reproduced), got {len(listings)}"
+    # Direct AliExpress site search is the acquisition fallback.
+    assert len(listings) > 0, f"Expected fallback listings, got {len(listings)}"
+    assert mock_client.site_search_call_count > 0
 
     # Verify the lanes that were called
     assert mock_client.post_call_count > 0, "Affiliate API should have been called"
@@ -159,12 +176,8 @@ async def test_aliexpress_should_use_ds_search_when_affiliate_and_brave_fail() -
     # Perform a generic search query
     listings = await connector.search("RTX 3060", {})
 
-    # AFTER FIX: This assertion should pass (>0 listings from DS search)
-    assert len(listings) > 0, "DS search should return listings when affiliate and Brave fail"
-
-    # Verify listings came from DS (check variant metadata)
-    if listings:
-        ds_listings = [l for l in listings if l.variant_normalized and l.variant_normalized.get("aliexpress_source_lane") == "ds"]
-        assert len(ds_listings) > 0, "At least one listing should be from DS lane"
+    # Direct site discovery is acquisition; DS remains enrichment-only.
+    assert len(listings) > 0, "Direct AliExpress site search should return listings when other lanes fail"
+    assert mock_client.site_search_call_count > 0
 
     await connector.cleanup()

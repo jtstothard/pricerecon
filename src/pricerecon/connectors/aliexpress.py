@@ -97,6 +97,11 @@ class AliExpressConnector(BaseConnector):
         if manual_targets:
             listings.extend(await self._manual_pid_search(manual_targets, filters))
 
+        # Direct site search is an acquisition fallback, not a DS discovery API.
+        # Use it only after the primary discovery lanes produced no candidates.
+        if not listings and filters.get("site_search_discovery", True):
+            listings.extend(await self._site_search(query, filters))
+
         listings = self._dedupe_listings(listings)
 
         if self._should_enrich_with_ds(filters):
@@ -363,6 +368,55 @@ class AliExpressConnector(BaseConnector):
 
         data = self._extract_response_list(self._extract_top_response_payload(response.json()))
         return [self._listing_from_affiliate_item(item, query) for item in data]
+
+    async def _site_search(self, query: str, filters: dict[str, Any]) -> list[NormalizedListing]:
+        """Discover products from AliExpress' public wholesale search page."""
+        from urllib.parse import quote_plus
+
+        slug = re.sub(r"[^a-z0-9]+", "-", query.lower()).strip("-")
+        url = f"https://www.aliexpress.com/w/wholesale-{quote_plus(slug)}.html"
+        try:
+            response = await self._client.get(
+                url,
+                headers={"User-Agent": "Mozilla/5.0", "Accept": "text/html"},
+                timeout=30.0,
+                follow_redirects=True,
+            )
+            response.raise_for_status()
+            html = response.text
+        except Exception as exc:
+            logger.warning("AliExpress direct site search failed: %s", exc)
+            return []
+
+        pids = list(dict.fromkeys(re.findall(r"aliexpress\.com/item/(\d{10,})", html)))
+        max_pids = int(filters.get("site_search_max_pids", 25))
+        listings: list[NormalizedListing] = []
+        for pid in pids[:max_pids]:
+            marker = re.search(
+                rf".{0,300}{re.escape(pid)}.{0,700}", html, re.IGNORECASE | re.DOTALL
+            )
+            snippet = marker.group(0) if marker else html
+            title_match = re.search(r"<h[1-6][^>]*>(.*?)</h[1-6]>", snippet, re.IGNORECASE | re.DOTALL)
+            title = re.sub(r"<[^>]+>", " ", title_match.group(1)) if title_match else f"AliExpress {pid}"
+            title = re.sub(r"\s+", " ", title).strip()
+            price = self._extract_price(snippet)
+            if price is None:
+                continue
+            listings.append(NormalizedListing.model_validate({
+                "source": self.connector_id,
+                "source_type": self.source_role,
+                "source_listing_id": pid,
+                "title_raw": title,
+                "price": price,
+                "currency": filters.get("currency", self._affiliate_currency),
+                "url": f"https://www.aliexpress.com/item/{pid}.html",
+                "variant_normalized": self._build_enrichment_payload(
+                    pid=pid, title=title, display_price=price, original_price=None,
+                    shipping_cost=None, seller=None, rating=None, sales=None,
+                    stock=None, source="site_search",
+                ),
+            }))
+        return listings
 
     async def _brave_search(self, query: str, filters: dict[str, Any]) -> list[NormalizedListing]:
         """Discover PIDs via Brave Search for non-enrolled listings."""
@@ -822,8 +876,12 @@ class AliExpressConnector(BaseConnector):
                 continue
             try:
                 detail = await self._fetch_ds_detail(pid)
-            except ConnectorDegradedError:
-                raise
+            except ConnectorDegradedError as exc:
+                if (listing.variant_normalized or {}).get("aliexpress_source_lane") != "site_search":
+                    raise
+                logger.warning("AliExpress DS enrichment unavailable for %s: %s", pid, exc.message)
+                enriched.append(listing)
+                continue
             except Exception as exc:
                 raise ConnectorDegradedError(
                     status=ConnectorStatus.unknown_error,
