@@ -115,7 +115,9 @@ class ArgosConnector(BaseConnector):
             snapshot_listings: list[dict[str, str | None]] = []
             current: dict[str, str | None] | None = None
             for line in html.splitlines():
-                link_match = re.search(r"link \\\"(.+?)\\\"", line)
+                link_match = re.search(r'link "(.+?)"', line) or re.search(
+                    r'link \\\"(.+?)\\\"', line
+                )
                 if link_match:
                     if current:
                         snapshot_listings.append(current)
