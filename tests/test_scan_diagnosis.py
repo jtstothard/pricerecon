@@ -5,6 +5,7 @@ the parser can extract listings.
 
 Used to diagnose the WAF blocking issue and validate recovery via Camofox.
 """
+
 import pytest
 from pricerecon.connectors.html import SelectorConfig, parse_listings_from_html
 from pricerecon.models import SourceType

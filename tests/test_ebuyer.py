@@ -13,6 +13,7 @@ TDD sequence:
 2. GREEN: minimal fix applied
 3. Verify full test suite
 """
+
 import json
 
 import pytest
@@ -81,6 +82,6 @@ def test_ebuyer_json_parser_extracts_listings(
     first = listings[0]
     assert first.title_raw
     assert first.price is not None
-    assert first.url.startswith('https://www.ebuyer.com/')
-    assert 'RTX' in first.title_raw or '3080' in first.title_raw.lower()
-    assert first.currency == 'GBP'
+    assert first.url.startswith("https://www.ebuyer.com/")
+    assert "RTX" in first.title_raw or "3080" in first.title_raw.lower()
+    assert first.currency == "GBP"

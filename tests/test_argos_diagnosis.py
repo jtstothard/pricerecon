@@ -5,7 +5,6 @@ from pathlib import Path
 
 from pricerecon.connectors.argos import ArgosConnector
 
-
 FIXTURE = Path(__file__).parent / "fixtures" / "argos" / "camofox-laptop-snapshot.json"
 
 

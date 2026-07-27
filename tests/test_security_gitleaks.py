@@ -12,7 +12,6 @@ from pathlib import Path
 
 import pytest
 
-
 # Use the gitleaks binary at /tmp/gitleaks as per task reference
 GITLEAKS_BINARY = "/tmp/gitleaks"
 GITLEAKS_IGNORE_FILE = Path(".gitleaksignore")
@@ -68,7 +67,7 @@ def test_gitleaks_ignore_file_exists_and_non_empty(repo_root: Path) -> None:
 @pytest.mark.skipif(
     # We'll determine availability in the test itself for better error messages
     False,
-    reason="Gitleaks binary not available - skipping integration test"
+    reason="Gitleaks binary not available - skipping integration test",
 )
 def test_gitleaks_detect_returns_zero_findings(repo_root: Path) -> None:
     """Run gitleaks scan and verify zero findings with ignore file active.
@@ -95,14 +94,17 @@ def test_gitleaks_detect_returns_zero_findings(repo_root: Path) -> None:
         [
             str(gitleaks_path),
             "detect",
-            "--source", str(repo_root),
-            "--report-format", "sarif",
-            "--report-path", str(report_path),
-            "--verbose"
+            "--source",
+            str(repo_root),
+            "--report-format",
+            "sarif",
+            "--report-path",
+            str(report_path),
+            "--verbose",
         ],
         cwd=repo_root,
         capture_output=True,
-        text=True
+        text=True,
     )
 
     # Gitleaks returns non-zero exit code if any findings are detected

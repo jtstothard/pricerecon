@@ -144,7 +144,9 @@ async def test_search_503_is_bot_blocked(connector: Any, mock_session: Any) -> N
     """Amazon's automated-access 503 is reported as a truthful source block."""
     mock_response = Mock()
     mock_response.status_code = 503
-    mock_response.text = (Path(__file__).parent / "fixtures" / "amazon_uk" / "blocked-503.html").read_text()
+    mock_response.text = (
+        Path(__file__).parent / "fixtures" / "amazon_uk" / "blocked-503.html"
+    ).read_text()
     mock_response.raise_for_status = Mock(side_effect=Exception("503"))
     mock_session.get.return_value = mock_response
 

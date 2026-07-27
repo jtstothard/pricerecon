@@ -218,7 +218,7 @@ async def test_api_failure_reaches_browser(
 ) -> None:
     connector = RedditHardwareSwapUKConnector()
     calls: list[str] = []
-    
+
     # Disable retries for this test to verify fallback chain logic
     monkeypatch.setenv("PRICERECON_REDDIT_RSS_MAX_RETRIES", "0")
     monkeypatch.setenv("PRICERECON_REDDIT_API_MAX_RETRIES", "0")
@@ -866,26 +866,34 @@ class TestRedditFallbackFullChain:
     """Test full fallback chain progression through all tiers."""
 
     @pytest.mark.asyncio
-    async def test_rss_403_to_api_429_to_browser_success(self, monkeypatch: Any, caplog: pytest.LogCaptureFixture) -> None:
+    async def test_rss_403_to_api_429_to_browser_success(
+        self, monkeypatch: Any, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """Test RSS-403 → API-429 → browser-success progression."""
         # Disable retries to simplify test
         monkeypatch.setenv("PRICERECON_REDDIT_RSS_MAX_RETRIES", "0")
         monkeypatch.setenv("PRICERECON_REDDIT_API_MAX_RETRIES", "0")
         monkeypatch.setenv("PRICERECON_REDDIT_BROWSER_MAX_RETRIES", "0")
-        
+
         connector = RedditHardwareSwapUKConnector()
         calls: list[str] = []
 
         async def rss(*args: Any, **kwargs: Any) -> list[Any]:
             calls.append("rss")
             raise ConnectorDegradedError(
-                ConnectorStatus.bot_blocked, "RSS blocked", connector.connector_id, {"status_code": 403}
+                ConnectorStatus.bot_blocked,
+                "RSS blocked",
+                connector.connector_id,
+                {"status_code": 403},
             )
 
         async def api(*args: Any, **kwargs: Any) -> list[Any]:
             calls.append("api")
             raise ConnectorDegradedError(
-                ConnectorStatus.rate_limited, "API rate limited", connector.connector_id, {"status_code": 429}
+                ConnectorStatus.rate_limited,
+                "API rate limited",
+                connector.connector_id,
+                {"status_code": 429},
             )
 
         async def browser(*args: Any, **kwargs: Any) -> list[Any]:
@@ -937,28 +945,39 @@ class TestRedditFallbackFullChain:
         ]
 
     @pytest.mark.asyncio
-    async def test_all_tiers_fail_with_complete_error_summary(self, monkeypatch: Any, caplog: pytest.LogCaptureFixture) -> None:
+    async def test_all_tiers_fail_with_complete_error_summary(
+        self, monkeypatch: Any, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """Test all tiers fail and error includes complete summary of attempts."""
         # Disable retries to simplify test
         monkeypatch.setenv("PRICERECON_REDDIT_RSS_MAX_RETRIES", "0")
         monkeypatch.setenv("PRICERECON_REDDIT_API_MAX_RETRIES", "0")
         monkeypatch.setenv("PRICERECON_REDDIT_BROWSER_MAX_RETRIES", "0")
-        
+
         connector = RedditHardwareSwapUKConnector()
 
         async def rss(*args: Any, **kwargs: Any) -> list[Any]:
             raise ConnectorDegradedError(
-                ConnectorStatus.bot_blocked, "RSS blocked", connector.connector_id, {"status_code": 403}
+                ConnectorStatus.bot_blocked,
+                "RSS blocked",
+                connector.connector_id,
+                {"status_code": 403},
             )
 
         async def api(*args: Any, **kwargs: Any) -> list[Any]:
             raise ConnectorDegradedError(
-                ConnectorStatus.auth_failed, "API auth failed", connector.connector_id, {"status_code": 401}
+                ConnectorStatus.auth_failed,
+                "API auth failed",
+                connector.connector_id,
+                {"status_code": 401},
             )
 
         async def browser(*args: Any, **kwargs: Any) -> list[Any]:
             raise ConnectorDegradedError(
-                ConnectorStatus.timeout, "Browser timeout", connector.connector_id, {"timeout_ms": 30000}
+                ConnectorStatus.timeout,
+                "Browser timeout",
+                connector.connector_id,
+                {"timeout_ms": 30000},
             )
 
         monkeypatch.setattr(TemplateConnector, "search", rss)
@@ -1027,12 +1046,14 @@ class TestRedditFallbackFullChain:
         assert connector._browser_max_retries == 1
 
     @pytest.mark.asyncio
-    async def test_retries_with_backoff_on_recoverable_errors(self, monkeypatch: Any, caplog: pytest.LogCaptureFixture) -> None:
+    async def test_retries_with_backoff_on_recoverable_errors(
+        self, monkeypatch: Any, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """Test that retries use exponential backoff on recoverable errors."""
         monkeypatch.setenv("PRICERECON_REDDIT_RSS_MAX_RETRIES", "2")
         monkeypatch.setenv("PRICERECON_REDDIT_API_ENABLED", "false")
         monkeypatch.setenv("PRICERECON_REDDIT_BROWSER_ENABLED", "false")
-        
+
         connector = RedditHardwareSwapUKConnector()
         call_count = 0
 
@@ -1041,7 +1062,10 @@ class TestRedditFallbackFullChain:
             call_count += 1
             if call_count < 3:  # Fail first 2 attempts
                 raise ConnectorDegradedError(
-                    ConnectorStatus.bot_blocked, "RSS blocked", connector.connector_id, {"status_code": 403}
+                    ConnectorStatus.bot_blocked,
+                    "RSS blocked",
+                    connector.connector_id,
+                    {"status_code": 403},
                 )
             return []
 
@@ -1053,14 +1077,16 @@ class TestRedditFallbackFullChain:
         # Verify 3 attempts total (1 initial + 2 retries)
         assert call_count == 3
         assert listings == []
-        
+
         # Verify retry logs show backoff pattern
         retry_logs = [
             record.message
             for record in caplog.records
             if "failed:" in record.message and "Retrying" in record.message
         ]
-        assert len(retry_logs) == 2  # First retry logs "Retrying in 1s", second logs "Retrying in 2s"
+        assert (
+            len(retry_logs) == 2
+        )  # First retry logs "Retrying in 1s", second logs "Retrying in 2s"
         assert "Retrying in 1s" in retry_logs[0]
         assert "Retrying in 2s" in retry_logs[1]
 

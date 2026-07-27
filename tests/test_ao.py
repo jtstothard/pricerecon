@@ -110,8 +110,7 @@ async def test_search_empty_results(connector: AOConnector, respx_mock: Any) -> 
 
 
 @pytest.mark.asyncio
-async def test_ao_is_explicitly_disabled_when_upstream_returns_cloudflare_challenge(
-) -> None:
+async def test_ao_is_explicitly_disabled_when_upstream_returns_cloudflare_challenge() -> None:
     """AO must not report a healthy zero-result search for a bot challenge."""
     from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 

@@ -86,7 +86,7 @@ def test_argos_deduplicates_by_product_id() -> None:
 @pytest.mark.asyncio
 async def test_argos_real_403_fixture_fails_fast_truthfully() -> None:
     """A live Argos response is an Akamai block, not an empty result set.
-    
+
     NOTE: This test documents legacy direct-HTTP behavior. Argos now routes through
     Camofox/BrowserClient, so the 403 is no longer surfaced as a connector error.
     The fixture parsing assertion remains valid: an Akamai block page contains

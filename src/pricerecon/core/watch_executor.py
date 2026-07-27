@@ -154,10 +154,7 @@ def apply_post_normalization_filters(
     condition_filter = filter_dict.get("condition_filter", {})
     conditions = condition_filter.get("conditions")
     if conditions:
-        filtered = [
-            lst for lst in filtered
-            if lst.condition is None or lst.condition in conditions
-        ]
+        filtered = [lst for lst in filtered if lst.condition is None or lst.condition in conditions]
     spec_match = filter_dict.get("spec_match", {})
     if spec_match:
         filtered = [
@@ -266,10 +263,9 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
                 # FlareSolverr/Byparr-compatible endpoint over Camofox's a11y
                 # snapshot backend. Per-watch config still takes precedence.
                 if not connector_kwargs.get("flaresolverr_url"):
-                    connector_kwargs["flaresolverr_url"] = (
-                        runtime_config.get("flaresolverr_url")
-                        or os.environ.get("PRICERECON_FLARESOLVERR_URL")
-                    )
+                    connector_kwargs["flaresolverr_url"] = runtime_config.get(
+                        "flaresolverr_url"
+                    ) or os.environ.get("PRICERECON_FLARESOLVERR_URL")
             elif connector_id == "aliexpress":
                 import os
 

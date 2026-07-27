@@ -1042,13 +1042,13 @@ async def test_aliexpress_ds_token_refresh_populates_token_and_expiry() -> None:
         ) -> Any:
             calls.append({"url": url, "params": params, "method": "GET"})
             assert url == "https://api-sg.aliexpress.com/rest/auth/token/refresh"
-            
+
             class MockResponse:
                 status_code = 200
-                
+
                 def raise_for_status(self) -> None:
                     pass
-                
+
                 def json(self) -> dict[str, Any]:
                     return {
                         "code": "0",
@@ -1056,7 +1056,7 @@ async def test_aliexpress_ds_token_refresh_populates_token_and_expiry() -> None:
                         "refresh_token": "new-refresh-token",
                         "expires_in": 3600,
                     }
-            
+
             return MockResponse()
 
         async def post(

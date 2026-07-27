@@ -53,7 +53,6 @@ async def test_empty_subreddit_is_not_silently_converted_to_success(monkeypatch:
     assert listings == []
 
 
-
 @pytest.mark.asyncio
 async def test_rate_limit_headers_preserved_in_fallback_error(monkeypatch: Any) -> None:
     """Rate limit headers should be included in error detail when API is rate-limited."""
@@ -199,6 +198,7 @@ class TestNormalizationConsistency:
 
         # Get listing from RSS
         from pricerecon.connectors.rss import FeedEntry
+
         rss_entry = FeedEntry(
             id="rss_123",
             title="[H] RTX 4090 [W] £900",
@@ -211,31 +211,33 @@ class TestNormalizationConsistency:
         rss_fields = set(rss_listing.model_dump(exclude_none=True).keys())
 
         # Get listing from API
-        api_listing = connector._api_post_to_listing({
-            "id": "api_456",
-            "title": "[H] RTX 4090 [W] £950",
-            "selftext": "Great condition",
-            "permalink": "/r/hardwareswapuk/comments/api_456/",
-            "url": "https://www.reddit.com/r/hardwareswapuk/comments/api_456/",
-            "created_utc": 1_700_000_100,
-            "author": "api_seller",
-        })
+        api_listing = connector._api_post_to_listing(
+            {
+                "id": "api_456",
+                "title": "[H] RTX 4090 [W] £950",
+                "selftext": "Great condition",
+                "permalink": "/r/hardwareswapuk/comments/api_456/",
+                "url": "https://www.reddit.com/r/hardwareswapuk/comments/api_456/",
+                "created_utc": 1_700_000_100,
+                "author": "api_seller",
+            }
+        )
         api_fields = set(api_listing.model_dump(exclude_none=True).keys())
 
         # Get listing from browser
         browser_entries = _parse_browser_posts(
             """{"data":{"children":[{"data":{"id":"browser_789","title":"[H] RTX 4090 [W] £975","selftext":"Great condition","permalink":"/r/hardwareswapuk/comments/browser_789/","url":"https://www.reddit.com/r/hardwareswapuk/comments/browser_789/","created_utc":1700000200,"author":"browser_seller"}}]}}""",
             "hardwareswapuk",
-            25
+            25,
         )
         assert len(browser_entries) == 1
         browser_listing = connector._entry_to_listing(browser_entries[0])
         browser_fields = set(browser_listing.model_dump(exclude_none=True).keys())
 
         # All tiers should produce the same set of fields
-        assert rss_fields == api_fields == browser_fields, (
-            f"Field mismatch - RSS: {rss_fields}, API: {api_fields}, Browser: {browser_fields}"
-        )
+        assert (
+            rss_fields == api_fields == browser_fields
+        ), f"Field mismatch - RSS: {rss_fields}, API: {api_fields}, Browser: {browser_fields}"
 
     def test_timestamp_format_consistency(self, monkeypatch: Any) -> None:
         """Verify all tiers produce timestamps with same format (UTC timezone)."""
@@ -252,19 +254,21 @@ class TestNormalizationConsistency:
         rss_listing = connector._entry_to_listing(rss_entry)
 
         # API timestamp
-        api_listing = connector._api_post_to_listing({
-            "id": "api_456",
-            "title": "Test",
-            "permalink": "/r/test/",
-            "created_utc": 1_700_000_000,
-        })
+        api_listing = connector._api_post_to_listing(
+            {
+                "id": "api_456",
+                "title": "Test",
+                "permalink": "/r/test/",
+                "created_utc": 1_700_000_000,
+            }
+        )
         assert rss_listing.timestamp_seen == api_listing.timestamp_seen
 
         # Browser timestamp (from JSON)
         browser_entries = _parse_browser_posts(
             """{"data":{"children":[{"data":{"id":"browser_789","title":"Test","permalink":"/r/test/","created_utc":1700000000}}]}}""",
             "test",
-            25
+            25,
         )
         browser_listing = connector._entry_to_listing(browser_entries[0])
         assert rss_listing.timestamp_seen == browser_listing.timestamp_seen
