@@ -54,7 +54,7 @@ async def test_connector(name: str, connector_class, query: str) -> dict:
         listings = await conn.search(query)
         result["success"] = True
         result["listings"] = len(listings)
-        
+
         # Show sample listing
         if listings:
             sample = listings[0]

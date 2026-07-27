@@ -58,11 +58,7 @@ def test_time_window():
     print("Testing time window...")
 
     # Create time window
-    tw_data = {
-        "start": "09:00",
-        "end": "21:00",
-        "days": ["mon", "tue", "wed", "thu", "fri"]
-    }
+    tw_data = {"start": "09:00", "end": "21:00", "days": ["mon", "tue", "wed", "thu", "fri"]}
     tw = TimeWindow.from_dict(tw_data)
 
     assert tw.start.hour == 9 and tw.start.minute == 0
@@ -79,11 +75,7 @@ def test_time_window():
 
     # Test day validation
     try:
-        TimeWindow.from_dict({
-            "start": "09:00",
-            "end": "21:00",
-            "days": ["mon", "invalid_day"]
-        })
+        TimeWindow.from_dict({"start": "09:00", "end": "21:00", "days": ["mon", "invalid_day"]})
         assert False, "Should have raised ScheduleParseError"
     except ScheduleParseError:
         print("✓ Invalid day names rejected")
@@ -114,11 +106,7 @@ async def test_scheduler():
         2,
         "30m",
         "Europe/London",
-        time_window={
-            "start": "09:00",
-            "end": "21:00",
-            "days": ["mon", "tue", "wed", "thu", "fri"]
-        }
+        time_window={"start": "09:00", "end": "21:00", "days": ["mon", "tue", "wed", "thu", "fri"]},
     )
     assert job_id == "watch_2"
     print("✓ Watch added with time window")
