@@ -22,3 +22,6 @@ f48a331cf13641860f4004e29fe1cd96781af6f4:tests/fixtures/currys/RTX_3080.json:gen
 8bc6afbcb16d98efa130ce8d4f04c0cc8ec724cb:tests/fixtures/currys/flaresolverr.json:generic-api-key:1
 8bc6afbcb16d98efa130ce8d4f04c0cc8ec724cb:tests/fixtures/currys/RTX_4060.json:generic-api-key:1
 8bc6afbcb16d98efa130ce8d4f04c0cc8ec724cb:tests/fixtures/currys/RTX_5090.json:generic-api-key:1
+# Dell XPS captured HTML - third-party JWT embedded in Dell's page JS (public client-side).
+# Verified non-credential by Hermes Agent 2026-07-27.
+540d49e6c3b034732294377e35fb952512d53b6a:tests/fixtures/dell_uk/XPS_byparr.html:jwt:2136
