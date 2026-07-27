@@ -176,6 +176,46 @@ async def test_update_watch(client: AsyncClient) -> None:
     assert data["query"] == "updated query"
 
 
+async def test_update_watch_preserves_notifications_when_omitted(client: AsyncClient) -> None:
+    """Test partial updates do not wipe existing notification settings."""
+    watch_data = {
+        "name": "Notification Watch",
+        "query": "test query",
+        "category": "electronics",
+        "sources": [{"connector": "ebay"}],
+        "schedule": {"interval": "1h"},
+        "filters": {},
+        "grouping": {},
+        "notifications": {
+            "events": ["new_listing", "price_drop"],
+            "channels": ["telegram", "webhook"],
+            "webhook_url": "https://example.test/notify",
+            "telegram_bot_token": "bot-token",
+            "telegram_chat_id": "chat-id",
+        },
+        "enabled": True,
+    }
+    create_resp = await client.post("/api/watches", json=watch_data)
+    assert create_resp.status_code == 201
+    created_notifications = create_resp.json()["notifications"]
+    watch_id = create_resp.json()["id"]
+
+    update_data = {
+        "name": "Updated Notification Watch",
+        "query": "updated query",
+        "category": "electronics",
+        "sources": [{"connector": "ebay"}],
+        "schedule": {"interval": "2h"},
+        "filters": {},
+        "grouping": {},
+        "enabled": True,
+    }
+    update_resp = await client.put(f"/api/watches/{watch_id}", json=update_data)
+
+    assert update_resp.status_code == 200
+    assert update_resp.json()["notifications"] == created_notifications
+
+
 async def test_delete_watch(client: AsyncClient) -> None:
     """Test deleting a watch."""
     # Create a watch
