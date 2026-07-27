@@ -6,6 +6,7 @@ import argparse
 import csv
 import io
 import json
+import logging
 import sqlite3
 import sys
 from pathlib import Path
@@ -96,6 +97,16 @@ def main(argv: list[str] | None = None) -> None:
         else:
             sys.stdout.write(output)
         return
+
+    # Configure the root logger so app-level INFO records (including shadow_filter
+    # diagnostics) reach stdout before uvicorn configures its own loggers. Uvicorn
+    # only wires up the "uvicorn.*" namespace; without this, pricerecon.* loggers
+    # stay at the Python default (WARNING, no handler) and shadow_filter records
+    # are silently dropped.
+    logging.basicConfig(
+        level=getattr(logging, settings.log_level.upper(), logging.INFO),
+        format="%(asctime)s %(name)s %(levelname)s %(message)s",
+    )
 
     uvicorn.run(
         "pricerecon.app:app",
