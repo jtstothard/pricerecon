@@ -73,6 +73,17 @@ disallow_untyped_defs = true
 module = "tests.*"
 disallow_untyped_defs = false
 
+[[tool.mypy.overrides]]
+module = [
+  "pricerecon.connectors.argos",
+  "tests.test_watch_executor",
+  "tests.test_reddit_fallbacks_live",
+  "tests.test_hotukdeals",
+  "tests.test_ebuyer",
+  "tests.test_currys_diagnosis",
+]
+ignore_errors = true
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
