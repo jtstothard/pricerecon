@@ -31,7 +31,7 @@ class MockAffiliateFailingResponse:
         return {
             "error_response": {
                 "code": "InsufficientPermission",
-                "msg": "App does not have permission to access this api"
+                "msg": "App does not have permission to access this api",
             }
         }
 
@@ -57,13 +57,13 @@ class MockBraveRateLimitedResponse:
 class MockDirectSiteResponse:
     status_code = 200
     headers: dict[str, str] = {}
-    text = '''
+    text = """
     <html><body>
       <a href="https://www.aliexpress.com/item/1005001234567890.html">
         <h2>RTX 3060 12GB Graphics Card</h2><span class="price">£189.99</span>
       </a>
     </body></html>
-    '''
+    """
 
     def raise_for_status(self) -> None:
         return None
@@ -83,7 +83,14 @@ class MockClient:
         self.post_call_count += 1
         return MockAffiliateFailingResponse()
 
-    async def get(self, url: str, params: object = None, headers: object = None, timeout: object = None, follow_redirects: bool = False):
+    async def get(
+        self,
+        url: str,
+        params: object = None,
+        headers: object = None,
+        timeout: object = None,
+        follow_redirects: bool = False,
+    ):
         self.get_call_count += 1
         if "aliexpress.com/w/wholesale-" in url:
             self.site_search_call_count += 1
@@ -177,7 +184,9 @@ async def test_aliexpress_should_use_ds_search_when_affiliate_and_brave_fail() -
     listings = await connector.search("RTX 3060", {})
 
     # Direct site discovery is acquisition; DS remains enrichment-only.
-    assert len(listings) > 0, "Direct AliExpress site search should return listings when other lanes fail"
+    assert (
+        len(listings) > 0
+    ), "Direct AliExpress site search should return listings when other lanes fail"
     assert mock_client.site_search_call_count > 0
 
     await connector.cleanup()

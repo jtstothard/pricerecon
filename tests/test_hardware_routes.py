@@ -95,7 +95,15 @@ def test_glm_watch_synonym_groups_are_applied_without_legacy_routes() -> None:
     """Watch-level groups accept chipset naming and reject unsafe variants."""
     filters = {
         "spec_match": {
-            "excluded_title_terms": ["iphone", "ipad", "android", "galaxy", "pixel", "phone", "tablet"]
+            "excluded_title_terms": [
+                "iphone",
+                "ipad",
+                "android",
+                "galaxy",
+                "pixel",
+                "phone",
+                "tablet",
+            ]
         }
     }
     groups = [["strix halo", "ryzen ai max", "ai max+ 395", "395+"], ["128gb"]]

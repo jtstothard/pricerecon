@@ -134,16 +134,14 @@ class _RedditConnector(TemplateConnector):
                 last_exception = exc
                 if attempt < max_retries:
                     # Exponential backoff: 1s, 2s, 4s, ...
-                    backoff_seconds = 2 ** attempt
+                    backoff_seconds = 2**attempt
                     logger.warning(
                         f"{stage_name} attempt {attempt + 1}/{max_retries + 1} failed: {exc}. "
                         f"Retrying in {backoff_seconds}s..."
                     )
                     await asyncio.sleep(backoff_seconds)
                 else:
-                    logger.error(
-                        f"{stage_name} failed after {max_retries + 1} attempts: {exc}"
-                    )
+                    logger.error(f"{stage_name} failed after {max_retries + 1} attempts: {exc}")
         # All retries exhausted
         assert last_exception is not None
         raise last_exception
@@ -569,13 +567,17 @@ class HotUKDealsConnector(TemplateConnector):
                 endpoint_url="https://www.hotukdeals.com/rss/new",
             )
         )
-        self._cache = _HotUKDealsCache(Path(cache_path or "~/.cache/pricerecon/hotukdeals.json"), self.cache_retention_days)
+        self._cache = _HotUKDealsCache(
+            Path(cache_path or "~/.cache/pricerecon/hotukdeals.json"), self.cache_retention_days
+        )
 
     @property
     def cache_size(self) -> int:
         return len(self._cache.entries)
 
-    async def search(self, query: str, filters: Optional[dict[str, Any]] = None) -> list[NormalizedListing]:
+    async def search(
+        self, query: str, filters: Optional[dict[str, Any]] = None
+    ) -> list[NormalizedListing]:
         try:
             result = self.fetch_entries(self._render_url(query=query, filters=filters or {}))
             entries = await result if inspect.isawaitable(result) else result
@@ -585,7 +587,9 @@ class HotUKDealsConnector(TemplateConnector):
             entries = list(self._cache.entries.values())
             if not entries:
                 raise
-        listings = _filter_listings_by_query([self._entry_to_listing(entry) for entry in entries], query)
+        listings = _filter_listings_by_query(
+            [self._entry_to_listing(entry) for entry in entries], query
+        )
         for listing in listings:
             listing.in_stock = None
         return listings
@@ -617,11 +621,19 @@ class _HotUKDealsCache:
         for entry in entries:
             if entry.published_at is None or entry.published_at >= cutoff:
                 self.entries[entry.id] = entry
-        self.entries = {key: entry for key, entry in self.entries.items() if entry.published_at is None or entry.published_at >= cutoff}
+        self.entries = {
+            key: entry
+            for key, entry in self.entries.items()
+            if entry.published_at is None or entry.published_at >= cutoff
+        }
 
     def save(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(json.dumps({"entries": [entry.model_dump(mode="json") for entry in self.entries.values()]}))
+        self.path.write_text(
+            json.dumps(
+                {"entries": [entry.model_dump(mode="json") for entry in self.entries.values()]}
+            )
+        )
 
 
 def _looks_blocked(content: str) -> bool:

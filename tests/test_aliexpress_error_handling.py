@@ -1,4 +1,5 @@
 """Test AliExpress connector error handling for IncompleteSignature and other API errors."""
+
 from typing import cast
 import pytest
 from pricerecon.connectors.aliexpress import AliExpressConnector
@@ -9,7 +10,7 @@ import httpx
 @pytest.mark.asyncio
 async def test_aliexpress_connector_raises_on_incomplete_signature_error() -> None:
     """Test that IncompleteSignature errors are surfaced instead of silently returning empty results."""
-    
+
     class DummyResponse:
         def __init__(self, payload: dict[str, object], status_code: int = 200) -> None:
             self._payload = payload
@@ -36,12 +37,14 @@ async def test_aliexpress_connector_raises_on_incomplete_signature_error() -> No
                 {
                     "error_response": {
                         "code": "IncompleteSignature",
-                        "msg": "The request signature does not conform to platform standards"
+                        "msg": "The request signature does not conform to platform standards",
                     }
                 }
             )
 
-        async def get(self, url: str, params: object = None, headers: object = None, timeout: object = None) -> DummyResponse:
+        async def get(
+            self, url: str, params: object = None, headers: object = None, timeout: object = None
+        ) -> DummyResponse:
             # Return empty response for Brave search (so we can test affiliate lane in isolation)
             return DummyResponse({"web": {"results": []}})
 
@@ -75,7 +78,7 @@ async def test_aliexpress_connector_raises_on_incomplete_signature_error() -> No
 @pytest.mark.asyncio
 async def test_aliexpress_connector_raises_on_other_api_errors() -> None:
     """Test that other error_response errors are surfaced as unknown_error."""
-    
+
     class DummyResponse:
         def __init__(self, payload: dict[str, object], status_code: int = 200) -> None:
             self._payload = payload
@@ -93,15 +96,12 @@ async def test_aliexpress_connector_raises_on_other_api_errors() -> None:
             self, url: str, json: object = None, headers: object = None, data: object = None
         ) -> DummyResponse:
             return DummyResponse(
-                {
-                    "error_response": {
-                        "code": "InvalidParameter",
-                        "msg": "Invalid parameter value"
-                    }
-                }
+                {"error_response": {"code": "InvalidParameter", "msg": "Invalid parameter value"}}
             )
 
-        async def get(self, url: str, params: object = None, headers: object = None, timeout: object = None) -> DummyResponse:
+        async def get(
+            self, url: str, params: object = None, headers: object = None, timeout: object = None
+        ) -> DummyResponse:
             return DummyResponse({"web": {"results": []}})
 
         async def aclose(self) -> None:
@@ -131,7 +131,7 @@ async def test_aliexpress_connector_raises_on_other_api_errors() -> None:
 @pytest.mark.asyncio
 async def test_aliexpress_connector_extract_top_response_payload_with_error_response() -> None:
     """Test _extract_top_response_payload raises ConnectorDegradedError for error_response."""
-    
+
     connector = AliExpressConnector(
         {
             "app_key": "test-key",
@@ -142,28 +142,18 @@ async def test_aliexpress_connector_extract_top_response_payload_with_error_resp
     # Test IncompleteSignature (auth_failed)
     with pytest.raises(ConnectorDegradedError) as exc_info:
         connector._extract_top_response_payload(
-            {
-                "error_response": {
-                    "code": "IncompleteSignature",
-                    "msg": "Signature error"
-                }
-            }
+            {"error_response": {"code": "IncompleteSignature", "msg": "Signature error"}}
         )
-    
+
     assert exc_info.value.status == ConnectorStatus.auth_failed
     assert "IncompleteSignature" in exc_info.value.message
 
     # Test other error codes (unknown_error)
     with pytest.raises(ConnectorDegradedError) as exc_info:
         connector._extract_top_response_payload(
-            {
-                "error_response": {
-                    "code": "SomeOtherError",
-                    "msg": "Other error"
-                }
-            }
+            {"error_response": {"code": "SomeOtherError", "msg": "Other error"}}
         )
-    
+
     assert exc_info.value.status == ConnectorStatus.unknown_error
     assert "SomeOtherError" in exc_info.value.message
 
@@ -171,9 +161,7 @@ async def test_aliexpress_connector_extract_top_response_payload_with_error_resp
     result = connector._extract_top_response_payload(
         {
             "aliexpress_affiliate_product_query_response": {
-                "result": {
-                    "items": [{"productId": "123"}]
-                }
+                "result": {"items": [{"productId": "123"}]}
             }
         }
     )

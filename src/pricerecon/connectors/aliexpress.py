@@ -396,26 +396,43 @@ class AliExpressConnector(BaseConnector):
                 rf".{0,300}{re.escape(pid)}.{0,700}", html, re.IGNORECASE | re.DOTALL
             )
             snippet = marker.group(0) if marker else html
-            title_match = re.search(r"<h[1-6][^>]*>(.*?)</h[1-6]>", snippet, re.IGNORECASE | re.DOTALL)
-            title = re.sub(r"<[^>]+>", " ", title_match.group(1)) if title_match else f"AliExpress {pid}"
+            title_match = re.search(
+                r"<h[1-6][^>]*>(.*?)</h[1-6]>", snippet, re.IGNORECASE | re.DOTALL
+            )
+            title = (
+                re.sub(r"<[^>]+>", " ", title_match.group(1))
+                if title_match
+                else f"AliExpress {pid}"
+            )
             title = re.sub(r"\s+", " ", title).strip()
             price = self._extract_price(snippet)
             if price is None:
                 continue
-            listings.append(NormalizedListing.model_validate({
-                "source": self.connector_id,
-                "source_type": self.source_role,
-                "source_listing_id": pid,
-                "title_raw": title,
-                "price": price,
-                "currency": filters.get("currency", self._affiliate_currency),
-                "url": f"https://www.aliexpress.com/item/{pid}.html",
-                "variant_normalized": self._build_enrichment_payload(
-                    pid=pid, title=title, display_price=price, original_price=None,
-                    shipping_cost=None, seller=None, rating=None, sales=None,
-                    stock=None, source="site_search",
-                ),
-            }))
+            listings.append(
+                NormalizedListing.model_validate(
+                    {
+                        "source": self.connector_id,
+                        "source_type": self.source_role,
+                        "source_listing_id": pid,
+                        "title_raw": title,
+                        "price": price,
+                        "currency": filters.get("currency", self._affiliate_currency),
+                        "url": f"https://www.aliexpress.com/item/{pid}.html",
+                        "variant_normalized": self._build_enrichment_payload(
+                            pid=pid,
+                            title=title,
+                            display_price=price,
+                            original_price=None,
+                            shipping_cost=None,
+                            seller=None,
+                            rating=None,
+                            sales=None,
+                            stock=None,
+                            source="site_search",
+                        ),
+                    }
+                )
+            )
         return listings
 
     async def _brave_search(self, query: str, filters: dict[str, Any]) -> list[NormalizedListing]:
@@ -877,7 +894,9 @@ class AliExpressConnector(BaseConnector):
             try:
                 detail = await self._fetch_ds_detail(pid)
             except ConnectorDegradedError as exc:
-                if (listing.variant_normalized or {}).get("aliexpress_source_lane") != "site_search":
+                if (listing.variant_normalized or {}).get(
+                    "aliexpress_source_lane"
+                ) != "site_search":
                     raise
                 logger.warning("AliExpress DS enrichment unavailable for %s: %s", pid, exc.message)
                 enriched.append(listing)
@@ -1162,12 +1181,16 @@ class AliExpressConnector(BaseConnector):
                 error_msg = error.get("msg", error.get("message", "Unknown error"))
                 # Raise immediately to surface the error instead of swallowing it
                 raise ConnectorDegradedError(
-                    status=ConnectorStatus.auth_failed if error_code == "IncompleteSignature" else ConnectorStatus.unknown_error,
+                    status=(
+                        ConnectorStatus.auth_failed
+                        if error_code == "IncompleteSignature"
+                        else ConnectorStatus.unknown_error
+                    ),
                     message=f"AliExpress API error: {error_code} - {error_msg}",
                     connector_id=self.connector_id,
                     detail={"error_response": error},
                 )
-            
+
             for key in (
                 "aliexpress_affiliate_product_query_response",
                 "aliexpress_affiliate_productdetail_get_response",

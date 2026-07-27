@@ -32,18 +32,18 @@ from pricerecon.connectors.status import ConnectorDegradedError
 
 def pytest_configure(config):
     """Register custom markers."""
-    config.addinivalue_line("markers", "live: marks tests as live integration tests (deselect with '-m \"not live\"')")
+    config.addinivalue_line(
+        "markers", "live: marks tests as live integration tests (deselect with '-m \"not live\"')"
+    )
 
 
 def _browser_enabled() -> bool:
     """Check if browser testing is enabled."""
-    return (
-        os.getenv("PRICERECON_REDDIT_BROWSER_ENABLED", "").strip().lower() in {"1", "true", "yes"}
-        and (
-            os.getenv("CAMOFOX_URL")
-            or os.getenv("PRICERECON_CAMOFOX_URL")
-        )
-    )
+    return os.getenv("PRICERECON_REDDIT_BROWSER_ENABLED", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    } and (os.getenv("CAMOFOX_URL") or os.getenv("PRICERECON_CAMOFOX_URL"))
 
 
 def _api_enabled() -> bool:
@@ -58,7 +58,10 @@ def _api_enabled() -> bool:
 
 @pytest.mark.live
 @pytest.mark.asyncio
-@pytest.mark.skipif(not _browser_enabled(), reason="Browser not configured - set PRICERECON_REDDIT_BROWSER_ENABLED and CAMOFOX_* env vars")
+@pytest.mark.skipif(
+    not _browser_enabled(),
+    reason="Browser not configured - set PRICERECON_REDDIT_BROWSER_ENABLED and CAMOFOX_* env vars",
+)
 async def test_live_browser_fallback_fetches_real_posts() -> None:
     """Live test: browser tier fetches real posts from r/test.
 
@@ -108,7 +111,10 @@ async def test_live_browser_fallback_fetches_real_posts() -> None:
 
 @pytest.mark.live
 @pytest.mark.asyncio
-@pytest.mark.skipif(not _browser_enabled(), reason="Browser not configured - set PRICERECON_REDDIT_BROWSER_ENABLED and CAMOFOX_* env vars")
+@pytest.mark.skipif(
+    not _browser_enabled(),
+    reason="Browser not configured - set PRICERECON_REDDIT_BROWSER_ENABLED and CAMOFOX_* env vars",
+)
 async def test_live_browser_multiple_subreddits_work() -> None:
     """Live test: browser tier works across different Reddit subreddits."""
     connectors = [
@@ -147,7 +153,10 @@ async def test_live_browser_multiple_subreddits_work() -> None:
 
 @pytest.mark.live
 @pytest.mark.asyncio
-@pytest.mark.skipif(not _api_enabled(), reason="API not configured - set PRICERECON_REDDIT_API_ENABLED and REDDIT_* env vars")
+@pytest.mark.skipif(
+    not _api_enabled(),
+    reason="API not configured - set PRICERECON_REDDIT_API_ENABLED and REDDIT_* env vars",
+)
 async def test_live_api_fallback_fetches_real_posts() -> None:
     """Live test: API tier fetches real posts and normalizes correctly.
 
@@ -189,7 +198,10 @@ async def test_live_api_fallback_fetches_real_posts() -> None:
 
     # Verify rate limit info was captured
     if connector._last_rate_limit_info:
-        assert "remaining" in connector._last_rate_limit_info or "used" in connector._last_rate_limit_info
+        assert (
+            "remaining" in connector._last_rate_limit_info
+            or "used" in connector._last_rate_limit_info
+        )
         print(f"\nLive API test: Rate limit info captured: {connector._last_rate_limit_info}")
 
     print(f"\nLive API test: Successfully fetched {len(listings)} listings from Reddit API")
@@ -197,7 +209,9 @@ async def test_live_api_fallback_fetches_real_posts() -> None:
 
 @pytest.mark.live
 @pytest.mark.asyncio
-@pytest.mark.skipif(not (_browser_enabled() or _api_enabled()), reason="No fallback tier configured")
+@pytest.mark.skipif(
+    not (_browser_enabled() or _api_enabled()), reason="No fallback tier configured"
+)
 async def test_live_fallback_schema_consistency() -> None:
     """Live test: all active tiers produce identically-shaped NormalizedListing objects.
 
@@ -211,7 +225,9 @@ async def test_live_fallback_schema_consistency() -> None:
         try:
             browser_listings = await connector._search_browser("test", {"limit": 3})
             if browser_listings:
-                field_sets["browser"] = set(browser_listings[0].model_dump(exclude_none=True).keys())
+                field_sets["browser"] = set(
+                    browser_listings[0].model_dump(exclude_none=True).keys()
+                )
         except ConnectorDegradedError as exc:
             print(f"Browser degraded: {exc.message}")
 
@@ -229,10 +245,14 @@ async def test_live_fallback_schema_consistency() -> None:
     if len(field_sets) >= 2:
         first_fields = list(field_sets.values())[0]
         for tier, fields in field_sets.items():
-            assert fields == first_fields, f"Field mismatch for {tier}: {fields - first_fields} extra, {first_fields - fields} missing"
+            assert (
+                fields == first_fields
+            ), f"Field mismatch for {tier}: {fields - first_fields} extra, {first_fields - fields} missing"
         print(f"\nLive schema consistency test: All tiers produce identical fields")
     else:
-        pytest.skip(f"Need at least 2 active tiers for schema comparison, got: {list(field_sets.keys())}")
+        pytest.skip(
+            f"Need at least 2 active tiers for schema comparison, got: {list(field_sets.keys())}"
+        )
 
 
 # Documentation for running live tests

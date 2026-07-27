@@ -174,33 +174,35 @@ class TemplateConnector(BaseConnector):
                 continue
             if not name or not product_id:
                 continue
-            listings.append(NormalizedListing(
-                source=self.connector_id,
-                source_type=self.template.source_type,
-                source_listing_id=product_id,
-                title_raw=name,
-                price=price,
-                currency="GBP",
-                url=f"{self.template.base_url}/searchresults?descriptionfilter={quote_plus(name)}",  # fallback to search query
-                product_normalized=None,
-                variant_normalized=None,
-                condition=None,
-                condition_raw=None,
-                shipping_cost=None,
-                total_landed_cost=None,
-                seller_or_store=None,
-                seller_feedback_score=None,
-                seller_feedback_pct=None,
-                location=None,
-                in_stock=None,
-                stock_state=None,
-                image_url=None,
-                exact_variant_confirmed=None,
-                variant_match_confidence=None,
-                mismatch_flags=None,
-                risk_flags=None,
-                category=self.template.category,
-            ))
+            listings.append(
+                NormalizedListing(
+                    source=self.connector_id,
+                    source_type=self.template.source_type,
+                    source_listing_id=product_id,
+                    title_raw=name,
+                    price=price,
+                    currency="GBP",
+                    url=f"{self.template.base_url}/searchresults?descriptionfilter={quote_plus(name)}",  # fallback to search query
+                    product_normalized=None,
+                    variant_normalized=None,
+                    condition=None,
+                    condition_raw=None,
+                    shipping_cost=None,
+                    total_landed_cost=None,
+                    seller_or_store=None,
+                    seller_feedback_score=None,
+                    seller_feedback_pct=None,
+                    location=None,
+                    in_stock=None,
+                    stock_state=None,
+                    image_url=None,
+                    exact_variant_confirmed=None,
+                    variant_match_confidence=None,
+                    mismatch_flags=None,
+                    risk_flags=None,
+                    category=self.template.category,
+                )
+            )
         return listings
 
     async def initialize(self) -> None:

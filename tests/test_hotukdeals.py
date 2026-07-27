@@ -58,7 +58,9 @@ async def test_hotukdeals_missing_terms_returns_zero():
 
     # "RTX" is not in the real feed snapshot, so should return 0
     listings_rtx = await connector.search("RTX")
-    assert len(listings_rtx) == 0, f"Expected 0 listings for 'RTX' (not in feed), got {len(listings_rtx)}"
+    assert (
+        len(listings_rtx) == 0
+    ), f"Expected 0 listings for 'RTX' (not in feed), got {len(listings_rtx)}"
 
 
 @pytest.mark.asyncio

@@ -31,9 +31,7 @@ class TimeoutRetailerConnector(BaseConnector):
     BASE_URL: str
     RETAILER_NAME: str
     WAF_DESCRIPTION = "source-side WAF protection"
-    WAF_EVIDENCE = (
-        "HTTP 403 responses, JavaScript challenges, Byparr timeouts at 60s"
-    )
+    WAF_EVIDENCE = "HTTP 403 responses, JavaScript challenges, Byparr timeouts at 60s"
     DIAGNOSIS_TASK = "***REMOVED***"
 
     @property

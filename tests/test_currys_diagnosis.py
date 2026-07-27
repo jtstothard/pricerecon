@@ -43,12 +43,21 @@ def test_currys_template_selectors_parse_captured_listings(currys_rtx5090_html: 
 
 def test_currys_rtx3080_parser_extracts_listings(currys_rtx3080_html: str) -> None:
     selectors = SelectorConfig(
-        card=".product-tile", title="a.pdpLink", price=".price", url="a.pdpLink",
-        stock=".prod-availability-dynamic", image="img", id="a.pdpLink",
+        card=".product-tile",
+        title="a.pdpLink",
+        price=".price",
+        url="a.pdpLink",
+        stock=".prod-availability-dynamic",
+        image="img",
+        id="a.pdpLink",
     )
     listings = parse_listings_from_html(
-        currys_rtx3080_html, base_url="https://www.currys.co.uk", source="currys",
-        source_type=SourceType.RETAILER, selector=selectors, category="gpu",
+        currys_rtx3080_html,
+        base_url="https://www.currys.co.uk",
+        source="currys",
+        source_type=SourceType.RETAILER,
+        selector=selectors,
+        category="gpu",
     )
     assert isinstance(listings, list)
 
@@ -76,7 +85,9 @@ async def test_currys_connector_routes_through_flaresolverr(monkeypatch) -> None
             direct_attempted = True
             raise AssertionError("CurrysConnector must not use direct HTTP")
 
-    monkeypatch.setattr("pricerecon.connectors.template_connector.httpx.AsyncClient", MockAsyncClient)
+    monkeypatch.setattr(
+        "pricerecon.connectors.template_connector.httpx.AsyncClient", MockAsyncClient
+    )
     monkeypatch.setattr("pricerecon.connectors.flaresolverr.httpx.AsyncClient", MockAsyncClient)
     monkeypatch.setattr(FlareSolverrClient, "request_html", request_html)
 

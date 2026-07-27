@@ -9,7 +9,6 @@ import pytest
 from pricerecon.connectors.dell_uk import DellUKConnector
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 
-
 FIXTURE = Path(__file__).parent / "fixtures" / "dell_uk" / "access_denied.html"
 BY_PARR_FIXTURE = Path(__file__).parent / "fixtures" / "dell_uk" / "XPS_byparr.html"
 CAMOFOX_FIXTURE = Path(__file__).parent / "fixtures" / "dell_uk" / "XPS_camofox.snapshot"
@@ -71,15 +70,21 @@ async def test_dell_uk_uses_flaresolverr_html_route(monkeypatch: pytest.MonkeyPa
         calls.append(url)
         return html
 
-    monkeypatch.setattr("pricerecon.connectors.dell_uk.FlareSolverrClient.request_html", request_html)
+    monkeypatch.setattr(
+        "pricerecon.connectors.dell_uk.FlareSolverrClient.request_html", request_html
+    )
     connector = DellUKConnector(flaresolverr_url="http://byparr.test/v1")
     listings = await connector.search("XPS")
 
     assert len(listings) == 12
     assert calls == ["https://www.dell.com/en-uk/search/laptops?text=XPS"]
 
+
 def test_dell_uk_does_not_parse_camofox_snapshot_as_html() -> None:
     connector = DellUKConnector()
-    assert connector._parse_listings(
-        CAMOFOX_FIXTURE.read_text(), "XPS", "https://www.dell.com/en-uk/search/laptops?text=XPS"
-    ) == []
+    assert (
+        connector._parse_listings(
+            CAMOFOX_FIXTURE.read_text(), "XPS", "https://www.dell.com/en-uk/search/laptops?text=XPS"
+        )
+        == []
+    )

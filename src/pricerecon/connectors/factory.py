@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-
 # These fields describe whether a source participates in a watch, rather than
 # how its connector should be constructed.  They can be present in persisted
 # source/config-file records and must not leak into arbitrary connector

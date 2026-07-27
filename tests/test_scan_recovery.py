@@ -9,6 +9,7 @@ Diagnosis findings:
 - Camofox/Byparr route: Works (257KB fixture with 480 products)
 - Template selectors need fixing to match real HTML structure
 """
+
 import pytest
 from pricerecon.connectors.html import SelectorConfig, parse_listings_from_html
 from pricerecon.models import SourceType

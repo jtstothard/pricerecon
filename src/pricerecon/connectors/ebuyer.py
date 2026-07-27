@@ -1,4 +1,5 @@
 """Ebuyer template connector marker."""
+
 from .template_connector import TemplateConnector
 
 
