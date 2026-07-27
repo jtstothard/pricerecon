@@ -1,0 +1,532 @@
+- main:
+  - link "Skip to main content" [e1]:
+    - /url: "#mh-main"
+  - button "Navigation" [e2]
+  - link "Dell Technologies Home" [e3]:
+    - /url: https://www.dell.com/en-uk
+    - img
+  - search:
+    - combobox "Search Dell": laptops
+    - button "Search Dell" [e4]
+  - button "Sign In" [e5]:
+    - img
+  - dialog "Sign In"
+  - button "No items in your basket." [e6]:
+    - img
+  - dialog "Basket":
+    - button "Close" [e7]:
+      - img
+    - progressbar "Loading"
+    - list
+  - navigation:
+    - menu:
+      - menuitem "Artificial Intelligence" [e8]
+      - menuitem "IT Infrastructure" [e9]
+      - menuitem "Computers & Accessories" [e10]
+      - menuitem "Services" [e11]
+      - menuitem "Support" [e12]
+      - menuitem "Deals" [e13]
+      - menuitem "Dell Premier for Business" [e14]:
+        - link "Dell Premier for Business" [e15]:
+          - /url: https://www.dell.com/en-uk/lp/dt/dell-premier
+      - menuitem "Contact Us" [e16]
+      - menuitem "UK/EN" [e17]
+  - complementary:
+    - button "Contact Us" [e18]
+  - navigation "breadcrumb":
+    - list:
+      - listitem:
+        - text: Showing results for laptops in
+        - link "All Categories" [e19]:
+          - /url: javascript:;
+      - listitem: Laptops & 2-in-1 PCs
+  - list:
+    - listitem:
+      - link "Shop Products" [e20]
+    - listitem:
+      - link "Get Support" [e21]
+  - tabpanel
+  - region "Virtual Assistant":
+    - separator
+    - heading "Virtual Assistant" [level=3]
+    - button "Hide panel" [e22] [expanded]
+    - region "Virtual Assistant":
+      - paragraph:
+        - text: Looking for the perfect laptops? I can help you find the one that fits your lifestyle and performance needs. Dell offers a range of choices designed for every kind of user — from everyday multitaskers to creative professionals and gaming enthusiasts. Filter by task or category to find the ideal laptops for your needs.
+        - list:
+          - listitem: "Dell laptops: Designed for daily use, these laptops combine lightweight form factors with responsive performance, offering solid battery life and ease of connectivity."
+        - list:
+          - listitem: "Dell Pro laptops: Built for business, these laptops deliver secure, reliable performance with robust connectivity and enhanced durability for professional workflows."
+        - list:
+          - listitem: "Dell Pro Max laptops: Powerful machines featuring high‑end processors and advanced graphics, perfect for multitasking, media creation, and demanding productivity."
+        - list:
+          - listitem: "Alienware laptops: High‑performance gaming laptops with top‑tier GPUs, advanced cooling, and immersive displays for ultimate speed and visual fidelity."
+      - radiogroup "Select AI summary feedback":
+        - radio "Helpful Response" [e23]
+        - radio "Not Helpful Response" [e24]
+      - status
+      - button "Read more about virtual assistant suggestions" [e25]
+      - heading "Select a question or the chat button to begin a Virtual Assistant chat. The search results currently displayed will remain as shown." [level=3]
+      - list "Quick Prompts":
+        - listitem:
+          - button "Explore Dell laptops for everyday use" [e26]
+        - listitem:
+          - button "Discover Dell Pro laptops for business success" [e27]
+        - listitem:
+          - button "Check out Dell Pro Max laptops for high performance" [e28]
+        - listitem:
+          - button "Browse Alienware laptops for gaming thrills" [e29]
+      - button "Chat with Virtual Assistant" [e30]
+  - paragraph: Showing 1 - 12 of 263 results for 'laptops'
+  - text: "Sort By:"
+  - combobox "Sort By":
+    - option "RelevanceRelevance" [selected]
+    - option "Price Low to HighPrice Low to High"
+    - option "Price High to LowPrice High to Low"
+  - button "Filters" [e31]
+  - article:
+    - button "Save" [e32]
+    - checkbox "Select 2 or more products to compare them side by side" [e33]
+    - button "Compare Dell 16 Laptop with other products" [e34]: Compare
+    - status
+    - heading "Dell 16 Laptop" [level=3]:
+      - link "Dell 16 Laptop" [e35]:
+        - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-16-laptop/spd/dell-dc16256-laptop/cndc1625602
+    - link "4.4 out of 5 stars. 168 reviews" [e36]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-16-laptop/spd/dell-dc16256-laptop/cndc1625602#ratings_section
+    - text: Original Price
+    - deletion: £828.99
+    - text: Dell Price £628.99 Save £200.00 (24%) £524.16 excluding VAT @20%
+    - link "Charger included" [e37]:
+      - /url: javascript:;
+      - img "Charger included"
+    - link "This device charges at 45 - 65W" [e38]:
+      - /url: javascript:;
+      - img "This device charges at 45 - 65W"
+    - button "View Delivery Dates" [e39]
+    - heading "Specs" [level=4]
+    - link "Customise Dell 16 Laptop" [e40]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-16-laptop/spd/dell-dc16256-laptop/cndc1625602
+      - text: Customise
+    - text: AMD Ryzen™ 5 220, 6 cores Windows 11 Home AMD Radeon™ Graphics 16 GB DDR5 512 GB SSD 16.0-in. display Full HD+ (1920X1200) WVA
+    - link "Configure and buy Dell 16 Laptop" [e41]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-16-laptop/spd/dell-dc16256-laptop/cndc1625602?view=configurations
+      - text: Configure and buy
+  - article:
+    - button "Save" [e42]
+    - checkbox "Select 2 or more products to compare them side by side" [e43]
+    - button "Compare Dell 14 Plus Laptop with other products" [e44]: Compare
+    - status
+    - heading "Dell 14 Plus Laptop" [level=3]:
+      - link "Dell 14 Plus Laptop" [e45]:
+        - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-14-plus-laptop/spd/dell-db14250-laptop/cndb1425002sc_noac
+    - link "4.4 out of 5 stars. 1439 reviews" [e46]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-14-plus-laptop/spd/dell-db14250-laptop/cndb1425002sc_noac#ratings_section
+    - text: Original Price
+    - deletion: £1,599.00
+    - text: Dell Price £899.00 Save £700.00 (44%) £749.17 excluding VAT @20%
+    - link "Charger not included" [e47]:
+      - /url: javascript:;
+      - img "Charger not included"
+    - link "This device charges at 27 - 63W" [e48]:
+      - /url: javascript:;
+      - img "This device charges at 27 - 63W"
+    - button "Free next business day delivery option available" [e49]
+    - button "View Delivery Dates" [e50]
+    - heading "Specs" [level=4]
+    - link "Customise Dell 14 Plus Laptop" [e51]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-14-plus-laptop/spd/dell-db14250-laptop/cndb1425002sc_noac
+      - text: Customise
+    - text: Intel® Core™ Ultra 7 258V, 8 cores Windows 11 Home Intel® Arc™ Graphics 32 GB LPDDR5X 1 TB SSD 14.0-in. display 2.5K (2560X1600) WVA
+    - link "Configure and buy Dell 14 Plus Laptop" [e52]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-14-plus-laptop/spd/dell-db14250-laptop/cndb1425002sc_noac?view=configurations
+      - text: Configure and buy
+  - article:
+    - button "Save" [e53]
+    - checkbox "Select 2 or more products to compare them side by side" [e54]
+    - button "Compare Dell 16 Laptop with other products" [e55]: Compare
+    - status
+    - heading "Dell 16 Laptop" [level=3]:
+      - link "Dell 16 Laptop" [e56]:
+        - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-16-laptop/spd/dell-dc16250-laptop/cndc1625008
+    - link "4.6 out of 5 stars. 1107 reviews" [e57]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-16-laptop/spd/dell-dc16250-laptop/cndc1625008#ratings_section
+    - text: Original Price
+    - deletion: £898.99
+    - text: Dell Price £698.99 Save £200.00 (22%) £582.49 excluding VAT @20%
+    - link "Charger included" [e58]:
+      - /url: javascript:;
+      - img "Charger included"
+    - link "This device charges at 27 - 54W" [e59]:
+      - /url: javascript:;
+      - img "This device charges at 27 - 54W"
+    - heading "Specs" [level=4]
+    - link "Customise Dell 16 Laptop" [e60]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-16-laptop/spd/dell-dc16250-laptop/cndc1625008
+      - text: Customise
+    - text: Intel® Core™ 7-150U, 10 cores Windows 11 Home Intel® Graphics 16 GB DDR5 512 GB SSD 16.0-in. display Full HD+ (1920X1200) WVA
+    - link "Configure and buy Dell 16 Laptop" [e61]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-16-laptop/spd/dell-dc16250-laptop/cndc1625008?view=configurations
+      - text: Configure and buy
+  - article:
+    - button "Save" [e62]
+    - checkbox "Select 2 or more products to compare them side by side" [e63]
+    - button "Compare Dell 16 Plus Laptop with other products" [e64]: Compare
+    - status
+    - heading "Dell 16 Plus Laptop" [level=3]:
+      - link "Dell 16 Plus Laptop" [e65]:
+        - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-16-plus-laptop/spd/dell-db16250-laptop/cndb1625004sc_noac
+    - link "4.5 out of 5 stars. 3912 reviews" [e66]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-16-plus-laptop/spd/dell-db16250-laptop/cndb1625004sc_noac#ratings_section
+    - text: Original Price
+    - deletion: £1,599.00
+    - text: Dell Price £899.00 Save £700.00 (44%) £749.17 excluding VAT @20%
+    - link "Charger not included" [e67]:
+      - /url: javascript:;
+      - img "Charger not included"
+    - link "This device charges at 27 - 63W" [e68]:
+      - /url: javascript:;
+      - img "This device charges at 27 - 63W"
+    - heading "Specs" [level=4]
+    - link "Customise Dell 16 Plus Laptop" [e69]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-16-plus-laptop/spd/dell-db16250-laptop/cndb1625004sc_noac
+      - text: Customise
+    - text: Intel® Core™ Ultra 7 258V, 8 cores Windows 11 Home Intel® Arc™ Graphics 32 GB LPDDR5X 1 TB SSD 16.0-in. display 2.5K (2560X1600) WVA
+    - link "Configure and buy Dell 16 Plus Laptop" [e70]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-16-plus-laptop/spd/dell-db16250-laptop/cndb1625004sc_noac?view=configurations
+      - text: Configure and buy
+  - article:
+    - button "Save" [e71]
+    - checkbox "Select 2 or more products to compare them side by side" [e72]
+    - button "Compare Dell 16 Laptop with other products" [e73]: Compare
+    - status
+    - heading "Dell 16 Laptop" [level=3]:
+      - link "Dell 16 Laptop" [e74]:
+        - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-16-laptop/spd/dell-dc16250-laptop/cndc1625005
+    - link "4.6 out of 5 stars. 1107 reviews" [e75]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-16-laptop/spd/dell-dc16250-laptop/cndc1625005#ratings_section
+    - text: Original Price
+    - deletion: £679.00
+    - text: Dell Price £499.00 Save £180.00 (27%) £415.83 excluding VAT @20%
+    - link "Charger included" [e76]:
+      - /url: javascript:;
+      - img "Charger included"
+    - link "This device charges at 27 - 54W" [e77]:
+      - /url: javascript:;
+      - img "This device charges at 27 - 54W"
+    - heading "Specs" [level=4]
+    - link "Customise Dell 16 Laptop" [e78]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-16-laptop/spd/dell-dc16250-laptop/cndc1625005
+      - text: Customise
+    - text: Intel® Core™ 5-120U, 10 cores Windows 11 Home Intel® Graphics 8 GB DDR5 512 GB SSD 16.0-in. display Full HD+ (1920X1200) WVA
+    - link "Configure and buy Dell 16 Laptop" [e79]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-16-laptop/spd/dell-dc16250-laptop/cndc1625005?view=configurations
+      - text: Configure and buy
+  - article:
+    - button "Save" [e80]
+    - checkbox "Select 2 or more products to compare them side by side" [e81]
+    - button "Compare Dell 14 Laptop with other products" [e82]: Compare
+    - status
+    - 'button "Available Colours: black"'
+    - heading "Dell 14 Laptop" [level=3]:
+      - link "Dell 14 Laptop" [e83]:
+        - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-14-laptop/spd/dell-dc14255-laptop/cndc1425503
+    - link "4.6 out of 5 stars. 11 reviews" [e84]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-14-laptop/spd/dell-dc14255-laptop/cndc1425503#ratings_section
+    - text: Original Price
+    - deletion: £649.00
+    - text: Dell Price £499.00 Save £150.00 (23%) £415.83 excluding VAT @20%
+    - link "Charger included" [e85]:
+      - /url: javascript:;
+      - img "Charger included"
+    - link "This device charges at 45 - 65W" [e86]:
+      - /url: javascript:;
+      - img "This device charges at 45 - 65W"
+    - heading "Specs" [level=4]
+    - link "Customise Dell 14 Laptop" [e87]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-14-laptop/spd/dell-dc14255-laptop/cndc1425503
+      - text: Customise
+    - text: AMD Ryzen™ 5 220, 6 cores Windows 11 Home AMD Radeon™ Graphics 8GB, 1x8GB, DDR5, 5600MT/s 512 GB SSD 14.0-in. display Full HD+ (1920X1200) WVA
+    - link "Configure and buy Dell 14 Laptop" [e88]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-14-laptop/spd/dell-dc14255-laptop/cndc1425503?view=configurations
+      - text: Configure and buy
+  - article:
+    - button "Save" [e89]
+    - checkbox "Select 2 or more products to compare them side by side" [e90]
+    - button "Compare Inspiron 14 2-in-1 Laptop with other products" [e91]: Compare
+    - status
+    - text: Flexibility unlocked with a 360° hinge
+    - heading "Inspiron 14 2-in-1 Laptop" [level=3]:
+      - link "Inspiron 14 2-in-1 Laptop" [e92]:
+        - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/inspiron-14-2-in-1-laptop/spd/inspiron-14-7440-2-in-1-laptop/cn74814
+    - link "4.4 out of 5 stars. 827 reviews" [e93]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/inspiron-14-2-in-1-laptop/spd/inspiron-14-7440-2-in-1-laptop/cn74814#ratings_section
+    - text: Original Price
+    - deletion: £749.00
+    - text: Dell Price £599.00 Save £150.00 (20%) £499.17 excluding VAT @20%
+    - link "Charger included" [e94]:
+      - /url: javascript:;
+      - img "Charger included"
+    - link "This device charges at 27 - 53W" [e95]:
+      - /url: javascript:;
+      - img "This device charges at 27 - 53W"
+    - heading "Specs" [level=4]
+    - link "Customise Inspiron 14 2-in-1 Laptop" [e96]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/inspiron-14-2-in-1-laptop/spd/inspiron-14-7440-2-in-1-laptop/cn74814
+      - text: Customise
+    - text: 13th Gen Intel® Core™ i5-1334U, 10 cores Windows 11 Home Intel® UHD Graphics 8 GB DDR5 512 GB SSD 14.0-in. display Full HD+ (1920X1200) WVA
+    - link "Configure and buy Inspiron 14 2-in-1 Laptop" [e97]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/inspiron-14-2-in-1-laptop/spd/inspiron-14-7440-2-in-1-laptop/cn74814?view=configurations
+      - text: Configure and buy
+  - article:
+    - button "Save" [e98]
+    - checkbox "Select 2 or more products to compare them side by side" [e99]
+    - button "Compare Dell 14 Laptop with other products" [e100]: Compare
+    - status
+    - 'button "Available Colours: black"'
+    - heading "Dell 14 Laptop" [level=3]:
+      - link "Dell 14 Laptop" [e101]:
+        - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-14-laptop/spd/dell-dc14255-laptop/cndc1425502
+    - link "4.6 out of 5 stars. 11 reviews" [e102]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-14-laptop/spd/dell-dc14255-laptop/cndc1425502#ratings_section
+    - text: Original Price
+    - deletion: £778.99
+    - text: Dell Price £598.99 Save £180.00 (23%) £499.16 excluding VAT @20%
+    - link "Charger included" [e103]:
+      - /url: javascript:;
+      - img "Charger included"
+    - link "This device charges at 45 - 65W" [e104]:
+      - /url: javascript:;
+      - img "This device charges at 45 - 65W"
+    - heading "Specs" [level=4]
+    - link "Customise Dell 14 Laptop" [e105]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-14-laptop/spd/dell-dc14255-laptop/cndc1425502
+      - text: Customise
+    - text: AMD Ryzen™ 5 220, 6 cores Windows 11 Home AMD Radeon™ Graphics 16 GB DDR5 512 GB SSD 14.0-in. display Full HD+ (1920X1200) WVA
+    - link "Configure and buy Dell 14 Laptop" [e106]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-14-laptop/spd/dell-dc14255-laptop/cndc1425502?view=configurations
+      - text: Configure and buy
+  - article:
+    - button "Save" [e107]
+    - checkbox "Select 2 or more products to compare them side by side" [e108]
+    - button "Compare Dell 14 Laptop with other products" [e109]: Compare
+    - status
+    - heading "Dell 14 Laptop" [level=3]:
+      - link "Dell 14 Laptop" [e110]:
+        - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-14-laptop/spd/dell-dc14250-laptop/cndc1425009
+    - link "4.2 out of 5 stars. 124 reviews" [e111]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-14-laptop/spd/dell-dc14250-laptop/cndc1425009#ratings_section
+    - text: Original Price
+    - deletion: £798.99
+    - text: Dell Price £598.99 Save £200.00 (25%) £499.16 excluding VAT @20%
+    - link "Charger included" [e112]:
+      - /url: javascript:;
+      - img "Charger included"
+    - link "This device charges at 27 - 53W" [e113]:
+      - /url: javascript:;
+      - img "This device charges at 27 - 53W"
+    - heading "Specs" [level=4]
+    - link "Customise Dell 14 Laptop" [e114]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-14-laptop/spd/dell-dc14250-laptop/cndc1425009
+      - text: Customise
+    - text: Intel® Core™ 5-120U, 10 cores Windows 11 Home Intel® Graphics 16 GB DDR5 512 GB SSD 14.0-in. display Full HD+ (1920X1200) WVA
+    - link "Configure and buy Dell 14 Laptop" [e115]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-14-laptop/spd/dell-dc14250-laptop/cndc1425009?view=configurations
+      - text: Configure and buy
+  - article:
+    - button "Save" [e116]
+    - checkbox "Select 2 or more products to compare them side by side" [e117]
+    - button "Compare Inspiron 14 2-in-1 Laptop with other products" [e118]: Compare
+    - status
+    - heading "Inspiron 14 2-in-1 Laptop" [level=3]:
+      - link "Inspiron 14 2-in-1 Laptop" [e119]:
+        - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/inspiron-14-2-in-1-laptop/spd/inspiron-14-7440-2-in-1-laptop/cn74810
+    - link "4.4 out of 5 stars. 827 reviews" [e120]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/inspiron-14-2-in-1-laptop/spd/inspiron-14-7440-2-in-1-laptop/cn74810#ratings_section
+    - text: Original Price
+    - deletion: £979.00
+    - text: Dell Price £799.00 Save £180.00 (18%) £665.83 excluding VAT @20%
+    - link "Charger included" [e121]:
+      - /url: javascript:;
+      - img "Charger included"
+    - link "This device charges at 27 - 53W" [e122]:
+      - /url: javascript:;
+      - img "This device charges at 27 - 53W"
+    - heading "Specs" [level=4]
+    - link "Customise Inspiron 14 2-in-1 Laptop" [e123]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/inspiron-14-2-in-1-laptop/spd/inspiron-14-7440-2-in-1-laptop/cn74810
+      - text: Customise
+    - text: Intel® Core™ 7 150U, 10 cores Windows 11 Home Intel® Graphics 16 GB DDR5 512 GB SSD 14.0-in. display Full HD+ (1920X1200) WVA
+    - link "Configure and buy Inspiron 14 2-in-1 Laptop" [e124]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/inspiron-14-2-in-1-laptop/spd/inspiron-14-7440-2-in-1-laptop/cn74810?view=configurations
+      - text: Configure and buy
+  - article:
+    - button "Save" [e125]
+    - checkbox "Select 2 or more products to compare them side by side" [e126]
+    - button "Compare Dell 14 Plus 2-in-1 Laptop with other products" [e127]: Compare
+    - status
+    - heading "Dell 14 Plus 2-in-1 Laptop" [level=3]:
+      - link "Dell 14 Plus 2-in-1 Laptop" [e128]:
+        - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-14-plus-2-in-1-laptop/spd/dell-db04250-2-in-1-laptop/cndb0425003
+    - link "4.2 out of 5 stars. 298 reviews" [e129]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-14-plus-2-in-1-laptop/spd/dell-db04250-2-in-1-laptop/cndb0425003#ratings_section
+    - text: Original Price
+    - deletion: £1,198.99
+    - text: Dell Price £898.99 Save £300.00 (25%) £749.16 excluding VAT @20%
+    - link "Charger included" [e130]:
+      - /url: javascript:;
+      - img "Charger included"
+    - link "This device charges at 27 - 63W" [e131]:
+      - /url: javascript:;
+      - img "This device charges at 27 - 63W"
+    - heading "Specs" [level=4]
+    - link "Customise Dell 14 Plus 2-in-1 Laptop" [e132]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-14-plus-2-in-1-laptop/spd/dell-db04250-2-in-1-laptop/cndb0425003
+      - text: Customise
+    - text: Intel® Core™ Ultra 7 256V, 8 cores Windows 11 Home Intel® Arc™ Graphics 16 GB LPDDR5X 512 GB SSD 14.0-in. display Full HD+ (1920X1200) WVA
+    - link "Configure and buy Dell 14 Plus 2-in-1 Laptop" [e133]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-14-plus-2-in-1-laptop/spd/dell-db04250-2-in-1-laptop/cndb0425003?view=configurations
+      - text: Configure and buy
+  - article:
+    - button "Save" [e134]
+    - checkbox "Select 2 or more products to compare them side by side" [e135]
+    - button "Compare Dell Chromebook 11 Laptop with other products" [e136]: Compare
+    - status
+    - heading "Dell Chromebook 11 Laptop" [level=3]:
+      - link "Dell Chromebook 11 Laptop" [e137]:
+        - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-chromebook-11-laptop-or-2-in-1/spd/chromebook-cc11260-2-in-1-laptop/bto002_cc11260_emea
+    - link "4.4 out of 5 stars. 21 reviews" [e138]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-chromebook-11-laptop-or-2-in-1/spd/chromebook-cc11260-2-in-1-laptop/bto002_cc11260_emea#ratings_section
+    - text: £432.02 £360.02 excluding VAT @20%
+    - link "Charger included" [e139]:
+      - /url: javascript:;
+      - img "Charger included"
+    - link "This device charges at 23 - 44W" [e140]:
+      - /url: javascript:;
+      - img "This device charges at 23 - 44W"
+    - heading "Specs" [level=4]
+    - link "Customise Dell Chromebook 11 Laptop" [e141]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-chromebook-11-laptop-or-2-in-1/spd/chromebook-cc11260-2-in-1-laptop/bto002_cc11260_emea
+      - text: Customise
+    - text: Intel® N150 ChromeOS 4 GB LPDDR5 64 GB eMMC 11.6-in. display HD (1366X768) TN
+    - link "Configure and buy Dell Chromebook 11 Laptop" [e142]:
+      - /url: //www.dell.com/en-uk/shop/laptops-2-in-1-pcs/dell-chromebook-11-laptop-or-2-in-1/spd/chromebook-cc11260-2-in-1-laptop/bto002_cc11260_emea?view=configurations
+      - text: Configure and buy
+  - navigation:
+    - button "First Page" [e143] [disabled]
+    - button "Previous Page" [e144] [disabled]
+    - textbox "Page" [e145]: "1"
+    - text: of 22
+    - button "Next Page" [e146]
+    - button "Last Page" [e147]
+  - button "Manage" [e148]:
+    - img
+  - text: Manage
+  - navigation:
+    - heading "Account" [level=3]:
+      - button "Account" [e149]
+    - heading "Support" [level=3]:
+      - button "Support" [e150]
+    - heading "Connect with Us" [level=3]:
+      - button "Connect with Us" [e151]
+    - button "Site Map" [e152]
+    - button "UK/EN Location & Language selection, Selected United Kingdom English" [e153]: UK/EN
+    - heading "Our Offerings" [level=3]:
+      - button "Our Offerings" [e154]
+    - heading "Our Company" [level=3]:
+      - button "Our Company" [e155]
+    - heading "Our Partners" [level=3]:
+      - button "Our Partners" [e156]
+    - heading "Resources" [level=3]:
+      - button "Resources" [e157]
+  - navigation:
+    - list:
+      - listitem:
+        - link "Dell Technologies" [e158]:
+          - /url: //www.dell.com/en-uk
+      - listitem:
+        - link "Dell Premier for Business" [e159]:
+          - /url: //www.dell.com/en-uk/lp/dt/dell-premier
+  - navigation:
+    - list:
+      - listitem:
+        - link "Copyright © 2026 Dell Inc." [e160]:
+          - /url: //www.dell.com/en-uk/lp/legal/site-terms-of-use-copyright
+      - listitem:
+        - link "Terms & Conditions" [e161]:
+          - /url: //www.dell.com/en-uk/lp/legal/terms-of-sale
+      - listitem:
+        - link "Privacy Statement" [e162]:
+          - /url: //www.dell.com/en-uk/lp/legal/policies-privacy
+      - listitem:
+        - link "Cookies, Ads & Emails" [e163]:
+          - /url: //www.dell.com/en-uk/lp/legal/policies-cookies-ads-emails
+      - listitem:
+        - link "Legal & Regulatory" [e164]:
+          - /url: //www.dell.com/en-uk/lp/legal/terms
+      - listitem:
+        - link "Accessibility" [e165]:
+          - /url: //www.dell.com/en-uk/lp/accessibility
+      - listitem:
+        - link "Anti-Slavery, Human Trafficking & Child Labour" [e166]:
+          - /url: //www.delltechnologies.com/asset/en-uk/solutions/business-solutions/legal-pricing/statement-against-modern-slavery-human-trafficking-and-child-labor.pdf
+      - listitem:
+        - link "Carbon Reduction Plan" [e167]:
+          - /url: //www.delltechnologies.com/asset/en-gb/solutions/business-solutions/legal-pricing/carbon-reduction-plan.pdf
+  - strong:
+    - text: Marketing Campaign Claims/Disclaimers
+    - strong: "Dell Student Discounts:"
+  - text: ^Any students or apprentice over 16 years old at college and university level are entitled for a student discount all year long. Find out more information on
+  - link "https://www.dell.com/en-uk/lp/students" [e168]:
+    - /url: https://www.dell.com/en-uk/lp/students
+  - text: .
+  - paragraph
+  - paragraph:
+    - text: ^^Students can save more off their cart when they register for Dell Rewards and verify as a student. The student discount is automatically and discretely applied to eligible products at check out.
+    - strong: "Dell Rewards:"
+    - text: "*You must be a member of the Dell Rewards program and logged into your Dell account at the time of purchase. To use your Rewards towards a future purchase, the order total of your purchase must be at least £100 after Rewards have been applied. See full program terms at"
+    - link "Dell Rewards | Dell UK" [e169]:
+      - /url: https://www.dell.com/en-uk/lp/dell-rewards
+    - text: .
+  - paragraph:
+    - strong: "Built for the Knight - Get LEGO Batman:"
+    - text: "** Legacy of the Dark Knight with the purchase of Alienware Gaming Desktops or Gaming Notebooks featuring qualifying Intel® Core Ultra 5, 7, and 9 (Series 2)."
+    - link "More details" [e170]:
+      - /url: https://www.dell.com/en-uk/lp/intel-aw-gaming-bundle
+    - strong: Bundle Up and Save More!
+    - text: Save 20% on monitors and accessories purchased with a PC use code PROMO20. Discount not available when monitors and accessories are purchased separately. Offer cannot be combined with other coupons unless otherwise stated. Offer limited to 5 monitors or accessories per order. Offer ends 31/10/2026
+    - strong: "Onsite Service After Remote Diagnosis and Other Important Information:"
+    - text: Onsite service is determined by technician and cause of issue; may involve customer access to inside of system and multiple or extended sessions. If issue is covered by warranty and not resolved remotely, technician or part will be dispatched, usually within 1-2 business days following completion of remote diagnosis. Onsite service is provided by Dell Marketing L.P. Availability and terms vary by country and by product. For complete details see
+    - link "dell.com services" [e171]:
+      - /url: https://www.dell.com/en-uk/lp/legal/global-consumer-service-contracts
+      - text: Dell.com/service
+    - text: contracts. Onsite availability varies by country and service purchased. Onsite service available after remote diagnosis on field serviceable units.
+    - strong: "Pricing:"
+    - text: The pricing available on this site is Dell’s pricing for online purchases through Dell’s web store only. If you have contractual terms with Dell that refer to list pricing, please contact your Dell sales representative to obtain information about Dell’s list pricing. Prices and specifications are correct at date of publication but subject to availability or change without notice. Photos for illustrative purposes only - actual items may differ from photo. Dell will not be responsible for errors in typography or photography. Offers limited to 5 systems per customer per promotional period. For purchases above 5 units our Small Business Technology Advisors are here to help.
+    - link "Cl" [e172]:
+      - /url: https://www.dell.com/en-uk/lp/contact-us
+    - link "ick to Chat." [e173]:
+      - /url: https://www.dell.com/en-uk/lp/contact-us
+    - text: "Savings up to an additional 5% with Dell Premier and getting Dell's best online price with Dell Premier excludes the following: limited quantity deals, limited time deals, client peripherals, Dell, Dell Premium, XPS, and Alienware."
+    - strong: "Disclaimer details for Advanced Exchange:"
+    - text: Onsite or Advanced Exchange after remote diagnosis (a) Onsite after remote diagnosis is determined by online/phone technician of cause of issue, may involve customer access to inside of system and multiple extended sessions. If issue is covered by Limited Hardware Warranty and not resolved remotely, technician and/or part will be dispatched usually within 1 or 2 business days following completion of remote diagnosis. Onsite service is provided by Dell Marketing L.P., Availability varies. Other conditions apply. (b) Advanced Exchange replaces hardware after remote diagnosis. Customer must return original hardware to Dell according to the rules specified. Advanced Exchange subject to country availability. (c) For complete details about onsite or Advanced Exchange, please see
+    - link "dell.com global consumer service contracts" [e174]:
+      - /url: https://www.dell.com/en-uk/lp/legal/global-consumer-service-contracts
+      - text: dell.com/service contracts.
+    - strong: "Hard drive retention:"
+    - text: Hard drive retention is not available on models with a soldered hard drive which includes Chromebooks.
+    - strong: "Delivery Conditions:"
+    - text: Products marked as Free Next Business Day Delivery, or similar, ship on the same day if ordered before 5pm Monday - Friday and will be delivered the next business day (excluding bank holidays and weekends) for customers located in UK mainland (excluding Scottish Highlands, Offshore Islands, Northern Ireland, and all overseas territories). Next business day delivery dependent on payment made by debit/credit card or PayPal and upon confirmation of order by Dell. See
+    - link "dell.com free shipping and next business day delivery" [e175]:
+      - /url: https://www.dell.com/en-uk/lp/dell-free-shipping#Next-Business-Day-Delivery
+      - text: Next Business Day Delivery
+    - text: for full terms. All other products will be delivered via the fastest available method (excluding bank holidays and weekends) and generally within 3-5 days, depending on customer location.
+    - strong: "PayPal:"
+    - text: The PayPal Credit is a credit line to fund Dell purchases made online. Check out how
+    - link "Paypal Credit FAQ" [e176]:
+      - /url: https://www.paypal.com/uk/webapps/mpp/paypal-virtual-credit/faq?newtab=true
+      - text: PayPal Credit
+    - text: works. Dell Corporation Limited is authorised and regulated by the Financial Conduct Authority, FRN 778776, with limited permission to act as a credit broker. Dell Corporation Limited is not a lender and only operates as a credit broker exclusively for PayPal Credit. PayPal Credit is a trading name of PayPal UK Ltd, 5 Fleet Place, London, United Kingdom, EC4M 7RD, United Kingdom. PayPal Credit acceptance is subject to status, terms and conditions apply.
+    - strong: "Trademarks:"
+    - text: Dell Technologies, Dell and other trademarks are trademarks of Dell Inc. or its subsidiaries. Microsoft and Windows are US registered of Microsoft Corporation. Ultrabook, Celeron, Celeron Inside, Core Inside, Intel, Intel Logo, Intel Atom, Intel Atom Inside, Intel Core, Intel Inside, Intel Inside Logo, Intel vPro, Itanium, Itanium Inside, Intel Evo, Intel Optane, Iris, Itanium, MAX, Pentium, Pentium Inside, vPro Inside, Xeon, Xeon Phi and Xeon Inside are trademarks of Intel Corporation or its subsidiaries in the U.S. and/or other countries. AMD, and the AMD Arrow logo, and combinations thereof are trademarks of Advanced Micro Devices, Inc.. The NVIDIA logo, GeForce, GeForce RTX, GeForce RTX Super, GeForce GTX, GeForce GTX Super, GRID, SHIELD, Battery Boost, Reflex, DLSS, CUDA, FXAA, GameStream, G-SYNC, G-SYNC Ultimate, NVLINK, ShadowPlay, SLI, TXAA, PhysX, GeForce Experience, GeForce NOW, Maxwell, Pascal and Turing are trademarks and/or registered trademarks of NVIDIA Corporation in the U.S. and other countries. Snapdragon is a trademark or registered trademark of Qualcomm Incorporated. Other trademarks may be trademarks of their respective owners.
+- status
