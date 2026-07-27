@@ -16,7 +16,13 @@ import sqlite3
 
 from pricerecon.db.schema import DB_PATH, init_db
 from pricerecon.core.watch_executor import execute_watch, get_watch_results, get_watch_events
-from pricerecon.models import SourceConfig, WatchFilters, WatchSchedule, WatchGrouping, WatchNotification
+from pricerecon.models import (
+    SourceConfig,
+    WatchFilters,
+    WatchSchedule,
+    WatchGrouping,
+    WatchNotification,
+)
 
 
 def get_db():
@@ -79,6 +85,7 @@ def watch_add(
     filters = WatchFilters()
     if price_max:
         from decimal import Decimal
+
         filters.price_max = Decimal(str(price_max))
 
     # Build schedule
@@ -86,11 +93,11 @@ def watch_add(
 
     # Build config JSON (using mode='json' to handle Decimal serialization)
     config = {
-        "sources": [s.model_dump(mode='json') for s in source_configs],
-        "filters": filters.model_dump(mode='json'),
-        "schedule": schedule.model_dump(mode='json'),
-        "grouping": WatchGrouping(enabled=False, product_key=None).model_dump(mode='json'),
-        "notifications": WatchNotification().model_dump(mode='json'),
+        "sources": [s.model_dump(mode="json") for s in source_configs],
+        "filters": filters.model_dump(mode="json"),
+        "schedule": schedule.model_dump(mode="json"),
+        "grouping": WatchGrouping(enabled=False, product_key=None).model_dump(mode="json"),
+        "notifications": WatchNotification().model_dump(mode="json"),
         "enabled": True,
         "status": "active",
     }
@@ -106,7 +113,7 @@ def watch_add(
                 json.dumps(config),
                 datetime.utcnow().isoformat(),
                 datetime.utcnow().isoformat(),
-            )
+            ),
         )
         watch_id = cursor.lastrowid
         conn.commit()
@@ -138,7 +145,7 @@ def watch_list(limit: int):
            FROM watches
            ORDER BY created_at DESC
            LIMIT ?""",
-        (limit,)
+        (limit,),
     )
     rows = cursor.fetchall()
     conn.close()
