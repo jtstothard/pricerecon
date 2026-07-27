@@ -81,6 +81,10 @@ module = [
   "tests.test_hotukdeals",
   "tests.test_ebuyer",
   "tests.test_currys_diagnosis",
+  "tests.test_shadow_filters",
+  "tests.test_source_queries_routing",
+  "tests.test_hardware_routes",
+  "tests.test_connectors",
 ]
 ignore_errors = true
 
