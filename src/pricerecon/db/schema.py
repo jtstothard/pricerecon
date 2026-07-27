@@ -129,6 +129,32 @@ def _apply_migrations(conn: sqlite3.Connection) -> None:
                 ("1.1", "Add checked_at column to connector_health"),
             )
 
+    # Migration 1.2: configure the initial shadow-only false-positive floors.
+    # This is a JSON config update, not a schema/data migration of listings or alerts.
+    if "1.2" not in applied:
+        floors = {18: 1000, 19: 1250, 20: 2000, 21: 2000, 22: 1250}
+        for watch_id, floor in floors.items():
+            row = cursor.execute(
+                "SELECT config_json FROM watches WHERE id = ?", (watch_id,)
+            ).fetchone()
+            if not row:
+                continue
+            try:
+                config = json.loads(row[0])
+            except (TypeError, json.JSONDecodeError):
+                config = {}
+            filters = config.setdefault("filters", {})
+            filters.setdefault("min_price_gbp", floor)
+            filters.setdefault("component_subject_pattern", None)
+            cursor.execute(
+                "UPDATE watches SET config_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                (json.dumps(config), watch_id),
+            )
+        cursor.execute(
+            "INSERT INTO schema_migrations (version, description) VALUES (?, ?)",
+            ("1.2", "Configure shadow-mode price floors for watches 18-22"),
+        )
+
     conn.commit()
 
 
