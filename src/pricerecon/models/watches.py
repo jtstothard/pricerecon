@@ -84,6 +84,9 @@ class WatchFilters(BaseModel):
 
     The shadow fields are deliberately observational: watch execution logs their
     matches but does not remove listings from the result set.
+
+    Enforcement fields control whether shadow rules are applied to suppress
+    listings from the alert pipeline.
     """
 
     price_max: Optional[Decimal] = Field(None, ge=0, description="Maximum price")
@@ -92,6 +95,9 @@ class WatchFilters(BaseModel):
     )
     component_subject_pattern: Optional[str] = Field(
         None, description="Case-insensitive component-subject regex (currently shadow-only)"
+    )
+    enforce_component_pattern: bool = Field(
+        default=True, description="Enforce P1 component-subject pattern filtering (suppresses matches)"
     )
     currency: str = Field(default="GBP", description="Currency for price_max")
     condition_filter: ConditionFilter = Field(default_factory=lambda: ConditionFilter())
