@@ -18,7 +18,6 @@ Or configure with environment variables:
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any
 
 import os
 import pytest
@@ -248,7 +247,7 @@ async def test_live_fallback_schema_consistency() -> None:
             assert (
                 fields == first_fields
             ), f"Field mismatch for {tier}: {fields - first_fields} extra, {first_fields - fields} missing"
-        print(f"\nLive schema consistency test: All tiers produce identical fields")
+        print("\nLive schema consistency test: All tiers produce identical fields")
     else:
         pytest.skip(
             f"Need at least 2 active tiers for schema comparison, got: {list(field_sets.keys())}"
