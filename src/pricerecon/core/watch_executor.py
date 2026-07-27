@@ -78,11 +78,15 @@ def evaluate_shadow_filters(
         if not matched:
             continue
         entry = {
-            "tag": "shadow_filter", "watch_id": watch_id,
-            "listing_id": listing.source_listing_id, "alert_id": None,
-            "title": listing.title_raw, "price": str(listing.price) if listing.price is not None else None,
+            "tag": "shadow_filter",
+            "watch_id": watch_id,
+            "listing_id": listing.source_listing_id,
+            "alert_id": None,
+            "title": listing.title_raw,
+            "price": str(listing.price) if listing.price is not None else None,
             "which_filter_matched": matched[0] if len(matched) == 1 else "both",
-            "floor_value": floor, "pattern_name": SHADOW_FILTER_PATTERN_NAME,
+            "floor_value": floor,
+            "pattern_name": SHADOW_FILTER_PATTERN_NAME,
         }
         if review_missing_price:
             entry["review"] = "missing_price"
