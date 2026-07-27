@@ -10,11 +10,13 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import inspect
 import json
 import logging
 import os
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any, Optional, Callable
 from urllib.parse import quote_plus
 
@@ -556,8 +558,9 @@ class RedditBapcSalesUKConnector(_RedditConnector):
 
 class HotUKDealsConnector(TemplateConnector):
     CONNECTOR_ID = "hotukdeals"
+    cache_retention_days = 7
 
-    def __init__(self) -> None:
+    def __init__(self, cache_path: str | Path | None = None) -> None:
         super().__init__(
             _load_template_or_default(
                 self.CONNECTOR_ID,
@@ -566,14 +569,59 @@ class HotUKDealsConnector(TemplateConnector):
                 endpoint_url="https://www.hotukdeals.com/rss/new",
             )
         )
+        self._cache = _HotUKDealsCache(Path(cache_path or "~/.cache/pricerecon/hotukdeals.json"), self.cache_retention_days)
 
-    async def search(
-        self, query: str, filters: Optional[dict[str, Any]] = None
-    ) -> list[NormalizedListing]:
-        listings = _filter_listings_by_query(await super().search(query, filters), query)
+    @property
+    def cache_size(self) -> int:
+        return len(self._cache.entries)
+
+    async def search(self, query: str, filters: Optional[dict[str, Any]] = None) -> list[NormalizedListing]:
+        try:
+            result = self.fetch_entries(self._render_url(query=query, filters=filters or {}))
+            entries = await result if inspect.isawaitable(result) else result
+            self._cache.upsert(entries)
+            self._cache.save()
+        except Exception:
+            entries = list(self._cache.entries.values())
+            if not entries:
+                raise
+        listings = _filter_listings_by_query([self._entry_to_listing(entry) for entry in entries], query)
         for listing in listings:
             listing.in_stock = None
         return listings
+
+
+class _HotUKDealsCache:
+    def __init__(self, path: Path, retention_days: int) -> None:
+        self.path = path.expanduser()
+        self.retention = timedelta(days=retention_days)
+        self.entries: dict[str, FeedEntry] = {}
+        self._load()
+
+    def _load(self) -> None:
+        try:
+            payload = json.loads(self.path.read_text())
+        except (OSError, ValueError):
+            return
+        cutoff = datetime.now(timezone.utc) - self.retention
+        for raw in payload.get("entries", []) if isinstance(payload, dict) else []:
+            try:
+                entry = FeedEntry.model_validate(raw)
+            except Exception:
+                continue
+            if entry.published_at is None or entry.published_at >= cutoff:
+                self.entries[entry.id] = entry
+
+    def upsert(self, entries: list[FeedEntry], seen_at: datetime | None = None) -> None:
+        cutoff = datetime.now(timezone.utc) - self.retention
+        for entry in entries:
+            if entry.published_at is None or entry.published_at >= cutoff:
+                self.entries[entry.id] = entry
+        self.entries = {key: entry for key, entry in self.entries.items() if entry.published_at is None or entry.published_at >= cutoff}
+
+    def save(self) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path.write_text(json.dumps({"entries": [entry.model_dump(mode="json") for entry in self.entries.values()]}))
 
 
 def _looks_blocked(content: str) -> bool:
