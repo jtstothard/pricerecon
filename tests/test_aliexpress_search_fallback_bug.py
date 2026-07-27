@@ -8,7 +8,6 @@ Brave lanes fail, we get 0 results even though DS credentials are available.
 import pytest
 from typing import cast
 from pricerecon.connectors.aliexpress import AliExpressConnector
-from pricerecon.connectors.status import ConnectorDegradedError
 import httpx
 
 

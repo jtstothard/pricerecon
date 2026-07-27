@@ -3,7 +3,6 @@
 import pytest
 
 from pricerecon.connectors.aria import AriaConnector
-from pricerecon.connectors.ccl import CclConnector
 from pricerecon.connectors.ao import AOConnector
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 

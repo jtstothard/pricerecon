@@ -5,7 +5,6 @@ from decimal import Decimal
 import pytest
 from pricerecon.connectors.argos import ArgosConnector
 from pricerecon.connectors.musicmagpie import MusicMagpieConnector
-from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 from pricerecon.models import SourceType
 
 

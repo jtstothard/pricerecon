@@ -22,7 +22,7 @@ def test_argos_live_camofox_snapshot_has_listings() -> None:
     # The parser may surface promotional blocks (e.g. "Microsoft 365. McAfee")
     # before real products. Assert the Lenovo listing exists anywhere in the
     # results, not necessarily at index 0.
-    lenovo = [l for l in listings if l.source_listing_id == "7816905"]
+    lenovo = [item for item in listings if item.source_listing_id == "7816905"]
     assert len(lenovo) == 1, f"Lenovo IdeaPad 7816905 not found in {len(listings)} listings"
     assert "Lenovo IdeaPad" in lenovo[0].title_raw
     assert str(lenovo[0].price) == "349.00"
