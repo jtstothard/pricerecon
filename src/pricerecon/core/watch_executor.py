@@ -53,11 +53,24 @@ def evaluate_shadow_filters(
     results: list[dict[str, Any]] = []
     for listing in listings:
         matched: list[str] = []
-        # Floors are GBP by contract. Unknown currencies are not coerced to zero;
-        # they are review-worthy and therefore logged rather than suppressed.
+        # Floors are GBP by contract. Prices should already be normalized by the
+        # connector; unknown currencies and invalid values are review-worthy, not
+        # silently coerced to zero (and are never suppressed in shadow mode).
         review_missing_price = listing.price is None
-        price_gbp = listing.price if listing.currency.upper() == "GBP" else None
-        if floor is not None and (review_missing_price or (price_gbp is not None and price_gbp < floor)):
+        review_invalid_price = False
+        if listing.price is not None:
+            try:
+                review_invalid_price = not listing.price.is_finite()
+            except (AttributeError, TypeError):
+                review_invalid_price = True
+        currency = (listing.currency or "").upper()
+        price_gbp = listing.price if currency == "GBP" and not review_invalid_price else None
+        if floor is not None and (
+            review_missing_price
+            or review_invalid_price
+            or (price_gbp is None and listing.price is not None)
+            or (price_gbp is not None and price_gbp < floor)
+        ):
             matched.append("price_floor")
         title = _shadow_title(listing.title_raw)
         if pattern and re.search(pattern, title, flags=re.IGNORECASE):
