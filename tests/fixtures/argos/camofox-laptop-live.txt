@@ -1,0 +1,350 @@
+- banner:
+  - link "Skip to Content" [e1]:
+    - /url: "#__next"
+  - link "Track Order" [e2]:
+    - /url: /order/tracking?clickOrigin=header:search:order-tracking
+    - img
+    - text: Track Order
+  - link "Returns" [e3]:
+    - /url: /order/tracking?type=returns&clickOrigin=header:search:returns
+    - img
+    - text: Returns
+  - link "Stores" [e4]:
+    - /url: /stores/?clickOrigin=header:search:stores
+    - img
+    - text: Stores
+  - link "Help" [e5]:
+    - /url: /help/?clickOrigin=header:search:help
+    - img
+    - text: Help
+  - link "Logo - go to homepage" [e6]:
+    - /url: /?clickOrigin=header:search:argos+logo
+    - img "Argos logo"
+  - navigation "Categories":
+    - list:
+      - listitem:
+        - link "Shop" [e7]:
+          - /url: "#megaMenu"
+          - text: Shop
+          - img
+      - listitem:
+        - link "Trending" [e8]:
+          - /url: "#"
+          - text: Trending
+          - img
+      - listitem:
+        - link "Shop A-mazing deals" [e9]:
+          - /url: /amazing-deals?tag=ar:topnav:button2:shop-a-mazing-deals&clickOrigin=header:search:shop+a-mazing+deals
+  - search:
+    - text: Search
+    - combobox "Search"
+    - button "Search button Search" [e10]
+  - text: Use up and down arrows to review and enter to select. Touch device users, explore by touch or with swipe gestures.
+  - button "Open Ask Trevor" [e11]: Ask Trevor
+  - link "Account" [e12]:
+    - /url: /account/login?clickOrigin=header:search:account
+  - link "Wishlist" [e13]:
+    - /url: /wishlist?clickOrigin=header:search:wishlist
+  - link "Trolley" [e14]:
+    - /url: /basket?clickOrigin=header:search:trolley
+- region "Promotional offers":
+  - list:
+    - listitem:
+      - link "Small Item Delivery £4.95, free over £100" [e15]:
+        - /url: https://help.argos.co.uk/help/delivery-&-collection-guide?tag=ar:propbar-small-item
+    - listitem:
+      - link "Large Item Delivery £9.95" [e16]:
+        - /url: https://help.argos.co.uk/help/delivery-&-collection-guide?tag=ar:propbar-large-item
+    - listitem:
+      - link "A year of fast delivery with Argos Plus" [e17]:
+        - /url: /features/argos-plus?tag=ar:propbar:argosplus
+- main:
+  - heading "Results for 'laptop' in..." [level=4]
+  - heading "Technology" [level=1]
+  - text: Sort by
+  - combobox "Sort by":
+    - option "Relevance" [selected]
+    - 'option "Price: Low - High"'
+    - 'option "Price: High - Low"'
+    - option "Customer Rating"
+    - option "New In"
+  - button "Category" [e18]
+  - button "New" [e19]
+  - button "Offers & Clearance" [e20]
+  - button "Brands" [e21]
+  - button "All filters" [e22]
+  - list "Applied filter tags"
+  - text: 807 products
+  - img "VALUE argos care off"
+  - img "new badge"
+  - link "HP 14-ep2001na 14in Intel N1504GB 128GB Laptop" [e23]:
+    - /url: /product/8398037?clickSR=slp:term:laptop:1:807:1
+  - text: Rating 2.5 out of 5, from 10 reviews Lowest Price £199.00
+  - button "Argos Pay finance options. 0% instalments available or from £7.99 per month. Terms apply." [e24]: 0% instalments available or from £7.99 per month*
+  - button "Add to trolley" [e25]
+  - button "Add to wishlist" [e26]
+  - img "VALUE argos care off"
+  - img "INFO 0 interest"
+  - link "Acer Aspire Lite 14 in Intel N150 8GB 128GB Laptop" [e27]:
+    - /url: /product/8112608?clickSR=slp:term:laptop:2:807:1
+  - text: £279.00
+  - button "Argos Pay finance options. 0% instalments available or from £11.20 per month. Terms apply." [e28]: 0% instalments available or from £11.20 per month*
+  - button "Add to trolley" [e29]
+  - button "Add to wishlist" [e30]
+  - img "VALUE argos care off"
+  - img "new badge"
+  - link "ASUS Vivobook Go 14in Celeron N150 8GB 128GB Laptop" [e31]:
+    - /url: /product/8565808?clickSR=slp:term:laptop:3:807:1
+  - text: Rating 5.0 out of 5, from 1 reviews Save £30.00 £229.00
+  - button "Argos Pay finance options. 0% instalments available or from £9.19 per month. Terms apply." [e32]: 0% instalments available or from £9.19 per month*
+  - button "Add to trolley" [e33]
+  - button "Add to wishlist" [e34]
+  - img "VALUE argos care off"
+  - link "ASUS CX14 14in N50 4GB 64GB Chromebook - Blue" [e35]:
+    - /url: /product/7789829?clickSR=slp:term:laptop:4:807:1
+  - text: Rating 4.6 out of 5, from 29 reviews £149.00
+  - button "Argos Pay finance options. Buy now, pay in 3 months. Terms apply." [e36]: Buy now, pay in 3 months*
+  - button "Add to trolley" [e37]
+  - button "Add to wishlist" [e38]
+  - img "VALUE 50 cashback"
+  - link "HP 14a-ne1000na 14in Celeron 4GB 64GB Chromebook - Grey" [e39]:
+    - /url: /product/7631324?clickSR=slp:term:laptop:5:807:1
+  - text: Rating 4.7 out of 5, from 66 reviews £179.00
+  - button "Argos Pay finance options. Buy now, pay in 3 months or from £7.19 per month. Terms apply." [e40]: Buy now, pay in 3 months or from £7.19 per month*
+  - button "Add to trolley" [e41]
+  - button "Add to wishlist" [e42]
+  - img "VALUE argos care off"
+  - img "new badge"
+  - link "ASUS Vivobook G0 14in Celeron N150 8GB 128GB Laptop" [e43]:
+    - /url: /product/8565815?clickSR=slp:term:laptop:6:807:1
+  - text: Rating 5.0 out of 5, from 2 reviews Save £30.00 £229.00
+  - button "Argos Pay finance options. 0% instalments available or from £9.19 per month. Terms apply." [e44]: 0% instalments available or from £9.19 per month*
+  - button "Add to trolley" [e45]
+  - button "Add to wishlist" [e46]
+  - img "VALUE argos care off"
+  - img "new badge"
+  - link "HP 15-fd0001na Intel Core i5-1334U 16GB 512GB Laptop" [e47]:
+    - /url: /product/8172112?clickSR=slp:term:laptop:8:807:1
+  - text: Rating 5.0 out of 5, from 1 reviews £579.00
+  - button "Argos Pay finance options. 0% instalments available or from £23.24 per month. Terms apply." [e48]: 0% instalments available or from £23.24 per month*
+  - button "Add to trolley" [e49]
+  - button "Add to wishlist" [e50]
+  - img "VALUE special offer"
+  - img "INFO 0 interest"
+  - link "Lenovo Slim 3 15.30in i5 16GB 512GB Laptop - Grey" [e51]:
+    - /url: /product/7791082?clickSR=slp:term:laptop:9:807:1
+  - text: Rating 4.8 out of 5, from 35 reviews £599.00
+  - button "Argos Pay finance options. 0% instalments available or from £24.04 per month. Terms apply." [e52]: 0% instalments available or from £24.04 per month*
+  - button "Add to trolley" [e53]
+  - button "Add to wishlist" [e54]
+  - navigation "Page navigation":
+    - list:
+      - listitem:
+        - button "Go to previous page" [e55] [disabled]
+      - listitem: Page 1 of 14
+      - listitem:
+        - button "Go to page 1" [e56]: "1"
+      - listitem:
+        - button "Go to page 2" [e57]: "2"
+      - listitem:
+        - button "Go to page 3" [e58]: "3"
+      - listitem:
+        - button "Go to page 4" [e59]: "4"
+      - listitem:
+        - button "Go to page 5" [e60]: "5"
+      - listitem:
+        - button "Go to page 14" [e61]: "14"
+      - listitem:
+        - button "Go to next page" [e62]
+  - complementary "*Argos Pay Representative Example":
+    - heading "*Argos Pay Representative Example" [level=3]
+    - paragraph:
+      - text: Representative
+      - strong: 34.9% APR
+      - text: (variable),
+      - strong: 34.95% PA
+      - text: purchase rate (variable),
+      - strong: £1,200
+      - text: assumed credit limit.
+    - text: Offers and credit subject to status. 18+. UK only. Terms apply.
+    - strong: NewDay Ltd is the lender, Argos Limited is the broker.
+  - complementary:
+    - text: "Search feedback: Were these results helpful?"
+    - button "Yes" [e63]
+    - button "No" [e64]
+- contentinfo:
+  - heading "Need help?" [level=4]
+  - list:
+    - listitem:
+      - link "Help & FAQs" [e65]:
+        - /url: /help
+    - listitem:
+      - link "Contact us" [e66]:
+        - /url: /help/contact-us
+    - listitem:
+      - link "Store finder" [e67]:
+        - /url: /stores
+    - listitem:
+      - link "Account" [e68]:
+        - /url: /account/login
+    - listitem:
+      - link "Advice & inspiration" [e69]:
+        - /url: /features/advice-and-inspiration
+  - heading "Delivery & returns" [level=4]
+  - list:
+    - listitem:
+      - link "Delivery & collection" [e70]:
+        - /url: /help/delivery-&-collection-guide
+    - listitem:
+      - link "Returns" [e71]:
+        - /url: /order/tracking?type=returns
+    - listitem:
+      - link "Refunds" [e72]:
+        - /url: /help/returns-and-refunds
+    - listitem:
+      - link "Track your order" [e73]:
+        - /url: /order/tracking
+    - listitem:
+      - link "Argos Plus" [e74]:
+        - /url: /features/argos-plus
+  - heading "Product care" [level=4]
+  - list:
+    - listitem:
+      - link "Argos Care" [e75]:
+        - /url: /help/argos-care
+    - listitem:
+      - link "Product Support" [e76]:
+        - /url: https://www.argos-support.co.uk/
+    - listitem:
+      - link "Product recall" [e77]:
+        - /url: /events/safety-product-recalls
+    - listitem:
+      - link "Argos Spares" [e78]:
+        - /url: http://www.argosspares.co.uk/
+  - heading "Payment & services" [level=4]
+  - list:
+    - listitem:
+      - link "Ways to pay" [e79]:
+        - /url: https://help.argos.co.uk/help/your-ways-to-pay
+    - listitem:
+      - link "Our Services" [e80]:
+        - /url: /features/our-services
+    - listitem:
+      - link "Gift cards" [e81]:
+        - /url: /features/all-gift-cards
+    - listitem:
+      - link "Voucher codes" [e82]:
+        - /url: /events/voucher-discount-codes
+    - listitem:
+      - link "eGift Card Rewards" [e83]:
+        - /url: /features/egift-card-rewards
+    - listitem:
+      - link "Argos Pay" [e84]:
+        - /url: https://help.argos.co.uk/help/argos-pay
+    - listitem:
+      - link "Klarna" [e85]:
+        - /url: https://help.argos.co.uk/help/argos-klarna
+    - listitem:
+      - link "Nectar at Argos" [e86]:
+        - /url: /help/nectar
+    - listitem:
+      - link "Pet Insurance" [e87]:
+        - /url: https://www.argospetinsurance.co.uk/?utm_source=argos.co.uk&utm_medium=referral&utm_campaign=ARG_footer
+    - listitem:
+      - link "Furniture Recycling" [e88]:
+        - /url: https://help.argos.co.uk/help/products-and-services/clearabee-information-page/clearabeeinfopage
+  - heading "About Argos" [level=4]
+  - list:
+    - listitem:
+      - link "About us" [e89]:
+        - /url: https://corporate.sainsburys.co.uk/about-us/our-brands/
+    - listitem:
+      - link "Argos for Business" [e90]:
+        - /url: https://www.sainsburysforbusiness.co.uk
+    - listitem:
+      - link "Careers" [e91]:
+        - /url: https://sainsburys.jobs
+    - listitem:
+      - link "Press enquiries" [e92]:
+        - /url: https://corporate.sainsburys.co.uk/contact-us/
+    - listitem:
+      - link "Modern Slavery Statement" [e93]:
+        - /url: https://corporate.sainsburys.co.uk/sustainability/explore-by-a-z/people-in-our-supply-chain/standing-up-to-modern-slavery/
+    - listitem:
+      - link "Sell on Argos" [e94]:
+        - /url: https://www.argos.co.uk/features/sell-on-argos
+  - strong: Returning an item
+  - paragraph:
+    - text: For returns, product support and repairs
+    - link "Learn more here" [e95]:
+      - /url: /help/returns-and-refunds/
+  - strong: Payment methods
+  - strong: Follow us
+  - link "Argos YouTube channel" [e96]:
+    - /url: https://www.youtube.com/user/argoscouk
+    - img
+  - link "Argos Facebook page" [e97]:
+    - /url: https://www.facebook.com/argos
+    - img
+  - link "Argos X social network" [e98]:
+    - /url: https://x.com/Argos_online
+    - img
+  - link "Argos Pinterest" [e99]:
+    - /url: https://www.pinterest.co.uk/argosonline/
+    - img
+  - link "Argos Instagram" [e100]:
+    - /url: https://www.instagram.com/argos/
+    - img
+  - strong: Download our app
+  - link "Download the Argos app from the Apple Store" [e101]:
+    - /url: https://apps.apple.com/gb/app/argos/id370371087
+  - link "Download the Argos app from the Google Play Store" [e102]:
+    - /url: https://play.google.com/store/apps/details?id=com.homeretailgroup.argos.android&hl=en
+  - link [e103]:
+    - /url: //www.argos.co.uk
+  - link [e104]:
+    - /url: //www.sainsburys.co.uk/gol-ui/groceries
+  - link [e105]:
+    - /url: //tuclothing.sainsburys.co.uk/
+  - link [e106]:
+    - /url: //www.habitat.co.uk/
+  - link [e107]:
+    - /url: //www.nectar.com
+  - link "Accessibility" [e108]:
+    - /url: https://www.argos.co.uk/help/accessibility-statement
+  - link "Privacy hub" [e109]:
+    - /url: https://privacy-hub.sainsburys.co.uk
+  - link "Privacy policy" [e110]:
+    - /url: https://privacy-hub.sainsburys.co.uk/privacy-policy/
+  - link "Cookies policy" [e111]:
+    - /url: https://privacy-hub.sainsburys.co.uk/cookie-policy/
+  - button "Cookie preferences" [e112]
+  - link "Terms & conditions" [e113]:
+    - /url: https://help.argos.co.uk/help/terms-and-conditions
+  - paragraph: © Argos Limited 2026. All Rights Reserved.
+  - text: "*"
+  - strong: Argos Pay
+  - text: is provided by NewDay Ltd. UK residents aged 18 and over. Offers and credit subject to status. Terms apply.
+  - strong: Argos Limited is a credit broker and not a lender, introducing Argos Pay under an exclusive arrangement with the lender NewDay Ltd.
+  - text: "Argos Limited is authorised and regulated by the Financial Conduct Authority (firm reference number: 713206), registered office: 33 Charterhouse Street, London, EC1M 6HA). NewDay Ltd is a company registered in England and Wales (company number: 7297722), registered office: 7 Handyside Street, London, N1C 4DA. NewDay Ltd is authorised and regulated by the Financial Conduct Authority (firm reference number: 690292) and is also authorised by the Financial Conduct Authority under the Payment Services Regulations 2017 (firm reference number: 555318) for the provision of payment services."
+  - strong: PayPal Pay in 3
+  - text: is the trading name of PayPal UK LTD, 5 Fleet Place, London, United Kingdom, EC4M 7RD. Terms and conditions apply. Credit subject to status, UK residents only. Argos Limited acts as a broker and offers finance from a restricted range of finance providers. PayPal Pay in 3 is regulated by the Financial Conduct Authority. Pay in 3 eligibility is subject to status and approval. 18+ UK residents only. Pay in 3 is a credit agreement. Check if affordable and how you will repay. May make other borrowing more difficult or expensive. See product terms for more details.
+  - strong: Klarna's Pay in 3
+  - text: / Pay in 30 days are regulated credit agreements. Borrowing more than you can afford or paying late may negatively impact your financial status and ability to obtain credit. 18+, UK residents only. Subject to status. Ts&Cs and late fees apply.
+  - strong: Argos Care
+  - text: policies are provided by Domestic & General Insurance PLC, who are an insurer not an intermediary. They have not given you a personal recommendation as to whether this policy is suitable for your needs.
+- alert
+- region "Cookie banner":
+  - dialog "Our cookies and use of personal data":
+    - heading "Our cookies and use of personal data" [level=2]
+    - text: We and our 36 partners store and/or access information on your device and process personal data, including transaction data and unique IDs, for the purposes below. This allows us and our partners to customise and measure the effectiveness of the marketing you see across web, apps, social media and elsewhere. We may share personal data with 3rd parties. You can configure your choices below. For more information or to resurface this menu to change your choices or withdraw your consent, see
+    - link "More information about your privacy, opens in a new tab":
+      - /url: https://privacy-hub.sainsburys.co.uk/cookie-policy/
+      - text: Cookie and Digital Advertising Policy.
+    - heading "We and our partners process data for the following purposes:" [level=3]
+    - paragraph:
+      - text: Use precise geolocation data. Actively scan device characteristics for identification. Store and/or access information on a device. Personalised advertising and content, advertising and content measurement, audience research and services development.
+      - button "List of Partners (vendors)"
+    - button "Continue and accept"
+    - button "Required only"
+    - button "Let me choose, Opens the preference center dialog": Let me choose
