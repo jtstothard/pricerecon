@@ -247,7 +247,10 @@ async def update_watch(watch_id: int, watch_update: WatchUpdate) -> Watch:
         )
 
     try:
-        # Build config JSON
+        # Build config JSON. Pydantic applies defaults to omitted fields, so use
+        # fields_set to avoid replacing existing notification settings with the
+        # default notification config during a partial update.
+        existing_config = json.loads(row["config_json"])
         config = {
             "display_title": watch_update.display_title,
             "synonym_groups": watch_update.synonym_groups,
@@ -256,11 +259,13 @@ async def update_watch(watch_id: int, watch_update: WatchUpdate) -> Watch:
             "filters": watch_update.filters.model_dump(mode="json"),
             "schedule": watch_update.schedule.model_dump(mode="json"),
             "grouping": watch_update.grouping.model_dump(mode="json"),
-            "notifications": watch_update.notifications.model_dump(mode="json"),
+            "notifications": (
+                watch_update.notifications.model_dump(mode="json")
+                if "notifications" in watch_update.model_fields_set
+                else existing_config.get("notifications", {})
+            ),
             "enabled": watch_update.enabled,
-            "status": json.loads(row["config_json"]).get(
-                "status", "active"
-            ),  # Preserve existing status
+            "status": existing_config.get("status", "active"),  # Preserve existing status
         }
 
         cursor.execute(
