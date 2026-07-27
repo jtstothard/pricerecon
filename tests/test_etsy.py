@@ -55,7 +55,7 @@ async def test_search_parsing(connector: EtsyConnector, respx_mock: Any) -> None
         }
     }
 
-    respx_mock.post("http://localhost:8191/").mock(
+    respx_mock.post("http://localhost:8191/v1").mock(
         return_value=httpx.Response(200, json=flaresolverr_response)
     )
 
@@ -95,7 +95,7 @@ async def test_search_empty_results(connector: EtsyConnector, respx_mock: Any) -
         }
     }
 
-    respx_mock.post("http://localhost:8191/").mock(
+    respx_mock.post("http://localhost:8191/v1").mock(
         return_value=httpx.Response(200, json=flaresolverr_response)
     )
 
