@@ -1338,3 +1338,60 @@ async def test_watch_executor_records_non_empty_timeout_health(monkeypatch: Any)
     assert recorded[0][2] != ""
     assert recorded[0][3] is not None
     assert recorded[0][3]["error_type"] == "ConnectTimeout"
+
+
+@pytest.mark.asyncio
+async def test_facebook_marketplace_url_uses_lat_lon() -> None:
+    """Search URL must use latitude/longitude, not a place name string."""
+    from pricerecon.connectors.fb_marketplace import FacebookMarketplaceConnector
+
+    connector = FacebookMarketplaceConnector(browser_client=None)
+    url = connector._search_url("MacBook Pro")
+
+    assert "latitude=" in url
+    assert "longitude=" in url
+    assert "***REMOVED***" in url  # ***REMOVED*** default
+    assert "***REMOVED***" in url
+    assert "location=" not in url  # old broken param must be gone
+
+
+@pytest.mark.asyncio
+async def test_facebook_marketplace_usd_price_returns_none() -> None:
+    """USD listings should produce price=None, currency=UNK, not price=0."""
+    cards = [
+        {
+            "title": "$3,100 Corsair AI Workstation 300",
+            "url": "https://www.facebook.com/marketplace/item/789",
+            "text": "$3,100 Corsair AI Workstation 300",
+        },
+    ]
+
+    class FakeLocator:
+        def __init__(self, payload: Any) -> None:
+            self.payload = payload
+
+        async def evaluate_all(self, _script: Any) -> Any:
+            return self.payload
+
+    class FakePage:
+        async def goto(self, *_args: Any, **_kwargs: Any) -> Any:
+            return None
+
+        async def wait_for_timeout(self, *_args: Any, **_kwargs: Any) -> Any:
+            return None
+
+        def locator(self, _selector: Any) -> Any:
+            return FakeLocator(cards)
+
+    class FakeContext:
+        pass
+
+    connector = FacebookMarketplaceConnector(browser_client=None)
+    connector._context = cast(Any, FakeContext())
+    connector._page = cast(Any, FakePage())
+
+    listings = await connector.search("rtx")
+
+    assert len(listings) == 1
+    assert listings[0].price is None
+    assert listings[0].currency == "UNK"

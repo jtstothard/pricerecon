@@ -26,12 +26,16 @@ class FacebookMarketplaceConnector(BaseConnector):
         self,
         *,
         location: str | None = None,
+        latitude: float | None = None,
+        longitude: float | None = None,
         radius_km: int = 25,
         headless: bool = True,
         browser_client: BrowserClient | None = None,
         max_listings_per_hour: int = 150,
     ) -> None:
-        self.location = location or os.getenv("FB_MARKETPLACE_LOCATION", "United Kingdom")
+        self.location = location or os.getenv("FB_MARKETPLACE_LOCATION", "***REMOVED***, ***REMOVED***")
+        self.latitude = latitude or float(os.getenv("FB_MARKETPLACE_LAT", "***REMOVED***"))
+        self.longitude = longitude or float(os.getenv("FB_MARKETPLACE_LON", "***REMOVED***"))
         self.radius_km = radius_km
         self.headless = headless
         self.browser_client = browser_client or BrowserClient()
@@ -102,12 +106,17 @@ class FacebookMarketplaceConnector(BaseConnector):
 
     def _search_url(self, query: str, filters: dict[str, Any] | None = None) -> str:
         filters = filters or {}
-        location = quote_plus(str(filters.get("location") or self.location))
+        latitude = filters.get("latitude") or self.latitude
+        longitude = filters.get("longitude") or self.longitude
         radius = int(filters.get("radius_km") or self.radius_km)
         encoded = quote_plus(query)
+        # Facebook Marketplace search uses lat/lon coordinates, not a place
+        # name string.  Using a name like "United Kingdom" silently defaults
+        # to Meta HQ (Menlo Park, CA) and returns US listings.
         return (
             "https://www.facebook.com/marketplace/search/?query="
-            f"{encoded}&exact=false&radius={radius}&location={location}"
+            f"{encoded}&exact=false&radius={radius}"
+            f"&latitude={latitude}&longitude={longitude}"
         )
 
     async def search(
@@ -138,7 +147,7 @@ class FacebookMarketplaceConnector(BaseConnector):
                 if not title:
                     continue
                 text = card.get("text") or ""
-                price = extract_visible_gbp_price(f"{title} {text}") or Decimal("0")
+                price = extract_visible_gbp_price(f"{title} {text}")
                 listings.append(
                     NormalizedListing(
                         source=self.connector_id,
@@ -148,7 +157,7 @@ class FacebookMarketplaceConnector(BaseConnector):
                         ).hexdigest(),
                         title_raw=title,
                         price=price,
-                        currency="GBP",
+                        currency="GBP" if price is not None else "UNK",
                         url=card.get("url") or "",
                         timestamp_seen=datetime.utcnow(),
                         seller_or_store=None,
