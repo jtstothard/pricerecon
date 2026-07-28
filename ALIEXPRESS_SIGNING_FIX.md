@@ -134,13 +134,13 @@ The infrastructure is in place to enable SHA256 when needed.
 
 ## Changed Files
 
-- `***REMOVED***/src/pricerecon/connectors/aliexpress.py`
+- `~/pricerecon/src/pricerecon/connectors/aliexpress.py`
   - Added `_top_sign_hmac_sha256` method
   - Modified `_build_top_request` to accept `sign_method` parameter
   - Modified `_extract_top_response_payload` to raise on `error_response`
   - Refactored `_top_sign` for consistency
 
-- `***REMOVED***/tests/test_aliexpress_error_handling.py` (new file)
+- `~/pricerecon/tests/test_aliexpress_error_handling.py` (new file)
   - Added comprehensive error handling tests
 
 ## Acceptance Criteria Met

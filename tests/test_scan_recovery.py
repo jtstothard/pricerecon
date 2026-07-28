@@ -2,7 +2,7 @@
 
 This test validates that Scan connector recovers via TemplateConnector
 using the correct selectors for the actual HTML structure from the
-diagnosis task (***REMOVED***).
+diagnosis task (TASK-XXXX).
 
 Diagnosis findings:
 - Direct HTTP: 403 Cloudflare block
