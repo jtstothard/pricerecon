@@ -108,7 +108,7 @@ class BoxConnector(TimeoutRetailerConnector):
         "homepage shell (8KB) with navigation/search UI, but search page yields "
         "no product cards or RTX results after multiple attempts"
     )
-    DIAGNOSIS_TASK = "TASK-XXXX"
+    DIAGNOSIS_TASK = "endpoint-drift-2026-07-28"
 
 
 class CurrysConnector(TimeoutRetailerConnector):

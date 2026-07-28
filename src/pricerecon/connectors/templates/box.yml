@@ -2,6 +2,12 @@ name: box
 source_type: retailer
 base_url: https://www.box.co.uk
 search_url: https://www.box.co.uk/search?search={query}
+# The configured search route returned HTTP 404 in the baseline probe. Current
+# direct requests are challenged by Cloudflare (HTTP 403), and no alternate
+# route has been verified to return product HTML. Keep this connector disabled
+# until a supported access lane and canonical search endpoint are revalidated.
+disabled: true
+disabled_reason: "Box search endpoint returned HTTP 404 in the 2026-07-28 baseline; current access is Cloudflare-challenged and no alternate product-search endpoint is verified"
 use_flare_solverr: true
 selectors:
   card: article, .product, .product-card, .search-result
