@@ -6,7 +6,6 @@ import hashlib
 import asyncio
 import os
 from datetime import datetime
-from decimal import Decimal
 from typing import Any
 from urllib.parse import quote_plus
 
