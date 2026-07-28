@@ -89,6 +89,7 @@ def test_guardrail_floor_rejects_1424_price_pattern_rejects_1424_title():
 
 # --- Enforcement tests ---
 
+
 def _filters_enforce():
     return WatchFilters()
 
