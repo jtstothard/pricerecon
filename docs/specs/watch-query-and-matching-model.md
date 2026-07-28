@@ -109,9 +109,9 @@ Test that when a watch has `source_queries`, the correct query string reaches ea
 
 ## Out of Scope
 
-- Reddit API / browser fallback activation (separate task `t_41a99393`)
-- Browser backend wiring for retailers (separate task `t_41a99393`)
-- Aria / Novatech endpoint drift (separate task `t_55108e0c`)
+- Reddit API / browser fallback activation (separate task `TASK-XXXX`)
+- Browser backend wiring for retailers (separate task `TASK-XXXX`)
+- Aria / Novatech endpoint drift (separate task `TASK-XXXX`)
 - Nested boolean DSL parser (rejected in ADR)
 - Structured spec matching (gpu_model, ram_gb, etc.) — unchanged, orthogonal
 - Notification pipeline changes
@@ -120,4 +120,4 @@ Test that when a watch has `source_queries`, the correct query string reaches ea
 
 - The ADR is committed at `254094f` in `docs/adr/0001-watch-query-and-matching-model.md`.
 - The domain glossary is in `CONTEXT.md`.
-- This spec supersedes the monolithic task `t_25120dea`.
+- This spec supersedes the monolithic task `TASK-XXXX`.

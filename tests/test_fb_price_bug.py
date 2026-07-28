@@ -15,7 +15,7 @@ from pricerecon.connectors.price import extract_visible_gbp_price
 
 
 class TestFBMarketplacePriceBug:
-    """Regression for t_e0564506: USD prices must not produce GBP fragments."""
+    """Regression for TASK-XXXX: USD prices must not produce GBP fragments."""
 
     def test_usd_price_returns_none_1(self):
         """$3,100 USD with "Workstation 300" in title → None (was £300)."""

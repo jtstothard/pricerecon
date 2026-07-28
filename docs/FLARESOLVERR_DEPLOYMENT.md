@@ -116,7 +116,7 @@ If PriceRecon and FlareSolverr run on different hosts:
 
 ```yaml
 # config.yml (on PriceRecon host)
-flaresolverr_url: "http://docker-app-vm:8191/v1"
+flaresolverr_url: "http://localhost:8191/v1"
 ```
 
 Ensure DNS resolution works or use IP address directly.
@@ -270,10 +270,10 @@ Watch for:
 
 ## Related Files
 
-- `/home/hermes/pricerecon/src/pricerecon/connectors/flaresolverr.py` - FlareSolverr client
-- `/home/hermes/pricerecon/src/pricerecon/connectors/template_connector.py` - Integration
-- `/home/hermes/pricerecon/src/pricerecon/connectors/templates/*.yml` - Connector configs
-- `/home/hermes/pricerecon/config.yml` - Runtime configuration
-- `/home/hermes/pricerecon/docker-compose.yml` - Deployment config
-- `/home/hermes/pricerecon/scripts/check_flaresolverr.sh` - Verification script
-- `/home/hermes/pricerecon/scripts/test_flaresolverr_connectors.py` - Live testing
+- `~/pricerecon/src/pricerecon/connectors/flaresolverr.py` - FlareSolverr client
+- `~/pricerecon/src/pricerecon/connectors/template_connector.py` - Integration
+- `~/pricerecon/src/pricerecon/connectors/templates/*.yml` - Connector configs
+- `~/pricerecon/config.yml` - Runtime configuration
+- `~/pricerecon/docker-compose.yml` - Deployment config
+- `~/pricerecon/scripts/check_flaresolverr.sh` - Verification script
+- `~/pricerecon/scripts/test_flaresolverr_connectors.py` - Live testing

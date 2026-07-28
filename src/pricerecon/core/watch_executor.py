@@ -398,7 +398,6 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
                     cfg.get("camofox_url")
                     or os.environ.get("ALIEXPRESS_CAMOFOX_URL")
                     or os.environ.get("CAMOFOX_URL")
-                    or "http://192.168.10.252:9377"
                 )
                 cfg.setdefault("camofox_url", camofox_url)
                 if camofox_url:
@@ -423,11 +422,7 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
 
                 cfg = {**config_defaults, **dict(source.config or {})}
                 browser_client = None
-                camofox_url = (
-                    cfg.get("camofox_url")
-                    or os.environ.get("CAMOFOX_URL")
-                    or "http://192.168.10.252:9377"
-                )
+                camofox_url = cfg.get("camofox_url") or os.environ.get("CAMOFOX_URL")
                 cfg.setdefault("camofox_url", camofox_url)
                 if camofox_url:
                     browser_client = BrowserClient(

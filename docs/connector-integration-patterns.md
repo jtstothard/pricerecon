@@ -19,8 +19,8 @@ FlareSolverr is a proxy service that solves Cloudflare, DataDome, and Akamai cha
 ### Infrastructure
 
 - **Service**: FlareSolverr (HTTP API)
-- **Deployment**: `docker-app-vm`
-- **URL**: `http://docker-app-vm:8191/v1`
+- **Deployment**: `localhost`
+- **URL**: `http://localhost:8191/v1`
 - **Protocol**: POST with JSON payload
 
 ### When to Use
@@ -55,7 +55,7 @@ class MyRetailerConnector(BaseConnector):
         self.flaresolverr_url = (
             flaresolverr_url 
             or global_config.get("flaresolverr_url")
-            or "http://docker-app-vm:8191/v1"
+            or "http://localhost:8191/v1"
         )
         self._flaresolverr_client: Optional[FlareSolverrClient] = None
         self._client: Optional[httpx.AsyncClient] = None
@@ -121,7 +121,7 @@ class FlareSolverrClient:
     def __init__(self, endpoint: str, timeout: float = 90.0):
         """
         Args:
-            endpoint: FlareSolverr API URL (e.g., "http://docker-app-vm:8191/v1")
+            endpoint: FlareSolverr API URL (e.g., "http://localhost:8191/v1")
             timeout: HTTP client timeout for the FlareSolverr request
         """
 
@@ -145,7 +145,7 @@ class FlareSolverrClient:
 ### Request Flow
 
 ```
-Connector → POST http://docker-app-vm:8191/v1
+Connector → POST http://localhost:8191/v1
            Payload: {"cmd": "request.get", "url": "https://...", "maxTimeout": 60000}
            ↓
 FlareSolverr → Launch browser → Solve challenge → Return HTML
@@ -178,13 +178,13 @@ Add to global `config.yml`:
 
 ```yaml
 # FlareSolverr endpoint (for Cloudflare-protected retailers)
-flaresolverr_url: "http://docker-app-vm:8191/v1"
+flaresolverr_url: "http://localhost:8191/v1"
 
 # Or per-connector in watch config:
 sources:
   - connector: myretailer
     config:
-      flaresolverr_url: "http://docker-app-vm:8191/v1"
+      flaresolverr_url: "http://localhost:8191/v1"
 ```
 
 ### Existing Examples
@@ -204,7 +204,7 @@ Camofox is a remote browser service that runs Playwright browsers and exposes th
 ### Infrastructure
 
 - **Service**: Camofox REST API
-- **Deployment**: `192.168.10.252:9377`
+- **Deployment**: `localhost:9377`
 - **Protocol**: REST API with `/tabs` and `/sessions` endpoints
 - **Authentication**: Bearer token (optional, via `Authorization` header)
 
@@ -232,7 +232,7 @@ from typing import Optional
 
 class MySPAConnector(BaseConnector):
     def __init__(self, camofox_url: str | None = None):
-        self.camofox_url = camofox_url or "http://192.168.10.252:9377"
+        self.camofox_url = camofox_url or "http://localhost:9377"
         self._browser_client: Optional[BrowserClient] = None
         self._context: Optional[Any] = None
 
@@ -329,12 +329,12 @@ class BrowserSessionConfig:
 ```
 Connector → BrowserClient (uses Camofox if camofox_url set)
          ↓
-    POST http://192.168.10.252:9377/tabs
+    POST http://localhost:9377/tabs
     Payload: {"userId": "...", "sessionKey": "...", "url": "https://..."}
          ↓
 Camofox → Launch browser → Navigate → Render JS
          ↓
-    GET http://192.168.10.252:9377/tabs/{tabId}/snapshot?format=text
+    GET http://localhost:9377/tabs/{tabId}/snapshot?format=text
          ↓
 Connector ← HTML content of rendered page
 ```
@@ -403,7 +403,7 @@ Add to global `config.yml`:
 connectors:
   myspa:
     enabled: true
-    camofox_url: "http://192.168.10.252:9377"
+    camofox_url: "http://localhost:9377"
     camofox_user_id: "pricerecon-myspa"
     camofox_api_key: null  # Optional: set if Camofox requires auth
 ```
@@ -414,7 +414,7 @@ Or per-watch config:
 sources:
   - connector: myspa
     config:
-      camofox_url: "http://192.168.10.252:9377"
+      camofox_url: "http://localhost:9377"
 ```
 
 ### Existing Examples
@@ -817,7 +817,7 @@ from pricerecon.connectors.flaresolverr import FlareSolverrClient
 
 @pytest.mark.asyncio
 async def test_flaresolverr_request():
-    client = FlareSolverrClient("http://docker-app-vm:8191/v1")
+    client = FlareSolverrClient("http://localhost:8191/v1")
     
     # Mock httpx in tests, or use real endpoint in integration tests
     html = await client.request_html("https://example.com")
@@ -830,7 +830,7 @@ async def test_flaresolverr_request():
 ```python
 @pytest.mark.asyncio
 async def test_browser_client_camofox():
-    config = BrowserSessionConfig(camofox_url="http://192.168.10.252:9377")
+    config = BrowserSessionConfig(camofox_url="http://localhost:9377")
     client = BrowserClient(config=config)
     
     context = await client.new_context()

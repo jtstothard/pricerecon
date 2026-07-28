@@ -1,10 +1,10 @@
 """Documentation: Vinted and Gumtree Connector Integration Audit
 
-This document records the reconciliation outcome for task t_78df61d0.
+This document records the reconciliation outcome for task TASK-XXXX.
 
 ## Audit Findings (2026-07-14)
 
-The completed task t_bfc7c7ed claimed Vinted and Gumtree connectors were
+The completed task TASK-XXXX claimed Vinted and Gumtree connectors were
 integrated, but the actual repo state showed:
 
 1. Connector implementations existed as untracked files:
@@ -72,8 +72,8 @@ The following artifacts were not production-ready and have been removed:
 
 ## Related Tasks
 
-- Parent: t_bfc7c7ed (Implement missing Vinted + Gumtree connectors)
-- This task: t_78df61d0 (Reconcile Vinted/Gumtree board claim with real repo state)
+- Parent: TASK-XXXX (Implement missing Vinted + Gumtree connectors)
+- This task: TASK-XXXX (Reconcile Vinted/Gumtree board claim with real repo state)
 
 ## Files Changed
 
