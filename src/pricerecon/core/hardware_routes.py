@@ -37,7 +37,7 @@ _COMMON_EXCLUDES = (
 
 ROUTES: tuple[HardwareRoute, ...] = (
     HardwareRoute(
-        name="***REMOVED***",
+        name="strix-halo-128gb",
         required_terms=("strix", "halo", "128gb"),
         excluded_terms=("192gb", "64gb", "256gb", "macbook", "mac studio", *_COMMON_EXCLUDES),
         allowed_sources=frozenset(
@@ -45,7 +45,7 @@ ROUTES: tuple[HardwareRoute, ...] = (
         ),
     ),
     HardwareRoute(
-        name="***REMOVED***",
+        name="strix-halo-192gb",
         required_terms=("strix", "halo", "192gb"),
         excluded_terms=("128gb", "64gb", "256gb", "macbook", "mac studio", *_COMMON_EXCLUDES),
         allowed_sources=frozenset(

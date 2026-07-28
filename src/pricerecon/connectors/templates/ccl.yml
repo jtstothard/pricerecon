@@ -14,6 +14,6 @@ selectors:
 # Byparr bypass capabilities (direct HTTP 403 domain-wide, Byparr timeouts >120s).
 # Keep the connector explicit and truthful until a supported access lane is supplied.
 disabled: true
-disabled_reason: "hardened Cloudflare protection (HTTP 403 domain-wide, Byparr anti-bot route times out >120s). See diagnosis task ***REMOVED***."
+disabled_reason: "hardened Cloudflare protection (HTTP 403 domain-wide, Byparr anti-bot route times out >120s). See internal diagnosis notes for details."
 use_flare_solverr: true
 category: gpu

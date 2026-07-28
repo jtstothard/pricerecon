@@ -40,7 +40,7 @@ def listing(title: str) -> NormalizedListing:
 def test_glm_routes_have_strict_variant_and_source_allowlists() -> None:
     route = route_for_query("Strix Halo 128GB")
     assert route is not None
-    assert route.name == "***REMOVED***"
+    assert route.name == "strix-halo-128gb"
     assert "cex" in route.allowed_sources
     assert "amazon" not in route.allowed_sources
     assert route_title_matches("GMKtec Strix Halo 128GB mini PC", route)
