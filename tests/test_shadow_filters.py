@@ -2,9 +2,11 @@ from decimal import Decimal
 
 from pricerecon.core.watch_executor import (
     SHADOW_FILTER_PATTERN,
+    apply_component_pattern_filter,
     evaluate_shadow_filters,
 )
 from pricerecon.models.listings import NormalizedListing, SourceType
+from pricerecon.models.watches import WatchFilters
 
 FP_1424 = "For Mac Studio SSD for M1 Max M1 Ultra 512GB Upgrade PCB Circuit Board with Nand"
 GENUINE_1415 = "Corsair AI Workstation 300 Desktop PC - AMD Strix Halo Ryzen AI Max 395+ 128GB UNIFIED RAM 4TB SSD"
@@ -83,3 +85,31 @@ def test_guardrail_floor_rejects_1424_price_pattern_rejects_1424_title():
     assert len(entries) == 1
     assert entries[0]["which_filter_matched"] == "both"
     assert entries[0]["floor_value"] == 2000
+
+
+# --- Enforcement tests ---
+
+
+def _filters_enforce():
+    return WatchFilters()
+
+
+def test_enforcement_suppresses_component_listing_1424():
+    """apply_component_pattern_filter removes the 1424 SSD PCB listing."""
+    result = apply_component_pattern_filter([listing(FP_1424)], _filters_enforce())
+    assert result == [], "1424 component listing should be suppressed"
+
+
+def test_enforcement_keeps_genuine_systems_1415_1416():
+    """apply_component_pattern_filter passes genuine Strix Halo systems through."""
+    result = apply_component_pattern_filter(
+        [listing(GENUINE_1415), listing(GENUINE_1416)], _filters_enforce()
+    )
+    assert len(result) == 2, "genuine systems 1415/1416 should survive"
+
+
+def test_enforcement_off_passes_everything():
+    """With enforce_component_pattern=False, even component listings survive."""
+    filters = WatchFilters(enforce_component_pattern=False)
+    result = apply_component_pattern_filter([listing(FP_1424)], filters)
+    assert len(result) == 1, "enforcement off should pass component listings through"
