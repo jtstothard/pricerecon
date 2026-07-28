@@ -116,7 +116,7 @@ class ArgosConnector(BaseConnector):
             current: dict[str, str | None] | None = None
             for line in html.splitlines():
                 link_match = re.search(r'link "(.+?)"', line) or re.search(
-                    r'link \\\"(.+?)\\\"', line
+                    r"link \\\"(.+?)\\\"", line
                 )
                 if link_match:
                     if current:

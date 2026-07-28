@@ -95,6 +95,25 @@ def evaluate_shadow_filters(
     return results
 
 
+def apply_component_pattern_filter(
+    listings: list[NormalizedListing], filters: Any
+) -> list[NormalizedListing]:
+    """Suppress listings matching the enforced P1 component-subject pattern.
+
+    Price floors intentionally remain shadow-only; this function applies only
+    the component-subject rule when enabled in the watch filters.
+    """
+    values = filters.model_dump() if hasattr(filters, "model_dump") else (filters or {})
+    if not values.get("enforce_component_pattern", True):
+        return listings
+    pattern = values.get("component_subject_pattern") or SHADOW_FILTER_PATTERN
+    return [
+        listing
+        for listing in listings
+        if not re.search(pattern, _shadow_title(listing.title_raw), flags=re.IGNORECASE)
+    ]
+
+
 def get_db() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -459,9 +478,10 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
     filtered_listings = apply_post_normalization_filters(
         all_listings, watch.filters, watch.synonym_groups if watch.synonym_groups else None
     )
-    # Evaluation only: deliberately run against the complete post-fetch set and
-    # retain every listing for the normal alert/dashboard pipeline.
+    # Keep shadow evaluation against the complete post-fetch set for auditing,
+    # then enforce only P1 before entering the alert/dashboard pipeline.
     shadow_entries = evaluate_shadow_filters(all_listings, watch.filters, watch_id)
+    filtered_listings = apply_component_pattern_filter(filtered_listings, watch.filters)
     first_run, diff_result, event_ids = run_check(watch_id, filtered_listings)
 
     conn = get_db()
