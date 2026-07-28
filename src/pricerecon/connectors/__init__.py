@@ -59,7 +59,6 @@ def discover_connectors() -> dict[str, type[BaseConnector]]:
         "ebuyer",
         "ccl",
         "novatech",
-        "aria",
         "shopify",
         "fb_marketplace",
         "johnlewis",

@@ -68,7 +68,7 @@ These use Playwright for dynamic content, not FlareSolverr.
 
 **Can I use this connector without FlareSolverr?**
 
-- ✅ **Yes**: Amazon, Argos, CCL, CeX, Ebuyer, John Lewis, Laptops Direct, Music Magpie, Novatech, Shopify, Dell, Aria
+- ✅ **Yes**: Amazon, Argos, CCL, CeX, Ebuyer, John Lewis, Laptops Direct, Music Magpie, Novatech, Shopify, Dell
 - ❌ **No**: All sites in "FlareSolverr-Required" table above
 - 🔐 **Maybe**: eBay (API key required), Facebook (cookies required), Costco (session cookie required), Google Shopping (Playwright required)
 

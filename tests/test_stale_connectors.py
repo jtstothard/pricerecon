@@ -2,7 +2,6 @@
 
 import pytest
 
-from pricerecon.connectors.aria import AriaConnector
 from pricerecon.connectors.ao import AOConnector
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 
@@ -10,7 +9,6 @@ from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 @pytest.mark.parametrize(
     "connector_class, connector_id",
     [
-        (AriaConnector, "aria"),
         (AOConnector, "ao"),
     ],
 )

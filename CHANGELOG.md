@@ -34,6 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Detailed error reporting per connector
 
 ### Changed
+- Retired the Aria connector after the retailer's confirmed business closure. Its
+  connector module, template, registry entries, and active source-name mapping
+  were removed; the live-traffic baseline remains as historical evidence.
 - Updated README.md "Optional browser / anti-bot services" section
   - Now points to comprehensive deployment documentation
   - Clarified FlareSolverr requirement for specific connectors

@@ -111,7 +111,7 @@ Test that when a watch has `source_queries`, the correct query string reaches ea
 
 - Reddit API / browser fallback activation (separate task `TASK-XXXX`)
 - Browser backend wiring for retailers (separate task `TASK-XXXX`)
-- Aria / Novatech endpoint drift (separate task `TASK-XXXX`)
+- Novatech endpoint drift (separate task `TASK-XXXX`)
 - Nested boolean DSL parser (rejected in ADR)
 - Structured spec matching (gpu_model, ram_gb, etc.) — unchanged, orthogonal
 - Notification pipeline changes
