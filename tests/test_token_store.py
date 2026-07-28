@@ -144,7 +144,8 @@ async def test_refresh_if_needed_with_valid_token(store: OAuthTokenStore) -> Non
         nonlocal refresh_called
         refresh_called = True
         return TokenData(
-            access_token="refreshed_token", expires_at=datetime.now(timezone.utc) + timedelta(hours=2)
+            access_token="refreshed_token",
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=2),
         )
 
     result = await store.refresh_if_needed("test_connector", fake_refresh)
@@ -165,7 +166,8 @@ async def test_refresh_if_needed_with_expired_token(store: OAuthTokenStore) -> N
         nonlocal refresh_called
         refresh_called = True
         return TokenData(
-            access_token="refreshed_token", expires_at=datetime.now(timezone.utc) + timedelta(hours=2)
+            access_token="refreshed_token",
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=2),
         )
 
     result = await store.refresh_if_needed("test_connector", fake_refresh)
@@ -182,7 +184,8 @@ async def test_refresh_if_needed_with_no_token(store: OAuthTokenStore) -> None:
         nonlocal refresh_called
         refresh_called = True
         return TokenData(
-            access_token="refreshed_token", expires_at=datetime.now(timezone.utc) + timedelta(hours=2)
+            access_token="refreshed_token",
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=2),
         )
 
     result = await store.refresh_if_needed("test_connector", fake_refresh)
@@ -200,7 +203,8 @@ async def test_concurrent_refresh(store: OAuthTokenStore) -> None:
         refresh_count += 1
         await asyncio.sleep(0.1)  # Simulate slow refresh
         return TokenData(
-            access_token=f"token_{refresh_count}", expires_at=datetime.now(timezone.utc) + timedelta(hours=1)
+            access_token=f"token_{refresh_count}",
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
         )
 
     # Launch multiple concurrent refreshes
@@ -216,7 +220,9 @@ async def test_concurrent_refresh(store: OAuthTokenStore) -> None:
 @pytest.mark.asyncio
 async def test_delete_token(store: OAuthTokenStore) -> None:
     """Test deleting a token."""
-    token = TokenData(access_token="test_token", expires_at=datetime.now(timezone.utc) + timedelta(hours=1))
+    token = TokenData(
+        access_token="test_token", expires_at=datetime.now(timezone.utc) + timedelta(hours=1)
+    )
     await store.store_token("test_connector", token)
 
     assert await store.is_valid("test_connector")
@@ -240,10 +246,14 @@ async def test_list_connectors(store: OAuthTokenStore) -> None:
 @pytest.mark.asyncio
 async def test_replace_token(store: OAuthTokenStore) -> None:
     """Test that replace=True overwrites existing tokens."""
-    token1 = TokenData(access_token="token1", expires_at=datetime.now(timezone.utc) + timedelta(hours=1))
+    token1 = TokenData(
+        access_token="token1", expires_at=datetime.now(timezone.utc) + timedelta(hours=1)
+    )
     await store.store_token("test_connector", token1)
 
-    token2 = TokenData(access_token="token2", expires_at=datetime.now(timezone.utc) + timedelta(hours=2))
+    token2 = TokenData(
+        access_token="token2", expires_at=datetime.now(timezone.utc) + timedelta(hours=2)
+    )
     await store.store_token("test_connector", token2, replace=True)
 
     retrieved = await store.get_token("test_connector")
@@ -254,10 +264,14 @@ async def test_replace_token(store: OAuthTokenStore) -> None:
 @pytest.mark.asyncio
 async def test_no_replace_token(store: OAuthTokenStore) -> None:
     """Test that replace=False skips if token exists."""
-    token1 = TokenData(access_token="token1", expires_at=datetime.now(timezone.utc) + timedelta(hours=1))
+    token1 = TokenData(
+        access_token="token1", expires_at=datetime.now(timezone.utc) + timedelta(hours=1)
+    )
     await store.store_token("test_connector", token1)
 
-    token2 = TokenData(access_token="token2", expires_at=datetime.now(timezone.utc) + timedelta(hours=2))
+    token2 = TokenData(
+        access_token="token2", expires_at=datetime.now(timezone.utc) + timedelta(hours=2)
+    )
     await store.store_token("test_connector", token2, replace=False)
 
     retrieved = await store.get_token("test_connector")
