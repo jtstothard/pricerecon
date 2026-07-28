@@ -1,6 +1,6 @@
 """Watches CRUD API endpoints."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 import sqlite3
@@ -179,8 +179,8 @@ async def create_watch(watch_create: WatchCreate) -> Watch:
                 watch_create.query,
                 watch_create.category,
                 json.dumps(config),
-                datetime.utcnow().isoformat(),
-                datetime.utcnow().isoformat(),
+                datetime.now(timezone.utc).isoformat(),
+                datetime.now(timezone.utc).isoformat(),
             ),
         )
         watch_id = cursor.lastrowid
@@ -277,7 +277,7 @@ async def update_watch(watch_id: int, watch_update: WatchUpdate) -> Watch:
                 watch_update.query,
                 watch_update.category,
                 json.dumps(config),
-                datetime.utcnow().isoformat(),
+                datetime.now(timezone.utc).isoformat(),
                 watch_id,
             ),
         )
@@ -351,7 +351,7 @@ async def trigger_watch_check(watch_id: int) -> WatchCheckResponse:
     cursor = conn.cursor()
     cursor.execute(
         "UPDATE watches SET last_check_at = ? WHERE id = ?",
-        (datetime.utcnow().isoformat(), watch_id),
+        (datetime.now(timezone.utc).isoformat(), watch_id),
     )
     conn.commit()
     conn.close()
@@ -360,6 +360,6 @@ async def trigger_watch_check(watch_id: int) -> WatchCheckResponse:
         watch_id=watch_id,
         status="completed",
         message=f"Check completed: {result['listings_found']} listings found",
-        started_at=datetime.utcnow(),
+        started_at=datetime.now(timezone.utc),
         result=result,
     )

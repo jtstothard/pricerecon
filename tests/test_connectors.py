@@ -123,7 +123,7 @@ def test_html_parser_normalizes_cards() -> None:
 
 @pytest.mark.asyncio
 async def test_watch_executor_filters_by_spec_match_ram(monkeypatch: Any) -> None:
-    now = watch_executor.datetime.utcnow()
+    now = watch_executor.datetime.now(timezone.utc)
     watch = Watch(
         id=99,
         name="RAM floor watch",
@@ -882,7 +882,7 @@ async def test_aliexpress_connector_uses_manual_pid_and_ds_and_browser(monkeypat
 
 
 def test_aliexpress_connector_extracts_nested_ds_payload_shape() -> None:
-    now = watch_executor.datetime.utcnow()
+    now = watch_executor.datetime.now(timezone.utc)
     connector = AliExpressConnector({})
     listing = NormalizedListing(
         source="aliexpress",
@@ -1250,7 +1250,7 @@ async def test_dell_uk_connector_parses_visible_listing_cards_and_registers_entr
 
 @pytest.mark.asyncio
 async def test_watch_executor_records_non_empty_timeout_health(monkeypatch: Any) -> None:
-    now = watch_executor.datetime.utcnow()
+    now = watch_executor.datetime.now(timezone.utc)
     watch = Watch(
         id=42,
         name="Overclockers GPU watch",

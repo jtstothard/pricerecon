@@ -3,7 +3,7 @@
 import json
 import sqlite3
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import AsyncGenerator
 
@@ -28,7 +28,7 @@ from pricerecon.db.schema import DB_PATH, init_db
 settings = get_settings()
 frontend_dist = Path(__file__).parent.parent.parent / "frontend" / "dist"
 APP_VERSION = "0.1.0"
-_app_start_time = datetime.utcnow()
+_app_start_time = datetime.now(timezone.utc)
 
 
 async def load_watches_from_db() -> None:
@@ -73,7 +73,7 @@ async def check_watch(watch_id: int) -> None:
     try:
         cursor.execute(
             "UPDATE watches SET last_check_at = ? WHERE id = ?",
-            (datetime.utcnow().isoformat(), watch_id),
+            (datetime.now(timezone.utc).isoformat(), watch_id),
         )
         conn.commit()
     finally:

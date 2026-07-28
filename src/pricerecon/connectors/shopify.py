@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any
 from urllib.parse import quote_plus
@@ -89,7 +89,7 @@ class ShopifyConnector(BaseConnector):
                         price=Decimal(str(variant.get("price") or "0")),
                         currency=(variant.get("currency") or "GBP").upper(),
                         url=f"{self.base_url}/products/{handle}",
-                        timestamp_seen=datetime.utcnow(),
+                        timestamp_seen=datetime.now(timezone.utc),
                         product_normalized=title,
                         variant_normalized={
                             "shopify_variant_title": variant.get("title") or title,

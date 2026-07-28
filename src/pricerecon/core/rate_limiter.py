@@ -2,7 +2,7 @@
 
 import logging
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from threading import Lock
 from typing import Optional
 
@@ -111,11 +111,11 @@ class TokenBucket:
 
             if elapsed >= self.window_seconds:
                 # Already reset
-                return datetime.utcnow()
+                return datetime.now(timezone.utc)
 
             # Time until next full reset
             time_until_reset = self.window_seconds - elapsed
-            return datetime.utcnow() + timedelta(seconds=time_until_reset)
+            return datetime.now(timezone.utc) + timedelta(seconds=time_until_reset)
 
     def reset(self) -> None:
         """Reset the bucket to full capacity."""
