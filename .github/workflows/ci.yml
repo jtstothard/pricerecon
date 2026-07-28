@@ -69,6 +69,9 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Check public-release markers
+        run: python scripts/check_public_markers.py
+
       - name: Run canonical quality gate
         run: python -m pricerecon.quality_gate
 
