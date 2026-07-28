@@ -20,7 +20,7 @@ async def test_ccl_raises_truthful_error_on_cloudflare_block() -> None:
     assert "Cloudflare" in error.message
     assert error.detail is not None
     assert "Cloudflare" in error.detail["root_cause"]
-    assert "t_6d1ce628" in error.detail["diagnosis_task"]
+    assert "TASK-XXXX" in error.detail["diagnosis_task"]
     assert error.detail["url"] == "https://www.cclonline.com"
     assert "Byparr" in error.detail["evidence"]
 

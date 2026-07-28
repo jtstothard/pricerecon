@@ -139,7 +139,7 @@ The connector handles:
 Run the test suite:
 
 ```bash
-cd /home/hermes/pricerecon
+cd ~/pricerecon
 source venv/bin/activate
 PYTHONPATH=src:$PYTHONPATH python test_ebay_connector.py
 ```

@@ -8,7 +8,7 @@ within 60 seconds.
 Instead of silent timeouts, these connectors raise ConnectorDegradedError with
 status=bot_blocked and truthful error messages about the underlying WAF blocking.
 
-See diagnosis: t_bd07a701 (per-connector evidence for source-side blocking).
+See diagnosis: TASK-XXXX (per-connector evidence for source-side blocking).
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ class TimeoutRetailerConnector(BaseConnector):
     RETAILER_NAME: str
     WAF_DESCRIPTION = "source-side WAF protection"
     WAF_EVIDENCE = "HTTP 403 responses, JavaScript challenges, Byparr timeouts at 60s"
-    DIAGNOSIS_TASK = "t_bd07a701"
+    DIAGNOSIS_TASK = "TASK-XXXX"
 
     @property
     def source_role(self) -> SourceType:
@@ -93,7 +93,7 @@ class OverclockersConnector(TimeoutRetailerConnector):
         "Captured direct HTTP 403 and Turnstile challenge responses from "
         "Direct HTTP, Playwright, Camofox, and CloakBrowser transport tests"
     )
-    DIAGNOSIS_TASK = "t_c9a09e95"
+    DIAGNOSIS_TASK = "TASK-XXXX"
 
 
 class BoxConnector(TimeoutRetailerConnector):
@@ -108,7 +108,7 @@ class BoxConnector(TimeoutRetailerConnector):
         "homepage shell (8KB) with navigation/search UI, but search page yields "
         "no product cards or RTX results after multiple attempts"
     )
-    DIAGNOSIS_TASK = "t_0344ad01"
+    DIAGNOSIS_TASK = "TASK-XXXX"
 
 
 class CurrysConnector(TimeoutRetailerConnector):

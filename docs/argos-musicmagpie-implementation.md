@@ -7,18 +7,18 @@ Both Argos and MusicMagpie connectors have been implemented using the browser-as
 ### Files Created
 
 1. **Connector Classes:**
-   - `/home/hermes/pricerecon/src/pricerecon/connectors/argos.py` - Argos connector
-   - `/home/hermes/pricerecon/src/pricerecon/connectors/musicmagpie.py` - MusicMagpie connector
+   - `~/pricerecon/src/pricerecon/connectors/argos.py` - Argos connector
+   - `~/pricerecon/src/pricerecon/connectors/musicmagpie.py` - MusicMagpie connector
 
 2. **Seed Scripts:**
-   - `/home/hermes/pricerecon/seed_argos.py` - DB seed for Argos
-   - `/home/hermes/pricerecon/seed_musicmagpie.py` - DB seed for MusicMagpie
+   - `~/pricerecon/seed_argos.py` - DB seed for Argos
+   - `~/pricerecon/seed_musicmagpie.py` - DB seed for MusicMagpie
 
 3. **Tests:**
-   - `/home/hermes/pricerecon/tests/test_argos_musicmagpie.py` - Comprehensive test suite
+   - `~/pricerecon/tests/test_argos_musicmagpie.py` - Comprehensive test suite
 
 4. **Verification:**
-   - `/home/hermes/pricerecon/verify_argos_musicmagpie_camofox.py` - Live verification script
+   - `~/pricerecon/verify_argos_musicmagpie_camofox.py` - Live verification script
 
 ### Configuration
 
@@ -29,13 +29,13 @@ Both connectors require Camofox for bypassing bot detection:
 sources:
   - connector: argos
     config:
-      camofox_url: "http://192.168.10.252:9377"
+      camofox_url: "http://localhost:9377"
       camofox_user_id: "pricerecon-argos"
       camofox_session_key: "watcher"
 
   - connector: musicmagpie
     config:
-      camofox_url: "http://192.168.10.252:9377"
+      camofox_url: "http://localhost:9377"
       camofox_user_id: "pricerecon-musicmagpie"
       camofox_session_key: "watcher"
 ```

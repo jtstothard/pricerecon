@@ -39,15 +39,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Clarified FlareSolverr requirement for specific connectors
 
 ### Fixed
-- Identified FlareSolverr deployment gap in t_7db2a64c
+- Identified FlareSolverr deployment gap in TASK-XXXX
   - 12 connectors blocked without FlareSolverr service
-  - Config file referenced non-existent `http://docker-app-vm:8191/v1`
+  - Config file referenced non-existent `http://localhost:8191/v1`
   - All tested sites confirmed to require anti-bot bypass (HTTP 403 on direct requests)
 
 ### Technical Debt
 - FlareSolverr service not deployed or configured
 - 12 FlareSolverr-dependent connectors will fail with `ConnectorDegradedError` until service is deployed
-- Config file contains stale endpoint reference (`docker-app-vm` hostname not resolvable)
+- Config file contains stale endpoint reference (`localhost` hostname not resolvable)
 
 ## [0.5.0] - 2026-07-14
 

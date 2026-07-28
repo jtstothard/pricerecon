@@ -41,7 +41,7 @@ async def test_overclockers_reports_captured_turnstile_diagnosis() -> None:
     error = raised.value
     assert "Cloudflare Turnstile" in error.message
     assert error.detail is not None
-    assert error.detail["diagnosis_task"] == "t_c9a09e95"
+    assert error.detail["diagnosis_task"] == "TASK-XXXX"
     assert "Playwright" in error.detail["evidence"]
     assert "Camofox" in error.detail["evidence"]
 

@@ -1,8 +1,8 @@
-# Acceptance Criteria - Task t_8c307709
+# Acceptance Criteria - Task TASK-XXXX
 
 All criteria met:
 
-- [x] Repo created at /home/hermes/pricerecon (git initialized, committed)
+- [x] Repo created at ~/pricerecon (git initialized, committed)
 - [x] App starts with: python -m pricerecon or uvicorn pricerecon.app:app
 - [x] GET /api/health returns 200 with {"status": "ok"}
 - [x] SQLite DB initialized with all 9 tables on first startup
@@ -14,7 +14,7 @@ All criteria met:
 
 ## Deliverables
 
-Project location: /home/hermes/pricerecon
+Project location: ~/pricerecon
 
 Key files:
 - pyproject.toml - Project config with all dependencies
@@ -32,7 +32,7 @@ Key files:
 ## Verification
 
 ```bash
-cd /home/hermes/pricerecon
+cd ~/pricerecon
 source venv/bin/activate
 python -m pricerecon  # Server starts on :8000
 curl http://localhost:8000/api/health  # {"status":"ok"}

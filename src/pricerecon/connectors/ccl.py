@@ -4,7 +4,7 @@ CCL has hardened Cloudflare protection that exceeds Byparr bypass capabilities.
 Direct HTTP returns domain-wide 403. Byparr anti-bot route times out (>120s).
 AO/Scan/Box connectors work via Byparr, confirming infrastructure health.
 
-See diagnosis: t_6d1ce628 (per-connector evidence for Cloudflare protection escalation).
+See diagnosis: TASK-XXXX (per-connector evidence for Cloudflare protection escalation).
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ class CclConnector(BaseConnector):
         "Byparr anti-bot route times out (>120s) on CCL; "
         "AO/Scan/Box connectors work via Byparr, confirming infrastructure health"
     )
-    DIAGNOSIS_TASK = "t_6d1ce628"
+    DIAGNOSIS_TASK = "TASK-XXXX"
 
     @property
     def source_role(self) -> SourceType:

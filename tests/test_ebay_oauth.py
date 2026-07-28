@@ -11,7 +11,7 @@ import pytest
 # Add src to path
 import sys
 
-sys.path.insert(0, "/home/hermes/pricerecon/src")
+sys.path.insert(0, "~/pricerecon/src")
 
 from pricerecon.connectors.ebay import eBayConnector, eBayOAuthToken, eBayTokenStore
 
