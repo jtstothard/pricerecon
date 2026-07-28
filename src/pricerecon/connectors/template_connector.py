@@ -152,9 +152,9 @@ class TemplateConnector(BaseConnector):
     def _parse_ebuyer_json(self, html: str) -> list[NormalizedListing]:
         """Parse Ebuyer's client-side productImpressions search data.
 
-        NOTE: product_id format (e.g., '73468903-2267377') does not map to real product URLs.
-        Current best-effort: report base search URL in url field. A proper fix requires
-        mapping product codes to their detail pages, which selectors cannot provide.
+        Ebuyer renders product cards with empty placeholder elements, but emits
+        product impressions JSON and card attributes in the initial HTML. Use
+        the JSON fields and join each impression to the card's real product URL.
         """
         match = re.search(r"var ecommerceData = ({.*?});", html, re.DOTALL)
         if not match:
@@ -164,15 +164,33 @@ class TemplateConnector(BaseConnector):
         except json.JSONDecodeError:
             return []
 
+        product_urls: dict[str, str] = {}
+        product_images: dict[str, str] = {}
+        for tag_match in re.finditer(
+            r'<li\b[^>]*\bli-productid="([^"]+)"[^>]*>', html, re.IGNORECASE
+        ):
+            tag = tag_match.group(0)
+            product_code = tag_match.group(1)
+            url_match = re.search(r'\bli-url="([^"]+)"', tag, re.IGNORECASE)
+            image_match = re.search(r'\bli-imageurl="([^"]+)"', tag, re.IGNORECASE)
+            if url_match:
+                product_urls[product_code] = url_match.group(1)
+            if image_match:
+                product_images[product_code] = image_match.group(1)
+
         listings: list[NormalizedListing] = []
         for item in impressions:
             name = str(item.get("name", "")).strip()
             product_id = str(item.get("id", "")).strip()
+            product_code = str(item.get("dimension5", "")).strip()
             try:
                 price = Decimal(str(item.get("price", "")).replace(",", ""))
             except (ArithmeticError, ValueError):
                 continue
             if not name or not product_id:
+                continue
+            relative_url = product_urls.get(product_code)
+            if not relative_url:
                 continue
             listings.append(
                 NormalizedListing(
@@ -182,7 +200,7 @@ class TemplateConnector(BaseConnector):
                     title_raw=name,
                     price=price,
                     currency="GBP",
-                    url=f"{self.template.base_url}/searchresults?descriptionfilter={quote_plus(name)}",  # fallback to search query
+                    url=f"{self.template.base_url}{relative_url}",
                     product_normalized=None,
                     variant_normalized=None,
                     condition=None,
@@ -195,7 +213,7 @@ class TemplateConnector(BaseConnector):
                     location=None,
                     in_stock=None,
                     stock_state=None,
-                    image_url=None,
+                    image_url=product_images.get(product_code),
                     exact_variant_confirmed=None,
                     variant_match_confidence=None,
                     mismatch_flags=None,

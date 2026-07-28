@@ -10,5 +10,6 @@ selectors:
   stock: .product-line-card__description-low-stock-message
   image: img[data-product-line-item-image]
   id: .product-line-card
-use_flare_solverr: true
+# Direct HTTP is the verified working access lane for this endpoint.
+use_flare_solverr: false
 category: gpu

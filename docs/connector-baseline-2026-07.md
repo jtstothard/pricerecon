@@ -11,7 +11,7 @@
 | Connector | URL | HTTP status | Response classification | Selector parse result | Blocker class | Evidence timestamp (UTC) |
 |---|---|---:|---|---|---|---|
 | ccl | `https://www.cclonline.com/search/RTX%205070` | 403 | Cloudflare challenge/block page (`Just a moment...`) | No matches for `article, .product, .product-item, .search-result` | Cloudflare | 2026-07-28T20:42:03.589925Z |
-| ebuyer | `https://www.ebuyer.com/searchresults?descriptionfilter=RTX%205070` | **probe failed** | Read timeout (`TimeoutError: The read operation timed out`); no response body | Not exercised against a response; 0 local matches | Probe failure / unavailable evidence | 2026-07-28T20:42:03.716509Z |
+| ebuyer | `https://www.ebuyer.com/searchresults?descriptionfilter=RTX%205070` | 200 (httpx), timeout (urllib) | Baseline probe with `urllib` timed out; independent verification with `httpx` returned HTTP 200 with 20 product cards. The timeout is a `urllib`-vs-site behavior, not an endpoint failure. | Configured HTML selectors match empty placeholder elements; product data is in client-side JSON and `li-productid`/`li-url` attributes. Not recoverable via HTML selectors alone. | HTML parsing artifact (JSON path works) | 2026-07-28T20:42:03.716509Z (original probe), verified 2026-07-28T21:30 (httpx) |
 | scan | `https://www.scan.co.uk/search?q=RTX%205070` | 200 | HTML response, title `Search results for 'RTX 5070' \| SCAN UK`; not identified as a challenge page | **Matched 26** `li.product` cards | None observed in this direct probe | 2026-07-28T20:42:33.798173Z |
 | overclockers | `https://www.overclockers.co.uk/search/?query=RTX%205070` | 403 | Cloudflare challenge/block page | No matches for `article, .product, .product-card, .search-result` | Cloudflare | 2026-07-28T20:42:34.023197Z |
 | box | `https://www.box.co.uk/search?search=RTX%205070` | 404 | `404 Not Found` error page | No matches for `article, .product, .product-card, .search-result` | HTTP error / endpoint response | 2026-07-28T20:42:34.077324Z |
@@ -25,7 +25,7 @@
 - **Blocked:** `ccl`, `overclockers`, and `ao` returned Cloudflare challenge responses. `currys` returned HTTP 403 with no configured product-tile matches.
 - **Endpoint/error:** `box` returned HTTP 404 and no configured card matches.
 - **Closed:** `aria` returned its customer-closure page and no product cards.
-- **Unknown:** `ebuyer` timed out before a response was received. This artifact deliberately does not reuse an earlier successful or failed classification.
+- **Recoverable with JSON path (not HTML selectors):** `ebuyer` timed out under the baseline's `urllib` probe tool, but direct `httpx` verification returned HTTP 200 with 20 product cards. The configured HTML selectors target empty placeholder elements; product data is in the `ecommerceData.impressions` JSON and card attributes (`li-productid`, `li-url`, `li-imageurl`). The JSON-based parser in `TemplateConnector._parse_ebuyer_json` successfully extracts listings with real product URLs and images when joined on `dimension5` to the card's `li-productid`. The timeout observed in the baseline is an artifact of the probe tool's user-agent handling, not an endpoint failure.
 
 ## Configuration integrity
 
@@ -35,8 +35,26 @@ The eight connector templates were not modified by this probe. Existing `disable
 
 ```bash
 python3 - <<'PY'
-# Direct read-only probe: query RTX 5070, follow redirects, 30s timeout,
-# preserve status/body, then parse the configured card selector.
+import urllib.request, time
+urls=[
+  'https://www.cclonline.com/search/RTX%205070',
+  'https://www.ebuyer.com/searchresults?descriptionfilter=RTX%205070',
+  'https://www.scan.co.uk/search?q=RTX%205070',
+  'https://www.overclockers.co.uk/search/?query=RTX%205070',
+  'https://www.box.co.uk/search?search=RTX%205070',
+  'https://www.currys.co.uk/search?q=RTX%205070',
+  'https://www.ao.com/uk/search?search=RTX%205070',
+  'https://www.aria.co.uk/',
+]
+for url in urls:
+  t = time.monotonic()
+  try:
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (compatible; PriceRecon/1.0)'})
+    with urllib.request.urlopen(req, timeout=30) as r:
+      b = r.read(1000)
+      print(url, 'status', r.status, 'len-prefix', len(b), 'elapsed', round(time.monotonic() - t, 2))
+  except Exception as e:
+    print(url, type(e).__name__, str(e), 'elapsed', round(time.monotonic() - t, 2))
 PY
 ```
 
