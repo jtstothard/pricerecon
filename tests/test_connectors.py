@@ -429,7 +429,11 @@ async def test_facebook_marketplace_connector_parses_concatenated_gbp_price() ->
     class FakeContext:
         pass
 
-    connector = FacebookMarketplaceConnector(browser_client=None)
+    connector = FacebookMarketplaceConnector(
+        browser_client=None,
+        latitude=51.5074,  # London — example only
+        longitude=-0.1278,
+    )
     connector._context = cast(Any, FakeContext())
     connector._page = cast(Any, FakePage())
 
@@ -1338,3 +1342,70 @@ async def test_watch_executor_records_non_empty_timeout_health(monkeypatch: Any)
     assert recorded[0][2] != ""
     assert recorded[0][3] is not None
     assert recorded[0][3]["error_type"] == "ConnectTimeout"
+
+
+def test_fb_marketplace_missing_coords_raises_error() -> None:
+    """Connector must fail clearly when no coordinates are configured."""
+    import pytest
+    from pricerecon.connectors.fb_marketplace import FacebookMarketplaceConnector
+    from pricerecon.connectors.status import ConnectorDegradedError
+
+    with pytest.raises(ConnectorDegradedError, match="requires latitude and longitude"):
+        FacebookMarketplaceConnector(browser_client=None)
+
+
+def test_fb_marketplace_url_uses_lat_lon() -> None:
+    """Search URL must use lat/lon coordinates, not a place-name string."""
+    from pricerecon.connectors.fb_marketplace import FacebookMarketplaceConnector
+
+    connector = FacebookMarketplaceConnector(
+        browser_client=None,
+        latitude=51.5074,  # London — example only
+        longitude=-0.1278,
+    )
+    url = connector._search_url("MacBook Pro")
+
+    assert "latitude=" in url
+    assert "longitude=" in url
+    assert "51.5074" in url
+    assert "-0.1278" in url
+    assert "location=" not in url
+
+
+def test_fb_marketplace_per_watch_independence() -> None:
+    """Two connectors with different locations produce different search URLs."""
+    from pricerecon.connectors.fb_marketplace import FacebookMarketplaceConnector
+
+    london = FacebookMarketplaceConnector(browser_client=None, latitude=51.5074, longitude=-0.1278)
+    manchester = FacebookMarketplaceConnector(
+        browser_client=None, latitude=53.4808, longitude=-2.2426
+    )
+
+    url1 = london._search_url("test")
+    url2 = manchester._search_url("test")
+
+    assert "51.5074" in url1
+    assert "53.4808" in url2
+    assert url1 != url2
+
+
+def test_fb_marketplace_zero_latitude_valid() -> None:
+    """Latitude 0.0 (equator) is a valid value, not treated as unset."""
+    from pricerecon.connectors.fb_marketplace import FacebookMarketplaceConnector
+
+    connector = FacebookMarketplaceConnector(browser_client=None, latitude=0.0, longitude=0.0)
+    assert connector.latitude == 0.0
+    assert connector.longitude == 0.0
+
+
+def test_fb_marketplace_invalid_range_rejected() -> None:
+    """Out-of-range coordinates are rejected."""
+    import pytest
+    from pricerecon.connectors.fb_marketplace import FacebookMarketplaceConnector
+    from pricerecon.connectors.status import ConnectorDegradedError
+
+    with pytest.raises(ConnectorDegradedError, match="out of range"):
+        FacebookMarketplaceConnector(browser_client=None, latitude=91.0, longitude=0.0)
+
+    with pytest.raises(ConnectorDegradedError, match="out of range"):
+        FacebookMarketplaceConnector(browser_client=None, latitude=0.0, longitude=181.0)

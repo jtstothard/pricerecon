@@ -13,7 +13,7 @@ NC='\033[0m' # No Color
 DEFAULT_ENDPOINTS=(
     "http://localhost:8191"
     "http://localhost:8191/v1"
-    "http://***REMOVED***:8191/v1"
+    "http://localhost:8191/v1"
     "http://byparr:8191/v1"
 )
 

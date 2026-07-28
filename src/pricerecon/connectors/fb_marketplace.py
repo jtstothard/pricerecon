@@ -6,7 +6,6 @@ import hashlib
 import asyncio
 import os
 from datetime import datetime
-from decimal import Decimal
 from typing import Any
 from urllib.parse import quote_plus
 
@@ -26,12 +25,20 @@ class FacebookMarketplaceConnector(BaseConnector):
         self,
         *,
         location: str | None = None,
+        latitude: float | None = None,
+        longitude: float | None = None,
         radius_km: int = 25,
         headless: bool = True,
         browser_client: BrowserClient | None = None,
         max_listings_per_hour: int = 150,
     ) -> None:
-        self.location = location or os.getenv("FB_MARKETPLACE_LOCATION", "United Kingdom")
+        self.location = location or os.getenv("FB_MARKETPLACE_LOCATION")
+        lat_env = os.getenv("FB_MARKETPLACE_LAT")
+        lon_env = os.getenv("FB_MARKETPLACE_LON")
+        self.latitude = latitude if latitude is not None else (float(lat_env) if lat_env else None)
+        self.longitude = (
+            longitude if longitude is not None else (float(lon_env) if lon_env else None)
+        )
         self.radius_km = radius_km
         self.headless = headless
         self.browser_client = browser_client or BrowserClient()
@@ -41,6 +48,39 @@ class FacebookMarketplaceConnector(BaseConnector):
         self._hourly_budget_used = 0
         self._hourly_budget_window = datetime.utcnow()
         self._last_action_at: float | None = None
+        self._validate_location()
+
+    def _validate_location(self) -> None:
+        """Validate coordinates are present and in range, or raise a clear error."""
+        if self.latitude is None or self.longitude is None:
+            raise ConnectorDegradedError(
+                status=ConnectorStatus.unknown_error,
+                message=(
+                    "facebook_marketplace requires latitude and longitude. "
+                    "Set them in sources[].config, "
+                    "connectors.facebook_marketplace, or "
+                    "FB_MARKETPLACE_LAT / FB_MARKETPLACE_LON env vars."
+                ),
+                connector_id=self.CONNECTOR_ID,
+            )
+        if not -90 <= self.latitude <= 90:
+            raise ConnectorDegradedError(
+                status=ConnectorStatus.unknown_error,
+                message=f"latitude {self.latitude} out of range (-90 to 90)",
+                connector_id=self.CONNECTOR_ID,
+            )
+        if not -180 <= self.longitude <= 180:
+            raise ConnectorDegradedError(
+                status=ConnectorStatus.unknown_error,
+                message=f"longitude {self.longitude} out of range (-180 to 180)",
+                connector_id=self.CONNECTOR_ID,
+            )
+        if self.radius_km <= 0:
+            raise ConnectorDegradedError(
+                status=ConnectorStatus.unknown_error,
+                message=f"radius_km must be positive, got {self.radius_km}",
+                connector_id=self.CONNECTOR_ID,
+            )
 
     @property
     def source_role(self) -> SourceType:
@@ -102,12 +142,17 @@ class FacebookMarketplaceConnector(BaseConnector):
 
     def _search_url(self, query: str, filters: dict[str, Any] | None = None) -> str:
         filters = filters or {}
-        location = quote_plus(str(filters.get("location") or self.location))
+        latitude = filters.get("latitude") or self.latitude
+        longitude = filters.get("longitude") or self.longitude
         radius = int(filters.get("radius_km") or self.radius_km)
         encoded = quote_plus(query)
+        # Facebook Marketplace search uses lat/lon coordinates, not a place
+        # name string.  Using a name like "United Kingdom" silently defaults
+        # to Meta HQ (Menlo Park, CA) and returns US listings.
         return (
             "https://www.facebook.com/marketplace/search/?query="
-            f"{encoded}&exact=false&radius={radius}&location={location}"
+            f"{encoded}&exact=false&radius={radius}"
+            f"&latitude={latitude}&longitude={longitude}"
         )
 
     async def search(
@@ -138,7 +183,7 @@ class FacebookMarketplaceConnector(BaseConnector):
                 if not title:
                     continue
                 text = card.get("text") or ""
-                price = extract_visible_gbp_price(f"{title} {text}") or Decimal("0")
+                price = extract_visible_gbp_price(f"{title} {text}")
                 listings.append(
                     NormalizedListing(
                         source=self.connector_id,
@@ -148,7 +193,7 @@ class FacebookMarketplaceConnector(BaseConnector):
                         ).hexdigest(),
                         title_raw=title,
                         price=price,
-                        currency="GBP",
+                        currency="GBP" if price is not None else "UNK",
                         url=card.get("url") or "",
                         timestamp_seen=datetime.utcnow(),
                         seller_or_store=None,
