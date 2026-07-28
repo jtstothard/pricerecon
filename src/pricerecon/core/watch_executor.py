@@ -98,11 +98,7 @@ def evaluate_shadow_filters(
 def apply_component_pattern_filter(
     listings: list[NormalizedListing], filters: Any
 ) -> list[NormalizedListing]:
-    """Suppress listings matching the enforced P1 component-subject pattern.
-
-    Price floors intentionally remain shadow-only; this function applies only
-    the component-subject rule when enabled in the watch filters.
-    """
+    """Suppress listings matching the enforced P1 component-subject pattern."""
     values = filters.model_dump() if hasattr(filters, "model_dump") else (filters or {})
     if not values.get("enforce_component_pattern", True):
         return listings
@@ -112,6 +108,40 @@ def apply_component_pattern_filter(
         for listing in listings
         if not re.search(pattern, _shadow_title(listing.title_raw), flags=re.IGNORECASE)
     ]
+
+
+def apply_price_floor_filter(
+    listings: list[NormalizedListing], filters: Any
+) -> list[NormalizedListing]:
+    """Suppress listings below the per-watch GBP price floor.
+
+    Only applies to GBP-priced listings. Non-GBP listings, missing prices, and
+    invalid prices are passed through unchanged — the FB price parser now returns
+    None for foreign-currency listings, so those will pass here rather than being
+    incorrectly suppressed by a garbage price.
+    """
+    values = filters.model_dump() if hasattr(filters, "model_dump") else (filters or {})
+    if not values.get("enforce_price_floor", True):
+        return listings
+    floor = values.get("min_price_gbp")
+    if floor is None:
+        return listings
+    result = []
+    for listing in listings:
+        if listing.price is None:
+            result.append(listing)
+            continue
+        currency = (listing.currency or "").upper()
+        if currency != "GBP":
+            result.append(listing)
+            continue
+        try:
+            price_gbp = float(listing.price)
+            if price_gbp >= floor:
+                result.append(listing)
+        except (TypeError, ValueError):
+            result.append(listing)
+    return result
 
 
 def get_db() -> sqlite3.Connection:
@@ -507,9 +537,10 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
         all_listings, watch.filters, watch.synonym_groups if watch.synonym_groups else None
     )
     # Keep shadow evaluation against the complete post-fetch set for auditing,
-    # then enforce only P1 before entering the alert/dashboard pipeline.
+    # then enforce P1 component pattern + price floors before the alert pipeline.
     shadow_entries = evaluate_shadow_filters(all_listings, watch.filters, watch_id)
     filtered_listings = apply_component_pattern_filter(filtered_listings, watch.filters)
+    filtered_listings = apply_price_floor_filter(filtered_listings, watch.filters)
     first_run, diff_result, event_ids = run_check(watch_id, filtered_listings)
 
     conn = get_db()

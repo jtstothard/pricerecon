@@ -100,6 +100,10 @@ class WatchFilters(BaseModel):
         default=True,
         description="Enforce P1 component-subject pattern filtering (suppresses matches)",
     )
+    enforce_price_floor: bool = Field(
+        default=True,
+        description="Enforce per-watch GBP price floor (suppresses listings below min_price_gbp)",
+    )
     currency: str = Field(default="GBP", description="Currency for price_max")
     condition_filter: ConditionFilter = Field(default_factory=lambda: ConditionFilter())
     exclude_patterns: list[str] = Field(

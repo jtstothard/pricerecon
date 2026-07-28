@@ -113,3 +113,61 @@ def test_enforcement_off_passes_everything():
     filters = WatchFilters(enforce_component_pattern=False)
     result = apply_component_pattern_filter([listing(FP_1424)], filters)
     assert len(result) == 1, "enforcement off should pass component listings through"
+
+
+# --- Price-floor enforcement tests ---
+
+
+def _filters_floor(floor):
+    from pricerecon.models.watches import WatchFilters
+
+    return WatchFilters(min_price_gbp=floor)
+
+
+def test_price_floor_suppresses_low_gbp():
+    """Listings below the floor are suppressed."""
+    from pricerecon.core.watch_executor import apply_price_floor_filter
+
+    result = apply_price_floor_filter(
+        [listing(GENUINE_1415, Decimal("500")), listing(GENUINE_1416, Decimal("1500"))],
+        _filters_floor(1000),
+    )
+    assert len(result) == 1, "only the £1500 listing should survive a £1000 floor"
+
+
+def test_price_floor_keeps_at_floor():
+    """Listing exactly at the floor passes through."""
+    from pricerecon.core.watch_executor import apply_price_floor_filter
+
+    result = apply_price_floor_filter(
+        [listing(GENUINE_1415, Decimal("1000"))], _filters_floor(1000)
+    )
+    assert len(result) == 1, "listing at the floor should survive"
+
+
+def test_price_floor_passes_non_gbp():
+    """Non-GBP listings pass through unchanged (no conversion)."""
+    from pricerecon.core.watch_executor import apply_price_floor_filter
+
+    usd_listing = listing(GENUINE_1415, Decimal("100"))
+    usd_listing.currency = "USD"
+    result = apply_price_floor_filter([usd_listing], _filters_floor(1000))
+    assert len(result) == 1, "USD listing should pass through a GBP floor"
+
+
+def test_price_floor_passes_missing_price():
+    """Listings with no price pass through (None price from USD fix)."""
+    from pricerecon.core.watch_executor import apply_price_floor_filter
+
+    result = apply_price_floor_filter([listing(GENUINE_1415, None)], _filters_floor(1000))
+    assert len(result) == 1, "missing-price listing should pass through"
+
+
+def test_price_floor_off_passes_everything():
+    """With enforce_price_floor=False, everything passes."""
+    from pricerecon.core.watch_executor import apply_price_floor_filter
+    from pricerecon.models.watches import WatchFilters
+
+    filters = WatchFilters(min_price_gbp=1000, enforce_price_floor=False)
+    result = apply_price_floor_filter([listing(GENUINE_1415, Decimal("50"))], filters)
+    assert len(result) == 1, "enforcement off should pass everything through"
