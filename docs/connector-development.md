@@ -170,6 +170,7 @@ Each connector must declare its `source_role`:
   - Often time-sensitive
 - **Operational notes**:
   - Prefer canonical feed URLs over redirecting aliases. HotUKDeals currently resolves directly at `/rss/new`; if a feed starts redirecting, update the template to the canonical path instead of relying on the redirect chain.
+  - HotUKDeals is implemented by the RSS connector in `connectors/reddit.py`. The former disabled HTML-template/Phase 2 stub was retired because the RSS feed is the supported, query-filtered path; do not reintroduce a second template connector for the same id.
   - Reddit community feeds are frequently rate limited or bot-blocked. Treat HTTP 429 as `rate_limited` with retry on the next sweep, and HTTP 403 as `bot_blocked`/anti-bot rather than a generic failure.
   - For Reddit, prefer queryless `/new/.rss` fetching plus local query filtering. That keeps the connector resilient when Reddit blocks search RSS endpoints.
 

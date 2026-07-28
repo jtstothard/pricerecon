@@ -1,25 +1,23 @@
-"""Tests for HotUKDeals connector."""
+"""Tests for the RSS-backed HotUKDeals connector."""
 
-import pytest
-from pricerecon.connectors.hotukdeals import HotUKDealsConnector
+from pricerecon.connectors.reddit import HotUKDealsConnector
 from pricerecon.models import SourceType
 
 
-@pytest.fixture
-def connector() -> HotUKDealsConnector:
-    """Create connector instance."""
-    instance = HotUKDealsConnector()
-    # Keep parser tests focused on fixture parsing; the production template is
-    # disabled because the live upstream currently serves a Cloudflare page.
-    instance.template.disabled = False
-    return instance
-
-
-def test_source_role(connector: HotUKDealsConnector) -> None:
+def test_source_role() -> None:
     """Test connector is a deal signal source."""
+    connector = HotUKDealsConnector()
     assert connector.source_role == SourceType.SIGNAL
 
 
-def test_connector_id(connector: HotUKDealsConnector) -> None:
+def test_connector_id() -> None:
     """Test connector ID."""
+    connector = HotUKDealsConnector()
     assert connector.connector_id == "hotukdeals"
+
+
+def test_connector_uses_rss_implementation_not_phase_two_template() -> None:
+    """The supported connector must use the canonical RSS feed path."""
+    connector = HotUKDealsConnector()
+    assert connector.template.endpoint_url == "https://www.hotukdeals.com/rss/new"
+    assert not hasattr(connector, "template_name")
