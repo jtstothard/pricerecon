@@ -1,16 +1,17 @@
 name: hotukdeals
-source_type: signal
+source_type: marketplace
 base_url: https://www.hotukdeals.com
 search_url: https://www.hotukdeals.com/search?q={query}
-use_flare_solverr: false
-disabled: true
-disabled_reason: "Template not yet fully configured - Phase 2 stub"
+use_camofox: true
+disabled: false
+disabled_reason: ""
 selectors:
-  card: .thread-card
-  title: .thread-title
-  price: .price, .voucher-price
-  url: a[href]
-  stock: .stock
+  card: article
+  title: strong a[href]
+  price: span, div, .price, [class*="price"]
+  url: strong a[href]
+  store: button
+  stock: span, div, [class*="stock"], [class*="delivery"]
   image: img
-  id: data-id
-category: deals
+  id: strong a[href]
+category: cpu, gpu, laptop, components, electronics
