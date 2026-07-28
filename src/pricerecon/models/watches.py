@@ -97,7 +97,8 @@ class WatchFilters(BaseModel):
         None, description="Case-insensitive component-subject regex (currently shadow-only)"
     )
     enforce_component_pattern: bool = Field(
-        default=True, description="Enforce P1 component-subject pattern filtering (suppresses matches)"
+        default=True,
+        description="Enforce P1 component-subject pattern filtering (suppresses matches)",
     )
     currency: str = Field(default="GBP", description="Currency for price_max")
     condition_filter: ConditionFilter = Field(default_factory=lambda: ConditionFilter())
