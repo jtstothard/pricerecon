@@ -40,8 +40,12 @@ echo
 # Check configured endpoint first if set
 if [ -n "${CONFIGURED_ENDPOINT}" ]; then
     echo "Testing configured endpoint: ${CONFIGURED_ENDPOINT}"
-    STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "${CONFIGURED_ENDPOINT}" 2>&1 || echo "failed")
-    if [ "${STATUS}" = "200" ] || [ "${STATUS}" = "400" ]; then
+    # FlareSolverr exposes POST /v1; GET /v1 returns 405 even when healthy.
+    STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 \
+        -X POST -H "Content-Type: application/json" \
+        --data '{"cmd":"request.get","url":"https://example.com","maxTimeout":1000}' \
+        "${CONFIGURED_ENDPOINT}" 2>&1 || echo "failed")
+    if [ "${STATUS}" = "200" ]; then
         echo -e "  ${GREEN}✓ FlareSolverr is reachable${NC}"
         echo -e "  ${GREEN}✓ Connectors requiring FlareSolverr should work${NC}"
         echo
@@ -71,8 +75,11 @@ else
     FOUND=0
     for endpoint in "${DEFAULT_ENDPOINTS[@]}"; do
         echo "Testing: ${endpoint}"
-        STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "${endpoint}" 2>&1 || echo "failed")
-        if [ "${STATUS}" = "200" ] || [ "${STATUS}" = "400" ]; then
+        STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 \
+            -X POST -H "Content-Type: application/json" \
+            --data '{"cmd":"request.get","url":"https://example.com","maxTimeout":1000}' \
+            "${endpoint}" 2>&1 || echo "failed")
+        if [ "${STATUS}" = "200" ]; then
             echo -e "  ${GREEN}✓ FlareSolverr found at ${endpoint}${NC}"
             echo
             echo "Set this endpoint in config.yml:"
