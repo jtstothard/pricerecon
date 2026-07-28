@@ -25,7 +25,7 @@ All 12 FlareSolverr-dependent connectors were tested. **All are blocked.**
 | **Etsy** | https://www.etsy.com/uk/search?q=iPhone+12 | 403 | ❌ BLOCKED | Captcha-delivery.com JS challenge |
 | **Mercari** | https://www.mercari.com/search?keyword=iPhone+12 | 403 | ❌ BLOCKED | Cloudflare protection |
 | **OnBuy** | https://www.onbuy.com/gb/search/?q=iPhone+12 | 403 | ❌ BLOCKED | Cloudflare protection |
-| **Overclockers** | https://www.overclockers.co.uk/search?criteria=iPhone+12 | 403 | ❌ BLOCKED | Cloudflare protection |
+| **Overclockers** | https://www.overclockers.co.uk/search?criteria=iPhone+12 | 403 | ❌ BLOCKED | Cloudflare challenge (`Cf-Mitigated: challenge`) |
 | **Scan** | https://www.scan.co.uk/search?q=iPhone+12 | 403 | ❌ BLOCKED | Cloudflare protection |
 | **Very.co.uk** | https://www.very.co.uk/electricals/ip-12/search?q=iPhone+12 | 403 | ❌ BLOCKED | Cloudflare protection |
 
