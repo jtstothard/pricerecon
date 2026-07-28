@@ -97,3 +97,51 @@ async def test_currys_connector_routes_through_flaresolverr(monkeypatch) -> None
     assert not direct_attempted
     assert listings
     assert listings[0].source == "currys"
+
+
+@pytest.mark.asyncio
+async def test_flaresolverr_client_posts_request_get_and_returns_solution(monkeypatch) -> None:
+    """The solver transport must be verified independently of Currys routing."""
+    calls: list[tuple[str, dict]] = []
+
+    class MockResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return {
+                "status": "ok",
+                "message": "Challenge not detected!",
+                "solution": {"status": 200, "response": "<html>solver result</html>"},
+            }
+
+    class MockAsyncClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return None
+
+        async def post(self, endpoint: str, *, json: dict) -> MockResponse:
+            calls.append((endpoint, json))
+            return MockResponse()
+
+    monkeypatch.setattr("pricerecon.connectors.flaresolverr.httpx.AsyncClient", MockAsyncClient)
+
+    client = FlareSolverrClient("http://solver.test/v1")
+    html = await client.request_html("https://www.currys.co.uk/search?q=RTX+5090")
+
+    assert html == "<html>solver result</html>"
+    assert calls == [
+        (
+            "http://solver.test/v1",
+            {
+                "cmd": "request.get",
+                "url": "https://www.currys.co.uk/search?q=RTX+5090",
+                "maxTimeout": 60000,
+            },
+        )
+    ]
