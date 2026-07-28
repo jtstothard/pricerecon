@@ -11,6 +11,7 @@ from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 @pytest.mark.asyncio
 async def test_ccl_recovers_through_flaresolverr(monkeypatch) -> None:
     """CCL uses the challenge-recovery lane and parses the returned HTML."""
+
     async def request_html(_self, url: str) -> str:
         assert url == "https://www.cclonline.com/search/RTX+5090"
         return """
@@ -34,6 +35,7 @@ async def test_ccl_recovers_through_flaresolverr(monkeypatch) -> None:
 @pytest.mark.asyncio
 async def test_ccl_reports_recovery_failure(monkeypatch) -> None:
     """A failed recovery attempt remains observable as a bounded timeout."""
+
     async def request_html(_self, _url: str) -> str:
         raise httpx.ReadTimeout("challenge timed out")
 
