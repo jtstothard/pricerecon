@@ -10,10 +10,7 @@ selectors:
   stock: .stock, .availability, .product-stock, [data-testid="stock"]
   image: img
   id: a[href]
-# The configured endpoint returns hardened Cloudflare protection that exceeds
-# Byparr bypass capabilities (direct HTTP 403 domain-wide, Byparr timeouts >120s).
-# Keep the connector explicit and truthful until a supported access lane is supplied.
-disabled: true
-disabled_reason: "hardened Cloudflare protection (HTTP 403 domain-wide, Byparr anti-bot route times out >120s). See internal diagnosis notes for details."
+# CCL returns a Cloudflare challenge to direct HTTP; use the bounded browser
+# recovery lane rather than silently treating the source as unavailable.
 use_flare_solverr: true
 category: gpu
