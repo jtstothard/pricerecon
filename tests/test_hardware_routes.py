@@ -1,5 +1,5 @@
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, timezone
 
 from pricerecon.core.hardware_routes import route_for_query, route_title_matches
 from pricerecon.core.watch_executor import apply_post_normalization_filters
@@ -15,7 +15,7 @@ def listing(title: str) -> NormalizedListing:
         price=Decimal("1000"),
         currency="GBP",
         url="https://example.test/item",
-        timestamp_seen=datetime.utcnow(),
+        timestamp_seen=datetime.now(timezone.utc),
         product_normalized=None,
         variant_normalized=None,
         condition=None,

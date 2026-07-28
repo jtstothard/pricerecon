@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import asyncio
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import quote_plus
 
@@ -46,7 +46,7 @@ class FacebookMarketplaceConnector(BaseConnector):
         self._context = None
         self._page = None
         self._hourly_budget_used = 0
-        self._hourly_budget_window = datetime.utcnow()
+        self._hourly_budget_window = datetime.now(timezone.utc)
         self._last_action_at: float | None = None
         self._validate_location()
 
@@ -122,7 +122,7 @@ class FacebookMarketplaceConnector(BaseConnector):
         ]
 
     async def _delay(self) -> None:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         if (now - self._hourly_budget_window).total_seconds() >= 3600:
             self._hourly_budget_window = now
             self._hourly_budget_used = 0
@@ -195,7 +195,7 @@ class FacebookMarketplaceConnector(BaseConnector):
                         price=price,
                         currency="GBP" if price is not None else "UNK",
                         url=card.get("url") or "",
-                        timestamp_seen=datetime.utcnow(),
+                        timestamp_seen=datetime.now(timezone.utc),
                         seller_or_store=None,
                         location=self.location,
                         product_normalized=None,

@@ -7,7 +7,7 @@ Thread-safe for concurrent use across multiple connector instances.
 import asyncio
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable, Optional, Awaitable
 
@@ -60,7 +60,7 @@ class TokenData:
 
     def is_expired(self, buffer_seconds: int = 300) -> bool:
         """Check if token is expired (with buffer)."""
-        return datetime.utcnow() >= self.expires_at - timedelta(seconds=buffer_seconds)
+        return datetime.now(timezone.utc) >= self.expires_at - timedelta(seconds=buffer_seconds)
 
 
 class OAuthTokenStore:

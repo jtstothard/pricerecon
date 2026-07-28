@@ -1,7 +1,7 @@
 """Tests for the token bucket rate limiter."""
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 
 from pricerecon.core.rate_limiter import (
@@ -55,7 +55,7 @@ class TestTokenBucket:
     def test_reset_time(self) -> None:
         bucket = TokenBucket(capacity=10, window_seconds=60)
         reset_time = bucket.get_reset_time()
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         # Reset time should be approximately 1 minute in the future
         assert reset_time >= now + timedelta(seconds=59)
@@ -65,7 +65,7 @@ class TestTokenBucket:
         bucket = TokenBucket(capacity=10, window_seconds=60)
         bucket.try_acquire(10)
         reset_time = bucket.get_reset_time()
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         # Reset time should be approximately 1 minute in the future
         assert reset_time >= now + timedelta(seconds=59)

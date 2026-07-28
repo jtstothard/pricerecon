@@ -4,7 +4,7 @@
 import asyncio
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -111,8 +111,8 @@ def watch_add(
                 query,
                 category,
                 json.dumps(config),
-                datetime.utcnow().isoformat(),
-                datetime.utcnow().isoformat(),
+                datetime.now(timezone.utc).isoformat(),
+                datetime.now(timezone.utc).isoformat(),
             ),
         )
         watch_id = cursor.lastrowid

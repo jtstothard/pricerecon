@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from pricerecon.db.schema import DB_PATH
@@ -227,7 +227,7 @@ def store_listings(watch_id: int, listings: list[NormalizedListing]) -> None:
                 (
                     listing.timestamp_seen.isoformat()
                     if listing.timestamp_seen
-                    else datetime.utcnow().isoformat()
+                    else datetime.now(timezone.utc).isoformat()
                 ),
                 listing.model_dump_json(),
             ),
