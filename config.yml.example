@@ -1,0 +1,47 @@
+# PriceRecon configuration example
+#
+# Copy this file to config.yml and edit for your deployment:
+#   cp config.yml.example config.yml
+#
+# For deployment-specific overrides (endpoints, locations), create config.local.yml
+# (not tracked in git) which is deep-merged over config.yml:
+#   cp config.yml.example config.local.yml
+
+database_path: pricerecon.db
+host: 0.0.0.0
+port: 8000
+log_level: info
+
+# FlareSolverr endpoint (optional, for Cloudflare-protected retailers)
+# Replace with your FlareSolverr host if using Docker Compose networking
+flaresolverr_url: "http://localhost:8191/v1"
+
+# Connector-specific settings (optional)
+connectors:
+  ebay:
+    app_id: null  # Your eBay App ID
+    # OAuth token will be stored in database
+
+  amazon_uk:
+    enabled: true
+
+  cex:
+    enabled: true
+
+  facebook_marketplace:
+    enabled: false  # Requires Facebook cookies + location config
+    # Location is REQUIRED — set latitude/longitude for your search area.
+    # The connector will error if these are not provided.
+    # Example (London):
+    # latitude: 51.5074
+    # longitude: -0.1278
+    # location: "London"  # Display label only
+    # radius_km: 25
+
+  shopify:
+    enabled: true
+    # Optional single-store default only. In shared/multi-store deployments,
+    # prefer per-watch sources[].config.base_url (or store_url) instead.
+    # base_url: https://example.myshopify.com
+
+  # Add more connector configs here
