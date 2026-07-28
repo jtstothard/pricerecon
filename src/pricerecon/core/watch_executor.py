@@ -388,6 +388,34 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
                 connector_kwargs = {"config": cfg}
                 if browser_client is not None:
                     connector_kwargs["browser_client"] = browser_client
+            elif connector_id == "hotukdeals":
+                import os
+
+                cfg = {**config_defaults, **dict(source.config or {})}
+                browser_client = None
+                camofox_url = (
+                    cfg.get("camofox_url")
+                    or os.environ.get("CAMOFOX_URL")
+                    or "http://192.168.10.252:9377"
+                )
+                cfg.setdefault("camofox_url", camofox_url)
+                if camofox_url:
+                    browser_client = BrowserClient(
+                        config=BrowserSessionConfig(
+                            camofox_url=str(camofox_url),
+                            camofox_user_id=str(
+                                cfg.get("camofox_user_id") or f"pricerecon_{watch_id}"
+                            ),
+                            camofox_session_key=str(
+                                cfg.get("camofox_session_key") or f"watch_{watch_id}"
+                            ),
+                            camofox_api_key=os.environ.get("CAMOFOX_API_KEY"),
+                            camofox_access_key=os.environ.get("CAMOFOX_ACCESS_KEY"),
+                        )
+                    )
+                connector_kwargs = {"config": cfg}
+                if browser_client is not None:
+                    connector_kwargs["browser_client"] = browser_client
             try:
                 from pricerecon.connectors.factory import validate_and_create_connector
 
