@@ -126,4 +126,5 @@ async def test_ao_is_explicitly_disabled_when_upstream_returns_cloudflare_challe
 
     assert raised.value.status is ConnectorStatus.disabled
     assert raised.value.connector_id == "ao"
+    assert raised.value.message.startswith("ao is disabled:")
     assert raised.value.detail and "Cloudflare" in raised.value.detail["reason"]
