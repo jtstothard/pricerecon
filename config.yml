@@ -26,4 +26,11 @@ connectors:
     # Optional single-store default only. In shared/multi-store deployments,
     # prefer per-watch sources[].config.base_url (or store_url) instead.
     # base_url: https://example.myshopify.com
+  aliexpress:
+    enabled: true
+    # Optional local SearXNG discovery fallback after affiliate and Brave.
+    searxng_url: "http://192.168.10.252:8080"
+    searxng_discovery: true
+    searxng_timeout: 10
+    searxng_max_results: 25
   # Add more connector configs here

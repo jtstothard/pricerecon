@@ -23,8 +23,10 @@ from pricerecon.models import NormalizedListing, SourceType, VariantMatchConfide
 logger = logging.getLogger(__name__)
 
 _DEFAULT_TOP_ENDPOINT = "https://api-sg.aliexpress.com/sync"
+_DEFAULT_SEARXNG_ENDPOINT = "http://192.168.10.252:8080"
 
 _SHORT_LINK_HOSTS = {"a.aliexpress.com", "s.click.aliexpress.com"}
+_PRODUCT_HOSTS = {"aliexpress.com", "www.aliexpress.com", "m.aliexpress.com"}
 _PID_RE = re.compile(r"\b(\d{10,20})\b")
 _PRICE_RE = re.compile(r"(?P<currency>GBP|£|\$|USD|EUR|€)?\s*(?P<amount>\d+(?:\.\d{1,2})?)")
 
@@ -62,6 +64,12 @@ class AliExpressConnector(BaseConnector):
         self._enrich_with_ds_default = bool(self.config.get("enrich_with_ds", False))
         self._brave_discovery_default = bool(self.config.get("brave_discovery", True))
         self._brave_max_pids = int(self.config.get("brave_max_pids", 25))
+        self._searxng_discovery_default = bool(self.config.get("searxng_discovery", True))
+        self._searxng_endpoint = str(
+            self.config.get("searxng_url", _DEFAULT_SEARXNG_ENDPOINT)
+        ).rstrip("/")
+        self._searxng_timeout = float(self.config.get("searxng_timeout", 10.0))
+        self._searxng_max_results = int(self.config.get("searxng_max_results", 25))
 
     @property
     def source_role(self) -> SourceType:
@@ -93,6 +101,11 @@ class AliExpressConnector(BaseConnector):
         if brave_query:
             listings.extend(await self._brave_search(query, filters))
 
+        # Brave discovery creates price-less placeholders.  They must not count
+        # as a successful discovery result or suppress the priced SearXNG lane.
+        if not any(listing.price is not None for listing in listings) and self._is_searxng_search_enabled(filters):
+            listings.extend(await self._searxng_search(query, filters))
+
         manual_targets = self._resolve_manual_targets(query, filters)
         if manual_targets:
             listings.extend(await self._manual_pid_search(manual_targets, filters))
@@ -102,6 +115,19 @@ class AliExpressConnector(BaseConnector):
         if not listings and filters.get("site_search_discovery", True):
             listings.extend(await self._site_search(query, filters))
 
+        # Prefer priced candidates when Brave placeholders and another lane
+        # describe the same product; placeholders must not hide priced results.
+        priced_keys = {
+            (listing.source, listing.source_listing_id)
+            for listing in listings
+            if listing.price is not None
+        }
+        listings = [
+            listing
+            for listing in listings
+            if listing.price is not None
+            or (listing.source, listing.source_listing_id) not in priced_keys
+        ]
         listings = self._dedupe_listings(listings)
 
         if self._should_enrich_with_ds(filters):
@@ -133,6 +159,11 @@ class AliExpressConnector(BaseConnector):
         if filters.get("brave_discovery") is not None:
             return bool(filters.get("brave_discovery"))
         return self._brave_discovery_default
+
+    def _is_searxng_search_enabled(self, filters: dict[str, Any]) -> bool:
+        if filters.get("searxng_discovery") is not None:
+            return bool(filters.get("searxng_discovery"))
+        return self._searxng_discovery_default
 
     def _should_enrich_with_ds(self, filters: dict[str, Any]) -> bool:
         if filters.get("enrich_with_ds") is not None:
@@ -200,17 +231,20 @@ class AliExpressConnector(BaseConnector):
 
     def _extract_pid_from_url(self, url: str) -> str | None:
         parsed = urlparse(url)
-        if parsed.netloc and parsed.netloc.lower() in _SHORT_LINK_HOSTS:
+        if parsed.scheme.lower() != "https":
+            return None
+        host = parsed.hostname.lower() if parsed.hostname else ""
+        if host in _SHORT_LINK_HOSTS:
             query_pid = parse_qs(parsed.query).get("pid") or parse_qs(parsed.query).get("productId")
             if query_pid:
                 normalized = self._normalize_pid(query_pid[0])
                 if normalized:
                     return normalized
-        pid = self._extract_pid(parsed.path)
-        if pid:
-            return pid
-        pid = self._extract_pid(url)
-        if pid:
+            return None
+        if host not in _PRODUCT_HOSTS or not parsed.path.lower().startswith("/item/"):
+            return None
+        pid = self._extract_pid(parsed.path.removeprefix("/item/"))
+        if pid and re.fullmatch(r"\d{10,20}", pid):
             return pid
         return None
 
@@ -225,7 +259,7 @@ class AliExpressConnector(BaseConnector):
         except Exception:
             return None
         final_url = str(response.url)
-        return self._extract_pid_from_url(final_url) or self._extract_pid(final_url)
+        return self._extract_pid_from_url(final_url)
 
     def _resolve_manual_targets(self, query: str, filters: dict[str, Any]) -> list[str]:
         targets: list[str] = []
@@ -489,6 +523,70 @@ class AliExpressConnector(BaseConnector):
             )
             listings.append(listing)
 
+        return listings
+
+    async def _searxng_search(
+        self, query: str, filters: dict[str, Any]
+    ) -> list[NormalizedListing]:
+        """Discover priced AliExpress listings through the local SearXNG API."""
+        max_results = max(0, int(filters.get("searxng_max_results", self._searxng_max_results)))
+        if not max_results:
+            return []
+        try:
+            response = await self._client.get(
+                f"{self._searxng_endpoint}/search",
+                params={"q": f"site:aliexpress.com/item/ {query}", "format": "json"},
+                headers={"Accept": "application/json", "User-Agent": "PriceRecon/1.0"},
+                timeout=float(filters.get("searxng_timeout", self._searxng_timeout)),
+                follow_redirects=True,
+            )
+            response.raise_for_status()
+            payload = response.json()
+            results = payload.get("results") if isinstance(payload, dict) else None
+            if not isinstance(results, list):
+                return []
+        except Exception as exc:
+            logger.warning("SearXNG search failed: %s", exc)
+            return []
+
+        listings: list[NormalizedListing] = []
+        seen: set[str] = set()
+        for result in results:
+            if not isinstance(result, dict):
+                continue
+            raw_url = result.get("url")
+            if not isinstance(raw_url, str):
+                continue
+            pid = self._extract_pid_from_url(raw_url)
+            if not pid or pid in seen:
+                continue
+            title = str(result.get("title") or f"AliExpress {pid}")
+            text = " ".join((title, str(result.get("content") or result.get("snippet") or "")))
+            price = self._extract_price(text)
+            if price is None:
+                continue
+            seen.add(pid)
+            listings.append(
+                NormalizedListing.model_validate(
+                    {
+                        "source": self.connector_id,
+                        "source_type": self.source_role,
+                        "source_listing_id": pid,
+                        "title_raw": title,
+                        "price": price,
+                        "currency": filters.get("currency", self._affiliate_currency),
+                        "url": raw_url,
+                        "variant_normalized": self._build_enrichment_payload(
+                            pid=pid, title=title, display_price=price,
+                            original_price=None, shipping_cost=None, seller=None,
+                            rating=None, sales=None, stock=None,
+                            source="searxng_discovery",
+                        ),
+                    }
+                )
+            )
+            if len(listings) >= max_results:
+                break
         return listings
 
     async def _rate_limit_brave(self) -> None:
