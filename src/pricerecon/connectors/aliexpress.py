@@ -12,7 +12,7 @@ import re
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from typing import Any
-from urllib.parse import parse_qs, urljoin, urlparse
+from urllib.parse import ParseResult, parse_qs, urljoin, urlparse
 
 import httpx
 
@@ -67,8 +67,8 @@ class AliExpressConnector(BaseConnector):
         self._brave_max_pids = int(self.config.get("brave_max_pids", 25))
         self._searxng_discovery_default = bool(self.config.get("searxng_discovery", True))
         self._searxng_endpoint = str(
-            self.config.get("searxng_url")
-            or os.getenv("SEARXNG_URL")
+            os.getenv("SEARXNG_URL")
+            or self.config.get("searxng_url")
             or _DEFAULT_SEARXNG_ENDPOINT
         ).rstrip("/")
         self._searxng_timeout = float(self.config.get("searxng_timeout", 10.0))
@@ -232,8 +232,22 @@ class AliExpressConnector(BaseConnector):
             return match.group(1)
         return None
 
+    def _safe_parse_url(self, url: str) -> ParseResult | None:
+        try:
+            parsed = urlparse(url)
+            # Accessors validate malformed ports and bracketed hosts lazily.
+            _ = parsed.hostname
+            _ = parsed.port
+            _ = parsed.username
+            _ = parsed.password
+            return parsed
+        except ValueError:
+            return None
+
     def _extract_pid_from_url(self, url: str) -> str | None:
-        parsed = urlparse(url)
+        parsed = self._safe_parse_url(url)
+        if parsed is None:
+            return None
         if parsed.scheme.lower() != "https":
             return None
         if parsed.username or parsed.password or parsed.port not in (None, 443):
@@ -252,10 +266,18 @@ class AliExpressConnector(BaseConnector):
         return match.group(1) if match else None
 
     def _resolve_short_link(self, url: str) -> str | None:
-        parsed = urlparse(url)
+        parsed = self._safe_parse_url(url)
+        if parsed is None:
+            return None
         if parsed.scheme.lower() != "https":
             return None
-        if not parsed.hostname or parsed.hostname.lower() not in _SHORT_LINK_HOSTS:
+        if (
+            not parsed.hostname
+            or parsed.hostname.lower() not in _SHORT_LINK_HOSTS
+            or parsed.username
+            or parsed.password
+            or parsed.port not in (None, 443)
+        ):
             return None
         current_url = url
         for _ in range(5):
@@ -278,7 +300,9 @@ class AliExpressConnector(BaseConnector):
                 return self._extract_pid_from_url(str(response.url))
 
             next_url = urljoin(current_url, location)
-            next_parsed = urlparse(next_url)
+            next_parsed = self._safe_parse_url(next_url)
+            if next_parsed is None:
+                return None
             if next_parsed.scheme.lower() != "https":
                 return None
             if next_parsed.username or next_parsed.password or next_parsed.port not in (None, 443):

@@ -71,6 +71,12 @@ async def test_searxng_timeout_is_safe() -> None:
     assert await connector(client)._searxng_search("GPU", {}) == []
 
 
+def test_searxng_url_environment_overrides_config(monkeypatch: Any) -> None:
+    monkeypatch.setenv("SEARXNG_URL", "http://env.example:8080")
+    conn = AliExpressConnector({"searxng_url": "http://config.example:8080"})
+    assert conn._searxng_endpoint == "http://env.example:8080"
+
+
 @pytest.mark.asyncio
 async def test_search_uses_searxng_only_after_brave_is_empty(monkeypatch: Any) -> None:
     client = Client(Response({"results": []}))
@@ -117,6 +123,8 @@ def test_extract_pid_from_url_requires_https_aliexpress_product_url() -> None:
     assert conn._extract_pid_from_url("https://www.aliexpress.com/item/1005001234567890.html.evil") is None
     assert conn._extract_pid_from_url("https://user@www.aliexpress.com/item/1005001234567890.html") is None
     assert conn._extract_pid_from_url("https://www.aliexpress.com:444/item/1005001234567890.html") is None
+    assert conn._extract_pid_from_url("https://www.aliexpress.com:bad/item/1005001234567890.html") is None
+    assert conn._extract_pid_from_url("https://[bad/item/1005001234567890.html") is None
 
 
 def test_resolve_short_link_does_not_extract_pid_from_arbitrary_redirect(monkeypatch: Any) -> None:
@@ -128,6 +136,8 @@ def test_resolve_short_link_does_not_extract_pid_from_arbitrary_redirect(monkeyp
     monkeypatch.setattr("pricerecon.connectors.aliexpress.httpx.get", lambda *args, **kwargs: RedirectResponse())
     assert conn._resolve_short_link("https://a.aliexpress.com/_test") is None
     assert conn._resolve_short_link("http://a.aliexpress.com/_test") is None
+    assert conn._resolve_short_link("https://user@a.aliexpress.com/_test") is None
+    assert conn._resolve_short_link("https://a.aliexpress.com:444/_test") is None
 
 
 def test_resolve_short_link_rejects_arbitrary_intermediate_redirect(monkeypatch: Any) -> None:
