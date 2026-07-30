@@ -46,9 +46,21 @@ def connector(client: Client) -> AliExpressConnector:
 async def test_searxng_success_dedupes_and_limits_results() -> None:
     payload = {
         "results": [
-            {"url": "https://www.aliexpress.com/item/1005001234567890.html", "title": "GPU", "content": "£19.99"},
-            {"url": "https://www.aliexpress.com/item/1005001234567890.html?x=1", "title": "duplicate", "content": "£20.00"},
-            {"url": "https://www.aliexpress.com/item/1005001234567891.html", "title": "GPU 2", "content": "£29.99"},
+            {
+                "url": "https://www.aliexpress.com/item/1005001234567890.html",
+                "title": "GPU",
+                "content": "£19.99",
+            },
+            {
+                "url": "https://www.aliexpress.com/item/1005001234567890.html?x=1",
+                "title": "duplicate",
+                "content": "£20.00",
+            },
+            {
+                "url": "https://www.aliexpress.com/item/1005001234567891.html",
+                "title": "GPU 2",
+                "content": "£29.99",
+            },
         ]
     }
     client = Client(Response(payload))
@@ -81,10 +93,13 @@ def test_searxng_url_environment_overrides_config(monkeypatch: Any) -> None:
 async def test_search_uses_searxng_only_after_brave_is_empty(monkeypatch: Any) -> None:
     client = Client(Response({"results": []}))
     conn = connector(client)
+
     async def empty_affiliate(query: str, filters: dict[str, Any]) -> list[Any]:
         return []
+
     async def empty_brave(query: str, filters: dict[str, Any]) -> list[Any]:
         return []
+
     monkeypatch.setattr(conn, "_affiliate_search", empty_affiliate)
     monkeypatch.setattr(conn, "_brave_search", empty_brave)
     results = await conn.search("GPU", {"site_search_discovery": False})
@@ -94,9 +109,19 @@ async def test_search_uses_searxng_only_after_brave_is_empty(monkeypatch: Any) -
 
 @pytest.mark.asyncio
 async def test_search_uses_searxng_when_brave_only_returns_placeholders(monkeypatch: Any) -> None:
-    client = Client(Response({"results": [
-        {"url": "https://www.aliexpress.com/item/1005001234567890.html", "title": "GPU", "content": "£19.99"}
-    ]}))
+    client = Client(
+        Response(
+            {
+                "results": [
+                    {
+                        "url": "https://www.aliexpress.com/item/1005001234567890.html",
+                        "title": "GPU",
+                        "content": "£19.99",
+                    }
+                ]
+            }
+        )
+    )
     conn = connector(client)
 
     async def empty_affiliate(query: str, filters: dict[str, Any]) -> list[Any]:
@@ -116,14 +141,31 @@ async def test_search_uses_searxng_when_brave_only_returns_placeholders(monkeypa
 
 def test_extract_pid_from_url_requires_https_aliexpress_product_url() -> None:
     conn = connector(Client(Response({})))
-    assert conn._extract_pid_from_url("https://www.aliexpress.com/item/1005001234567890.html") == "1005001234567890"
-    assert conn._extract_pid_from_url("http://www.aliexpress.com/item/1005001234567890.html") is None
+    assert (
+        conn._extract_pid_from_url("https://www.aliexpress.com/item/1005001234567890.html")
+        == "1005001234567890"
+    )
+    assert (
+        conn._extract_pid_from_url("http://www.aliexpress.com/item/1005001234567890.html") is None
+    )
     assert conn._extract_pid_from_url("https://example.com/item/1005001234567890.html") is None
     assert conn._extract_pid_from_url("https://www.aliexpress.com/search/1005001234567890") is None
-    assert conn._extract_pid_from_url("https://www.aliexpress.com/item/1005001234567890.html.evil") is None
-    assert conn._extract_pid_from_url("https://user@www.aliexpress.com/item/1005001234567890.html") is None
-    assert conn._extract_pid_from_url("https://www.aliexpress.com:444/item/1005001234567890.html") is None
-    assert conn._extract_pid_from_url("https://www.aliexpress.com:bad/item/1005001234567890.html") is None
+    assert (
+        conn._extract_pid_from_url("https://www.aliexpress.com/item/1005001234567890.html.evil")
+        is None
+    )
+    assert (
+        conn._extract_pid_from_url("https://user@www.aliexpress.com/item/1005001234567890.html")
+        is None
+    )
+    assert (
+        conn._extract_pid_from_url("https://www.aliexpress.com:444/item/1005001234567890.html")
+        is None
+    )
+    assert (
+        conn._extract_pid_from_url("https://www.aliexpress.com:bad/item/1005001234567890.html")
+        is None
+    )
     assert conn._extract_pid_from_url("https://[bad/item/1005001234567890.html") is None
 
 
@@ -133,7 +175,9 @@ def test_resolve_short_link_does_not_extract_pid_from_arbitrary_redirect(monkeyp
     class RedirectResponse:
         url = "https://example.com/item/1005001234567890.html"
 
-    monkeypatch.setattr("pricerecon.connectors.aliexpress.httpx.get", lambda *args, **kwargs: RedirectResponse())
+    monkeypatch.setattr(
+        "pricerecon.connectors.aliexpress.httpx.get", lambda *args, **kwargs: RedirectResponse()
+    )
     assert conn._resolve_short_link("https://a.aliexpress.com/_test") is None
     assert conn._resolve_short_link("http://a.aliexpress.com/_test") is None
     assert conn._resolve_short_link("https://user@a.aliexpress.com/_test") is None

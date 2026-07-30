@@ -67,9 +67,7 @@ class AliExpressConnector(BaseConnector):
         self._brave_max_pids = int(self.config.get("brave_max_pids", 25))
         self._searxng_discovery_default = bool(self.config.get("searxng_discovery", True))
         self._searxng_endpoint = str(
-            os.getenv("SEARXNG_URL")
-            or self.config.get("searxng_url")
-            or _DEFAULT_SEARXNG_ENDPOINT
+            os.getenv("SEARXNG_URL") or self.config.get("searxng_url") or _DEFAULT_SEARXNG_ENDPOINT
         ).rstrip("/")
         self._searxng_timeout = float(self.config.get("searxng_timeout", 10.0))
         self._searxng_max_results = int(self.config.get("searxng_max_results", 25))
@@ -106,7 +104,9 @@ class AliExpressConnector(BaseConnector):
 
         # Brave discovery creates price-less placeholders.  They must not count
         # as a successful discovery result or suppress the priced SearXNG lane.
-        if not any(listing.price is not None for listing in listings) and self._is_searxng_search_enabled(filters):
+        if not any(
+            listing.price is not None for listing in listings
+        ) and self._is_searxng_search_enabled(filters):
             listings.extend(await self._searxng_search(query, filters))
 
         manual_targets = self._resolve_manual_targets(query, filters)
@@ -579,9 +579,7 @@ class AliExpressConnector(BaseConnector):
 
         return listings
 
-    async def _searxng_search(
-        self, query: str, filters: dict[str, Any]
-    ) -> list[NormalizedListing]:
+    async def _searxng_search(self, query: str, filters: dict[str, Any]) -> list[NormalizedListing]:
         """Discover priced AliExpress listings through the local SearXNG API."""
         max_results = max(0, int(filters.get("searxng_max_results", self._searxng_max_results)))
         if not max_results:
@@ -631,9 +629,15 @@ class AliExpressConnector(BaseConnector):
                         "currency": filters.get("currency", self._affiliate_currency),
                         "url": raw_url,
                         "variant_normalized": self._build_enrichment_payload(
-                            pid=pid, title=title, display_price=price,
-                            original_price=None, shipping_cost=None, seller=None,
-                            rating=None, sales=None, stock=None,
+                            pid=pid,
+                            title=title,
+                            display_price=price,
+                            original_price=None,
+                            shipping_cost=None,
+                            seller=None,
+                            rating=None,
+                            sales=None,
+                            stock=None,
                             source="searxng_discovery",
                         ),
                     }
