@@ -12,7 +12,7 @@ import re
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from typing import Any
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urljoin, urlparse
 
 import httpx
 
@@ -236,6 +236,8 @@ class AliExpressConnector(BaseConnector):
         parsed = urlparse(url)
         if parsed.scheme.lower() != "https":
             return None
+        if parsed.username or parsed.password or parsed.port not in (None, 443):
+            return None
         host = parsed.hostname.lower() if parsed.hostname else ""
         if host in _SHORT_LINK_HOSTS:
             query_pid = parse_qs(parsed.query).get("pid") or parse_qs(parsed.query).get("productId")
@@ -255,14 +257,39 @@ class AliExpressConnector(BaseConnector):
             return None
         if not parsed.hostname or parsed.hostname.lower() not in _SHORT_LINK_HOSTS:
             return None
-        try:
-            response = httpx.get(
-                url, follow_redirects=True, timeout=10.0, headers={"User-Agent": "Mozilla/5.0"}
+        current_url = url
+        for _ in range(5):
+            try:
+                response = httpx.get(
+                    current_url,
+                    follow_redirects=False,
+                    timeout=10.0,
+                    headers={"User-Agent": "Mozilla/5.0"},
+                )
+            except Exception:
+                return None
+
+            location = (
+                getattr(response, "headers", {}).get("location")
+                if getattr(response, "is_redirect", False)
+                else None
             )
-        except Exception:
-            return None
-        final_url = str(response.url)
-        return self._extract_pid_from_url(final_url)
+            if not location:
+                return self._extract_pid_from_url(str(response.url))
+
+            next_url = urljoin(current_url, location)
+            next_parsed = urlparse(next_url)
+            if next_parsed.scheme.lower() != "https":
+                return None
+            if next_parsed.username or next_parsed.password or next_parsed.port not in (None, 443):
+                return None
+            next_host = next_parsed.hostname.lower() if next_parsed.hostname else ""
+            if next_host in _PRODUCT_HOSTS:
+                return self._extract_pid_from_url(next_url)
+            if next_host not in _SHORT_LINK_HOSTS:
+                return None
+            current_url = next_url
+        return None
 
     def _resolve_manual_targets(self, query: str, filters: dict[str, Any]) -> list[str]:
         targets: list[str] = []
