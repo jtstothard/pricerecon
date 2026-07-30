@@ -244,16 +244,16 @@ class AliExpressConnector(BaseConnector):
                 if normalized:
                     return normalized
             return None
-        if host not in _PRODUCT_HOSTS or not parsed.path.lower().startswith("/item/"):
+        if host not in _PRODUCT_HOSTS:
             return None
-        pid = self._extract_pid(parsed.path.removeprefix("/item/"))
-        if pid and re.fullmatch(r"\d{10,20}", pid):
-            return pid
-        return None
+        match = re.fullmatch(r"/item/(\d{10,20})\.html", parsed.path, re.IGNORECASE)
+        return match.group(1) if match else None
 
     def _resolve_short_link(self, url: str) -> str | None:
         parsed = urlparse(url)
-        if not parsed.netloc or parsed.netloc.lower() not in _SHORT_LINK_HOSTS:
+        if parsed.scheme.lower() != "https":
+            return None
+        if not parsed.hostname or parsed.hostname.lower() not in _SHORT_LINK_HOSTS:
             return None
         try:
             response = httpx.get(

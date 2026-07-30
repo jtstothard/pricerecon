@@ -114,6 +114,7 @@ def test_extract_pid_from_url_requires_https_aliexpress_product_url() -> None:
     assert conn._extract_pid_from_url("http://www.aliexpress.com/item/1005001234567890.html") is None
     assert conn._extract_pid_from_url("https://example.com/item/1005001234567890.html") is None
     assert conn._extract_pid_from_url("https://www.aliexpress.com/search/1005001234567890") is None
+    assert conn._extract_pid_from_url("https://www.aliexpress.com/item/1005001234567890.html.evil") is None
 
 
 def test_resolve_short_link_does_not_extract_pid_from_arbitrary_redirect(monkeypatch: Any) -> None:
@@ -124,3 +125,4 @@ def test_resolve_short_link_does_not_extract_pid_from_arbitrary_redirect(monkeyp
 
     monkeypatch.setattr("pricerecon.connectors.aliexpress.httpx.get", lambda *args, **kwargs: RedirectResponse())
     assert conn._resolve_short_link("https://a.aliexpress.com/_test") is None
+    assert conn._resolve_short_link("http://a.aliexpress.com/_test") is None
