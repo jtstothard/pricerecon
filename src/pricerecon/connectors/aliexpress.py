@@ -7,6 +7,7 @@ import hashlib
 import hmac
 import json
 import logging
+import os
 import re
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
@@ -23,7 +24,7 @@ from pricerecon.models import NormalizedListing, SourceType, VariantMatchConfide
 logger = logging.getLogger(__name__)
 
 _DEFAULT_TOP_ENDPOINT = "https://api-sg.aliexpress.com/sync"
-_DEFAULT_SEARXNG_ENDPOINT = "http://192.168.10.252:8080"
+_DEFAULT_SEARXNG_ENDPOINT = "http://searxng:8080"
 
 _SHORT_LINK_HOSTS = {"a.aliexpress.com", "s.click.aliexpress.com"}
 _PRODUCT_HOSTS = {"aliexpress.com", "www.aliexpress.com", "m.aliexpress.com"}
@@ -66,7 +67,9 @@ class AliExpressConnector(BaseConnector):
         self._brave_max_pids = int(self.config.get("brave_max_pids", 25))
         self._searxng_discovery_default = bool(self.config.get("searxng_discovery", True))
         self._searxng_endpoint = str(
-            self.config.get("searxng_url", _DEFAULT_SEARXNG_ENDPOINT)
+            self.config.get("searxng_url")
+            or os.getenv("SEARXNG_URL")
+            or _DEFAULT_SEARXNG_ENDPOINT
         ).rstrip("/")
         self._searxng_timeout = float(self.config.get("searxng_timeout", 10.0))
         self._searxng_max_results = int(self.config.get("searxng_max_results", 25))

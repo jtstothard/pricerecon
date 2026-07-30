@@ -29,7 +29,8 @@ connectors:
   aliexpress:
     enabled: true
     # Optional local SearXNG discovery fallback after affiliate and Brave.
-    searxng_url: "http://192.168.10.252:8080"
+    # Override with SEARXNG_URL in deployments where SearXNG is hosted remotely.
+    searxng_url: null
     searxng_discovery: true
     searxng_timeout: 10
     searxng_max_results: 25

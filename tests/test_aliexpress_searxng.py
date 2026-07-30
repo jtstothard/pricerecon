@@ -37,7 +37,7 @@ class Client:
 
 def connector(client: Client) -> AliExpressConnector:
     return AliExpressConnector(
-        {"searxng_url": "http://192.168.10.252:8080", "searxng_max_results": 2},
+        {"searxng_url": "http://searxng.test:8080", "searxng_max_results": 2},
         http_client=cast(httpx.AsyncClient, client),
     )
 
@@ -55,7 +55,7 @@ async def test_searxng_success_dedupes_and_limits_results() -> None:
     results = await connector(client)._searxng_search("GPU", {})
     assert len(results) == 2
     assert results[0].price == Decimal("19.99")
-    assert client.calls[0]["url"] == "http://192.168.10.252:8080/search"
+    assert client.calls[0]["url"] == "http://searxng.test:8080/search"
 
 
 @pytest.mark.asyncio
