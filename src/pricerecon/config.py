@@ -6,6 +6,29 @@ import yaml
 from pydantic_settings import BaseSettings
 
 
+def validate_browser_config(config: dict) -> dict:
+    """Validate named external-browser configuration during config loading."""
+    raw = config.get("browser_backends")
+    if raw is None:
+        return config
+    from pricerecon.connectors.browser_client import BrowserBackendConfigError, BrowserBackendRegistry
+
+    registry = BrowserBackendRegistry.from_mapping(raw)
+    default = config.get("browser_default", config.get("browser_selection"))
+    if default is not None:
+        registry.select(default)
+    connectors = config.get("connectors", {})
+    if not isinstance(connectors, dict):
+        raise BrowserBackendConfigError("connectors must be a mapping")
+    for connector_id, connector in connectors.items():
+        if not isinstance(connector, dict):
+            raise BrowserBackendConfigError(f"connector '{connector_id}' must be a mapping")
+        selection = connector.get("browser_backend", connector.get("browser_selection"))
+        if selection is not None:
+            registry.select(selection)
+    return config
+
+
 class Settings(BaseSettings):
     """Application settings."""
 
@@ -63,7 +86,7 @@ def load_config(path: Path | str | None = None) -> dict:
             local_config = yaml.safe_load(f) or {}
         config = _deep_merge(config, local_config)
 
-    return config
+    return validate_browser_config(config)
 
 
 def get_settings() -> Settings:

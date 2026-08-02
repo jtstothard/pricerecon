@@ -1556,6 +1556,36 @@ class AliExpressConnector(BaseConnector):
 
     async def _fetch_browser_detail(self, pid: str) -> dict[str, Any]:
         url = f"https://www.aliexpress.com/item/{pid}.html"
+        browser_result = await self.navigate_external_browser(url)
+        if browser_result is not None:
+            if browser_result.degraded:
+                raise ConnectorDegradedError(
+                    status=(
+                        ConnectorStatus.bot_blocked
+                        if browser_result.degradation.value == "blocked"
+                        else (
+                            ConnectorStatus.timeout
+                            if browser_result.degradation.value == "timeout"
+                            else ConnectorStatus.unknown_error
+                        )
+                    ),
+                    message="AliExpress external browser enrichment failed",
+                    connector_id=self.connector_id,
+                    detail={"product_id": pid, **self.browser_result_detail(browser_result)},
+                )
+            if browser_result.rendered.html:
+                detail = self._parse_browser_html(browser_result.rendered.html)
+            elif browser_result.rendered.snapshot:
+                detail = self._parse_browser_text(browser_result.rendered.snapshot)
+            else:
+                raise ConnectorDegradedError(
+                    status=ConnectorStatus.unknown_error,
+                    message="AliExpress external browser returned no rendered product content",
+                    connector_id=self.connector_id,
+                    detail={"product_id": pid, **self.browser_result_detail(browser_result)},
+                )
+            detail["selected_backend"] = browser_result.selected_backend
+            return detail
         if self._camofox_url:
             return await self._fetch_camofox_detail(pid, url)
         browser_client = self._browser_client

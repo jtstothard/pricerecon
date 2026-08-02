@@ -11,10 +11,12 @@ import glob
 import json
 import logging
 import os
+from collections.abc import Mapping
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, AsyncIterator
+from urllib.parse import urlsplit, urlunsplit
 
 import httpx
 
@@ -249,6 +251,17 @@ class BrowserSessionConfig:
     # CloakBrowser backend
     use_cloakbrowser: bool = field(default=False)
     cloakbrowser_fallback: bool = field(default=True)
+    # Named external browser backends.  These are deliberately plain data so
+    # credentials can remain in environment/config-local files and are never
+    # included in reprs or error messages.
+    browser_backends: Mapping[str, Any] | None = None
+    browser_selection: str | list[str] | None = None
+    browser_default: str | list[str] | None = None
+
+    def backend_registry(self) -> "BrowserBackendRegistry | None":
+        if self.browser_backends is None:
+            return None
+        return BrowserBackendRegistry.from_mapping(self.browser_backends)
 
     def __post_init__(self) -> None:
         env_timeout = os.environ.get("PRICERECON_BROWSER_NAV_TIMEOUT_MS", "").strip()
@@ -269,6 +282,163 @@ class BrowserSessionConfig:
             self.cloakbrowser_fallback = False
         elif env_fb in ("1", "true", "yes"):
             self.cloakbrowser_fallback = True
+
+
+class BrowserBackendConfig:
+    """Validated, secret-safe description of one browser service."""
+
+    __slots__ = ("name", "type", "endpoint", "options")
+
+    def __init__(self, name: str, backend_type: str, endpoint: str, options: dict[str, Any]):
+        self.name = name
+        self.type = backend_type
+        self.endpoint = endpoint
+        self.options = dict(options)
+
+    def __repr__(self) -> str:
+        return f"BrowserBackendConfig(name={self.name!r}, type={self.type!r}, endpoint={_redact_endpoint(self.endpoint)!r})"
+
+
+class BrowserBackendConfigError(ValueError):
+    """Configuration is invalid or refers to an unknown backend."""
+
+
+class BrowserBackendRegistry:
+    """Registry and deterministic selector for configured external browsers.
+
+    Accepted shape is ``{name: {type, endpoint, options}}``.  A list is used
+    for ordered fallback; it is never silently replaced by local Playwright.
+    """
+
+    _SUPPORTED_TYPES = {"camofox", "playwright", "cloakbrowser", "flaresolverr"}
+
+    def __init__(self, backends: dict[str, BrowserBackendConfig]):
+        self.backends = backends
+
+    @classmethod
+    def from_mapping(cls, raw: Mapping[str, Any]) -> "BrowserBackendRegistry":
+        if not isinstance(raw, Mapping) or not raw:
+            raise BrowserBackendConfigError("browser_backends must be a non-empty mapping")
+        parsed: dict[str, BrowserBackendConfig] = {}
+        for name, value in raw.items():
+            if not isinstance(name, str) or not name.strip():
+                raise BrowserBackendConfigError("browser backend names must be non-empty strings")
+            if not isinstance(value, Mapping):
+                raise BrowserBackendConfigError(f"browser backend '{name}' must be a mapping")
+            backend_type = str(value.get("type", "")).strip().lower()
+            if backend_type not in cls._SUPPORTED_TYPES:
+                raise BrowserBackendConfigError(
+                    f"browser backend '{name}' has unsupported type '{backend_type}'"
+                )
+            endpoint = str(value.get("endpoint", "")).strip()
+            if not endpoint:
+                raise BrowserBackendConfigError(f"browser backend '{name}' is missing endpoint")
+            try:
+                parsed_endpoint = urlsplit(endpoint)
+            except ValueError as exc:
+                raise BrowserBackendConfigError(
+                    f"browser backend '{name}' endpoint must be a valid URL"
+                ) from exc
+            allowed_schemes = {
+                "camofox": {"http", "https"},
+                "playwright": {"http", "https", "ws", "wss"},
+                "cloakbrowser": {"http", "https"},
+                "flaresolverr": {"http", "https"},
+            }[backend_type]
+            if parsed_endpoint.scheme not in allowed_schemes or not parsed_endpoint.hostname:
+                raise BrowserBackendConfigError(
+                    f"browser backend '{name}' endpoint must be a valid URL for type '{backend_type}'"
+                )
+            try:
+                parsed_endpoint.port
+            except ValueError as exc:
+                raise BrowserBackendConfigError(
+                    f"browser backend '{name}' endpoint must be a valid URL"
+                ) from exc
+            options = value.get("options", {})
+            if not isinstance(options, Mapping):
+                raise BrowserBackendConfigError(
+                    f"browser backend '{name}'.options must be a mapping"
+                )
+            parsed[name.strip()] = BrowserBackendConfig(
+                name.strip(), backend_type, endpoint, dict(options)
+            )
+        return cls(parsed)
+
+    def select(
+        self, selection: str | list[str] | tuple[str, ...] | None
+    ) -> list[BrowserBackendConfig]:
+        if selection is None:
+            raise BrowserBackendConfigError("no browser backend selection configured")
+        if not isinstance(selection, (str, list, tuple)):
+            raise BrowserBackendConfigError(
+                "browser selection must be a string or list/tuple of strings (non-empty list)"
+            )
+        names = [selection] if isinstance(selection, str) else list(selection)
+        if not names or any(not isinstance(name, str) or not name.strip() for name in names):
+            raise BrowserBackendConfigError(
+                "browser selection must be a string or list/tuple of strings (non-empty list)"
+            )
+        unknown = [name for name in names if name not in self.backends]
+        if unknown:
+            raise BrowserBackendConfigError(f"unknown browser backend(s): {', '.join(unknown)}")
+        return [self.backends[name] for name in names]
+
+    def public(self) -> dict[str, dict[str, str]]:
+        """Return diagnostics safe to log (options/credentials are excluded)."""
+        return {
+            name: {"type": backend.type, "endpoint": _redact_endpoint(backend.endpoint)}
+            for name, backend in self.backends.items()
+        }
+
+
+def _redact_endpoint(endpoint: str) -> str:
+    """Remove credentials from an endpoint before it enters diagnostics."""
+    parsed = urlsplit(endpoint)
+    if parsed.username is None and parsed.password is None:
+        return endpoint
+    host = parsed.hostname or ""
+    if ":" in host and not host.startswith("["):
+        host = f"[{host}]"
+    if parsed.port is not None:
+        host = f"{host}:{parsed.port}"
+    return urlunsplit((parsed.scheme, host, parsed.path, parsed.query, parsed.fragment))
+
+
+def resolve_browser_backend(
+    runtime_config: Mapping[str, Any], connector_config: Mapping[str, Any] | None = None
+) -> BrowserBackendConfig | None:
+    """Resolve the configured backend for a connector without local fallback.
+
+    ``browser_backend`` (or the legacy-friendly ``browser_selection``) on the
+    connector wins over the top-level ``browser_default``. A list is accepted
+    and returns its first configured backend; callers doing retries should use
+    :meth:`BrowserBackendRegistry.select` to retain the complete ordered list.
+    """
+    raw = runtime_config.get("browser_backends")
+    if raw is None:
+        return None
+    registry = BrowserBackendRegistry.from_mapping(raw)
+    connector = connector_config or {}
+    selection = connector.get("browser_backend", connector.get("browser_selection"))
+    if selection is None:
+        selection = runtime_config.get("browser_default", runtime_config.get("browser_selection"))
+    return registry.select(selection)[0] if selection is not None else None
+
+
+def resolve_browser_backends(
+    runtime_config: Mapping[str, Any], connector_config: Mapping[str, Any] | None = None
+) -> list[BrowserBackendConfig]:
+    """Resolve the complete ordered backend fallback list for a connector."""
+    raw = runtime_config.get("browser_backends")
+    if raw is None:
+        return []
+    registry = BrowserBackendRegistry.from_mapping(raw)
+    connector = connector_config or {}
+    selection = connector.get("browser_backend", connector.get("browser_selection"))
+    if selection is None:
+        selection = runtime_config.get("browser_default", runtime_config.get("browser_selection"))
+    return registry.select(selection) if selection is not None else []
 
 
 # ---------------------------------------------------------------------------
@@ -409,14 +579,69 @@ class BrowserClient:
         self._browser: Any = None
         self._remote_client: httpx.AsyncClient | None = None
         self._using_cloakbrowser: bool = False
+        self._active_backend: BrowserBackendConfig | None = None
+
+    def _configured_backends(self) -> list[BrowserBackendConfig]:
+        registry = self.config.backend_registry()
+        if registry is None:
+            return []
+        return registry.select(self.config.browser_selection or self.config.browser_default)
+
+    def _apply_backend(self, backend: BrowserBackendConfig) -> None:
+        self._active_backend = backend
+        if backend.type == "camofox":
+            self.config.camofox_url = backend.endpoint
+            self.config.camofox_api_key = (
+                str(backend.options.get("api_key", backend.options.get("access_key", ""))) or None
+            )
+            self.config.camofox_user_id = str(backend.options.get("user_id", "default"))
+            self.config.camofox_session_key = str(backend.options.get("session_key", "default"))
+
+    async def _start_backend(self, backend: BrowserBackendConfig) -> None:
+        self._apply_backend(backend)
+        if backend.type == "camofox":
+            self._remote_client = httpx.AsyncClient(timeout=60.0)
+            return
+        if backend.type == "cloakbrowser":
+            raise RuntimeError(
+                "cloakbrowser named backend is fetch-only and cannot create a context"
+            )
+        if async_playwright is None:
+            raise RuntimeError(f"Playwright is unavailable: {_PLAYWRIGHT_IMPORT_ERROR}")
+        self._playwright = await async_playwright().start()
+        self._browser = await self._playwright.chromium.connect_over_cdp(backend.endpoint)
 
     def _uses_camofox(self) -> bool:
-        return bool((self.config.camofox_url or "").strip())
+        return (
+            self._active_backend is not None and self._active_backend.type == "camofox"
+        ) or bool((self.config.camofox_url or "").strip())
 
     async def start(self) -> None:
+        if (
+            self._active_backend is not None
+            or self._browser is not None
+            or self._remote_client is not None
+        ):
+            return
+        configured = self._configured_backends()
+        if configured:
+            failures: list[str] = []
+            for backend in configured:
+                try:
+                    await self._start_backend(backend)
+                    return
+                except Exception as exc:
+                    failures.append(f"{backend.name}: {exc}")
+                    self._active_backend = None
+                    if self._remote_client is not None:
+                        await self._remote_client.aclose()
+                        self._remote_client = None
+                    if self._playwright is not None:
+                        await self._playwright.stop()
+                        self._playwright = None
+            raise RuntimeError("all configured browser backends failed: " + "; ".join(failures))
         if self._uses_camofox():
-            if self._remote_client is None:
-                self._remote_client = httpx.AsyncClient(timeout=60.0)
+            self._remote_client = httpx.AsyncClient(timeout=60.0)
             return
         if async_playwright is None:
             raise RuntimeError(f"Playwright is unavailable: {_PLAYWRIGHT_IMPORT_ERROR}")
@@ -439,6 +664,7 @@ class BrowserClient:
             await self._remote_client.aclose()
             self._remote_client = None
         self._using_cloakbrowser = False
+        self._active_backend = None
 
     def _fingerprint_kwargs(self) -> dict[str, Any]:
         if FingerprintGenerator is None:

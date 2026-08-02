@@ -344,3 +344,22 @@ class TestCloakBrowserBridge:
 
         assert result["used_cloakbrowser"] is True
         bridge.assert_awaited_once()
+
+
+async def test_named_backend_is_selected_by_production_client() -> None:
+    config = BrowserSessionConfig(
+        browser_backends={
+            "remote": {
+                "type": "camofox",
+                "endpoint": "https://browser.example/api",
+                "options": {"api_key": "secret"},
+            }
+        },
+        browser_selection="remote",
+    )
+    client = BrowserClient(config=config)
+    await client.start()
+    assert client._active_backend is not None
+    assert client._active_backend.name == "remote"
+    assert client.config.camofox_url == "https://browser.example/api"
+    await client.close()

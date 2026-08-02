@@ -95,6 +95,64 @@ DISCORD_WEBHOOK_URL=your-discord-webhook-url
 FLARESOLVERR_URL=http://localhost:8191
 ```
 
+### External browser backends
+
+Browser services can be registered once and selected per connector. Keep
+credentials in `config.local.yml` or environment variables; `options` are
+never included in the safe registry diagnostics.
+
+```yaml
+browser_backends:
+  camofox_primary:
+    type: camofox
+    endpoint: http://camofox-primary:9377
+    options: {api_key: ${CAMOFOX_PRIMARY_API_KEY}}
+  camofox_backup:
+    type: camofox
+    endpoint: http://camofox-backup:9377
+browser_default: [camofox_primary, camofox_backup]
+
+connectors:
+  reddit_hardwareswapuk:
+    browser_backend: camofox_primary
+  google_shopping:
+    browser_backend: [camofox_primary, camofox_backup]
+```
+
+Selections are deterministic: a retailer's `browser_backend` overrides the
+top-level `browser_default`; a list is an ordered fallback list. Unknown names,
+missing endpoints, and unsupported backend shapes fail validation rather than
+silently launching a local browser. Existing `camofox_url` and Playwright
+configuration remain supported.
+
+The external-browser adapter returns a discriminated outcome, so connectors can
+consume only evidence a backend actually produced:
+
+```python
+from pricerecon.connectors.external_browser_contract import (
+    BlockedResponse,
+    InterceptedResponse,
+    RenderedResponse,
+)
+
+outcome = await adapter.navigate(product_url)
+match outcome:
+    case InterceptedResponse(status_code=200, body=body):
+        return parse_api_payload(body)  # headers are redacted; body may be bounded
+    case RenderedResponse(content=dom):
+        return parse_rendered_listing(dom)  # no synthetic status or headers
+    case BlockedResponse(backend_name=name, reason=reason):
+        record_block(name, reason)
+    case degraded:
+        record_degraded(degraded.backend_name, degraded.kind, degraded.reason)
+```
+
+`InterceptedResponse` means interception was actually exercised;
+`RenderedResponse` means only rendered DOM/snapshot evidence is available.
+`EmptyResult`, `BlockedResponse`, `Timeout`, `MalformedResponse`, and
+`BackendOutage` are typed degraded outcomes — they remain values at the adapter
+boundary so fallback and connector policy can make an explicit decision.
+
 See [`.env.example`](.env.example) for all available options.
 
 ## Supported Sources
