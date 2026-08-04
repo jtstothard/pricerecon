@@ -1,6 +1,5 @@
 """Test SearXNG fallback lane in AliExpress connector."""
 
-import asyncio
 from typing import Any, cast
 
 import httpx
