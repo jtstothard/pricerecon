@@ -11,7 +11,10 @@ def validate_browser_config(config: dict) -> dict:
     raw = config.get("browser_backends")
     if raw is None:
         return config
-    from pricerecon.connectors.browser_client import BrowserBackendConfigError, BrowserBackendRegistry
+    from pricerecon.connectors.browser_client import (
+        BrowserBackendConfigError,
+        BrowserBackendRegistry,
+    )
 
     registry = BrowserBackendRegistry.from_mapping(raw)
     default = config.get("browser_default", config.get("browser_selection"))

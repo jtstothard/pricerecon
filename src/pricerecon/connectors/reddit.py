@@ -464,9 +464,7 @@ class _RedditConnector(TemplateConnector):
         )
         return self._entry_to_listing(entry)
 
-    async def _search_camofox(
-        self, query: str, filters: dict[str, Any]
-    ) -> list[NormalizedListing]:
+    async def _search_camofox(self, query: str, filters: dict[str, Any]) -> list[NormalizedListing]:
         """Retrieve through the configured authenticated Camofox profile only."""
         if not self._camofox_is_configured():
             raise ConnectorDegradedError(
@@ -482,7 +480,9 @@ class _RedditConnector(TemplateConnector):
         if result.degraded:
             error = as_connector_degraded_error(result, self.connector_id)
             if result.degradation is BrowserDegradation.BLOCKED:
-                status_codes = {attempt.status for attempt in result.attempts if attempt.status is not None}
+                status_codes = {
+                    attempt.status for attempt in result.attempts if attempt.status is not None
+                }
                 if status_codes & {401, 403}:
                     error = ConnectorDegradedError(
                         ConnectorStatus.auth_failed,
@@ -518,9 +518,7 @@ class _RedditConnector(TemplateConnector):
             [self._entry_to_listing(entry) for entry in entries], result
         )
 
-    async def _search_browser(
-        self, query: str, filters: dict[str, Any]
-    ) -> list[NormalizedListing]:
+    async def _search_browser(self, query: str, filters: dict[str, Any]) -> list[NormalizedListing]:
         """Compatibility alias for the Camofox-only Reddit browser path."""
         return await self._search_camofox(query, filters)
 

@@ -8,9 +8,12 @@ from pricerecon.connectors.browser_client import (
     resolve_browser_backends,
 )
 
-
 BACKENDS = {
-    "primary": {"type": "camofox", "endpoint": "https://browser-a.example/api", "options": {"api_key": "secret"}},
+    "primary": {
+        "type": "camofox",
+        "endpoint": "https://browser-a.example/api",
+        "options": {"api_key": "secret"},
+    },
     "backup": {"type": "camofox", "endpoint": "https://browser-b.example/api"},
 }
 
