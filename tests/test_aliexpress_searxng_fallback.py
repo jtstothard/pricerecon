@@ -210,8 +210,8 @@ async def test_aliexpress_searxng_handles_network_failure():
 
 
 @pytest.mark.asyncio
-async def test_aliexpress_searxng_respects_max_pids():
-    """Test that SearXNG respects the max_pids limit."""
+async def test_aliexpress_searxng_respects_max_results():
+    """Test that SearXNG respects the max_results limit."""
 
     class DummyResponse:
         def __init__(self, payload: dict[str, object]):
@@ -260,13 +260,5 @@ async def test_aliexpress_searxng_respects_max_pids():
     listings = await connector._searxng_search("test", {"searxng_max_results": 3})
     await connector.cleanup()
 
-    # Should only get 3 listings due to max_pids limit
+    # Should only get 3 listings due to max_results limit
     assert len(listings) == 3
-
-
-if __name__ == "__main__":
-    asyncio.run(test_aliexpress_uses_searxng_when_affiliate_and_brave_fail())
-    asyncio.run(test_aliexpress_searxng_disabled_when_flag_false())
-    asyncio.run(test_aliexpress_searxng_handles_network_failure())
-    asyncio.run(test_aliexpress_searxng_respects_max_pids())
-    print("All SearXNG fallback tests passed!")
