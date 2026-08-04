@@ -56,10 +56,10 @@ class CexConnector(BaseConnector):
 
         browser_result = await self.navigate_external_browser("https://uk.webuy.com/search")
         if browser_result is not None:
-            for response in browser_result.responses:
-                if response.intercepted and response.body:
+            for net_response in browser_result.responses:
+                if net_response.intercepted and net_response.body:
                     try:
-                        data = json.loads(response.body)
+                        data = json.loads(net_response.body)
                     except json.JSONDecodeError:
                         continue
                     hits = data.get("hits") if isinstance(data, dict) else None

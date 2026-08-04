@@ -56,10 +56,10 @@ class ShopifyConnector(BaseConnector):
             # Shopify's products JSON endpoint remains the authoritative price
             # transport. A browser override is evidence-only unless it
             # intercepts that endpoint; do not turn a stale DOM into prices.
-            for response in browser_result.responses:
-                if response.intercepted and "/products.json" in response.url and response.body:
+            for net_response in browser_result.responses:
+                if net_response.intercepted and "/products.json" in net_response.url and net_response.body:
                     try:
-                        payload = json.loads(response.body)
+                        payload = json.loads(net_response.body)
                     except json.JSONDecodeError:
                         break
                     return self.annotate_browser_result(

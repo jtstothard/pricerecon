@@ -84,7 +84,7 @@ async def test_amazon_browser_override_is_used_and_selected_backend_is_recorded(
     listings = await amazon.search("widget")
 
     assert listings[0].price == Decimal("19.99")
-    assert listings[0].variant_normalized["selected_backend"] == "primary"
+    assert (listings[0].variant_normalized or {})["selected_backend"] == "primary"
 
 
 @pytest.mark.asyncio
@@ -172,7 +172,7 @@ async def test_cex_browser_override_requires_intercepted_authoritative_hits(
     monkeypatch.setattr(cex, "navigate_external_browser", navigate)
     listings = await cex.search("widget")
     assert listings[0].source == "cex"
-    assert listings[0].variant_normalized["selected_backend"] == "primary"
+    assert (listings[0].variant_normalized or {})["selected_backend"] == "primary"
 
 
 @pytest.mark.asyncio
@@ -217,7 +217,7 @@ async def test_shopify_browser_override_records_backend_for_intercepted_products
     try:
         listings = await shopify.search("widget")
         assert listings[0].price == Decimal("12.50")
-        assert listings[0].variant_normalized["selected_backend"] == "primary"
+        assert (listings[0].variant_normalized or {})["selected_backend"] == "primary"
     finally:
         await shopify.cleanup()
 
@@ -233,6 +233,22 @@ def test_browser_annotation_preserves_existing_variant_data(amazon: AmazonConnec
         url="https://amazon.example/dp/B0C123ABC1",
         condition=Condition.NEW,
         variant_normalized={"existing": True},
+        product_normalized=None,
+        condition_raw=None,
+        shipping_cost=None,
+        total_landed_cost=None,
+        seller_or_store=None,
+        seller_feedback_score=None,
+        seller_feedback_pct=None,
+        location=None,
+        in_stock=None,
+        stock_state=None,
+        image_url=None,
+        exact_variant_confirmed=None,
+        variant_match_confidence=None,
+        mismatch_flags=None,
+        risk_flags=None,
+        category=None,
     )
     annotated = amazon.annotate_browser_result([listing], browser_result())
     assert annotated[0].variant_normalized == {
