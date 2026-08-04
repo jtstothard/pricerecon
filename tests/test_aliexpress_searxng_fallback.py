@@ -47,19 +47,21 @@ async def test_aliexpress_uses_searxng_when_affiliate_and_brave_fail():
 
             # SearXNG endpoint - return mock results (titles include prices)
             if "searxng" in url:
-                return DummyResponse({
-                    "results": [
-                        {
-                            "url": "https://www.aliexpress.com/item/1005001234567890.html",
-                            "title": "Test Product 1 £29.99"
-                        },
-                        {
-                            "url": "https://www.aliexpress.com/item/1005009876543210.html",
-                            "title": "Test Product 2 £49.99"
-                        }
-                    ]
-                })
-            
+                return DummyResponse(
+                    {
+                        "results": [
+                            {
+                                "url": "https://www.aliexpress.com/item/1005001234567890.html",
+                                "title": "Test Product 1 £29.99",
+                            },
+                            {
+                                "url": "https://www.aliexpress.com/item/1005009876543210.html",
+                                "title": "Test Product 2 £49.99",
+                            },
+                        ]
+                    }
+                )
+
             raise AssertionError(f"Unexpected GET request to: {url}")
 
         async def post(self, url, json=None, headers=None):
@@ -112,10 +114,14 @@ async def test_aliexpress_searxng_disabled_when_flag_false():
             calls.append(url)
             # Brave Search - return empty results
             if "search.brave.com" in url:
-                return type('Resp', (), {
-                    'text': '<html><body>No results</body></html>',
-                    'raise_for_status': lambda self: None
-                })()
+                return type(
+                    "Resp",
+                    (),
+                    {
+                        "text": "<html><body>No results</body></html>",
+                        "raise_for_status": lambda self: None,
+                    },
+                )()
             # Affiliate endpoint - fail
             if "api-sg.aliexpress.com" in url:
                 raise httpx.HTTPStatusError(
@@ -209,6 +215,7 @@ async def test_aliexpress_searxng_handles_network_failure():
 @pytest.mark.asyncio
 async def test_aliexpress_searxng_respects_max_pids():
     """Test that SearXNG respects the max_pids limit."""
+
     class DummyResponse:
         def __init__(self, payload: dict[str, object]):
             self._payload = payload
@@ -226,12 +233,12 @@ async def test_aliexpress_searxng_respects_max_pids():
                 results = [
                     {
                         "url": f"https://www.aliexpress.com/item/10050012345678{i}.html",
-                        "title": f"Product {i} £19.99"
+                        "title": f"Product {i} £19.99",
                     }
                     for i in range(10)
                 ]
                 return DummyResponse({"results": results})
-            
+
             raise AssertionError(f"Unexpected GET to: {url}")
 
         async def post(self, url, json=None, headers=None):
