@@ -75,7 +75,32 @@ class AmazonConnector(BaseConnector):
         if condition == "refurbished":
             params["rh"] = "p_n_condition-type:1486414031"
 
-        # Make request with curl_cffi
+        browser_result = await self.navigate_external_browser(
+            f"{self.BASE_URL}/s?k={query.replace(' ', '+')}"
+        )
+        if browser_result is not None:
+            if browser_result.degraded or not browser_result.rendered.html:
+                raise ConnectorDegradedError(
+                    (
+                        ConnectorStatus.bot_blocked
+                        if browser_result.degradation.value == "blocked"
+                        else (
+                            ConnectorStatus.timeout
+                            if browser_result.degradation.value == "timeout"
+                            else ConnectorStatus.unknown_error
+                        )
+                    ),
+                    "Amazon external browser did not provide parseable current results",
+                    self.CONNECTOR_ID,
+                    self.browser_result_detail(browser_result),
+                )
+            return self.annotate_browser_result(
+                self._parse_search_results(browser_result.rendered.html, query, filters),
+                browser_result,
+            )
+
+        # curl_cffi is the established direct default unless a browser was
+        # explicitly selected for this retailer.
         try:
             response = self.session.get(url, params=params, timeout=30)
             # Amazon intermittently returns a stock 503 page when automated

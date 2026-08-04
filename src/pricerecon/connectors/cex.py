@@ -7,11 +7,13 @@ Maps Grade A/B/C to Excellent/Good/Fair.
 """
 
 from decimal import Decimal
+import json
 from typing import Any, Optional
 
 import httpx
 
 from pricerecon.connectors.base import BaseConnector
+from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 from pricerecon.models import NormalizedListing, SourceType, Condition
 
 # CeX grade mapping
@@ -51,6 +53,27 @@ class CexConnector(BaseConnector):
         """
         if filters is None:
             filters = {}
+
+        browser_result = await self.navigate_external_browser("https://uk.webuy.com/search")
+        if browser_result is not None:
+            for net_response in browser_result.responses:
+                if net_response.intercepted and net_response.body:
+                    try:
+                        data = json.loads(net_response.body)
+                    except json.JSONDecodeError:
+                        continue
+                    hits = data.get("hits") if isinstance(data, dict) else None
+                    if isinstance(hits, list):
+                        return self.annotate_browser_result(
+                            [listing for hit in hits if (listing := self._parse_hit(hit))],
+                            browser_result,
+                        )
+            raise ConnectorDegradedError(
+                status=ConnectorStatus.unknown_error,
+                message="cex browser override returned no intercepted Algolia hits",
+                connector_id=self.connector_id,
+                detail=self.browser_result_detail(browser_result),
+            )
 
         # Build Algolia query payload
         payload = {

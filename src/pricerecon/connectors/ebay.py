@@ -3,14 +3,17 @@
 import logging
 import asyncio
 import threading
+import re
 from decimal import Decimal
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
+from urllib.parse import quote_plus
 
 import httpx
 from pydantic import BaseModel, Field, field_validator
 
 from pricerecon.connectors.base import BaseConnector
+from pricerecon.connectors.external_browser import as_connector_degraded_error
 from pricerecon.models import NormalizedListing, SourceType
 
 logger = logging.getLogger(__name__)
@@ -538,6 +541,20 @@ class eBayConnector(BaseConnector):
         self, query: str, filters: Optional[dict[str, Any]] = None
     ) -> list[NormalizedListing]:
         filters = filters or {}
+        browser_result = await self.navigate_external_browser(
+            f"https://www.ebay.co.uk/sch/i.html?_nkw={quote_plus(query)}"
+        )
+        if browser_result is not None:
+            if browser_result.degraded or not browser_result.rendered.html:
+                raise as_connector_degraded_error(browser_result, self.CONNECTOR_ID)
+            # A browser selection is authoritative for this execution. Do not
+            # mask a bad browser acquisition with a successful Browse API call.
+            return self.annotate_browser_result(
+                self._parse_browser_listings(browser_result.rendered.html), browser_result
+            )
+
+        # The authenticated Browse API remains the default without an explicit
+        # external browser selection.
         await self.ensure_token()
 
         token = self.token_store.get_token()
@@ -594,6 +611,75 @@ class eBayConnector(BaseConnector):
 
         data = response.json()
         return self._parse_listings(data.get("itemSummaries", []))
+
+    def _parse_browser_listings(self, html: str) -> list[NormalizedListing]:
+        """Parse only current, priced eBay cards rendered by the selected browser."""
+        listings: list[NormalizedListing] = []
+        seen_ids: set[str] = set()
+        for match in re.finditer(
+            r'<li[^>]+class=["\'][^"\']*\bs-item\b[^"\']*["\'][^>]*>(.*?)</li>',
+            html,
+            re.IGNORECASE | re.DOTALL,
+        ):
+            card = match.group(1)
+            url_match = re.search(
+                r'href=["\'](https?://[^"\']*?/itm/(\d+)[^"\']*)["\']', card, re.IGNORECASE
+            )
+            title_match = re.search(
+                r'class=["\'][^"\']*\bs-item__title\b[^"\']*["\'][^>]*>(.*?)</(?:div|h3|span)>',
+                card,
+                re.IGNORECASE | re.DOTALL,
+            )
+            price_match = re.search(
+                r'class=["\'][^"\']*\bs-item__price\b[^"\']*["\'][^>]*>\s*(?:£|GBP\s*)?([\d,]+(?:\.\d{1,2})?)',
+                card,
+                re.IGNORECASE | re.DOTALL,
+            )
+            if not url_match or not title_match or not price_match:
+                continue
+            item_id = url_match.group(2)
+            if item_id in seen_ids:
+                continue
+            title = re.sub(r"<[^>]+>", " ", title_match.group(1))
+            title = re.sub(r"\s+", " ", title).strip()
+            try:
+                price = Decimal(price_match.group(1).replace(",", ""))
+            except Exception:
+                continue
+            if not title or price <= 0:
+                continue
+            seen_ids.add(item_id)
+            listings.append(
+                NormalizedListing(
+                    source="ebay",
+                    source_type=self.source_role,
+                    source_listing_id=item_id,
+                    title_raw=title,
+                    price=price,
+                    currency="GBP",
+                    url=url_match.group(1),
+                    timestamp_seen=datetime.now(timezone.utc),
+                    product_normalized=None,
+                    variant_normalized=None,
+                    condition=None,
+                    condition_raw=None,
+                    shipping_cost=None,
+                    total_landed_cost=None,
+                    seller_or_store=None,
+                    seller_feedback_score=None,
+                    seller_feedback_pct=None,
+                    location=None,
+                    in_stock=None,
+                    stock_state=None,
+                    image_url=None,
+                    exact_variant_confirmed=None,
+                    variant_match_confidence=None,
+                    mismatch_flags=None,
+                    risk_flags=None,
+                    category=None,
+                )
+            )
+        return listings
 
     def _parse_listings(self, items: list[dict]) -> list[NormalizedListing]:
         listings = []

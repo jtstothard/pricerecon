@@ -11,6 +11,7 @@ from urllib.parse import quote_plus
 
 from pricerecon.connectors.base import BaseConnector
 from pricerecon.connectors.browser_client import BrowserClient
+from pricerecon.connectors.external_browser import as_connector_degraded_error
 from pricerecon.connectors.price import extract_visible_gbp_price
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 from pricerecon.models import NormalizedListing, SourceType
@@ -87,6 +88,9 @@ class FacebookMarketplaceConnector(BaseConnector):
         return SourceType.MARKETPLACE
 
     async def initialize(self) -> None:
+        """Initialize only the acquisition path selected by configuration."""
+        if self.has_external_browser():
+            return
         cookies = self._build_cookies()
         self._context = await self.browser_client.new_context(cookies=cookies)
         self._page = await self._context.new_page() if self._context is not None else None
@@ -98,7 +102,8 @@ class FacebookMarketplaceConnector(BaseConnector):
         if self._context is not None:
             await self._context.close()
             self._context = None
-        await self.browser_client.close()
+        if not self.has_external_browser():
+            await self.browser_client.close()
 
     def _build_cookies(self) -> list[dict[str, Any]]:
         required = {
@@ -155,103 +160,82 @@ class FacebookMarketplaceConnector(BaseConnector):
             f"&latitude={latitude}&longitude={longitude}"
         )
 
+    def _parse_external_html(self, html: str) -> list[NormalizedListing]:
+        """Parse rendered Marketplace cards without changing listing semantics."""
+        from bs4 import BeautifulSoup
+
+        soup = BeautifulSoup(html, "html.parser")
+        cards = [
+            {
+                "title": link.get_text(" ", strip=True),
+                "url": str(link.get("href") or ""),
+                "text": link.parent.get_text(" ", strip=True) if link.parent else "",
+            }
+            for link in soup.select("a[href*='/marketplace/item/']")
+        ]
+        return self._cards_to_listings(cards)
+
+    def _cards_to_listings(self, cards: list[dict[str, str]]) -> list[NormalizedListing]:
+        """Normalize cards shared by local and external-browser acquisitions."""
+        listings: list[NormalizedListing] = []
+        for card in cards:
+            title = (card.get("title") or "").strip()
+            if not title:
+                continue
+            text = card.get("text") or ""
+            price = extract_visible_gbp_price(f"{title} {text}")
+            listings.append(
+                NormalizedListing(
+                    source=self.connector_id,
+                    source_type=SourceType.MARKETPLACE,
+                    source_listing_id=hashlib.sha1((card.get("url") or title).encode()).hexdigest(),
+                    title_raw=title,
+                    price=price,
+                    currency="GBP" if price is not None else "UNK",
+                    url=card.get("url") or "",
+                    timestamp_seen=datetime.now(timezone.utc),
+                    seller_or_store=None,
+                    location=self.location,
+                    product_normalized=None,
+                    variant_normalized=None,
+                    condition=None,
+                    condition_raw=None,
+                    shipping_cost=None,
+                    total_landed_cost=None,
+                    seller_feedback_score=None,
+                    seller_feedback_pct=None,
+                    in_stock=None,
+                    stock_state=None,
+                    image_url=None,
+                    exact_variant_confirmed=None,
+                    variant_match_confidence=None,
+                    mismatch_flags=None,
+                    risk_flags=None,
+                    category=None,
+                )
+            )
+        return listings
+
     async def search(
         self, query: str, filters: dict[str, Any] | None = None
     ) -> list[NormalizedListing]:
-        if self._context is None or self._page is None:
-            await self.initialize()
-        assert self._page is not None
-        await self._delay()
-        try:
-            await self._page.goto(
-                self._search_url(query, filters), wait_until="domcontentloaded", timeout=45000
-            )
-            await self._page.wait_for_timeout(2500)
-            cards = await self._page.locator("a[href*='/marketplace/item/']").evaluate_all(
-                """els => els.map(el => {
-                    const card = el.closest('div');
-                    return {
-                      title: (el.textContent || '').trim(),
-                      url: el.href,
-                      text: (card ? card.textContent : el.textContent || '') || ''
-                    };
-                })"""
-            )
-            listings: list[NormalizedListing] = []
-            for idx, card in enumerate(cards):
-                title = (card.get("title") or "").strip()
-                if not title:
-                    continue
-                text = card.get("text") or ""
-                price = extract_visible_gbp_price(f"{title} {text}")
-                listings.append(
-                    NormalizedListing(
-                        source=self.connector_id,
-                        source_type=SourceType.MARKETPLACE,
-                        source_listing_id=hashlib.sha1(
-                            (card.get("url") or title).encode()
-                        ).hexdigest(),
-                        title_raw=title,
-                        price=price,
-                        currency="GBP" if price is not None else "UNK",
-                        url=card.get("url") or "",
-                        timestamp_seen=datetime.now(timezone.utc),
-                        seller_or_store=None,
-                        location=self.location,
-                        product_normalized=None,
-                        variant_normalized=None,
-                        condition=None,
-                        condition_raw=None,
-                        shipping_cost=None,
-                        total_landed_cost=None,
-                        seller_feedback_score=None,
-                        seller_feedback_pct=None,
-                        in_stock=None,
-                        stock_state=None,
-                        image_url=None,
-                        exact_variant_confirmed=None,
-                        variant_match_confidence=None,
-                        mismatch_flags=None,
-                        risk_flags=None,
-                        category=None,
-                    )
-                )
-            return listings
-        except ConnectorDegradedError:
-            raise
-        except TimeoutError as exc:
-            raise ConnectorDegradedError(
-                status=ConnectorStatus.timeout,
-                message="Facebook Marketplace timed out",
-                connector_id=self.CONNECTOR_ID,
-                detail={"error": str(exc)},
-            ) from exc
-        except Exception as exc:
-            text = str(exc).lower()
-            if "checkpoint" in text or "login" in text:
-                raise ConnectorDegradedError(
-                    status=ConnectorStatus.bot_blocked,
-                    message="Facebook Marketplace blocked the session",
-                    connector_id=self.CONNECTOR_ID,
-                    detail={"error": str(exc)},
-                ) from exc
-            if "auth" in text:
-                raise ConnectorDegradedError(
-                    status=ConnectorStatus.auth_failed,
-                    message="Facebook Marketplace auth failed",
-                    connector_id=self.CONNECTOR_ID,
-                    detail={"error": str(exc)},
-                ) from exc
-            if "parse" in text or "selector" in text:
-                raise ConnectorDegradedError(
-                    status=ConnectorStatus.parse_error,
-                    message="Facebook Marketplace parsing failed",
-                    connector_id=self.CONNECTOR_ID,
-                    detail={"error": str(exc)},
-                ) from exc
+        external_url = self._search_url(query, filters)
+        browser_result = await self.navigate_external_browser(external_url)
+        if browser_result is None:
             raise ConnectorDegradedError(
                 status=ConnectorStatus.unknown_error,
-                message="Facebook Marketplace search failed",
-                connector_id=self.CONNECTOR_ID,
-                detail={"error": str(exc)},
-            ) from exc
+                message="Facebook Marketplace requires a configured external browser backend",
+                connector_id=self.connector_id,
+                detail={"missing": ["browser_backend"]},
+            )
+        if browser_result.degraded or not browser_result.rendered.html:
+            raise as_connector_degraded_error(browser_result, self.connector_id)
+        external_listings = self._parse_external_html(browser_result.rendered.html)
+        if not external_listings:
+            raise ConnectorDegradedError(
+                status=ConnectorStatus.parse_error,
+                message="Facebook Marketplace browser content contained no listing cards",
+                connector_id=self.connector_id,
+                detail=self.browser_result_detail(browser_result),
+            )
+        return self.annotate_browser_result(external_listings, browser_result)

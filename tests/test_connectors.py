@@ -396,51 +396,39 @@ def test_rss_template_loader_returns_failure_for_invalid_yaml(tmp_path: Any) -> 
 
 @pytest.mark.asyncio
 async def test_facebook_marketplace_connector_parses_concatenated_gbp_price() -> None:
-    cards = [
-        {
-            "title": "£550Nvidia GeForce rtx 4060 8GB",
-            "url": "https://www.facebook.com/marketplace/item/123",
-            "text": "£550Nvidia GeForce rtx 4060 8GB",
-        },
-        {
-            "title": "£450ASUS GEFORCE RTX 5070",
-            "url": "https://www.facebook.com/marketplace/item/456",
-            "text": "£450ASUS GEFORCE RTX 5070",
-        },
-    ]
+    """Concatenated GBP prices (e.g. £550Nvidia) parse correctly via the shared adapter."""
+    html = """
+    <div><a href="https://www.facebook.com/marketplace/item/123">£550Nvidia GeForce rtx 4060 8GB</a></div>
+    <div><a href="https://www.facebook.com/marketplace/item/456">£450ASUS GEFORCE RTX 5070</a></div>
+    """
 
-    class FakeLocator:
-        def __init__(self, payload: Any) -> None:
-            self.payload = payload
+    config: dict[str, object] = {
+        "browser_backends": {"cloak": {"type": "cloakbrowser", "endpoint": "http://cloak.test"}},
+        "browser_default": "cloak",
+    }
 
-        async def evaluate_all(self, _script: Any) -> Any:
-            return self.payload
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"navigated": True, "html": html})
 
-    class FakePage:
-        async def goto(self, *_args: Any, **_kwargs: Any) -> Any:
-            return None
-
-        async def wait_for_timeout(self, *_args: Any, **_kwargs: Any) -> Any:
-            return None
-
-        def locator(self, _selector: Any) -> Any:
-            return FakeLocator(cards)
-
-    class FakeContext:
-        pass
+    from pricerecon.connectors.external_browser import ExternalBrowserAdapter
 
     connector = FacebookMarketplaceConnector(
-        browser_client=None,
-        latitude=51.5074,  # London — example only
+        latitude=51.5074,
         longitude=-0.1278,
     )
-    connector._context = cast(Any, FakeContext())
-    connector._page = cast(Any, FakePage())
+    connector._external_browser = ExternalBrowserAdapter.from_config(
+        config,
+        {"browser_backend": "cloak"},
+        client_factory=lambda **kwargs: httpx.AsyncClient(
+            transport=httpx.MockTransport(handler), **kwargs
+        ),
+    )
 
     listings = await connector.search("rtx")
 
     assert [listing.price for listing in listings] == [Decimal("550"), Decimal("450")]
-    assert [listing.title_raw for listing in listings] == [card["title"] for card in cards]
+    assert listings[0].title_raw == "£550Nvidia GeForce rtx 4060 8GB"
+    assert listings[1].title_raw == "£450ASUS GEFORCE RTX 5070"
 
 
 @pytest.mark.asyncio

@@ -15,6 +15,7 @@ import httpx
 import yaml
 from pricerecon.config import load_config
 from pricerecon.connectors.base import BaseConnector
+from pricerecon.connectors.external_browser import as_connector_degraded_error
 from pricerecon.connectors.flaresolverr import FlareSolverrClient
 from pricerecon.connectors.html import SelectorConfig, parse_listings_from_html
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
@@ -84,6 +85,11 @@ class TemplateConnector(BaseConnector):
         return self.template.search_url.format(query=quote_plus(query))
 
     async def _fetch_html(self, url: str) -> str:
+        browser_result = await self.navigate_external_browser(url)
+        if browser_result is not None:
+            if browser_result.degraded or not browser_result.rendered.html:
+                raise as_connector_degraded_error(browser_result, self.connector_id)
+            return browser_result.rendered.html
         if self.template.use_flare_solverr:
             endpoint = self.template.flaresolverr_url
             if not endpoint:
@@ -139,14 +145,19 @@ class TemplateConnector(BaseConnector):
         html = await self._fetch_html(self._format_search_url(query))
         # Ebuyer: parse client-side productImpressions JSON data
         if self.connector_id == "ebuyer":
-            return self._parse_ebuyer_json(html)
-        return parse_listings_from_html(
-            html,
-            base_url=self.template.base_url,
-            source=self.connector_id,
-            source_type=self.template.source_type,
-            selector=self.template.selectors,
-            category=self.template.category,
+            listings = self._parse_ebuyer_json(html)
+        else:
+            listings = parse_listings_from_html(
+                html,
+                base_url=self.template.base_url,
+                source=self.connector_id,
+                source_type=self.template.source_type,
+                selector=self.template.selectors,
+                category=self.template.category,
+            )
+        browser_result = getattr(self, "_last_external_browser_result", None)
+        return (
+            self.annotate_browser_result(listings, browser_result) if browser_result else listings
         )
 
     def _parse_ebuyer_json(self, html: str) -> list[NormalizedListing]:
@@ -223,5 +234,5 @@ class TemplateConnector(BaseConnector):
             )
         return listings
 
-    async def initialize(self) -> None:
-        return None
+    async def cleanup(self) -> None:
+        await self._client.aclose()

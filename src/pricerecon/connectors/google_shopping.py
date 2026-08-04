@@ -5,11 +5,8 @@ from decimal import Decimal
 from typing import Any, Optional
 
 from pricerecon.connectors.base import BaseConnector
-from pricerecon.connectors.browser_client import (
-    BrowserClient,
-    BrowserSessionConfig,
-    browser_context,
-)
+from pricerecon.connectors.external_browser import as_connector_degraded_error
+from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 from pricerecon.models import NormalizedListing, SourceType
 
 logger = logging.getLogger(__name__)
@@ -35,7 +32,6 @@ class GoogleShoppingConnector(BaseConnector):
                     (e.g., camofox_url, use_flare_solverr)
         """
         self.config = config or {}
-        self.browser_client: Optional[BrowserClient] = None
 
     @property
     def source_role(self) -> SourceType:
@@ -43,15 +39,12 @@ class GoogleShoppingConnector(BaseConnector):
         return SourceType.MARKETPLACE
 
     async def initialize(self) -> None:
-        """Initialize browser client."""
-        browser_config = BrowserSessionConfig(**self.config)
-        self.browser_client = BrowserClient(config=browser_config)
-        await self.browser_client.start()
+        """External browser sessions are acquired per navigation."""
+        return None
 
     async def cleanup(self) -> None:
-        """Cleanup browser resources."""
-        if self.browser_client:
-            await self.browser_client.close()
+        """The shared adapter cleans up each external browser session."""
+        return None
 
     async def search(
         self, query: str, filters: Optional[dict[str, Any]] = None
@@ -67,20 +60,21 @@ class GoogleShoppingConnector(BaseConnector):
         """
         filters = filters or {}
 
-        if self.browser_client is None:
-            await self.initialize()
-
-        assert self.browser_client is not None
-
         try:
             # Build search URL
             url_with_params = f"{self.SEARCH_URL}/search?q={query}&tbm=shop"
 
-            # Fetch page with browser
-            async with browser_context() as context:
-                page = await context.new_page()
-                await page.goto(url_with_params)
-                html = await page.content()
+            browser_result = await self.navigate_external_browser(url_with_params)
+            if browser_result is None:
+                raise ConnectorDegradedError(
+                    status=ConnectorStatus.unknown_error,
+                    message="Google Shopping requires a configured external browser backend",
+                    connector_id=self.connector_id,
+                    detail={"missing": ["browser_backend"]},
+                )
+            if browser_result.degraded:
+                raise as_connector_degraded_error(browser_result, self.connector_id)
+            html = browser_result.rendered.html
 
             if not html:
                 logger.error("Failed to fetch Google Shopping HTML")
@@ -89,8 +83,10 @@ class GoogleShoppingConnector(BaseConnector):
             listings = self._parse_search_results(html)
             logger.info(f"Google Shopping found {len(listings)} listings for '{query}'")
 
-            return listings
+            return self.annotate_browser_result(listings, browser_result)
 
+        except ConnectorDegradedError:
+            raise
         except Exception as e:
             logger.error(f"Google Shopping search failed: {e}")
             return []

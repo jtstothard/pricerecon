@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from decimal import Decimal
+import json
 from typing import Any
 from urllib.parse import quote_plus
 
@@ -47,6 +48,32 @@ class ShopifyConnector(BaseConnector):
                 message="shopify requires base_url (or store_url) for a specific storefront",
                 connector_id=self.connector_id,
                 detail={"missing": ["base_url"], "accepted_keys": ["base_url", "store_url"]},
+            )
+        browser_result = await self.navigate_external_browser(
+            f"{self.base_url}/search?q={quote_plus(query)}&type=product"
+        )
+        if browser_result is not None:
+            # Shopify's products JSON endpoint remains the authoritative price
+            # transport. A browser override is evidence-only unless it
+            # intercepts that endpoint; do not turn a stale DOM into prices.
+            for net_response in browser_result.responses:
+                if (
+                    net_response.intercepted
+                    and "/products.json" in net_response.url
+                    and net_response.body
+                ):
+                    try:
+                        payload = json.loads(net_response.body)
+                    except json.JSONDecodeError:
+                        break
+                    return self.annotate_browser_result(
+                        self._products_to_listings(payload.get("products", [])), browser_result
+                    )
+            raise ConnectorDegradedError(
+                status=ConnectorStatus.unknown_error,
+                message="shopify browser override returned no intercepted products JSON",
+                connector_id=self.connector_id,
+                detail=self.browser_result_detail(browser_result),
             )
         await self._client.get(
             f"{self.base_url}/search?q={quote_plus(query)}&type=product",

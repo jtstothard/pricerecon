@@ -447,6 +447,14 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
                 connector = validate_and_create_connector(
                     connector_class, connector_id, connector_kwargs
                 )
+                # This is deliberately post-construction: every BaseConnector
+                # can receive the shared named-backend selection without
+                # expanding its public constructor or changing its direct/API
+                # default. The structural guard keeps existing plugin/test
+                # doubles compatible with the executor contract.
+                configure_browser = getattr(connector, "configure_external_browser", None)
+                if callable(configure_browser):
+                    configure_browser(runtime_config, config_defaults | dict(source.config or {}))
             except Exception as exc:
                 raise ConnectorDegradedError(
                     status=ConnectorStatus.unknown_error,
