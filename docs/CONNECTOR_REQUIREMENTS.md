@@ -41,7 +41,7 @@ These sites work with direct HTTP requests and do not require FlareSolverr.
 | Laptops Direct | laptopsdirect.co.uk | None | Direct HTTP works |
 | Music Magpie | musicmagpie.co.uk | None | Direct HTTP works |
 | Novatech | novatech.co.uk | None | Direct HTTP works |
-| Reddit | reddit.com | Reddit API credentials (approved app) or optional browser | RSS is attempted first; on 403/429 the connector tries the approved API, then opt-in Camofox/Playwright. Browser mode requires a configured browser session; Cloudflare/CAPTCHA or proxy challenges remain human-gated prerequisites and are surfaced as structured degraded errors. |
+| Reddit | reddit.com | Reddit API credentials (approved app) or authenticated Camofox profile | RSS is attempted first; on 403/429 the connector tries the approved API, then only Camofox backends configured with persistent `user_id` and `session_key`. Missing or expired profile auth fails closed; anonymous Camofox, local Playwright, CAPTCHA bypass, and credential export are not used. |
 | HotUKDeals | hotukdeals.com | None | RSS feed (no HTTP scraping) |
 | Shopify | *.myshopify.com | None | Generic Shopify scraping |
 | Dell UK | dell.co.uk | None | Direct HTTP works |

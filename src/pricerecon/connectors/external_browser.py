@@ -158,6 +158,20 @@ class ExternalBrowserAdapter:
     ) -> "ExternalBrowserAdapter":
         return cls(resolve_browser_backends(runtime_config, connector_config), **kwargs)
 
+    def has_authenticated_camofox_profile(self) -> bool:
+        """Return whether every selected backend is a persistent Camofox profile.
+
+        This intentionally exposes only the presence of the required profile
+        identifiers, never their values. Connectors with stricter policies can
+        use it to reject anonymous or mixed backend selections before any
+        navigation is attempted.
+        """
+        return bool(self._backends) and all(
+            backend.type == "camofox"
+            and all(str(backend.options.get(key, "")).strip() for key in ("user_id", "session_key"))
+            for backend in self._backends
+        )
+
     async def navigate(
         self,
         url: str,

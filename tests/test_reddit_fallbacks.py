@@ -119,7 +119,7 @@ async def test_reddit_block_is_not_silently_converted_to_empty(monkeypatch: Any)
     assert raised.value.detail["fallbacks_attempted"] is False
     assert [
         (stage["stage"], stage["outcome"]) for stage in raised.value.detail["fallback_stages"]
-    ] == [("rss", "attempted"), ("rss", "failed"), ("api", "skipped"), ("browser", "skipped")]
+    ] == [("rss", "attempted"), ("rss", "failed"), ("api", "skipped"), ("camofox", "skipped")]
 
 
 def test_browser_snapshot_parser_normalizes_post_identity() -> None:
@@ -163,8 +163,9 @@ async def test_api_unexpected_error_does_not_prevent_browser_fallback(monkeypatc
     monkeypatch.setenv("REDDIT_CLIENT_SECRET", "secret")
     monkeypatch.setenv("REDDIT_USER_AGENT", "PriceRecon/test")
     monkeypatch.setenv("PRICERECON_REDDIT_BROWSER_ENABLED", "true")
+    monkeypatch.setattr(connector, "_camofox_is_configured", lambda: True)
     monkeypatch.setattr(connector, "_search_api", api)
-    monkeypatch.setattr(connector, "_search_browser", browser)
+    monkeypatch.setattr(connector, "_search_camofox", browser)
 
     listings = await connector.search("RTX 4090")
     assert len(listings) == 1
@@ -255,8 +256,9 @@ async def test_api_failure_reaches_browser(
     monkeypatch.setenv("REDDIT_CLIENT_SECRET", "secret")
     monkeypatch.setenv("REDDIT_USER_AGENT", "PriceRecon/test")
     monkeypatch.setenv("PRICERECON_REDDIT_BROWSER_ENABLED", "true")
+    monkeypatch.setattr(connector, "_camofox_is_configured", lambda: True)
     monkeypatch.setattr(connector, "_search_api", api)
-    monkeypatch.setattr(connector, "_search_browser", browser)
+    monkeypatch.setattr(connector, "_search_camofox", browser)
 
     with caplog.at_level("INFO", logger=reddit_module.__name__):
         assert len(await connector.search("RTX 4090")) == 1
@@ -271,8 +273,8 @@ async def test_api_failure_reaches_browser(
         ("rss", "failed"),
         ("api", "attempted"),
         ("api", "failed"),
-        ("browser", "attempted"),
-        ("browser", "succeeded"),
+        ("camofox", "attempted"),
+        ("camofox", "succeeded"),
     ]
 
 
@@ -296,13 +298,14 @@ async def test_browser_failure_returns_structured_degraded_error(monkeypatch: An
     monkeypatch.setattr(TemplateConnector, "search", rss)
     monkeypatch.delenv("PRICERECON_REDDIT_API_ENABLED", raising=False)
     monkeypatch.setenv("PRICERECON_REDDIT_BROWSER_ENABLED", "true")
-    monkeypatch.setattr(connector, "_search_browser", browser)
+    monkeypatch.setattr(connector, "_camofox_is_configured", lambda: True)
+    monkeypatch.setattr(connector, "_search_camofox", browser)
 
     with pytest.raises(ConnectorDegradedError) as raised:
         await connector.search("RTX")
     assert raised.value.status is ConnectorStatus.rate_limited
     assert raised.value.detail is not None
-    assert raised.value.detail["fallback_errors"] == ["browser:timeout"]
+    assert raised.value.detail["fallback_errors"] == ["camofox:timeout"]
     assert raised.value.detail["fallbacks_attempted"] is True
     assert [
         (stage["stage"], stage["outcome"]) for stage in raised.value.detail["fallback_stages"]
@@ -310,73 +313,9 @@ async def test_browser_failure_returns_structured_degraded_error(monkeypatch: An
         ("rss", "attempted"),
         ("rss", "failed"),
         ("api", "skipped"),
-        ("browser", "attempted"),
-        ("browser", "failed"),
+        ("camofox", "attempted"),
+        ("camofox", "failed"),
     ]
-
-
-class _FakeResponse:
-    def __init__(self, status: int) -> None:
-        self.status = status
-
-
-class _FakePage:
-    def __init__(self, content: str, status: int = 200, error: Exception | None = None) -> None:
-        self._content, self._status, self._error = content, status, error
-
-    async def goto(self, *args: Any, **kwargs: Any) -> _FakeResponse:
-        if self._error:
-            raise self._error
-        return _FakeResponse(self._status)
-
-    async def wait_for_timeout(self, _: int) -> None:
-        return None
-
-    async def content(self) -> str:
-        return self._content
-
-
-class _FakeContext:
-    def __init__(self, page: _FakePage) -> None:
-        self.page = page
-
-    async def new_page(self) -> _FakePage:
-        return self.page
-
-    async def close(self) -> None:
-        return None
-
-
-class _FakeBrowserClient:
-    page: _FakePage
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        pass
-
-    async def new_context(self) -> _FakeContext:
-        return _FakeContext(type(self).page)
-
-    async def close(self) -> None:
-        return None
-
-
-@pytest.mark.asyncio
-async def test_browser_session_success_and_structured_errors(monkeypatch: Any) -> None:
-    monkeypatch.setattr(reddit_module, "BrowserClient", _FakeBrowserClient)
-    monkeypatch.setenv("PRICERECON_REDDIT_BROWSER_ENABLED", "true")
-    connector = RedditHardwareSwapUKConnector()
-
-    _FakeBrowserClient.page = _FakePage("Access denied", status=403)
-    with pytest.raises(ConnectorDegradedError) as blocked:
-        await connector._search_browser("RTX", {})
-    assert blocked.value.status is ConnectorStatus.bot_blocked
-    assert blocked.value.detail is not None
-    assert blocked.value.detail["status_code"] == 403
-
-    _FakeBrowserClient.page = _FakePage("", error=TimeoutError("navigation timeout"))
-    with pytest.raises(ConnectorDegradedError) as timed_out:
-        await connector._search_browser("RTX", {})
-    assert timed_out.value.status is ConnectorStatus.timeout
 
 
 class TestRedditAPISuccess:
@@ -917,8 +856,9 @@ class TestRedditFallbackFullChain:
         monkeypatch.setenv("REDDIT_CLIENT_SECRET", "secret")
         monkeypatch.setenv("REDDIT_USER_AGENT", "PriceRecon/test")
         monkeypatch.setenv("PRICERECON_REDDIT_BROWSER_ENABLED", "true")
+        monkeypatch.setattr(connector, "_camofox_is_configured", lambda: True)
         monkeypatch.setattr(connector, "_search_api", api)
-        monkeypatch.setattr(connector, "_search_browser", browser)
+        monkeypatch.setattr(connector, "_search_camofox", browser)
 
         with caplog.at_level("INFO", logger=reddit_module.__name__):
             listings = await connector.search("RTX 4090")
@@ -940,8 +880,8 @@ class TestRedditFallbackFullChain:
             ("rss", "failed"),
             ("api", "attempted"),
             ("api", "failed"),
-            ("browser", "attempted"),
-            ("browser", "succeeded"),
+            ("camofox", "attempted"),
+            ("camofox", "succeeded"),
         ]
 
     @pytest.mark.asyncio
@@ -986,8 +926,9 @@ class TestRedditFallbackFullChain:
         monkeypatch.setenv("REDDIT_CLIENT_SECRET", "secret")
         monkeypatch.setenv("REDDIT_USER_AGENT", "PriceRecon/test")
         monkeypatch.setenv("PRICERECON_REDDIT_BROWSER_ENABLED", "true")
+        monkeypatch.setattr(connector, "_camofox_is_configured", lambda: True)
         monkeypatch.setattr(connector, "_search_api", api)
-        monkeypatch.setattr(connector, "_search_browser", browser)
+        monkeypatch.setattr(connector, "_search_camofox", browser)
 
         with caplog.at_level("INFO", logger=reddit_module.__name__):
             with pytest.raises(ConnectorDegradedError) as exc_info:
@@ -999,7 +940,7 @@ class TestRedditFallbackFullChain:
         assert error.detail is not None
 
         # Verify error contains complete fallback summary
-        assert error.detail["fallback_errors"] == ["api:auth_failed", "browser:timeout"]
+        assert error.detail["fallback_errors"] == ["api:auth_failed", "camofox:timeout"]
         assert error.detail["fallbacks_attempted"] is True
 
         # Verify all stages logged
@@ -1013,8 +954,8 @@ class TestRedditFallbackFullChain:
             {"rss": "failed"},
             {"api": "attempted"},
             {"api": "failed"},
-            {"browser": "attempted"},
-            {"browser": "failed"},
+            {"camofox": "attempted"},
+            {"camofox": "failed"},
         ]
 
     @pytest.mark.asyncio

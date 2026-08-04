@@ -128,7 +128,8 @@ async def test_bot_wall_html_response_in_browser_fallback(monkeypatch: Any) -> N
 
     monkeypatch.setattr(TemplateConnector, "search", rss_blocked)
     monkeypatch.setenv("PRICERECON_REDDIT_BROWSER_ENABLED", "true")
-    monkeypatch.setattr(connector, "_search_browser", browser_blocked)
+    monkeypatch.setattr(connector, "_camofox_is_configured", lambda: True)
+    monkeypatch.setattr(connector, "_search_camofox", browser_blocked)
 
     with pytest.raises(ConnectorDegradedError) as exc:
         await connector.search("RTX")
@@ -136,7 +137,7 @@ async def test_bot_wall_html_response_in_browser_fallback(monkeypatch: Any) -> N
     assert exc.value.status is ConnectorStatus.bot_blocked
     assert exc.value.detail is not None
     assert exc.value.detail.get("fallbacks_attempted") is True
-    assert any("browser:bot_blocked" in err for err in exc.value.detail.get("fallback_errors", []))
+    assert any("camofox:bot_blocked" in err for err in exc.value.detail.get("fallback_errors", []))
 
 
 def test_bot_wall_detection_various_patterns() -> None:
@@ -317,7 +318,8 @@ async def test_malformed_json_in_browser_fallback(monkeypatch: Any) -> None:
     monkeypatch.setenv("PRICERECON_REDDIT_BROWSER_MAX_RETRIES", "0")
     # Re-instantiate to pick up env vars
     connector = RedditHardwareSwapUKConnector()
-    monkeypatch.setattr(connector, "_search_browser", browser_malformed)
+    monkeypatch.setattr(connector, "_camofox_is_configured", lambda: True)
+    monkeypatch.setattr(connector, "_search_camofox", browser_malformed)
 
     # Search for RTX which matches "RTX 4090" in the content
     listings = await connector.search("RTX")

@@ -103,6 +103,12 @@ never included in the safe registry diagnostics.
 
 ```yaml
 browser_backends:
+  reddit_camofox:
+    type: camofox
+    endpoint: ${CAMOFOX_URL}
+    options:
+      user_id: ${PRICERECON_REDDIT_CAMOFOX_USER_ID}
+      session_key: ${PRICERECON_REDDIT_CAMOFOX_SESSION_KEY}
   camofox_primary:
     type: camofox
     endpoint: http://camofox-primary:9377
@@ -114,7 +120,9 @@ browser_default: [camofox_primary, camofox_backup]
 
 connectors:
   reddit_hardwareswapuk:
-    browser_backend: camofox_primary
+    browser_backend: reddit_camofox
+  reddit_bapcsalesuk:
+    browser_backend: reddit_camofox
   google_shopping:
     browser_backend: [camofox_primary, camofox_backup]
 ```
@@ -122,8 +130,9 @@ connectors:
 Selections are deterministic: a retailer's `browser_backend` overrides the
 top-level `browser_default`; a list is an ordered fallback list. Unknown names,
 missing endpoints, and unsupported backend shapes fail validation rather than
-silently launching a local browser. Existing `camofox_url` and Playwright
-configuration remain supported.
+silently launching a local browser. For Reddit, select only one or more Camofox
+backends that each provide non-empty `user_id` and `session_key`; anonymous
+Camofox and local Playwright are deliberately ineligible.
 
 The external-browser adapter returns a discriminated outcome, so connectors can
 consume only evidence a backend actually produced:

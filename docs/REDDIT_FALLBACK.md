@@ -3,10 +3,10 @@
 `RedditHardwareSwapUKConnector` and `RedditBapcSalesUKConnector` use this order:
 
 1. subreddit RSS (cheap, anonymous attempt);
-2. official Reddit OAuth API, only when explicitly enabled;
-3. browser acquisition through Camofox or local Playwright, only when enabled.
+2. official Reddit OAuth API, only when explicitly enabled and approved;
+3. an authenticated, persistent Camofox profile selected for that Reddit connector.
 
-A 403 (`bot_blocked`) or 429 (`rate_limited`) from RSS is never treated as an empty successful search. If no fallback is configured, or all configured fallbacks fail, the connector raises the structured degraded error with the original RSS status and fallback details.
+A 403 (`bot_blocked`) or 429 (`rate_limited`) from RSS is never treated as an empty successful search. If no eligible fallback is configured, or all eligible fallbacks fail, the connector raises the structured degraded error with the original RSS status and fallback details.
 
 ## Official API prerequisites
 
@@ -21,20 +21,30 @@ REDDIT_USER_AGENT=PriceRecon/1.0 by /u/your-reddit-account
 
 The connector uses the OAuth client-credentials flow. Reddit approval, valid credentials, and compliance with Reddit API terms are human-gated prerequisites; the application does not attempt to register or approve an app automatically.
 
-## Browser prerequisites
+## Authenticated Camofox prerequisites
 
-For remote Camofox:
+Configure a Camofox backend specifically for Reddit with a persistent, user-scoped profile and session identifier:
 
-```text
-CAMOFOX_URL=http://camofox:9376
-# Optional: CAMOFOX_API_KEY, CAMOFOX_USER_ID, CAMOFOX_SESSION_KEY
+```yaml
+browser_backends:
+  reddit_camofox:
+    type: camofox
+    endpoint: ${CAMOFOX_URL}
+    options:
+      user_id: ${PRICERECON_REDDIT_CAMOFOX_USER_ID}
+      session_key: ${PRICERECON_REDDIT_CAMOFOX_SESSION_KEY}
+connectors:
+  reddit_hardwareswapuk:
+    browser_backend: reddit_camofox
+  reddit_bapcsalesuk:
+    browser_backend: reddit_camofox
 ```
 
-For local Playwright, explicitly opt in and install the browser runtime in the deployment image:
+Alternatively, set `CAMOFOX_URL` (or `PRICERECON_CAMOFOX_URL`) with both
+`PRICERECON_REDDIT_CAMOFOX_USER_ID` and
+`PRICERECON_REDDIT_CAMOFOX_SESSION_KEY`. An API/access key belongs in the
+Camofox backend options when the service requires it.
 
-```text
-PRICERECON_REDDIT_BROWSER_ENABLED=true
-playwright install chromium
-```
+Establish and maintain the profile session through the approved, human-gated Camofox workflow. PriceRecon does not automate sign-in, export cookies, solve CAPTCHAs, or bypass Reddit policy controls.
 
-Browser acquisition is intended for blocked public pages and may still require a human to solve a CAPTCHA or sign-in challenge. Such pages remain `bot_blocked`; they are not returned as zero results.
+If the profile identifiers are missing, or the profile session is expired, the Reddit browser tier fails closed. It never falls back to an anonymous Camofox session or local Playwright. CAPTCHA or bot-wall pages remain `bot_blocked`; they are not returned as zero results.

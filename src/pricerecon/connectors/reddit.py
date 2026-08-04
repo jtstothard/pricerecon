@@ -17,14 +17,14 @@ import os
 import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Optional, Callable
+from typing import Any, Callable, Optional, cast
 from urllib.parse import quote_plus
 
 import httpx
 from returns.result import Success
 from selectolax.parser import HTMLParser
 
-from pricerecon.connectors.browser_client import BrowserClient
+from pricerecon.connectors.external_browser import BrowserDegradation, ExternalBrowserAdapter
 from pricerecon.connectors.rss import (
     ConnectorTemplateConfig,
     FeedEntry,
@@ -96,7 +96,6 @@ class _RedditConnector(TemplateConnector):
     def __init__(self, template: ConnectorTemplateConfig) -> None:
         super().__init__(template)
         self._api_client: httpx.AsyncClient | None = None
-        self._browser_client: BrowserClient | None = None
         self._last_rate_limit_info: dict[str, Any] | None = None
         # Load retry configuration from environment or use defaults
         self._rss_max_retries = int(os.getenv("PRICERECON_REDDIT_RSS_MAX_RETRIES", "2"))
@@ -151,9 +150,6 @@ class _RedditConnector(TemplateConnector):
         if self._api_client is not None:
             await self._api_client.aclose()
             self._api_client = None
-        if self._browser_client is not None:
-            await self._browser_client.close()
-            self._browser_client = None
 
     def _api_is_approved(self) -> bool:
         enabled = os.getenv(self.API_ENABLED_ENV, "").strip().lower()
@@ -183,14 +179,44 @@ class _RedditConnector(TemplateConnector):
             logger.warning(f"Reddit credential file is malformed: {cred_file}")
             return False
 
-    def _browser_is_configured(self) -> bool:
-        # Camofox is explicit; local Playwright can be opted into separately so
-        # a production worker does not unexpectedly launch a browser.
-        enabled = os.getenv("PRICERECON_REDDIT_BROWSER_ENABLED", "").strip().lower()
+    def _camofox_is_configured(self) -> bool:
+        """Return whether Reddit has an explicit persistent Camofox profile.
+
+        Reddit browser retrieval is deliberately unavailable through local
+        Playwright or an anonymous Camofox session.  A selected named Camofox
+        backend is preferred; the legacy environment form remains supported
+        when it names the same persistent user-scoped profile.
+        """
+        adapter = cast("ExternalBrowserAdapter | None", getattr(self, "_external_browser", None))
+        if adapter is not None:
+            return adapter.has_authenticated_camofox_profile()
         return bool(
-            os.getenv("CAMOFOX_URL")
-            or os.getenv("PRICERECON_CAMOFOX_URL")
-            or enabled in {"1", "true", "yes"}
+            (os.getenv("CAMOFOX_URL") or os.getenv("PRICERECON_CAMOFOX_URL"))
+            and os.getenv("PRICERECON_REDDIT_CAMOFOX_USER_ID", "").strip()
+            and os.getenv("PRICERECON_REDDIT_CAMOFOX_SESSION_KEY", "").strip()
+        )
+
+    def _camofox_adapter(self) -> Any:
+        """Return the configured Camofox adapter, never an anonymous browser."""
+        adapter = getattr(self, "_external_browser", None)
+        if adapter is not None:
+            return adapter
+
+        endpoint = os.getenv("CAMOFOX_URL") or os.getenv("PRICERECON_CAMOFOX_URL")
+        return ExternalBrowserAdapter.from_config(
+            {
+                "browser_backends": {
+                    "reddit_camofox": {
+                        "type": "camofox",
+                        "endpoint": endpoint,
+                        "options": {
+                            "user_id": os.getenv("PRICERECON_REDDIT_CAMOFOX_USER_ID", ""),
+                            "session_key": os.getenv("PRICERECON_REDDIT_CAMOFOX_SESSION_KEY", ""),
+                        },
+                    }
+                },
+                "browser_default": "reddit_camofox",
+            }
         )
 
     async def search(
@@ -264,28 +290,28 @@ class _RedditConnector(TemplateConnector):
             reason = "disabled" if not api_enabled else "not_approved"
             record_stage("api", "skipped", reason=reason)
 
-        browser_configured = self._browser_is_configured()
-        if browser_configured:
-            record_stage("browser", "attempted")
+        camofox_configured = self._camofox_is_configured()
+        if camofox_configured:
+            record_stage("camofox", "attempted")
             try:
                 finalized = self._finalize(
                     await self._retry_with_backoff(
-                        lambda: self._search_browser(query, filters),
+                        lambda: self._search_camofox(query, filters),
                         self._browser_max_retries,
-                        f"{self.connector_id}_browser",
+                        f"{self.connector_id}_camofox",
                     ),
                     query,
                 )
-                record_stage("browser", "succeeded", listing_count=len(finalized))
+                record_stage("camofox", "succeeded", listing_count=len(finalized))
                 return finalized
             except ConnectorDegradedError as exc:
-                fallback_errors.append(f"browser:{exc.status.value}")
-                record_stage("browser", "failed", status=exc.status.value, error=exc.message)
+                fallback_errors.append(f"camofox:{exc.status.value}")
+                record_stage("camofox", "failed", status=exc.status.value, error=exc.message)
             except Exception as exc:
-                fallback_errors.append(f"browser:{type(exc).__name__}")
-                record_stage("browser", "failed", status="unknown_error", error=str(exc))
+                fallback_errors.append(f"camofox:{type(exc).__name__}")
+                record_stage("camofox", "failed", status="unknown_error", error=str(exc))
         else:
-            record_stage("browser", "skipped", reason="not_configured")
+            record_stage("camofox", "skipped", reason="authenticated_profile_not_configured")
 
         # Do not turn an upstream 403/429 (or a failed configured fallback)
         # into a misleading successful empty search.
@@ -293,7 +319,7 @@ class _RedditConnector(TemplateConnector):
         detail = dict(rss_error.detail or {})
         if fallback_errors:
             detail["fallback_errors"] = fallback_errors
-        detail["fallbacks_attempted"] = bool((api_enabled and api_approved) or browser_configured)
+        detail["fallbacks_attempted"] = bool((api_enabled and api_approved) or camofox_configured)
         detail["fallback_stages"] = stage_events
         raise ConnectorDegradedError(
             status=rss_error.status,
@@ -438,90 +464,65 @@ class _RedditConnector(TemplateConnector):
         )
         return self._entry_to_listing(entry)
 
-    async def _search_browser(self, query: str, filters: dict[str, Any]) -> list[NormalizedListing]:
-        from pricerecon.connectors.browser_client import BrowserSessionConfig
-
-        camofox_url = os.getenv("CAMOFOX_URL") or os.getenv("PRICERECON_CAMOFOX_URL")
-        config = BrowserSessionConfig(
-            camofox_url=camofox_url,
-            camofox_api_key=os.getenv("CAMOFOX_API_KEY"),
-            camofox_access_key=os.getenv("CAMOFOX_ACCESS_KEY"),
-            camofox_user_id=os.getenv("CAMOFOX_USER_ID"),
-            camofox_session_key=os.getenv("CAMOFOX_SESSION_KEY"),
-        )
-        self._browser_client = self._browser_client or BrowserClient(config=config)
-        url = f"https://old.reddit.com/r/{self.SUBREDDIT}/new.json?raw_json=1&q={quote_plus(query)}&restrict_sr=1"
-        context: Any = None
-        content = ""
-        try:
-            context = await self._browser_client.new_context()
-            page = await context.new_page()
-            response = await page.goto(
-                url, wait_until="domcontentloaded", timeout=config.navigation_timeout_ms
+    async def _search_camofox(
+        self, query: str, filters: dict[str, Any]
+    ) -> list[NormalizedListing]:
+        """Retrieve through the configured authenticated Camofox profile only."""
+        if not self._camofox_is_configured():
+            raise ConnectorDegradedError(
+                ConnectorStatus.auth_failed,
+                "Reddit Camofox authenticated profile is not configured",
+                self.connector_id,
             )
-            await page.wait_for_timeout(config.wait_after_navigation_ms)
-            content = await page.content()
-            status_code = getattr(response, "status", None) if response is not None else None
-            if callable(status_code):
-                status_code = status_code()
-            if status_code in {403, 429}:
-                status = (
-                    ConnectorStatus.bot_blocked
-                    if status_code == 403
-                    else ConnectorStatus.rate_limited
-                )
-                raise ConnectorDegradedError(
-                    status,
-                    f"Reddit browser returned HTTP {status_code}",
-                    self.connector_id,
-                    {"requested_url": url, "status_code": status_code},
-                )
-        except ConnectorDegradedError:
-            raise
-        except (TimeoutError, asyncio.TimeoutError) as exc:
+
+        from pricerecon.connectors.external_browser import as_connector_degraded_error
+
+        url = f"https://www.reddit.com/r/{self.SUBREDDIT}/new/?q={quote_plus(query)}&restrict_sr=1"
+        result = await self._camofox_adapter().navigate(url)
+        if result.degraded:
+            error = as_connector_degraded_error(result, self.connector_id)
+            if result.degradation is BrowserDegradation.BLOCKED:
+                status_codes = {attempt.status for attempt in result.attempts if attempt.status is not None}
+                if status_codes & {401, 403}:
+                    error = ConnectorDegradedError(
+                        ConnectorStatus.auth_failed,
+                        "Reddit Camofox profile is unauthenticated or expired",
+                        self.connector_id,
+                        error.detail,
+                    )
+            raise error
+        content = result.rendered.snapshot or result.rendered.html
+        if _looks_authenticated_out(content):
             raise ConnectorDegradedError(
-                ConnectorStatus.timeout,
-                "Reddit browser navigation timed out",
+                ConnectorStatus.auth_failed,
+                "Reddit Camofox profile is unauthenticated or expired",
                 self.connector_id,
-                {"requested_url": url, "timeout_ms": config.navigation_timeout_ms},
-            ) from exc
-        except Exception as exc:
-            if "timeout" in str(exc).lower():
-                raise ConnectorDegradedError(
-                    ConnectorStatus.timeout,
-                    "Reddit browser navigation timed out",
-                    self.connector_id,
-                    {
-                        "requested_url": url,
-                        "timeout_ms": config.navigation_timeout_ms,
-                        "error": str(exc),
-                    },
-                ) from exc
-            raise ConnectorDegradedError(
-                ConnectorStatus.unknown_error,
-                "Reddit browser acquisition failed",
-                self.connector_id,
-                {"error": str(exc)},
-            ) from exc
-        finally:
-            if context is not None:
-                await context.close()
+                self.browser_result_detail(result),
+            )
         if _looks_blocked(content):
             raise ConnectorDegradedError(
                 ConnectorStatus.bot_blocked,
-                "Reddit browser page is blocked or human-gated",
+                "Reddit Camofox page is blocked or human-gated",
                 self.connector_id,
+                self.browser_result_detail(result),
             )
         entries = _parse_browser_posts(content, self.SUBREDDIT, int(filters.get("limit") or 25))
         if not entries:
-            # A blocked RSS request followed by an unparseable browser page is
-            # not evidence of zero matches; surface it as degraded instead.
             raise ConnectorDegradedError(
                 ConnectorStatus.parse_error,
-                "Reddit browser page contained no parseable posts",
+                "Reddit Camofox page contained no parseable posts",
                 self.connector_id,
+                self.browser_result_detail(result),
             )
-        return [self._entry_to_listing(entry) for entry in entries]
+        return self.annotate_browser_result(
+            [self._entry_to_listing(entry) for entry in entries], result
+        )
+
+    async def _search_browser(
+        self, query: str, filters: dict[str, Any]
+    ) -> list[NormalizedListing]:
+        """Compatibility alias for the Camofox-only Reddit browser path."""
+        return await self._search_camofox(query, filters)
 
 
 class RedditHardwareSwapUKConnector(_RedditConnector):
@@ -634,6 +635,19 @@ class _HotUKDealsCache:
                 {"entries": [entry.model_dump(mode="json") for entry in self.entries.values()]}
             )
         )
+
+
+def _looks_authenticated_out(content: str) -> bool:
+    lowered = content.lower()
+    return any(
+        marker in lowered
+        for marker in (
+            "log in to reddit",
+            "sign in to reddit",
+            "session has expired",
+            "your session has expired",
+        )
+    )
 
 
 def _looks_blocked(content: str) -> bool:
