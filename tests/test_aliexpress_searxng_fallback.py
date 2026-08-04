@@ -1,15 +1,12 @@
 """Test SearXNG fallback lane in AliExpress connector."""
 
 import asyncio
-from decimal import Decimal
 from typing import Any, cast
-from unittest.mock import Mock, AsyncMock
 
 import httpx
 import pytest
 
 from pricerecon.connectors.aliexpress import AliExpressConnector
-from pricerecon.connectors.status import ConnectorDegradedError
 
 
 @pytest.mark.asyncio
@@ -148,7 +145,7 @@ async def test_aliexpress_searxng_disabled_when_flag_false():
     connector._rate_limit_searxng = noop_rate_limit  # type: ignore[method-assign]
 
     # Search with SearXNG explicitly disabled
-    listings = await connector.search("test", {"searxng_discovery": False})
+    await connector.search("test", {"searxng_discovery": False})
     await connector.cleanup()
 
     # Verify SearXNG was not called
