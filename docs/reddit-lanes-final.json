@@ -1,0 +1,124 @@
+{
+  "availability": {
+    "camofox_profile_name": "reddit_camofox",
+    "camofox_snapshot": true,
+    "cloakbrowser": true,
+    "cloakbrowser_profile_names": [
+      "reddit_cloakbrowser"
+    ],
+    "official_oauth": false,
+    "official_oauth_credentials_present": false,
+    "rapi_browser_session": true,
+    "rss": true
+  },
+  "generated_at": "2026-08-05T13:21:35.827823+00:00",
+  "method": {
+    "fixed_limit": 5,
+    "fixed_query": "RTX",
+    "order": [
+      "rss",
+      "official_oauth",
+      "rapi_browser_session",
+      "camofox_snapshot",
+      "cloakbrowser"
+    ],
+    "sequential": true
+  },
+  "results": [
+    {
+      "count": 0,
+      "detail": {},
+      "failure_taxonomy": null,
+      "items": [],
+      "lane": "rss",
+      "latency_ms": 374.11,
+      "limit": 5,
+      "query": "RTX",
+      "relevance": {
+        "match_rate": null,
+        "matched_count": 0,
+        "returned_count": 0,
+        "terms": [
+          "rtx"
+        ]
+      },
+      "started_at": "2026-08-05T13:21:23.817983+00:00",
+      "status": "healthy_empty",
+      "subreddit": "hardwareswapuk"
+    },
+    {
+      "count": null,
+      "detail": {
+        "reason": "lane not configured"
+      },
+      "failure_taxonomy": "configuration_gap",
+      "lane": "official_oauth",
+      "latency_ms": null,
+      "limit": 5,
+      "query": "RTX",
+      "relevance": null,
+      "started_at": "2026-08-05T13:21:24.192119+00:00",
+      "status": "unavailable",
+      "subreddit": "hardwareswapuk"
+    },
+    {
+      "count": null,
+      "detail": {
+        "error_type": "HTTPStatusError",
+        "status_code": 500
+      },
+      "failure_taxonomy": "browser_http_error",
+      "lane": "rapi_browser_session",
+      "latency_ms": 2808.54,
+      "limit": 5,
+      "query": "RTX",
+      "relevance": null,
+      "started_at": "2026-08-05T13:21:24.192129+00:00",
+      "status": "failed",
+      "subreddit": "hardwareswapuk"
+    },
+    {
+      "count": 0,
+      "detail": {},
+      "failure_taxonomy": null,
+      "items": [],
+      "lane": "camofox_snapshot",
+      "latency_ms": 5344.1,
+      "limit": 5,
+      "query": "RTX",
+      "relevance": {
+        "match_rate": null,
+        "matched_count": 0,
+        "returned_count": 0,
+        "terms": [
+          "rtx"
+        ]
+      },
+      "started_at": "2026-08-05T13:21:27.000680+00:00",
+      "status": "healthy_empty",
+      "subreddit": "hardwareswapuk"
+    },
+    {
+      "count": 0,
+      "detail": {},
+      "failure_taxonomy": null,
+      "items": [],
+      "lane": "cloakbrowser",
+      "latency_ms": 3481.23,
+      "limit": 5,
+      "query": "RTX",
+      "relevance": {
+        "match_rate": null,
+        "matched_count": 0,
+        "returned_count": 0,
+        "terms": [
+          "rtx"
+        ]
+      },
+      "started_at": "2026-08-05T13:21:32.344805+00:00",
+      "status": "healthy_empty",
+      "subreddit": "hardwareswapuk"
+    }
+  ],
+  "schema_version": "1.1"
+}

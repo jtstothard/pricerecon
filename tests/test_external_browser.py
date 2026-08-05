@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import httpx
 
 from pricerecon.connectors.external_browser import (
@@ -222,6 +224,62 @@ async def test_cloakbrowser_reports_interception_capability_without_captures() -
     ).navigate("https://example.test/")
 
     assert result.network_interception_supported is True
+
+
+async def test_camofox_readonly_evaluation_uses_one_expression_and_closes_tab() -> None:
+    seen: list[tuple[str, str]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append((request.method, request.url.path))
+        if request.method == "POST" and request.url.path == "/tabs":
+            return httpx.Response(200, json={"tabId": "tab-eval"})
+        if request.method == "POST" and request.url.path.endswith("/evaluate"):
+            payload = json.loads(request.content)
+            assert payload["expression"] == "1 + 1"
+            return httpx.Response(200, json={"ok": True, "result": {"id": "abc"}})
+        if request.method == "DELETE":
+            return httpx.Response(204)
+        raise AssertionError(request.url)
+
+    adapter = ExternalBrowserAdapter.from_config(
+        {
+            "browser_backends": {
+                "camo": {
+                    "type": "camofox",
+                    "endpoint": "http://camo.example:9377",
+                    "options": {"user_id": "user", "session_key": "session"},
+                }
+            },
+            "browser_default": "camo",
+        },
+        client_factory=make_transport(httpx.MockTransport(handler)),
+    )
+    result = await adapter.evaluate_readonly("https://www.reddit.com/r/hardwareswapuk/", "1 + 1")
+
+    assert result == {"id": "abc"}
+    assert seen == [
+        ("POST", "/tabs"),
+        ("POST", "/tabs/tab-eval/evaluate"),
+        ("DELETE", "/tabs/tab-eval"),
+    ]
+
+
+async def test_camofox_readonly_evaluation_rejects_anonymous_profile() -> None:
+    adapter = ExternalBrowserAdapter.from_config(
+        {
+            "browser_backends": {
+                "camo": {"type": "camofox", "endpoint": "http://camo.example:9377"}
+            },
+            "browser_default": "camo",
+        }
+    )
+
+    try:
+        await adapter.evaluate_readonly("https://www.reddit.com/", "1 + 1")
+    except ValueError as exc:
+        assert "authenticated Camofox" in str(exc)
+    else:
+        raise AssertionError("anonymous evaluation must be rejected")
 
 
 async def test_empty_result_preserves_interception_capability() -> None:

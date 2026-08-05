@@ -212,6 +212,7 @@ class _RedditConnector(TemplateConnector):
                         "options": {
                             "user_id": os.getenv("PRICERECON_REDDIT_CAMOFOX_USER_ID", ""),
                             "session_key": os.getenv("PRICERECON_REDDIT_CAMOFOX_SESSION_KEY", ""),
+                            "api_key": os.getenv("CAMOFOX_API_KEY", ""),
                         },
                     }
                 },
@@ -506,14 +507,25 @@ class _RedditConnector(TemplateConnector):
                 self.connector_id,
                 self.browser_result_detail(result),
             )
-        entries = _parse_browser_posts(content, self.SUBREDDIT, int(filters.get("limit") or 25))
+        entries = _parse_browser_posts(
+            content, self.SUBREDDIT, int(filters.get("limit") or 25), query=query
+        )
         if not entries:
-            raise ConnectorDegradedError(
-                ConnectorStatus.parse_error,
-                "Reddit Camofox page contained no parseable posts",
-                self.connector_id,
-                self.browser_result_detail(result),
+            # A valid Reddit listing page can contain posts that do not match the
+            # requested query.  Treat that as a healthy empty result rather than
+            # misclassifying it as a malformed browser response.  Keep the
+            # parse-error path for snapshots with no recognizable subreddit posts.
+            subreddit_marker = re.compile(
+                rf"/r/{re.escape(self.SUBREDDIT)}/comments/",
+                re.IGNORECASE,
             )
+            if not subreddit_marker.search(content):
+                raise ConnectorDegradedError(
+                    ConnectorStatus.parse_error,
+                    "Reddit Camofox page contained no parseable posts",
+                    self.connector_id,
+                    self.browser_result_detail(result),
+                )
         return self.annotate_browser_result(
             [self._entry_to_listing(entry) for entry in entries], result
         )
@@ -661,8 +673,24 @@ def _looks_blocked(content: str) -> bool:
     )
 
 
-def _parse_browser_posts(content: str, subreddit: str, limit: int) -> list[FeedEntry]:
-    """Parse Reddit JSON listings, HTML, and Camofox text snapshots."""
+def _parse_browser_posts(
+    content: str, subreddit: str, limit: int, query: str = ""
+) -> list[FeedEntry]:
+    """Parse Reddit JSON listings, HTML, and Camofox text snapshots.
+
+    Camofox returns an accessibility/text snapshot rather than guaranteed HTML.
+    Those snapshots can contain pinned/sidebar links before the query results.
+    When a query is supplied, select matching candidates before applying the
+    limit so unrelated navigation content cannot crowd out the result set.
+    """
+    query_terms = _query_terms(query)
+
+    def matches_query(entry: FeedEntry) -> bool:
+        if not query_terms:
+            return True
+        haystack = " ".join((entry.title, entry.content, entry.link)).lower()
+        return all(term in haystack for term in query_terms)
+
     try:
         payload = json.loads(content)
     except (TypeError, ValueError):
@@ -670,7 +698,7 @@ def _parse_browser_posts(content: str, subreddit: str, limit: int) -> list[FeedE
     children = payload.get("data", {}).get("children", []) if isinstance(payload, dict) else []
     if isinstance(children, list):
         entries: list[FeedEntry] = []
-        for child in children[:limit]:
+        for child in children:
             data = child.get("data", {}) if isinstance(child, dict) else {}
             if not isinstance(data, dict):
                 continue
@@ -687,18 +715,55 @@ def _parse_browser_posts(content: str, subreddit: str, limit: int) -> list[FeedE
                 )
             except (TypeError, ValueError, OverflowError):
                 published = None
-            entries.append(
-                FeedEntry(
-                    id=str(data.get("id") or hashlib.sha1(link.encode()).hexdigest()),
-                    title=str(data.get("title") or ""),
-                    link=link,
-                    content=str(data.get("selftext") or ""),
-                    author=str(data.get("author") or "") or None,
-                    published_at=published,
-                )
+            entry = FeedEntry(
+                id=str(data.get("id") or hashlib.sha1(link.encode()).hexdigest()),
+                title=str(data.get("title") or ""),
+                link=link,
+                content=str(data.get("selftext") or ""),
+                author=str(data.get("author") or "") or None,
+                published_at=published,
             )
+            if matches_query(entry):
+                entries.append(entry)
         if entries:
-            return entries
+            return entries[:limit]
+
+    # Accessibility snapshots expose post links as standalone `/url:` lines.
+    # Parse this shape before HTML parsing, which can otherwise treat the
+    # snapshot's textual pseudo-markup as empty anchor nodes.
+    snapshot_entries: list[FeedEntry] = []
+    snapshot_seen: set[str] = set()
+    snapshot_lines = content.splitlines()
+    for index, line in enumerate(snapshot_lines):
+        url_match = re.search(
+            r"/url:\s*[\"']?(?P<link>(?:https?://(?:www\.)?reddit\.com|)/r/[^\s\"']+/comments/[^\s\"']+)",
+            line,
+        )
+        if not url_match:
+            continue
+        link = url_match.group("link").rstrip(".,)")
+        if link.startswith("/r/"):
+            link = f"https://www.reddit.com{link}"
+        if f"/r/{subreddit.lower()}/comments/" not in link.lower() or link in snapshot_seen:
+            continue
+        snapshot_seen.add(link)
+        title = ""
+        for previous in reversed(snapshot_lines[max(0, index - 6) : index]):
+            title_match = re.search(
+                r"(?:heading|link) [\"'](.+?)[\"'](?: \[level=\d+\])?:$", previous
+            )
+            if title_match:
+                title = title_match.group(1)
+                break
+        entry = FeedEntry(
+            id=hashlib.sha1(link.encode()).hexdigest(),
+            title=re.sub(r"\s+", " ", title).strip(),
+            link=link,
+        )
+        if matches_query(entry):
+            snapshot_entries.append(entry)
+    if snapshot_entries:
+        return snapshot_entries[:limit]
 
     parser = HTMLParser(content)
     entries = []
@@ -709,35 +774,71 @@ def _parse_browser_posts(content: str, subreddit: str, limit: int) -> list[FeedE
         if not title or not href:
             continue
         link = href if href.startswith("http") else f"https://www.reddit.com{href}"
+        if f"/r/{subreddit.lower()}/comments/" not in link.lower():
+            continue
         if link in seen:
             continue
         seen.add(link)
         body = anchor.parent.text(strip=True) if anchor.parent is not None else ""
-        entries.append(
-            FeedEntry(
-                id=hashlib.sha1(link.encode()).hexdigest(), title=title, link=link, content=body
-            )
+        entry = FeedEntry(
+            id=hashlib.sha1(link.encode()).hexdigest(), title=title, link=link, content=body
         )
+        if matches_query(entry):
+            entries.append(entry)
         if len(entries) >= limit:
             break
     # Camofox's text snapshot can omit anchor markup; retain only recognizable
-    # Reddit post URLs and use the surrounding line as a title.
+    # Reddit post URLs and use the surrounding line as a title. Accessibility
+    # snapshots put the title and ``/url:`` on adjacent lines, so handle both
+    # that shape and the older same-line fallback.
     if not entries:
-        for match in re.finditer(
-            r"(?P<title>.{5,200}?)\s+(?P<link>https?://(?:www\.)?reddit\.com/r/[^\s]+/comments/[^\s]+)",
-            content,
-        ):
-            link = match.group("link").rstrip(".,)")
+        candidates: list[FeedEntry] = []
+        snapshot_lines = content.splitlines()
+        for index, line in enumerate(snapshot_lines):
+            url_match = re.search(
+                r"/url:\s*[\"']?(?P<link>(?:https?://(?:www\.)?reddit\.com|)/r/[^\s\"']+/comments/[^\s\"']+)",
+                line,
+            )
+            if not url_match:
+                continue
+            link = url_match.group("link").rstrip(".,)")
+            if link.startswith("/r/"):
+                link = f"https://www.reddit.com{link}"
+            if f"/r/{subreddit.lower()}/comments/" not in link.lower():
+                continue
             if link in seen:
                 continue
             seen.add(link)
-            entries.append(
-                FeedEntry(
+            title = ""
+            for previous in reversed(snapshot_lines[max(0, index - 6) : index]):
+                title_match = re.search(
+                    r"(?:heading|link) [\"'](.+?)[\"'](?: \[level=\d+\])?:$", previous
+                )
+                if title_match:
+                    title = title_match.group(1)
+                    break
+            entry = FeedEntry(
+                id=hashlib.sha1(link.encode()).hexdigest(),
+                title=re.sub(r"\s+", " ", title).strip(),
+                link=link,
+            )
+            if matches_query(entry):
+                candidates.append(entry)
+        if not candidates:
+            for match in re.finditer(
+                r"(?P<title>.{5,200}?)\s+(?P<link>https?://(?:www\.)?reddit\.com/r/[^\s]+/comments/[^\s]+)",
+                content,
+            ):
+                link = match.group("link").rstrip(".,)")
+                if f"/r/{subreddit.lower()}/comments/" not in link.lower() or link in seen:
+                    continue
+                seen.add(link)
+                entry = FeedEntry(
                     id=hashlib.sha1(link.encode()).hexdigest(),
                     title=re.sub(r"\s+", " ", match.group("title")).strip(),
                     link=link,
                 )
-            )
-            if len(entries) >= limit:
-                break
+                if matches_query(entry):
+                    candidates.append(entry)
+        entries.extend(candidates[:limit])
     return entries

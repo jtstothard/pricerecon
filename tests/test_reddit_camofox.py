@@ -10,8 +10,79 @@ import pytest
 
 from pricerecon.connectors.external_browser import ExternalBrowserAdapter
 from pricerecon.connectors.reddit import RedditHardwareSwapUKConnector
+from pricerecon.connectors.reddit import _parse_browser_posts
 from pricerecon.connectors.rss import TemplateConnector
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
+
+
+def test_camofox_snapshot_query_results_are_not_crowded_out_by_sidebar_links() -> None:
+    sidebar = "\n".join(
+        f"Pinned post {index} https://www.reddit.com/r/hardwareswapuk/comments/sidebar{index}/post/"
+        for index in range(30)
+    )
+    snapshot = (
+        sidebar
+        + "\n[H] AMD Instinct MI50 32GB [W] £250 "
+        + "https://www.reddit.com/r/hardwareswapuk/comments/mi50/post/"
+    )
+
+    entries = _parse_browser_posts(snapshot, "hardwareswapuk", 25, query="MI50")
+
+    assert [entry.link for entry in entries] == [
+        "https://www.reddit.com/r/hardwareswapuk/comments/mi50/post/"
+    ]
+
+
+def test_camofox_snapshot_multiword_query_matches_post_url_slug() -> None:
+    snapshot = (
+        "[H] RTX 4090 listing "
+        "https://www.reddit.com/r/hardwareswapuk/comments/graphics-card/post/"
+    )
+
+    entries = _parse_browser_posts(snapshot, "hardwareswapuk", 25, query="graphics card")
+
+    assert len(entries) == 1
+    assert entries[0].link.endswith("/graphics-card/post/")
+
+
+def test_camofox_accessibility_snapshot_parses_adjacent_heading_and_url() -> None:
+    snapshot = """- heading \"[SG] RTX 4090 graphics card\" [level=2]:
+  - link \"[SG] RTX 4090 graphics card\":
+    - /url: https://www.reddit.com/r/HardwareSwapUK/comments/abc123/rtx-4090-graphics-card/
+"""
+
+    entries = _parse_browser_posts(snapshot, "hardwareswapuk", 25, query="graphics card")
+
+    assert len(entries) == 1
+    assert entries[0].title == "[SG] RTX 4090 graphics card"
+    assert entries[0].link.endswith("/rtx-4090-graphics-card/")
+
+
+def test_camofox_accessibility_snapshot_filters_after_sticky_posts() -> None:
+    sticky_posts = "\n".join(
+        f'- heading "Pinned post {index}" [level=2]:\n'
+        f"  - /url: https://www.reddit.com/r/hardwareswapuk/comments/sticky{index}/pinned/"
+        for index in range(6)
+    )
+    snapshot = (
+        sticky_posts
+        + '\n- heading "[W] RTX 3090 24GB" [level=2]:\n'
+        + "  - /url: https://www.reddit.com/r/hardwareswapuk/comments/rtx3090/rtx-3090/"
+    )
+
+    entries = _parse_browser_posts(snapshot, "hardwareswapuk", 1, query="RTX")
+
+    assert len(entries) == 1
+    assert entries[0].link.endswith("/rtx3090/rtx-3090/")
+
+
+def test_camofox_snapshot_with_valid_nonmatching_posts_is_empty() -> None:
+    snapshot = (
+        '- heading "[W] CPU and motherboard bundle" [level=2]:\n'
+        "  - /url: https://www.reddit.com/r/hardwareswapuk/comments/cpu1/cpu-bundle/"
+    )
+
+    assert _parse_browser_posts(snapshot, "hardwareswapuk", 25, query="graphics card") == []
 
 
 def _camofox_adapter(handler: Any) -> ExternalBrowserAdapter:
