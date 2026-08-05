@@ -121,7 +121,7 @@ browser_default: [camofox_primary, camofox_backup]
 connectors:
   reddit_hardwareswapuk:
     browser_backend: reddit_camofox
-  reddit_bapcsalesuk:
+  reddit_buildapcsalesuk:
     browser_backend: reddit_camofox
   google_shopping:
     browser_backend: [camofox_primary, camofox_backup]

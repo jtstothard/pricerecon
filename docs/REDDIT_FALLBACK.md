@@ -36,7 +36,7 @@ browser_backends:
 connectors:
   reddit_hardwareswapuk:
     browser_backend: reddit_camofox
-  reddit_bapcsalesuk:
+  reddit_buildapcsalesuk:
     browser_backend: reddit_camofox
 ```
 

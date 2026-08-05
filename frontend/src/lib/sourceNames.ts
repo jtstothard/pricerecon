@@ -25,6 +25,7 @@ const sourceDisplayNames: Record<string, string> = {
   'facebook_marketplace': 'Facebook Marketplace',
   'hotukdeals': 'HotUKDeals',
   'reddit_bapcsalesuk': 'Reddit BAPCSalesUK',
+  'reddit_buildapcsalesuk': 'Reddit BuildAPCSalesUK',
   'reddit_hardwareswapuk': 'Reddit HardwareSwapUK',
 }
 
