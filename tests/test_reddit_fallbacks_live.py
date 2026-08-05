@@ -24,7 +24,7 @@ import pytest
 
 from pricerecon.connectors.reddit import (
     RedditHardwareSwapUKConnector,
-    RedditBapcSalesUKConnector,
+    RedditBuildAPCSalesUKConnector,
 )
 from pricerecon.connectors.status import ConnectorDegradedError
 
@@ -118,7 +118,7 @@ async def test_live_browser_multiple_subreddits_work() -> None:
     """Live test: browser tier works across different Reddit subreddits."""
     connectors = [
         RedditHardwareSwapUKConnector(),
-        RedditBapcSalesUKConnector(),
+        RedditBuildAPCSalesUKConnector(),
     ]
 
     results = {}

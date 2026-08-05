@@ -495,7 +495,7 @@ def _extract_retailer(title: str, content: str) -> Optional[str]:
     combined = f"{title} {content}"
     retailer_patterns = [
         r"\b(?:amazon|scan|ebuyer|cex|currys|overclockers|box|argos)\b",
-        r"\b(?:hotukdeals|hukd|bapcsalesuk)\b",
+        r"\b(?:hotukdeals|hukd|buildapcsalesuk|bapcsalesuk)\b",
     ]
     for pattern in retailer_patterns:
         match = re.search(pattern, combined, flags=re.IGNORECASE)
