@@ -172,6 +172,30 @@ class ExternalBrowserAdapter:
             for backend in self._backends
         )
 
+    async def evaluate_readonly(
+        self,
+        url: str,
+        expression: str,
+        *,
+        timeout_ms: int = 60_000,
+    ) -> Any:
+        """Evaluate one read-only expression in an authenticated Camofox page.
+
+        This is intentionally narrower than a browser automation API: it only
+        supports a named, persistent Camofox profile, creates one temporary tab,
+        evaluates one expression, and closes that tab in a ``finally`` block.
+        Callers must keep the expression read-only; no click/type/press or
+        arbitrary tab/session operations are exposed here.
+        """
+        if not expression.strip():
+            raise ValueError("Camofox evaluation expression must not be empty")
+        if not self.has_authenticated_camofox_profile() or len(self._backends) != 1:
+            raise ValueError("read-only evaluation requires one authenticated Camofox profile")
+        backend = self._backends[0]
+        if backend.type != "camofox":
+            raise ValueError("read-only evaluation requires a Camofox backend")
+        return await self._camofox_evaluate(backend, url, expression, timeout_ms)
+
     async def navigate(
         self,
         url: str,
@@ -354,6 +378,56 @@ class ExternalBrowserAdapter:
             )
         return rendered, responses, True
 
+    async def _camofox_evaluate(
+        self,
+        backend: BrowserBackendConfig,
+        url: str,
+        expression: str,
+        timeout_ms: int,
+    ) -> Any:
+        opts = backend.options
+        user_id = str(opts["user_id"])
+        session_key = str(opts["session_key"])
+        token = str(opts.get("api_key", opts.get("access_key", ""))).strip()
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+        base = backend.endpoint.rstrip("/")
+        async with self._client_factory(timeout=timeout_ms / 1000) as client:
+            opened = await client.post(
+                f"{base}/tabs",
+                json={
+                    "userId": user_id,
+                    "sessionKey": session_key,
+                    "listItemId": session_key,
+                    "url": url,
+                },
+                headers=headers,
+            )
+            opened.raise_for_status()
+            data = opened.json()
+            if not isinstance(data, Mapping):
+                raise ValueError("Camofox tab response was not an object")
+            tab_id = str(data.get("tabId") or data.get("id") or "").strip()
+            if not tab_id:
+                raise ValueError("Camofox did not return a tab id")
+            try:
+                evaluated = await client.post(
+                    f"{base}/tabs/{tab_id}/evaluate",
+                    json={"userId": user_id, "expression": expression},
+                    headers=headers,
+                )
+                evaluated.raise_for_status()
+                payload = evaluated.json()
+                if not isinstance(payload, Mapping) or payload.get("ok") is not True:
+                    raise ValueError("Camofox evaluation response omitted ok=true")
+                return payload.get("result")
+            finally:
+                try:
+                    await client.delete(
+                        f"{base}/tabs/{tab_id}", params={"userId": user_id}, headers=headers
+                    )
+                except Exception:
+                    pass
+
     async def _camofox(
         self, backend: BrowserBackendConfig, url: str, timeout_ms: int
     ) -> tuple[RenderedContent, list[NetworkResponse], bool]:
@@ -382,16 +456,25 @@ class ExternalBrowserAdapter:
             if not tab_id:
                 raise ValueError("Camofox did not return a tab id")
             try:
-                snapshot = await client.get(
-                    f"{base}/tabs/{tab_id}/snapshot",
-                    params={"userId": user_id, "format": "text"},
-                    headers=headers,
-                )
-                snapshot.raise_for_status()
-                document = snapshot.json()
-                if not isinstance(document, Mapping):
-                    raise ValueError("Camofox snapshot response was not an object")
-                text = str(document.get("snapshot") or document.get("text") or "")
+                # Camofox returns the tab before Reddit's client-side page has
+                # populated the accessibility tree. Poll briefly instead of
+                # treating the initial shell (often just "Skip to main
+                # content") as a parse failure.
+                text = ""
+                for attempt in range(10):
+                    snapshot = await client.get(
+                        f"{base}/tabs/{tab_id}/snapshot",
+                        params={"userId": user_id, "format": "text"},
+                        headers=headers,
+                    )
+                    snapshot.raise_for_status()
+                    document = snapshot.json()
+                    if not isinstance(document, Mapping):
+                        raise ValueError("Camofox snapshot response was not an object")
+                    text = str(document.get("snapshot") or document.get("text") or "")
+                    if "/comments/" in text or attempt == 9:
+                        break
+                    await asyncio.sleep(1)
             finally:
                 try:
                     await client.delete(
