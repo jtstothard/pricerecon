@@ -23,7 +23,7 @@ from pricerecon.connectors.rss import (
 )
 from pricerecon.connectors.reddit import (
     HotUKDealsConnector,
-    RedditBapcSalesUKConnector,
+    RedditBuildAPCSalesUKConnector,
     RedditHardwareSwapUKConnector,
 )
 from pricerecon.connectors.shopify import ShopifyConnector
@@ -289,7 +289,7 @@ def test_reddit_hardwareswapuk_price_parser_uses_visible_gbp_amount() -> None:
     [
         (HotUKDealsConnector, "/rss/new"),
         (RedditHardwareSwapUKConnector, "/r/hardwareswapuk/new/.rss"),
-        (RedditBapcSalesUKConnector, "/r/bapcsalesuk/new/.rss"),
+        (RedditBuildAPCSalesUKConnector, "/r/buildapcsalesuk/new/.rss"),
     ],
 )
 async def test_signal_rss_connectors_use_canonical_feeds_and_filter_locally(

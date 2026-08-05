@@ -538,17 +538,17 @@ class RedditHardwareSwapUKConnector(_RedditConnector):
         )
 
 
-class RedditBapcSalesUKConnector(_RedditConnector):
-    CONNECTOR_ID = "reddit_bapcsalesuk"
-    SUBREDDIT = "bapcsalesuk"
+class RedditBuildAPCSalesUKConnector(_RedditConnector):
+    CONNECTOR_ID = "reddit_buildapcsalesuk"
+    SUBREDDIT = "buildapcsalesuk"
 
     def __init__(self) -> None:
         super().__init__(
             _load_template_or_default(
                 self.CONNECTOR_ID,
-                display_name="Reddit bapcsalesuk",
+                display_name="Reddit buildapcsalesuk",
                 source_role=SourceType.MARKETPLACE,
-                endpoint_url="https://www.reddit.com/r/bapcsalesuk/new/.rss?limit={limit}&restrict_sr=1",
+                endpoint_url="https://www.reddit.com/r/buildapcsalesuk/new/.rss?limit={limit}&restrict_sr=1",
             )
         )
 
