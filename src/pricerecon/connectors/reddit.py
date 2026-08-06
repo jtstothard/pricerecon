@@ -189,7 +189,7 @@ class _RedditConnector(TemplateConnector):
         """
         adapter = cast("ExternalBrowserAdapter | None", getattr(self, "_external_browser", None))
         if adapter is not None:
-            return adapter.has_authenticated_camofox_profile()
+            return adapter.has_authenticated_camofox_profile() or adapter.has_authenticated_cloakbrowser_reddit()
         return bool(
             (os.getenv("CAMOFOX_URL") or os.getenv("PRICERECON_CAMOFOX_URL"))
             and os.getenv("PRICERECON_REDDIT_CAMOFOX_USER_ID", "").strip()
@@ -203,20 +203,35 @@ class _RedditConnector(TemplateConnector):
             return adapter
 
         endpoint = os.getenv("CAMOFOX_URL") or os.getenv("PRICERECON_CAMOFOX_URL")
+        backends: dict[str, dict[str, Any]] = {
+            "reddit_camofox": {
+                "type": "camofox",
+                "endpoint": endpoint,
+                "options": {
+                    "user_id": os.getenv("PRICERECON_REDDIT_CAMOFOX_USER_ID", ""),
+                    "session_key": os.getenv("PRICERECON_REDDIT_CAMOFOX_SESSION_KEY", ""),
+                    "api_key": os.getenv("CAMOFOX_API_KEY", ""),
+                },
+            }
+        }
+        # When the CloakBrowser sidecar is configured, register it alongside the
+        # persistent Camofox profile. This enables the authenticated-state bridge:
+        # Camofox's storageState is fetched in memory and POSTed to the CloakBrowser
+        # HTTP wrapper, which injects it into browser.newContext({storageState}).
+        # The cloakbrowser endpoint is the sidecar wrapper, NOT the upstream SDK.
+        cloak_endpoint = os.getenv("PRICERECON_CLOAKBROWSER_URL") or os.getenv("CLOAKBROWSER_URL")
+        if cloak_endpoint:
+            backends["reddit_cloakbrowser"] = {
+                "type": "cloakbrowser",
+                "endpoint": cloak_endpoint,
+                "options": {},
+            }
         return ExternalBrowserAdapter.from_config(
             {
-                "browser_backends": {
-                    "reddit_camofox": {
-                        "type": "camofox",
-                        "endpoint": endpoint,
-                        "options": {
-                            "user_id": os.getenv("PRICERECON_REDDIT_CAMOFOX_USER_ID", ""),
-                            "session_key": os.getenv("PRICERECON_REDDIT_CAMOFOX_SESSION_KEY", ""),
-                            "api_key": os.getenv("CAMOFOX_API_KEY", ""),
-                        },
-                    }
-                },
-                "browser_default": "reddit_camofox",
+                "browser_backends": backends,
+                "browser_default": ["reddit_camofox", "reddit_cloakbrowser"]
+                if cloak_endpoint
+                else "reddit_camofox",
             }
         )
 
@@ -477,7 +492,12 @@ class _RedditConnector(TemplateConnector):
         from pricerecon.connectors.external_browser import as_connector_degraded_error
 
         url = f"https://www.reddit.com/r/{self.SUBREDDIT}/new/?q={quote_plus(query)}&restrict_sr=1"
-        result = await self._camofox_adapter().navigate(url)
+        adapter = self._camofox_adapter()
+        authenticated_bridge = getattr(adapter, "has_authenticated_cloakbrowser_reddit", None)
+        if callable(authenticated_bridge) and authenticated_bridge():
+            result = await adapter.navigate_with_camofox_storage_state(url)
+        else:
+            result = await adapter.navigate(url)
         if result.degraded:
             error = as_connector_degraded_error(result, self.connector_id)
             if result.degradation is BrowserDegradation.BLOCKED:
@@ -507,7 +527,23 @@ class _RedditConnector(TemplateConnector):
                 self.connector_id,
                 self.browser_result_detail(result),
             )
-        entries = _parse_browser_posts(
+        structured_entries: list[FeedEntry] = []
+        try:
+            structured = json.loads(content)
+        except (TypeError, ValueError):
+            structured = None
+        if isinstance(structured, dict) and isinstance(structured.get("items"), list):
+            for item in structured["items"]:
+                if not isinstance(item, dict) or not item.get("url") or not item.get("title"):
+                    continue
+                structured_entries.append(
+                    FeedEntry(
+                        id=hashlib.sha1(str(item["url"]).encode()).hexdigest(),
+                        title=str(item["title"]),
+                        link=str(item["url"]),
+                    )
+                )
+        entries = structured_entries or _parse_browser_posts(
             content, self.SUBREDDIT, int(filters.get("limit") or 25), query=query
         )
         if not entries:

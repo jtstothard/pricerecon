@@ -87,6 +87,7 @@ class CloakBrowserBridgeUnavailable(RuntimeError):
 async def run_cloakbrowser_bridge(
     url: str,
     *,
+    storage_state: Mapping[str, Any] | None = None,
     wait_ms: int = 8000,
     nav_timeout_ms: int = 45_000,
     timeout_ms: int | None = None,
@@ -99,6 +100,8 @@ async def run_cloakbrowser_bridge(
     """
     bridge = Path(__file__).parents[3] / "tools" / "cloakbrowser-bridge" / "bridge.mjs"
     node = os.environ.get("PRICERECON_NODE", "node")
+    if storage_state is not None:
+        _validate_playwright_storage_state(storage_state)
     result: dict[str, Any] = {
         "status": 0,
         "title": "",
@@ -123,6 +126,7 @@ async def run_cloakbrowser_bridge(
             json.dumps(
                 {
                     "url": url,
+                    "storageState": dict(storage_state or {"cookies": [], "origins": []}),
                     "options": {"wait_ms": wait_ms, "nav_timeout_ms": nav_timeout_ms},
                 }
             ).encode()
@@ -160,6 +164,32 @@ async def run_cloakbrowser_bridge(
                 logger.warning(f"CloakBrowser bridge cleanup failed: {exc}")
     result["blocked"] = bool(result.get("blocked", True))
     return result
+
+
+def _validate_playwright_storage_state(state: Mapping[str, Any]) -> None:
+    """Validate the small Playwright storageState contract without retaining it."""
+    if not isinstance(state, Mapping):
+        raise ValueError("Playwright storageState must be an object")
+    cookies = state.get("cookies", [])
+    origins = state.get("origins", [])
+    if not isinstance(cookies, list) or not isinstance(origins, list):
+        raise ValueError("Playwright storageState cookies/origins must be arrays")
+    for cookie in cookies:
+        if not isinstance(cookie, Mapping) or not all(
+            isinstance(cookie.get(field), str) for field in ("name", "value", "domain", "path")
+        ):
+            raise ValueError("Playwright storageState contains a malformed cookie")
+    for origin in origins:
+        if not isinstance(origin, Mapping) or not isinstance(origin.get("origin"), str):
+            raise ValueError("Playwright storageState contains a malformed origin")
+        local = origin.get("localStorage", [])
+        if not isinstance(local, list) or any(
+            not isinstance(entry, Mapping)
+            or not isinstance(entry.get("name"), str)
+            or not isinstance(entry.get("value"), str)
+            for entry in local
+        ):
+            raise ValueError("Playwright storageState contains malformed localStorage")
 
 
 # ---------------------------------------------------------------------------

@@ -48,3 +48,34 @@ Camofox backend options when the service requires it.
 Establish and maintain the profile session through the approved, human-gated Camofox workflow. PriceRecon does not automate sign-in, export cookies, solve CAPTCHAs, or bypass Reddit policy controls.
 
 If the profile identifiers are missing, or the profile session is expired, the Reddit browser tier fails closed. It never falls back to an anonymous Camofox session or local Playwright. CAPTCHA or bot-wall pages remain `bot_blocked`; they are not returned as zero results.
+
+## In-memory Camofox → CloakBrowser bridge
+
+For authenticated Reddit retrieval through CloakBrowser's installed Playwright,
+select exactly one Camofox backend followed by one CloakBrowser backend. The
+Camofox service must expose a Playwright `storageState` object at the configured
+path (the default is `/storage-state`):
+
+```yaml
+browser_backends:
+  reddit_camofox:
+    type: camofox
+    endpoint: ${CAMOFOX_URL}
+    options:
+      user_id: ${PRICERECON_REDDIT_CAMOFOX_USER_ID}
+      session_key: ${PRICERECON_REDDIT_CAMOFOX_SESSION_KEY}
+      storage_state_path: /storage-state
+  reddit_cloakbrowser:
+    type: cloakbrowser
+    endpoint: http://cloakbrowser
+browser_default: [reddit_camofox, reddit_cloakbrowser]
+```
+
+The bridge validates the state, streams it over a protected in-memory HTTP
+request to the CloakBrowser wrapper, and creates
+`browser.newContext({ storageState })`. It emits only bounded Reddit
+`{title, url}` items plus an authentication boolean; cookies, HTML, headers,
+response bodies, and query strings are not returned or logged. Missing or
+malformed state degrades to the existing RSS/API chain. The Camofox export
+endpoint and CloakBrowser wrapper must be deployed separately; the upstream
+CloakBrowser package is not modified.
