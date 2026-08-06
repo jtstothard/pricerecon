@@ -231,7 +231,6 @@ class ExternalBrowserAdapter:
                     f"{camo.endpoint.rstrip('/')}{state_path}",
                     params={
                         "userId": str(options["user_id"]),
-                        "sessionKey": str(options["session_key"]),
                     },
                     headers=headers,
                 )

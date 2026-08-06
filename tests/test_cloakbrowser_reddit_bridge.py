@@ -70,6 +70,8 @@ async def test_bridge_streams_state_in_memory_and_returns_only_structured_result
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.host == "camo.test":
             assert request.url.path == "/storage-state"
+            assert request.url.params["userId"] == "user"
+            assert "sessionKey" not in request.url.params
             return httpx.Response(200, json=STATE)
         assert request.url.host == "cloak.test"
         assert request.url.path == "/api/browser/authenticated-session"
