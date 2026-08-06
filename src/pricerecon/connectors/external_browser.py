@@ -19,7 +19,11 @@ from urllib.parse import urlsplit, urlunsplit
 
 import httpx
 
-from pricerecon.connectors.browser_client import BrowserBackendConfig, resolve_browser_backends
+from pricerecon.connectors.browser_client import (
+    BrowserBackendConfig,
+    _validate_playwright_storage_state,
+    resolve_browser_backends,
+)
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 
 
@@ -171,6 +175,190 @@ class ExternalBrowserAdapter:
             and all(str(backend.options.get(key, "")).strip() for key in ("user_id", "session_key"))
             for backend in self._backends
         )
+
+    def has_authenticated_cloakbrowser_reddit(self) -> bool:
+        """Return whether the explicit Camofox-to-CloakBrowser bridge is usable."""
+        camo = [backend for backend in self._backends if backend.type == "camofox"]
+        return (
+            len(self._backends) == 2
+            and len(camo) == 1
+            and any(backend.type == "cloakbrowser" for backend in self._backends)
+            and all(str(camo[0].options.get(key, "")).strip() for key in ("user_id", "session_key"))
+        )
+
+    async def navigate_with_camofox_storage_state(
+        self, url: str, *, wait_ms: int = 3_000, timeout_ms: int = 60_000
+    ) -> ExternalBrowserResult:
+        """Navigate with Camofox storageState passed in memory to CloakBrowser.
+
+        The state is never persisted, returned, or included in an exception or
+        diagnostic. Failure is an explicit degraded result so callers retain
+        their normal unauthenticated fallback chain.
+        """
+        if not self.has_authenticated_cloakbrowser_reddit():
+            return ExternalBrowserResult(
+                selected_backend=None,
+                attempts=(
+                    BrowserAttempt(
+                        "cloakbrowser-auth",
+                        BrowserDegradation.NOT_CONFIGURED,
+                        "authenticated backend pair not configured",
+                    ),
+                ),
+                degradation=BrowserDegradation.NOT_CONFIGURED,
+            )
+        camo = next(backend for backend in self._backends if backend.type == "camofox")
+        cloak = next(backend for backend in self._backends if backend.type == "cloakbrowser")
+        options = camo.options
+        token = str(options.get("api_key", options.get("access_key", ""))).strip()
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+        state_path = str(options.get("storage_state_path", "/storage-state"))
+        if state_path != "/storage-state":
+            return ExternalBrowserResult(
+                selected_backend=cloak.name,
+                attempts=(
+                    BrowserAttempt(
+                        cloak.name,
+                        BrowserDegradation.NOT_CONFIGURED,
+                        "authenticated state endpoint must be /storage-state",
+                    ),
+                ),
+                degradation=BrowserDegradation.NOT_CONFIGURED,
+            )
+        try:
+            async with self._client_factory(timeout=timeout_ms / 1000) as client:
+                response = await client.get(
+                    f"{camo.endpoint.rstrip('/')}{state_path}",
+                    params={
+                        "userId": str(options["user_id"]),
+                    },
+                    headers=headers,
+                )
+                response.raise_for_status()
+                payload = response.json()
+            state: Any = (
+                payload.get("storageState", payload) if isinstance(payload, Mapping) else None
+            )
+            _validate_playwright_storage_state(state)
+            state = json.loads(json.dumps(state, separators=(",", ":")))
+            # POST the validated storageState to the CloakBrowser HTTP wrapper
+            # in memory. The wrapper injects it into browser.newContext({storageState})
+            # and never persists/logs it. This replaces the local Node subprocess
+            # bridge (run_cloakbrowser_bridge) which requires the cloakbrowser SDK
+            # to be resolvable inside the PriceRecon container — it is not, so the
+            # bridge cannot start. The HTTP wrapper is the deployed sidecar at
+            # cloak.endpoint (for example, the internal CloakBrowser service URL).
+            wrapper_url = f"{cloak.endpoint.rstrip('/')}/api/browser/authenticated-session"
+            async with self._client_factory(
+                timeout=(timeout_ms + wait_ms + 10_000) / 1000
+            ) as render_client:
+                render_response = await render_client.post(
+                    wrapper_url,
+                    json={
+                        "url": url,
+                        "storageState": dict(state),
+                        "waitMs": wait_ms,
+                        "redditStructured": True,
+                    },
+                )
+                render_response.raise_for_status()
+                bridge = render_response.json()
+            if (
+                not isinstance(bridge, Mapping)
+                or bridge.get("ok") is not True
+                or bridge.get("navigated") is not True
+            ):
+                reason = (
+                    str(bridge.get("error"))
+                    if isinstance(bridge, Mapping)
+                    else "authenticated wrapper returned malformed response"
+                )
+                return ExternalBrowserResult(
+                    selected_backend=cloak.name,
+                    attempts=(
+                        BrowserAttempt(cloak.name, BrowserDegradation.BACKEND_UNAVAILABLE, reason),
+                    ),
+                    degradation=BrowserDegradation.BACKEND_UNAVAILABLE,
+                )
+            structured = {
+                "authenticated": bridge.get("authenticated") is True,
+                "items": bridge.get("items", []),
+            }
+            if not structured["authenticated"]:
+                return ExternalBrowserResult(
+                    selected_backend=cloak.name,
+                    attempts=(
+                        BrowserAttempt(
+                            cloak.name,
+                            BrowserDegradation.BLOCKED,
+                            "Reddit authentication was not proven",
+                        ),
+                    ),
+                    degradation=BrowserDegradation.BLOCKED,
+                )
+            items = bridge.get("items", [])
+            if not isinstance(items, list) or len(items) > 1_000:
+                return ExternalBrowserResult(
+                    selected_backend=cloak.name,
+                    attempts=(
+                        BrowserAttempt(
+                            cloak.name,
+                            BrowserDegradation.MALFORMED_RESPONSE,
+                            "authenticated wrapper returned malformed items",
+                        ),
+                    ),
+                    degradation=BrowserDegradation.MALFORMED_RESPONSE,
+                )
+            if any(
+                not isinstance(item, Mapping)
+                or not isinstance(item.get("title"), str)
+                or not isinstance(item.get("url"), str)
+                or not str(item["url"]).startswith("https://www.reddit.com/r/")
+                for item in items
+            ):
+                return ExternalBrowserResult(
+                    selected_backend=cloak.name,
+                    attempts=(
+                        BrowserAttempt(
+                            cloak.name,
+                            BrowserDegradation.MALFORMED_RESPONSE,
+                            "authenticated wrapper returned malformed items",
+                        ),
+                    ),
+                    degradation=BrowserDegradation.MALFORMED_RESPONSE,
+                )
+            return ExternalBrowserResult(
+                selected_backend=cloak.name,
+                attempts=(BrowserAttempt(cloak.name, BrowserDegradation.NONE),),
+                rendered=RenderedContent(
+                    title=str(bridge.get("title") or ""),
+                    snapshot=json.dumps(
+                        {"authenticated": True, "items": items}, separators=(",", ":")
+                    ),
+                ),
+            )
+        except httpx.TimeoutException:
+            return ExternalBrowserResult(
+                selected_backend=cloak.name,
+                attempts=(
+                    BrowserAttempt(
+                        cloak.name, BrowserDegradation.TIMEOUT, "authenticated state timed out"
+                    ),
+                ),
+                degradation=BrowserDegradation.TIMEOUT,
+            )
+        except (httpx.HTTPError, OSError, TypeError, ValueError, KeyError):
+            return ExternalBrowserResult(
+                selected_backend=cloak.name,
+                attempts=(
+                    BrowserAttempt(
+                        cloak.name,
+                        BrowserDegradation.MALFORMED_RESPONSE,
+                        "authenticated state unavailable",
+                    ),
+                ),
+                degradation=BrowserDegradation.MALFORMED_RESPONSE,
+            )
 
     async def evaluate_readonly(
         self,
