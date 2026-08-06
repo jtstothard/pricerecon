@@ -226,7 +226,7 @@ class ExternalBrowserAdapter:
             # bridge (run_cloakbrowser_bridge) which requires the cloakbrowser SDK
             # to be resolvable inside the PriceRecon container — it is not, so the
             # bridge cannot start. The HTTP wrapper is the deployed sidecar at
-            # cloak.endpoint (e.g. http://192.168.10.251:9378).
+            # cloak.endpoint (for example, the internal CloakBrowser service URL).
             wrapper_url = f"{cloak.endpoint.rstrip('/')}/api/browser/authenticated-session"
             async with self._client_factory(
                 timeout=(timeout_ms + wait_ms + 10_000) / 1000
