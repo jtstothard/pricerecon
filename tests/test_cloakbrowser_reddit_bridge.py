@@ -17,7 +17,7 @@ STATE = {
 }
 
 
-def adapter(handler: Any) -> ExternalBrowserAdapter:
+def adapter(handler: Any, *, storage_path: str = "/storage-state") -> ExternalBrowserAdapter:
     return ExternalBrowserAdapter.from_config(
         {
             "browser_backends": {
@@ -27,7 +27,7 @@ def adapter(handler: Any) -> ExternalBrowserAdapter:
                     "options": {
                         "user_id": "user",
                         "session_key": "reddit",
-                        "storage_state_path": "/storage-state",
+                        "storage_state_path": storage_path,
                     },
                 },
                 "cloak": {"type": "cloakbrowser", "endpoint": "http://cloak.test"},
@@ -47,6 +47,18 @@ def test_storage_state_validation_rejects_malformed_state() -> None:
         browser_client._validate_playwright_storage_state(
             {"cookies": [{"name": "x"}], "origins": []}
         )
+    with pytest.raises(ValueError, match="too large"):
+        browser_client._validate_playwright_storage_state(
+            {"cookies": [{"name": "x", "value": "x" * (256 * 1024)}], "origins": []}
+        )
+
+
+@pytest.mark.asyncio
+async def test_bridge_rejects_noncanonical_state_endpoint() -> None:
+    result = await adapter(
+        lambda request: httpx.Response(200, json=STATE), storage_path="/admin"
+    ).navigate_with_camofox_storage_state("https://www.reddit.com/r/x/new/")
+    assert result.degradation is BrowserDegradation.NOT_CONFIGURED
 
 
 @pytest.mark.asyncio
@@ -119,3 +131,51 @@ async def test_missing_authenticated_pair_is_explicit_unauthenticated_fallback()
     )
     assert result.degradation is BrowserDegradation.NOT_CONFIGURED
     assert "cookie" not in result.attempts[0].reason.lower()
+
+
+@pytest.mark.asyncio
+async def test_wrapper_must_return_boolean_authenticated_true() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.host == "camo.test":
+            return httpx.Response(200, json=STATE)
+        return httpx.Response(
+            200,
+            json={"ok": True, "navigated": True, "authenticated": "false", "items": []},
+        )
+
+    result = await adapter(handler).navigate_with_camofox_storage_state(
+        "https://www.reddit.com/r/x/new/"
+    )
+    assert result.degradation is BrowserDegradation.BLOCKED
+
+
+@pytest.mark.asyncio
+async def test_wrapper_rejects_malformed_structured_items() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.host == "camo.test":
+            return httpx.Response(200, json=STATE)
+        return httpx.Response(
+            200,
+            json={
+                "ok": True,
+                "navigated": True,
+                "authenticated": True,
+                "items": [{"title": "bogus", "url": "not-a-reddit-url"}],
+            },
+        )
+
+    result = await adapter(handler).navigate_with_camofox_storage_state(
+        "https://www.reddit.com/r/x/new/"
+    )
+    assert result.degradation is BrowserDegradation.MALFORMED_RESPONSE
+
+
+@pytest.mark.asyncio
+async def test_bridge_maps_timeout_separately() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ReadTimeout("timed out", request=request)
+
+    result = await adapter(handler).navigate_with_camofox_storage_state(
+        "https://www.reddit.com/r/x/new/"
+    )
+    assert result.degradation is BrowserDegradation.TIMEOUT

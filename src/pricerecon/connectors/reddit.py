@@ -548,8 +548,11 @@ class _RedditConnector(TemplateConnector):
                         link=str(item["url"]),
                     )
                 )
-        entries = structured_entries or _parse_browser_posts(
-            content, self.SUBREDDIT, int(filters.get("limit") or 25), query=query
+        limit = int(filters.get("limit") or 25)
+        entries = (
+            structured_entries[:limit]
+            if structured_entries
+            else _parse_browser_posts(content, self.SUBREDDIT, limit, query=query)
         )
         if not entries:
             # A valid Reddit listing page can contain posts that do not match the

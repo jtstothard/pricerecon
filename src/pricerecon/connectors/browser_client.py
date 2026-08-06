@@ -166,6 +166,12 @@ async def run_cloakbrowser_bridge(
     return result
 
 
+_MAX_STORAGE_STATE_BYTES = 256 * 1024
+_MAX_STORAGE_STATE_COOKIES = 256
+_MAX_STORAGE_STATE_ORIGINS = 64
+_MAX_STORAGE_STATE_LOCAL_STORAGE = 512
+
+
 def _validate_playwright_storage_state(state: Mapping[str, Any]) -> None:
     """Validate the small Playwright storageState contract without retaining it."""
     if not isinstance(state, Mapping):
@@ -174,6 +180,17 @@ def _validate_playwright_storage_state(state: Mapping[str, Any]) -> None:
     origins = state.get("origins", [])
     if not isinstance(cookies, list) or not isinstance(origins, list):
         raise ValueError("Playwright storageState cookies/origins must be arrays")
+    if len(cookies) > _MAX_STORAGE_STATE_COOKIES:
+        raise ValueError("Playwright storageState contains too many cookies")
+    if len(origins) > _MAX_STORAGE_STATE_ORIGINS:
+        raise ValueError("Playwright storageState contains too many origins")
+    try:
+        if len(json.dumps(state, separators=(",", ":"))) > _MAX_STORAGE_STATE_BYTES:
+            raise ValueError("Playwright storageState is too large")
+    except (TypeError, ValueError) as exc:
+        if isinstance(exc, ValueError) and str(exc).startswith("Playwright storageState"):
+            raise
+        raise ValueError("Playwright storageState is not JSON serializable") from exc
     for cookie in cookies:
         if not isinstance(cookie, Mapping) or not all(
             isinstance(cookie.get(field), str) for field in ("name", "value", "domain", "path")
@@ -183,6 +200,8 @@ def _validate_playwright_storage_state(state: Mapping[str, Any]) -> None:
         if not isinstance(origin, Mapping) or not isinstance(origin.get("origin"), str):
             raise ValueError("Playwright storageState contains a malformed origin")
         local = origin.get("localStorage", [])
+        if len(local) > _MAX_STORAGE_STATE_LOCAL_STORAGE:
+            raise ValueError("Playwright storageState contains too many localStorage entries")
         if not isinstance(local, list) or any(
             not isinstance(entry, Mapping)
             or not isinstance(entry.get("name"), str)
