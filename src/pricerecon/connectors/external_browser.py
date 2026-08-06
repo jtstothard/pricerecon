@@ -198,7 +198,13 @@ class ExternalBrowserAdapter:
         if not self.has_authenticated_cloakbrowser_reddit():
             return ExternalBrowserResult(
                 selected_backend=None,
-                attempts=(BrowserAttempt("cloakbrowser-auth", BrowserDegradation.NOT_CONFIGURED, "authenticated backend pair not configured"),),
+                attempts=(
+                    BrowserAttempt(
+                        "cloakbrowser-auth",
+                        BrowserDegradation.NOT_CONFIGURED,
+                        "authenticated backend pair not configured",
+                    ),
+                ),
                 degradation=BrowserDegradation.NOT_CONFIGURED,
             )
         camo = next(backend for backend in self._backends if backend.type == "camofox")
@@ -213,12 +219,17 @@ class ExternalBrowserAdapter:
             async with self._client_factory(timeout=timeout_ms / 1000) as client:
                 response = await client.get(
                     f"{camo.endpoint.rstrip('/')}{state_path}",
-                    params={"userId": str(options["user_id"]), "sessionKey": str(options["session_key"])},
+                    params={
+                        "userId": str(options["user_id"]),
+                        "sessionKey": str(options["session_key"]),
+                    },
                     headers=headers,
                 )
                 response.raise_for_status()
                 payload = response.json()
-            state: Any = payload.get("storageState", payload) if isinstance(payload, Mapping) else None
+            state: Any = (
+                payload.get("storageState", payload) if isinstance(payload, Mapping) else None
+            )
             _validate_playwright_storage_state(state)
             # POST the validated storageState to the CloakBrowser HTTP wrapper
             # in memory. The wrapper injects it into browser.newContext({storageState})
@@ -254,25 +265,45 @@ class ExternalBrowserAdapter:
                 )
                 return ExternalBrowserResult(
                     selected_backend=cloak.name,
-                    attempts=(BrowserAttempt(cloak.name, BrowserDegradation.BACKEND_UNAVAILABLE, reason),),
+                    attempts=(
+                        BrowserAttempt(cloak.name, BrowserDegradation.BACKEND_UNAVAILABLE, reason),
+                    ),
                     degradation=BrowserDegradation.BACKEND_UNAVAILABLE,
                 )
-            structured = {"authenticated": bool(bridge.get("authenticated")), "items": bridge.get("items", [])}
+            structured = {
+                "authenticated": bool(bridge.get("authenticated")),
+                "items": bridge.get("items", []),
+            }
             if not structured["authenticated"]:
                 return ExternalBrowserResult(
                     selected_backend=cloak.name,
-                    attempts=(BrowserAttempt(cloak.name, BrowserDegradation.BLOCKED, "Reddit authentication was not proven"),),
+                    attempts=(
+                        BrowserAttempt(
+                            cloak.name,
+                            BrowserDegradation.BLOCKED,
+                            "Reddit authentication was not proven",
+                        ),
+                    ),
                     degradation=BrowserDegradation.BLOCKED,
                 )
             return ExternalBrowserResult(
                 selected_backend=cloak.name,
                 attempts=(BrowserAttempt(cloak.name, BrowserDegradation.NONE),),
-                rendered=RenderedContent(title=str(bridge.get("title") or ""), snapshot=json.dumps(structured, separators=(",", ":"))),
+                rendered=RenderedContent(
+                    title=str(bridge.get("title") or ""),
+                    snapshot=json.dumps(structured, separators=(",", ":")),
+                ),
             )
         except (httpx.HTTPError, OSError, TypeError, ValueError, KeyError):
             return ExternalBrowserResult(
                 selected_backend=cloak.name,
-                attempts=(BrowserAttempt(cloak.name, BrowserDegradation.MALFORMED_RESPONSE, "authenticated state unavailable"),),
+                attempts=(
+                    BrowserAttempt(
+                        cloak.name,
+                        BrowserDegradation.MALFORMED_RESPONSE,
+                        "authenticated state unavailable",
+                    ),
+                ),
                 degradation=BrowserDegradation.MALFORMED_RESPONSE,
             )
 

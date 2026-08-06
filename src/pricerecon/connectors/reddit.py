@@ -189,7 +189,10 @@ class _RedditConnector(TemplateConnector):
         """
         adapter = cast("ExternalBrowserAdapter | None", getattr(self, "_external_browser", None))
         if adapter is not None:
-            return adapter.has_authenticated_camofox_profile() or adapter.has_authenticated_cloakbrowser_reddit()
+            return (
+                adapter.has_authenticated_camofox_profile()
+                or adapter.has_authenticated_cloakbrowser_reddit()
+            )
         return bool(
             (os.getenv("CAMOFOX_URL") or os.getenv("PRICERECON_CAMOFOX_URL"))
             and os.getenv("PRICERECON_REDDIT_CAMOFOX_USER_ID", "").strip()
@@ -229,9 +232,11 @@ class _RedditConnector(TemplateConnector):
         return ExternalBrowserAdapter.from_config(
             {
                 "browser_backends": backends,
-                "browser_default": ["reddit_camofox", "reddit_cloakbrowser"]
-                if cloak_endpoint
-                else "reddit_camofox",
+                "browser_default": (
+                    ["reddit_camofox", "reddit_cloakbrowser"]
+                    if cloak_endpoint
+                    else "reddit_camofox"
+                ),
             }
         )
 
