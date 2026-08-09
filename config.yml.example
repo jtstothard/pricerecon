@@ -46,7 +46,8 @@ connectors:
 
   aliexpress:
     enabled: true
-    # Optional local SearXNG discovery fallback after affiliate and Brave.
+    # Optional local SearXNG URL discovery after affiliate and Brave. Product
+    # detail enrichment resolves the price, so SearXNG snippets need not contain one.
     # SEARXNG_URL overrides this value when SearXNG is hosted remotely.
     searxng_url: null
     searxng_discovery: true

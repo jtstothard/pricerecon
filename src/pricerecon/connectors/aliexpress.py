@@ -118,8 +118,16 @@ class AliExpressConnector(BaseConnector):
         if not listings and filters.get("site_search_discovery", True):
             listings.extend(await self._site_search(query, filters))
 
-        # Prefer priced candidates when Brave placeholders and another lane
-        # describe the same product; placeholders must not hide priced results.
+        # Preserve price-less discovery candidates until enrichment. This lets
+        # SearXNG (and Brave) provide product URLs even when their snippets do
+        # not contain a price; DS PDP data is the authoritative price source.
+        listings = self._dedupe_listings(listings)
+
+        if self._should_enrich_with_ds(filters):
+            listings = await self._apply_ds_enrichment(listings)
+
+        # Prefer enriched/priced candidates over unresolved duplicates only
+        # after DS has had a chance to populate their price.
         priced_keys = {
             (listing.source, listing.source_listing_id)
             for listing in listings
@@ -131,10 +139,6 @@ class AliExpressConnector(BaseConnector):
             if listing.price is not None
             or (listing.source, listing.source_listing_id) not in priced_keys
         ]
-        listings = self._dedupe_listings(listings)
-
-        if self._should_enrich_with_ds(filters):
-            listings = await self._apply_ds_enrichment(listings)
 
         if self._should_enrich_with_browser(filters):
             listings = await self._apply_browser_enrichment(listings, filters)
@@ -580,7 +584,7 @@ class AliExpressConnector(BaseConnector):
         return listings
 
     async def _searxng_search(self, query: str, filters: dict[str, Any]) -> list[NormalizedListing]:
-        """Discover priced AliExpress listings through the local SearXNG API."""
+        """Discover AliExpress product URLs through the local SearXNG API."""
         max_results = max(0, int(filters.get("searxng_max_results", self._searxng_max_results)))
         if not max_results:
             return []
@@ -615,8 +619,6 @@ class AliExpressConnector(BaseConnector):
             title = str(result.get("title") or f"AliExpress {pid}")
             text = " ".join((title, str(result.get("content") or result.get("snippet") or "")))
             price = self._extract_price(text)
-            if price is None:
-                continue
             seen.add(pid)
             listings.append(
                 NormalizedListing.model_validate(
@@ -1792,14 +1794,16 @@ class AliExpressConnector(BaseConnector):
         )
 
     def _dedupe_listings(self, listings: list[NormalizedListing]) -> list[NormalizedListing]:
-        seen: set[tuple[str, str]] = set()
+        positions: dict[tuple[str, str], int] = {}
         deduped: list[NormalizedListing] = []
         for listing in listings:
             key = (listing.source, listing.source_listing_id)
-            if key in seen:
-                continue
-            seen.add(key)
-            deduped.append(listing)
+            existing_position = positions.get(key)
+            if existing_position is None:
+                positions[key] = len(deduped)
+                deduped.append(listing)
+            elif deduped[existing_position].price is None and listing.price is not None:
+                deduped[existing_position] = listing
         return deduped
 
     def _extract_price(self, html: str) -> Decimal | None:

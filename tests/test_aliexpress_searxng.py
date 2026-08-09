@@ -83,6 +83,74 @@ async def test_searxng_timeout_is_safe() -> None:
     assert await connector(client)._searxng_search("GPU", {}) == []
 
 
+@pytest.mark.asyncio
+async def test_searxng_keeps_url_only_result_as_ds_enrichment_candidate() -> None:
+    client = Client(
+        Response(
+            {
+                "results": [
+                    {
+                        "url": "https://www.aliexpress.com/item/1005001234567890.html",
+                        "title": "GPU",
+                        "content": "Product page with no price in the search result",
+                    }
+                ]
+            }
+        )
+    )
+
+    results = await connector(client)._searxng_search("GPU", {})
+
+    assert len(results) == 1
+    assert results[0].source_listing_id == "1005001234567890"
+    assert results[0].price is None
+    assert results[0].variant_normalized["aliexpress_source_lane"] == "searxng_discovery"
+
+
+@pytest.mark.asyncio
+async def test_search_enriches_url_only_searxng_result_with_ds_before_filtering(
+    monkeypatch: Any,
+) -> None:
+    client = Client(
+        Response(
+            {
+                "results": [
+                    {
+                        "url": "https://www.aliexpress.com/item/1005001234567890.html",
+                        "title": "GPU 4090",
+                        "content": "Product page with no price in the search result",
+                    }
+                ]
+            }
+        )
+    )
+    conn = AliExpressConnector(
+        {
+            "searxng_url": "http://searxng.test:8080",
+            "ds_app_key": "test-app-key",
+            "ds_app_secret": "test-app-secret",
+            "ds_access_token": "test-access-token",
+        },
+        http_client=cast(httpx.AsyncClient, client),
+    )
+
+    async def empty_search(query: str, filters: dict[str, Any]) -> list[Any]:
+        return []
+
+    async def fetch_ds_detail(pid: str) -> dict[str, Any]:
+        assert pid == "1005001234567890"
+        return {"title": "GPU 4090", "displayPrice": "999.99", "inStock": True}
+
+    monkeypatch.setattr(conn, "_affiliate_search", empty_search)
+    monkeypatch.setattr(conn, "_brave_search", empty_search)
+    monkeypatch.setattr(conn, "_fetch_ds_detail", fetch_ds_detail)
+
+    results = await conn.search("GPU 4090", {"site_search_discovery": False})
+
+    assert [listing.price for listing in results] == [Decimal("999.99")]
+    assert results[0].variant_normalized["aliexpress_source_lane"] == "ds"
+
+
 def test_searxng_url_environment_overrides_config(monkeypatch: Any) -> None:
     monkeypatch.setenv("SEARXNG_URL", "http://env.example:8080")
     conn = AliExpressConnector({"searxng_url": "http://config.example:8080"})
