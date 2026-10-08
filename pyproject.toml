@@ -63,6 +63,11 @@ exclude = [
     "frontend",
 ]
 
+# Ruff 0.16 widened its default rules from the legacy baseline. Pin the
+# established baseline explicitly so dependency-only PRs remain behaviour-neutral.
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+
 [tool.mypy]
 python_version = "3.12"
 warn_return_any = true
