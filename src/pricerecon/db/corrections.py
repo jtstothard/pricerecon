@@ -102,7 +102,6 @@ def read_corrections(
     )
 
     if entries:
-        from pricerecon.core.corrections import compatible_fresh_candidate
         from pricerecon.db.discovery import hydrate_candidate
         from pricerecon.models.discovery import DiscoveryCandidate
 
@@ -112,10 +111,7 @@ def read_corrections(
         ).fetchone()
         candidate = DiscoveryCandidate.model_validate_json(latest[0])
         hydrate_candidate(connection, candidate)
-        if compatible_fresh_candidate(candidate, result) and not any(
-            is_withdrawn(connection, "offer", offer.id, offer.revision)
-            for offer in candidate.offers
-        ):
+        if qualified_correction_paths(connection, candidate, result):
             result.requalification = "supported_by_fresh_evidence"
             result.needs = []
     return result
@@ -157,21 +153,24 @@ def save_correction(
             "SELECT capture_id FROM discovery_leads WHERE candidate_id=? ORDER BY rowid DESC LIMIT 1",
             (candidate_id,),
         ).fetchone()
-        binding = connection.execute(
-            "SELECT configuration_revision FROM discovery_bindings "
-            "WHERE candidate_id=? AND capture_id=? AND configuration_id=? ORDER BY rowid DESC LIMIT 1",
+        bindings = connection.execute(
+            "SELECT configuration_revision,id FROM discovery_bindings "
+            "WHERE candidate_id=? AND capture_id=? AND configuration_id=? ORDER BY rowid DESC",
             (
                 candidate_id,
                 request.capture_id,
                 request.observed_configuration_id or configuration_id,
             ),
-        ).fetchone()
+        ).fetchall()
         if (
             history.revision != request.expected_revision
             or latest is None
             or latest[0] != request.capture_id
-            or binding is None
-            or binding[0] != request.configuration_revision
+            or not any(
+                b[0] == request.configuration_revision
+                and b[1] in correction_binding_ids(connection, history)
+                for b in bindings
+            )
         ):
             raise CorrectionConflict()
         entry = CorrectionEntry(
@@ -189,56 +188,58 @@ def save_correction(
         # This raises TrackingConflict during a claimed send. The context rolls
         # back the correction and every withdrawal, including the inserted entry.
         reason = f"Identity {request.state}: {request.field}; correction {entry.id}"
-        # The stable correction subject may now have a freshly qualified,
-        # different configuration ID. Withdraw both its old and new descendants.
-        configuration_ids = {
+        # Retained selection IDs connect old and new definitions. Restrict
+        # every exact revision to this candidate; definition IDs are global.
+        binding_ids = correction_binding_ids(connection, history)
+        bindings = retained_subject_bindings(
+            connection,
+            candidate_id,
             configuration_id,
-            request.observed_configuration_id or configuration_id,
-            *(
-                entry.observed_configuration_id
-                for entry in history.lineage
-                if entry.observed_configuration_id is not None
-            ),
-        }
+            history.lineage[0].capture_id if history.lineage else None,
+        )
+        configuration_ids = {row[2] for row in bindings}
         for identity in sorted(configuration_ids):
-            invalidate_configuration_tracking(connection, identity, reason)
+            invalidate_configuration_tracking(
+                connection, identity, reason, candidate_id=candidate_id
+            )
         for row in connection.execute("SELECT payload_json FROM exact_tracking"):
             intent = ExactTracking.model_validate_json(row[0])
-            if intent.configuration_id in configuration_ids:
+            if intent.candidate_id == candidate_id and intent.configuration_id in configuration_ids:
                 intent.intended_values = {**history.values, request.field: request.value}
                 store(connection, intent)
-        for identity in sorted(configuration_ids):
+        for binding_id, revision, identity, configuration_revision in bindings:
             references = [
-                RevisionReference(kind="configuration", id=identity, revision=r[0])
-                for r in connection.execute(
-                    "SELECT revision FROM discovery_configurations WHERE id=?",
-                    (identity,),
-                )
+                RevisionReference(kind="binding", id=binding_id, revision=revision),
             ]
-            references.extend(
-                RevisionReference(kind="binding", id=r[0], revision=r[1])
-                for r in connection.execute(
-                    "SELECT id,revision FROM discovery_bindings WHERE configuration_id=?",
-                    (identity,),
+            if not any(
+                row[0] not in binding_ids
+                for row in connection.execute(
+                    "SELECT id FROM discovery_bindings WHERE configuration_id=? "
+                    "AND configuration_revision=?",
+                    (identity, configuration_revision),
                 )
-            )
-            references.extend(
-                RevisionReference(kind="offer", id=r[0], revision=r[1])
-                for r in connection.execute(
-                    "SELECT o.id,o.revision FROM discovery_offers o JOIN discovery_bindings b "
-                    "ON b.id=o.binding_id AND b.revision=o.binding_revision WHERE b.configuration_id=?",
-                    (identity,),
+            ):
+                references.append(
+                    RevisionReference(
+                        kind="configuration", id=identity, revision=configuration_revision
+                    )
                 )
-            )
-            references.extend(
-                RevisionReference(kind="cost", id=r[0], revision=r[1])
-                for r in connection.execute(
-                    "SELECT c.id,c.revision FROM discovery_cost_scenarios c JOIN discovery_offers o "
-                    "ON c.offer_id=o.id AND c.offer_revision=o.revision JOIN discovery_bindings b "
-                    "ON b.id=o.binding_id AND b.revision=o.binding_revision WHERE b.configuration_id=?",
-                    (identity,),
+            for offer_id, offer_revision in connection.execute(
+                "SELECT id,revision FROM discovery_offers WHERE candidate_id=? "
+                "AND binding_id=? AND binding_revision=?",
+                (candidate_id, binding_id, revision),
+            ):
+                references.append(
+                    RevisionReference(kind="offer", id=offer_id, revision=offer_revision)
                 )
-            )
+                references.extend(
+                    RevisionReference(kind="cost", id=r[0], revision=r[1])
+                    for r in connection.execute(
+                        "SELECT id,revision FROM discovery_cost_scenarios "
+                        "WHERE offer_id=? AND offer_revision=?",
+                        (offer_id, offer_revision),
+                    )
+                )
             for ref in references:
                 withdraw(connection, ref, entry.id, reason)
         return read_corrections(connection, candidate_id, configuration_id)
@@ -278,93 +279,229 @@ def candidate_corrections(
     ]
 
 
+def correction_binding_ids(
+    connection: sqlite3.Connection, correction: CorrectionHistory
+) -> set[str]:
+    """Follow retained selections, never an unrelated matching definition."""
+    return retained_selection_ids(
+        connection,
+        correction.candidate_id,
+        correction.configuration_id,
+        correction.lineage[0].capture_id if correction.lineage else None,
+    )
+
+
+def retained_selection_ids(
+    connection: sqlite3.Connection,
+    candidate_id: str,
+    configuration_id: str,
+    first_capture_id: str | None,
+) -> set[str]:
+    return {
+        row[0]
+        for row in retained_subject_bindings(
+            connection, candidate_id, configuration_id, first_capture_id
+        )
+    }
+
+
+def retained_subject_bindings(
+    connection: sqlite3.Connection,
+    candidate_id: str,
+    configuration_id: str,
+    first_capture_id: str | None,
+) -> list[tuple[str, int, str, int]]:
+    # Freeze membership at the first correction's observed capture. A later
+    # unrelated selection can converge on a descendant's definition without
+    # becoming part of this journal, including after a second correction.
+    if first_capture_id is None:
+        latest = connection.execute(
+            "SELECT capture_id FROM discovery_leads WHERE candidate_id=? ORDER BY rowid DESC LIMIT 1",
+            (candidate_id,),
+        ).fetchone()
+        first_capture_id = latest[0] if latest else None
+    roots = {
+        row[0]: row[1]
+        for row in connection.execute(
+            "SELECT id,revision FROM discovery_bindings WHERE candidate_id=? AND configuration_id=? "
+            "AND capture_id=?",
+            (candidate_id, configuration_id, first_capture_id),
+        )
+    }
+    # Older revisions of the original identity are affected too. A different
+    # identity preceding the subject capture is not a corrected descendant.
+    return [
+        row
+        for row in connection.execute(
+            "SELECT id,revision,configuration_id,configuration_revision FROM discovery_bindings "
+            "WHERE candidate_id=?",
+            (candidate_id,),
+        )
+        if row[0] in roots and (row[1] >= roots[row[0]] or row[2] == configuration_id)
+    ]
+
+
+def correction_paths(
+    connection: sqlite3.Connection,
+    candidate: "DiscoveryCandidate",
+    correction: CorrectionHistory,
+) -> list["DiscoveryCandidate"]:
+    """One exact configuration -> binding -> offer -> cost dependency path."""
+    bindings = correction_binding_ids(connection, correction)
+    paths = []
+    for binding in candidate.bindings:
+        if binding.id not in bindings:
+            continue
+        for configuration in candidate.configurations:
+            if (configuration.id, configuration.revision) != (
+                binding.configuration_id,
+                binding.configuration_revision,
+            ):
+                continue
+            for offer in candidate.offers:
+                if (offer.binding_id, offer.binding_revision) == (binding.id, binding.revision):
+                    paths.append(
+                        candidate.model_copy(
+                            update={
+                                "configuration": configuration,
+                                "configurations": [configuration],
+                                "bindings": [binding],
+                                "offers": [offer],
+                            }
+                        )
+                    )
+    return paths
+
+
+def qualified_correction_paths(
+    connection: sqlite3.Connection,
+    candidate: "DiscoveryCandidate",
+    correction: CorrectionHistory,
+) -> list["DiscoveryCandidate"]:
+    """Publication and readback share the same exact retained-lineage gates."""
+    from pricerecon.core.corrections import compatible_fresh_candidate
+    from pricerecon.db.history import get_history
+    from pricerecon.models.discovery import DiscoveryCapture
+
+    capture = DiscoveryCapture.model_validate_json(
+        connection.execute(
+            "SELECT payload_json FROM discovery_captures WHERE capture_id=?",
+            (candidate.capture_id,),
+        ).fetchone()[0]
+    )
+    changed = connection.execute(
+        "SELECT 1 FROM discovery_corrections WHERE candidate_id=? AND configuration_id=? "
+        "AND rowid>? LIMIT 1",
+        (candidate.id, correction.configuration_id, capture.correction_input_revision),
+    ).fetchone()
+    if (
+        changed
+        or not correction.lineage
+        or any(
+            o.completeness == "partial" for o in capture.outcomes if o.source == candidate.source
+        )
+    ):
+        return []
+    retained = get_history(candidate.id, connection=connection)
+    observations = {o.id: o for o in retained.observations} if retained else {}
+    boundary = correction.lineage[-1].recorded_at
+    qualified = []
+    for path in correction_paths(connection, candidate, correction):
+        offer = path.offers[0]
+        observation = observations.get(f"{candidate.capture_id}:{offer.id}:{offer.revision}")
+        if (
+            compatible_fresh_candidate(path, correction)
+            and observation is not None
+            and observation.observed_at is not None
+            and observation.observed_at > boundary
+            and "capture_lineage_unknown" not in observation.reasons
+            and observation.acquisition_state == "success"
+            and not any(
+                is_withdrawn(connection, ref.kind, ref.id, ref.revision)
+                for ref in observation.dependencies
+            )
+        ):
+            qualified.append(path)
+    return qualified
+
+
 def validate_publication(
     connection: sqlite3.Connection,
     capture: "DiscoveryCapture",
     candidates: list["DiscoveryCandidate"],
 ) -> None:
     """The acquisition's inputs are checked while its publication lock is held."""
-    from pricerecon.core.corrections import compatible_fresh_candidate
+    from pricerecon.categories.watches import configuration_matches_values
 
-    current_revision = correction_revision(connection)
     for candidate in candidates:
         corrections = candidate_corrections(connection, candidate.id)
         if not corrections:
             continue
-        valid = capture.correction_input_revision == current_revision and all(
-            compatible_fresh_candidate(candidate, correction) for correction in corrections
-        )
-        if valid:
-            # Use06's retained capture lineage to reject a new extraction or
-            # route that merely points back to pre-correction temporal evidence.
-            from pricerecon.db.history import get_history
-
-            retained = get_history(candidate.id, connection=connection)
-            boundary = max(c.lineage[-1].recorded_at for c in corrections)
-            observations = (
-                [o for o in retained.observations if o.capture_id == capture.capture_id]
-                if retained
-                else []
-            )
-            valid = (
-                bool(observations)
-                and all(
-                    o.observed_at is not None
-                    and o.observed_at > boundary
-                    and "capture_lineage_unknown" not in o.reasons
-                    and o.acquisition_state == "success"
-                    for o in observations
+        failed = {}
+        for correction in corrections:
+            qualified = {
+                (p.offers[0].id, p.offers[0].revision)
+                for p in qualified_correction_paths(connection, candidate, correction)
+            }
+            for path in correction_paths(connection, candidate, correction):
+                offer = path.offers[0]
+                if (offer.id, offer.revision) not in qualified:
+                    failed[(offer.id, offer.revision)] = (path, correction)
+        for path, correction in failed.values():
+            capture.publication_state = "withdrawn"
+            reason = "Correction inputs changed or fresh compatible evidence is still required"
+            offer, binding, config = path.offers[0], path.bindings[0], path.configurations[0]
+            references = [
+                RevisionReference(kind="binding", id=binding.id, revision=binding.revision),
+                RevisionReference(kind="offer", id=offer.id, revision=offer.revision),
+                *(
+                    RevisionReference(kind="cost", id=c.id, revision=c.revision)
+                    for c in offer.cost_scenarios
+                ),
+            ]
+            # A definition may be shared by several offers. A failed selected
+            # offer cannot withdraw another independently supported selection.
+            if not any(
+                b.configuration_id == config.id
+                and b.configuration_revision == config.revision
+                and (o.id, o.revision) not in failed
+                for b in candidate.bindings
+                for o in candidate.offers
+                if (o.binding_id, o.binding_revision) == (b.id, b.revision)
+            ):
+                references.append(
+                    RevisionReference(kind="configuration", id=config.id, revision=config.revision)
                 )
-                and all(
-                    o.completeness != "partial"
-                    for o in capture.outcomes
-                    if o.source == candidate.source
+            for ref in references:
+                withdraw(
+                    connection,
+                    ref,
+                    correction.lineage[-1].id,
+                    reason,
                 )
-            )
-        if valid:
+        for correction in corrections:
+            if not qualified_correction_paths(connection, candidate, correction):
+                continue
+            configuration_ids = {
+                row[2]
+                for row in retained_subject_bindings(
+                    connection,
+                    candidate.id,
+                    correction.configuration_id,
+                    correction.lineage[0].capture_id,
+                )
+            }
             for row in connection.execute("SELECT payload_json FROM exact_tracking"):
                 intent = ExactTracking.model_validate_json(row[0])
                 if (
                     intent.candidate_id == candidate.id
+                    and intent.configuration_id in configuration_ids
                     and intent.intended_values is not None
+                    and configuration_matches_values(correction.values, intent.intended_values)
                     and intent.invalidation_reason is not None
                 ):
-                    # Qualification is evaluated independently by the existing
-                    # tracking engine. Correction/recovery alone cannot send.
                     intent.invalidation_reason = None
                     store(connection, intent)
-            continue
-        capture.publication_state = "withdrawn"
-        reason = "Correction inputs changed or fresh compatible evidence is still required"
-        correction_id = corrections[-1].lineage[-1].id
-        for config in candidate.configurations:
-            withdraw(
-                connection,
-                RevisionReference(kind="configuration", id=config.id, revision=config.revision),
-                correction_id,
-                reason,
-            )
-        for binding in candidate.bindings:
-            withdraw(
-                connection,
-                RevisionReference(kind="binding", id=binding.id, revision=binding.revision),
-                correction_id,
-                reason,
-            )
-        for offer in candidate.offers:
-            withdraw(
-                connection,
-                RevisionReference(kind="offer", id=offer.id, revision=offer.revision),
-                correction_id,
-                reason,
-            )
-            for cost in offer.cost_scenarios:
-                withdraw(
-                    connection,
-                    RevisionReference(kind="cost", id=cost.id, revision=cost.revision),
-                    correction_id,
-                    reason,
-                )
     connection.execute(
         "UPDATE discovery_captures SET payload_json=? WHERE capture_id=?",
         (capture.model_dump_json(), capture.capture_id),

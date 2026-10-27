@@ -129,14 +129,29 @@ def project_lineage(connection: sqlite3.Connection, coupon: CouponAssessment) ->
             )
     from pricerecon.db.corrections import is_withdrawn
 
-    if row is not None and is_withdrawn(connection, "offer", coupon.offer_id, coupon.offer_revision):
+    if row is not None and is_withdrawn(
+        connection, "offer", coupon.offer_id, coupon.offer_revision
+    ):
         current = False
-    if row is not None and coupon.application is not None and coupon.application.receipt is not None:
+    if (
+        row is not None
+        and coupon.application is not None
+        and coupon.application.receipt is not None
+    ):
+        from pricerecon.db.corrections import retained_selection_ids
         from pricerecon.models.corrections import CorrectionEntry
 
-        boundaries = [CorrectionEntry.model_validate_json(r[0]).recorded_at for r in connection.execute(
-            "SELECT payload_json FROM discovery_corrections WHERE candidate_id=?", (row[4],),
-        )]
+        first_captures: dict[str, str] = {}
+        boundaries = []
+        for identity, payload in connection.execute(
+            "SELECT configuration_id,payload_json FROM discovery_corrections "
+            "WHERE candidate_id=? ORDER BY rowid",
+            (row[4],),
+        ):
+            correction = CorrectionEntry.model_validate_json(payload)
+            first_capture = first_captures.setdefault(identity, correction.capture_id)
+            if row[1] in retained_selection_ids(connection, row[4], identity, first_capture):
+                boundaries.append(correction.recorded_at)
         receipt_time = coupon.application.receipt.observed_at
         if boundaries and (receipt_time is None or receipt_time <= max(boundaries)):
             current = False
