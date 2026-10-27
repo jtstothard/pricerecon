@@ -14,8 +14,8 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 | [04: UK delivered cost](issues/04-show-uk-delivered-cost.md) | 03 | Closed |
 | [05: Exact tracking](issues/05-track-exact-products.md) | 04 | Closed |
 | [06: Observation history](issues/06-show-observation-history.md) | 04 | Closed |
-| [07: Corrections](issues/07-correct-identities.md) | 05, 06 | Open — independent-target intent repair |
-| [08: Comparisons](issues/08-compare-qualified-offers.md) | 07 | Blocked |
+| [07: Corrections](issues/07-correct-identities.md) | 05, 06 | Closed |
+| [08: Comparisons](issues/08-compare-qualified-offers.md) | 07 | In progress |
 | [09: Public coupons](issues/09-evaluate-public-coupons.md) | 04 | Closed |
 | [10: Shared limits](issues/10-prioritise-tracking.md) | 05 | Open — shared-admission repair |
 | [11: Source evidence](issues/11-carry-source-evidence.md) | 03, 10 | Blocked |
@@ -222,3 +222,7 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   the 123 suite. Source repair, active10 and original dirty parent were untouched.
   Collection stays staged; buyer/live/source/freshness/operating/activation gates
   remain separate and open.
+
+- 2026-10-27:07 closed after the parent target-ownership repair and126 guarded
+  workflows;08 claimed. See the [dated acceptance](issues/07-correct-identities.md#final-offline-acceptance--2026-10-27).
+  10 remains open pending independent acceptance of its retained grant repair.

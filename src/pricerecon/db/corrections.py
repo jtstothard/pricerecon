@@ -197,14 +197,35 @@ def save_correction(
             configuration_id,
             history.lineage[0].capture_id if history.lineage else None,
         )
-        configuration_ids = {row[2] for row in bindings}
-        for identity in sorted(configuration_ids):
+        # A descendant definition can equal another journal's original
+        # definition. Targets belong to their original captured selection revisions,
+        # not every definition ID that this journal has passed through.
+        tracking_configurations: set[str] = set()
+        subject_revisions = {(binding[0], binding[1]) for binding in bindings}
+        for row in connection.execute("SELECT payload_json FROM exact_tracking"):
+            intent = ExactTracking.model_validate_json(row[0])
+            if intent.candidate_id != candidate_id:
+                continue
+            anchored_selections = {
+                (binding[0], binding[1])
+                for binding in connection.execute(
+                    "SELECT id,revision FROM discovery_bindings WHERE candidate_id=? "
+                    "AND capture_id=? AND configuration_id=?",
+                    (intent.candidate_id, intent.capture_id, intent.configuration_id),
+                )
+            }
+            if anchored_selections & subject_revisions:
+                tracking_configurations.add(intent.configuration_id)
+        for identity in sorted(tracking_configurations):
             invalidate_configuration_tracking(
                 connection, identity, reason, candidate_id=candidate_id
             )
         for row in connection.execute("SELECT payload_json FROM exact_tracking"):
             intent = ExactTracking.model_validate_json(row[0])
-            if intent.candidate_id == candidate_id and intent.configuration_id in configuration_ids:
+            if (
+                intent.candidate_id == candidate_id
+                and intent.configuration_id in tracking_configurations
+            ):
                 intent.intended_values = {**history.values, request.field: request.value}
                 store(connection, intent)
         for binding_id, revision, identity, configuration_revision in bindings:

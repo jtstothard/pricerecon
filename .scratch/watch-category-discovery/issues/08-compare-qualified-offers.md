@@ -4,9 +4,9 @@
 
 **Blocked by:** [07: Correct identities without transferring misleading prices](07-correct-identities.md)
 
-**Status:** blocked — ticket07 independent-target intent repair required
+**Status:** in-progress
 
-**Assignee:** unclaimed
+**Assignee:** Codex implementer (isolated worktree)
 
 **Parent:** [Trustworthy UK watch discovery alongside existing monitoring](../../../docs/specs/watch-category-discovery.md)
 
