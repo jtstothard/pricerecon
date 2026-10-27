@@ -11,6 +11,7 @@ from pricerecon.models.costs import (
     CostScenarioInput,
     PublicCostSummary,
 )
+from pricerecon.models.coupons import CouponApplication
 from pricerecon.models.qualification import (
     MerchantEvidenceReport,
     MerchantOffer,
@@ -59,6 +60,8 @@ def evaluate_cost(
     offer: MerchantOffer,
     binding: SelectionBinding,
     at: datetime,
+    *,
+    reproduced_item_price: Decimal | None = None,
 ) -> CostScenario:
     result = CostScenario(
         **scenario.model_dump(),
@@ -69,6 +72,8 @@ def evaluate_cost(
         captured_at=at,
     )
     issues = result.issues
+    if scenario.kind == "public_coupon":
+        issues.append("coupon_requires_separate_reproduced_application")
     context = scenario.context
     if any(not value for value in context.model_dump().values()):
         issues.append("incomplete_cost_context")
@@ -187,7 +192,9 @@ def evaluate_cost(
             if kind == "item" and component.included_in is not None:
                 issues.append("item:invalid_inclusion")
                 continue
-            expected_item = offer.item_price
+            expected_item = (
+                offer.item_price if reproduced_item_price is None else reproduced_item_price
+            )
             if expected_item is not None and component.basis == "scenario":
                 expected_item *= context.quantity or 1
             if kind == "item" and (
@@ -347,3 +354,65 @@ def evaluate_costs(
                 )
             retained.assumptions = list(dict.fromkeys(retained.assumptions + scenario.assumptions))
     return [evaluate_cost(scenario, report, offer, binding, at) for scenario in merged.values()]
+
+
+def basket_allocation_issues(application: CouponApplication, base: CostScenario) -> list[str]:
+    """Reconcile receipt line allocations to complete before/after components.
+
+    This performs no discount formula or FX conversion. The ordinary cost engine
+    owns all payable arithmetic; coupon receipts must reconcile its inputs.
+    """
+    issues = []
+    context = base.context
+    members = [line.member for line in application.lines]
+    if len(set(members)) != len(members) or sorted(members) != sorted(context.basket_members):
+        issues.append("basket_allocation_incomplete")
+    selected = [line for line in application.lines if line.member == application.selected_member]
+    if len(selected) != 1 or application.selected_member not in context.basket_members:
+        return [*issues, "basket_selected_line_missing"]
+    if selected[0].quantity != context.quantity:
+        issues.append("basket_selected_quantity_mismatch")
+    if context.purchase_scope not in {"standalone", "whole_basket"}:
+        issues.append("coupon_allocation_scope_unproven")
+    if any(line.currency != context.charge_currency for line in application.lines):
+        issues.append("basket_allocation_currency_mismatch")
+    with localcontext() as arithmetic:
+        arithmetic.prec = 512
+        for scenario, field in (
+            (base, "before_item_total"),
+            (application.payable, "after_item_total"),
+        ):
+            for kind, lines in (
+                ("item", selected),
+                (
+                    "basket_other_items",
+                    [
+                        line
+                        for line in application.lines
+                        if line.member != application.selected_member
+                    ],
+                ),
+            ):
+                if not lines and kind == "basket_other_items":
+                    continue
+                parts = [part for part in scenario.components if part.kind == kind]
+                signatures = {part.model_dump_json(exclude={"evidence"}) for part in parts}
+                if (
+                    len(signatures) != 1
+                    or parts[0].amount is None
+                    or parts[0].currency != context.charge_currency
+                ):
+                    issues.append("basket_item_allocation_mismatch")
+                    continue
+                amount = parts[0].amount
+                if parts[0].basis == "per_unit":
+                    amount *= context.quantity or 1
+                allocated = sum((getattr(line, field) for line in lines), Decimal(0))
+                if allocated != amount:
+                    issues.append("basket_item_allocation_mismatch")
+        if (
+            application.selected_item_price * (context.quantity or 1)
+            != selected[0].after_item_total
+        ):
+            issues.append("basket_selected_price_mismatch")
+    return list(dict.fromkeys(issues))

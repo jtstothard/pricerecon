@@ -18,14 +18,14 @@ from .harness import MonitoringHarness
 from .workflows import LEGACY, listing
 
 
-async def main(port, qualification=False, costs=False):
+async def main(port, qualification=False, costs=False, coupons=False):
     with MonitoringHarness() as harness:
         from pricerecon.core.discovery import execute_discovery
         from pricerecon.models.discovery import DiscoveryAdmission, DiscoveryRequest
 
-        assert harness.application.frontend_dist.joinpath(
-            "index.html"
-        ).is_file(), "Build frontend first"
+        assert harness.application.frontend_dist.joinpath("index.html").is_file(), (
+            "Build frontend first"
+        )
         harness.seed_legacy(
             [(7, LEGACY), (8, {**LEGACY, "name": "Paused saved search", "enabled": False})]
         )
@@ -93,6 +93,14 @@ async def main(port, qualification=False, costs=False):
             unknown.cost_scenarios[0].components[1].amount = None
             unknown.cost_scenarios[0].components[1].currency = None
             harness.reports["cex"] = [verified, conditional, unknown]
+        if coupons:
+            from .coupon_workflows import advertised_report, reproduced_report
+
+            harness.reports["cex"] = [
+                reproduced_report(harness, "fixture-1"),
+                advertised_report(harness, "fixture-2"),
+                cost_report(harness, "fixture-4"),
+            ]
         async with harness.session() as (_, scheduler):
             fixture_router = APIRouter()
 
@@ -100,7 +108,9 @@ async def main(port, qualification=False, costs=False):
             async def fixture_identity():
                 return {
                     "fixture": (
-                        "ticket04-cost-ui"
+                        "ticket09-coupon-ui"
+                        if coupons
+                        else "ticket04-cost-ui"
                         if costs
                         else (
                             "ticket03-qualification-ui"
@@ -176,8 +186,9 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=8877)
     parser.add_argument("--qualification", action="store_true")
     parser.add_argument("--costs", action="store_true")
+    parser.add_argument("--coupons", action="store_true")
     args = parser.parse_args()
     try:
-        asyncio.run(main(args.port, args.qualification, args.costs))
+        asyncio.run(main(args.port, args.qualification, args.costs or args.coupons, args.coupons))
     except KeyboardInterrupt:
         print("OFFLINE_UI_STOPPED", flush=True)

@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from pricerecon.categories.watches import configuration_preference_fit, interpret, resolve_watch
 from pricerecon.core.costs import public_summary
 from pricerecon.core.qualification import qualify_offer
+from pricerecon.db.coupons import init_coupon_tables, read_coupons, save_coupons
 from pricerecon.db.schema import DB_PATH
 from pricerecon.models.costs import CostHistory, CostScenario
 from pricerecon.models.discovery import (
@@ -91,6 +92,7 @@ def init_discovery_tables(connection: sqlite3.Connection) -> None:
         INSERT OR IGNORE INTO schema_migrations (version, description)
             VALUES ('1.3', 'Add staged category discovery captures, leads and preferences');
     """)
+    init_coupon_tables(connection)
 
 
 def save_capture(capture: DiscoveryCapture, candidates: list[DiscoveryCandidate]) -> None:
@@ -163,7 +165,7 @@ def save_capture(capture: DiscoveryCapture, candidates: list[DiscoveryCandidate]
                         candidate.id,
                         offer.binding_id,
                         offer.binding_revision,
-                        offer.model_dump_json(exclude={"comparison", "cost_scenarios"}),
+                        offer.model_dump_json(exclude={"comparison", "cost_scenarios", "coupons"}),
                     ),
                 )
                 binding = next(b for b in candidate.bindings if b.id == offer.binding_id)
@@ -187,6 +189,7 @@ def save_capture(capture: DiscoveryCapture, candidates: list[DiscoveryCandidate]
                             cost.model_dump_json(),
                         ),
                     )
+                save_coupons(connection, offer, binding)
                 connection.execute(
                     "INSERT INTO discovery_assessments VALUES (?, ?, 'comparison', ?, ?)",
                     (
@@ -245,6 +248,7 @@ def _hydrate(connection: sqlite3.Connection, candidate: DiscoveryCandidate) -> N
         )
     ]
     for offer in candidate.offers:
+        offer.coupons = read_coupons(connection, offer)
         offer.cost_scenarios = [
             CostScenario.model_validate_json(row[0])
             for row in connection.execute(

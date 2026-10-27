@@ -112,6 +112,7 @@ function costContext(value: unknown) {
     'goods_location', 'dispatch_country', 'customs_origin', 'dispatch_route', 'basket_id', 'consignment_id', 'grouping_basis',
     'purchase_scope', 'payment_method', 'display_currency', 'charge_currency', 'funding_currency']
   return { ...Object.fromEntries(stringFields.map(key => [key, nullableText(context[key])])),
+    purchase_scope: context.purchase_scope === null ? null : choice(context.purchase_scope, ['standalone', 'allocated_share', 'whole_basket']),
     quantity: context.quantity === null ? null : integer(context.quantity),
     basket_members: list(context.basket_members, text), consignment_members: list(context.consignment_members, text) }
 }
@@ -142,7 +143,7 @@ function costScenario(value: unknown) {
   return { id: text(cost.id), revision: integer(cost.revision), policy_version: text(cost.policy_version),
     offer_id: text(cost.offer_id), offer_revision: integer(cost.offer_revision), binding_id: text(cost.binding_id),
     binding_revision: integer(cost.binding_revision), configuration_id: text(cost.configuration_id), configuration_revision: integer(cost.configuration_revision),
-    key: text(cost.key), kind: choice(cost.kind, ['public_no_coupon', 'personal', 'payment', 'cashback']), state,
+    key: text(cost.key), kind: choice(cost.kind, ['public_no_coupon', 'public_coupon', 'personal', 'payment', 'cashback']), state,
     captured_at: date(cost.captured_at), context: costContext(cost.context), context_evidence: list(cost.context_evidence, costEvidence),
     assumptions: list(cost.assumptions, text), issues: list(cost.issues, text),
     total: total === null ? null : { amount: amount(total.amount), currency: text(total.currency) },
@@ -182,8 +183,68 @@ function offer(value: unknown) {
     purchase_mode: nullableText(item.purchase_mode), item_price: amount(item.item_price), currency: nullableText(item.currency),
     destination: nullableText(item.destination), qualification: resolution(item.qualification), comparison: resolution(item.comparison),
     comparison_cohort: nullableText(item.comparison_cohort), policy_version: text(item.policy_version),
-    evidence: list(item.evidence, fieldEvidence), cost_scenarios: list(item.cost_scenarios, costScenario) }
+    evidence: list(item.evidence, fieldEvidence), cost_scenarios: list(item.cost_scenarios, costScenario),
+    coupons: list(item.coupons, coupon) }
 }
+
+function coupon(value: unknown) {
+  const item = record(value), terms = item.terms === null ? null : record(item.terms)
+  const eligibility = item.eligibility === null ? null : record(item.eligibility)
+  const application = item.application === null ? null : record(item.application)
+  const state = choice(item.state, ['unverified_opportunity', 'conditional_eligibility', 'applicable_not_reproduced', 'reproduced_at_observation', 'rejected', 'invalidated'])
+  const result = item.resulting_cost === null ? null : costScenario(item.resulting_cost)
+  if ((state === 'reproduced_at_observation') !== (result !== null)) throw new Error('Inconsistent coupon result')
+  const requirement = (raw: unknown) => choice(raw, ['required', 'not_required', 'unknown'])
+  const nullableDate = (raw: unknown) => raw === null ? null : date(raw)
+  const nullableCount = (raw: unknown) => raw === null ? null : integer(raw)
+  const boolean = (raw: unknown) => { if (typeof raw !== 'boolean') throw new Error('Invalid coupon boolean'); return raw }
+  const nullableBoolean = (raw: unknown) => raw === null ? null : boolean(raw)
+  return {
+    id: text(item.id), revision: integer(item.revision), label: text(item.label), state,
+    category: choice(item.category, ['public', 'personal', 'payment', 'cashback']),
+    applicability: choice(item.applicability, ['unknown', 'supported', 'conditional', 'rejected']),
+    lineage: choice(item.lineage, ['observation_only', 'superseded']),
+    offer_revision: integer(item.offer_revision), binding_revision: integer(item.binding_revision),
+    configuration_revision: integer(item.configuration_revision), policy_version: text(item.policy_version),
+    identity_policy_version: text(item.identity_policy_version), captured_at: date(item.captured_at),
+    context: costContext(item.context), issues: list(item.issues, text),
+    opportunity_evidence: list(item.opportunity_evidence, costEvidence),
+    terms: terms === null ? null : {
+      literal: text(terms.literal), codes: list(terms.codes, text), starts_at: nullableDate(terms.starts_at),
+      ends_at: nullableDate(terms.ends_at), time_zone_literal: nullableText(terms.time_zone_literal),
+      start_inclusive: nullableBoolean(terms.start_inclusive), end_inclusive: nullableBoolean(terms.end_inclusive),
+      minimum_spend: amount(terms.minimum_spend), minimum_currency: nullableText(terms.minimum_currency),
+      minimum_inclusive: nullableBoolean(terms.minimum_inclusive), minimum_basis: nullableText(terms.minimum_basis),
+      min_quantity: nullableCount(terms.min_quantity), max_quantity: nullableCount(terms.max_quantity),
+      channel: choice(terms.channel, ['web', 'app', 'any', 'unknown']), new_customer: requirement(terms.new_customer),
+      membership: requirement(terms.membership), redemption: choice(terms.redemption, ['public_no_activation', 'conditional', 'unknown']),
+      compatibility: choice(terms.compatibility, ['supported', 'forbidden', 'conditional', 'unknown']),
+      combination_rule: nullableText(terms.combination_rule), evidence: list(terms.evidence, costEvidence),
+      compatibility_evidence: list(terms.compatibility_evidence, costEvidence),
+    },
+    eligibility: eligibility === null ? null : {
+      channel: choice(eligibility.channel, ['web', 'app', 'unknown']), new_customer: requirement(eligibility.new_customer),
+      membership: requirement(eligibility.membership), eligible_base: amount(eligibility.eligible_base), currency: text(eligibility.currency),
+      terms_satisfied: boolean(eligibility.terms_satisfied), reason: text(eligibility.reason),
+      eligible_members: list(eligibility.eligible_members, text), excluded_members: list(eligibility.excluded_members, text),
+      evidence: list(eligibility.evidence, costEvidence),
+    },
+    application: application === null ? null : {
+      result: choice(application.result, ['applied', 'rejected', 'unknown']), applied_codes: list(application.applied_codes, text),
+      other_promotions: list(application.other_promotions, text), before_total: amount(application.before_total),
+      quoted_total: amount(application.quoted_total), currency: text(application.currency),
+      selected_member: text(application.selected_member), terms_fingerprint: text(application.terms_fingerprint),
+      evidence: list(application.evidence, costEvidence),
+      lines: list(application.lines, raw => { const line = record(raw); return { member: text(line.member), quantity: integer(line.quantity),
+        before_item_total: amount(line.before_item_total), after_item_total: amount(line.after_item_total), currency: text(line.currency),
+        eligible: boolean(line.eligible), applied_codes: list(line.applied_codes, text), evidence: list(line.evidence, costEvidence) } }),
+    },
+    resulting_cost: result,
+    historical_resulting_cost: item.historical_resulting_cost === null ? null : costScenario(item.historical_resulting_cost),
+  }
+}
+
+export type DiscoveryCoupon = ReturnType<typeof coupon>
 
 function parseCandidate(value: unknown) {
   const candidate = record(value), image = record(candidate.image)
