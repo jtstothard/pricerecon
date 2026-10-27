@@ -183,11 +183,13 @@ class MonitoringHarness:
         from pricerecon.core import (
             connector_health,
             diff_engine,
+            discovery,
             notifications,
             schedule,
             scheduler,
             watch_executor,
         )
+        from pricerecon.db import discovery as discovery_storage
 
         clock = self.clock
 
@@ -198,6 +200,8 @@ class MonitoringHarness:
 
         for module in (
             self.application,
+            discovery_storage,
+            discovery,
             watches,
             notifications,
             watch_executor,

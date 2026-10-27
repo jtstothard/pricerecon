@@ -8,6 +8,7 @@ import Exports from './pages/Exports'
 import Settings from './pages/Settings'
 import Events from './pages/Events'
 import Connectors from './pages/Connectors'
+import Discovery from './pages/Discovery'
 import { DataProvider } from './context/DataContext'
 import './App.css'
 
@@ -18,6 +19,7 @@ function App() {
         <AppShell>
           <Routes>
             <Route path="/" element={<WatchList />} />
+            <Route path="/discover" element={<Discovery />} />
             <Route
               path="/watch/:id"
               element={<WatchDetail />}

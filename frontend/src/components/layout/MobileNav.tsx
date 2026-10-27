@@ -44,6 +44,9 @@ function MobileNav({ isOpen, onClose }: MobileNavProps) {
         </div>
 
         <nav className="sidebar-nav" aria-label="Primary">
+          <NavLink to="/discover" onClick={onClose} className={({ isActive }) => `sidebar-nav__link${isActive ? ' is-active' : ''}`}>
+            <span className="sidebar-nav__link-label"><span className="sidebar-nav__dot" />Discover watches</span>
+          </NavLink>
           {sections.map(item => (
             <NavLink
               key={item.label}
