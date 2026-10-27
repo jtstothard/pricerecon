@@ -1,0 +1,188 @@
+{
+  "date": "2026-10-27",
+  "branch": "t3/shared-grant-bypass-repair",
+  "worktree": "/Users/jay/.t3/worktrees/pricerecon/t3-b00df60d",
+  "initial_integration": "f8ff7e5024401991ca33b9bf08468476dc708227",
+  "initial_merge": "fast-forward before edits; merge-base --is-ancestor passed",
+  "implementation_commit": "24fd79e7346a227c494a3b5d0de86d639702e42b",
+  "final_integration_merge": {
+    "code_integration": "7fcc3ea27e815ccd0922c3c4c1fe08c3d3724bc9",
+    "code_merge_commit": "3ce939b665e0f95779911e75856e978877fc23d1",
+    "latest_integration": "ce1b88ad9b9cc2a9ee513e9970475fd16bcfb99c",
+    "latest_merge_commit": "6c18c65ebcaa1d0e835892effbcccc328ce0da1f",
+    "conflicts": false,
+    "initial_and_latest_ancestry_confirmed": true,
+    "latest_update_only_receipts_tracker_and_standalone_07_probe": true,
+    "verified_application_and_selected_suite_files_unchanged_by_receipt_merge": true
+  },
+  "schema": "2.1",
+  "authority": "offline source/tests, temporary SQLite, controlled time/transports; local commits authorized",
+  "application_suite": {
+    "passed": 126,
+    "seconds": 122.89,
+    "retained_passed": 106,
+    "new_passed": 20,
+    "skips": 0,
+    "xfails": 0,
+    "cleared_environment": true
+  },
+  "additional_migrations": {
+    "passed": 2,
+    "seconds": 1.61,
+    "single_historical_grant_retained": true,
+    "multiple_historical_grants_blocked": true
+  },
+  "final_affected_API_recheck": {
+    "passed": 7,
+    "reason": "UTC alias fix and retained last-check timestamp assertion",
+    "seconds": 5.45
+  },
+  "total_distinct_passing_workflows": 145,
+  "one_128_case_invocation": false,
+  "limiter_external_browser_contracts": {
+    "passed": 37,
+    "seconds": 0.37,
+    "existing_Pydantic_warnings": 10,
+    "files": [
+      "tests/test_rate_limiter.py",
+      "tests/test_external_browser.py"
+    ]
+  },
+  "frontend": {
+    "tests_passed": 25,
+    "build_passed": true,
+    "modules": 642,
+    "existing_chunk_size_warning": true,
+    "source_unchanged": true,
+    "preview_tools_used": false,
+    "new_UI_proof_claimed": false
+  },
+  "mypy": {
+    "passed": true,
+    "files": 14,
+    "follow_imports": "silent",
+    "existing_unused_override_notes": true
+  },
+  "ruff": {
+    "files": 17,
+    "clean": 15,
+    "inherited_diagnostics": 18,
+    "added_diagnostics": 0,
+    "baseline": "f8ff7e5024401991ca33b9bf08468476dc708227",
+    "artifact": "ruff.json"
+  },
+  "exact_probes": {
+    "context_api": {
+      "red_exit": 1,
+      "red_actual_sends": 2,
+      "green_exit": 0,
+      "green_actual_sends": 1
+    },
+    "context_scheduler": {
+      "red_exit": 1,
+      "red_actual_sends": 2,
+      "green_exit": 0,
+      "green_actual_sends": 1
+    },
+    "process_resume": {
+      "red_exit": 1,
+      "red_actual_sends": 1,
+      "green_exit": 0,
+      "green_actual_sends": 0
+    }
+  },
+  "controls": {
+    "legacy_no_grant": "one send, unchanged intent",
+    "redirect": "second edge denied, request/page usage1, details0",
+    "full_never_configured_legacy_intent": "all retained assertions including captured notification drop channels and restart pass"
+  },
+  "additional_red_replay": "red-additional.json: baseline src from local temporary git archive; 12 failures, full never-configured legacy positive control passes",
+  "no_external_network_live_credentials_production_or_activation": true,
+  "no_installs_downloads_push_PR_or_delegation": true,
+  "original_dirty_parent_integration_and_07_checkout_untouched": true,
+  "gaps": [
+    "ticket07 independent-target intent gap remains open and separate; standalone failing probe retained by integration, not run or repaired here",
+    "unsupported origin-browser/native/AI acquisition lanes remain gated",
+    "physical disk/WAL/log/control metadata quotas",
+    "retention/deletion/backups/restore qualification",
+    "source rights",
+    "measured sustainable cadence/costs/maintenance owner",
+    "production/live offer/history/notification acceptance and buyer activation",
+    "no automatic grant renewal or reconciliation API"
+  ],
+  "python_sha256": {
+    "src/pricerecon/api/discovery.py": "3b162491d0e7aa9b4c3c816fad1d569bc7c5c9baf8f1330f7e205604daf0f29f",
+    "src/pricerecon/api/watches.py": "e399ad32816539448075484f8a13e4a5676fd334ecaa6ed81cee858f79618196",
+    "src/pricerecon/core/acquisition.py": "bb2512fd25cda3dc1741f3952ee3578e5a313b510383c3398e99df8444a818af",
+    "src/pricerecon/core/collection_policy.py": "f3ca950cd91790329eb9cf77eaa9389f4cc99e50a71a3da22440356fc63571c3",
+    "src/pricerecon/core/collection_transport.py": "8e9255b48114981b8efd34bcdcaf888250b87a6ad63a5e58a2f0b0a725a161f2",
+    "src/pricerecon/core/discovery.py": "2ef2910f6a21eb55e2f677310289433f833e81d1e2ba1dd2f65f6d17b74ff041",
+    "src/pricerecon/core/exact_tracking.py": "a716b0bde353c6ad0b4bbf4859c9d72b583c5abc268fb94ad0b1a41f4bb8db44",
+    "src/pricerecon/core/rate_limiter.py": "96d60160f30ff7df2e28ba37677b4df60d826f9dc96570a4d30967e954d98016",
+    "src/pricerecon/core/watch_executor.py": "7841cf1b10e40c66af134bbc9e0af36c1380ba9d3233660464ac20505142f939",
+    "src/pricerecon/db/collection.py": "cddbcf2e487aacdf6d08afa6f3cde78e93cb0d259e40497596068f25e5f969f1",
+    "src/pricerecon/db/discovery.py": "7513b3d526f99fd6f811309efd774e9d66fb71d3c6471f0374ed0e0cdfe3b039",
+    "tests/monitoring/collection_merger_probe.py": "292827627f65fdc4aba4bac1fafff268e8729c619e624296493a4ecb18e2e45c",
+    "tests/monitoring/collection_workflows.py": "fb752c49e96a7ce526d8d84cae5aec6e6c98b79e8c199094aa67b3eca400c3e8",
+    "tests/monitoring/shared_grant_workflows.py": "ad6bf6327cb6de1ffb9baa2d951490f51df5bc5d2f645084db21fc89d9919122",
+    "tests/monitoring/workflows.py": "d1997bb0e73214b4e70ab28aab1fb251349fd99d2ab03d34d0c780b2d0147253",
+    "tests/test_external_browser.py": "83fbd21d01857e6bc5dd298011bf5dc644e2f2099e4a06e71510e9fd9167ea16",
+    "tests/test_shared_grant_workflow.py": "fb79f8a8f09b1ed71fe7b1d1bbddf888e9bbf7beb5f45a2a5c24d2a4a7ad37d9"
+  },
+  "artifact_sha256": {
+    "green-context_api.json": "a0c1e28e29db06b779b8fb903ad085059347f3e4e0390f1cc7d6620a4b1c289d",
+    "green-context_scheduler.json": "d81fc2a03a9340d815da3fb56ba4a75c6662a7390d9f96ffe32222808156ed92",
+    "green-legacy_no_grant.json": "43a35283053ac914a0aadbcd08b693b55599177ed5ede1201757fa502bcd207e",
+    "green-process-controls.json": "0e66eced8ae1cce1a8aba9454be5b5f1b2e6040b9fb5f0f598a58888833204e7",
+    "green-process_resume.json": "adf85bdb369cabb7c01541191e256c5dd57233c7b82a838f24933a47d35e16f1",
+    "green-process_seed.json": "f02fe9ca4b95831908cd9a936a3105c3cedd2b7b95bd331755d71959bb062f01",
+    "green-redirect.json": "4949180eec2367449ab8860937f501a38eeb9f95dd7418f5dd97a941a9375ffe",
+    "red-additional.json": "77d2ff300cc81f622a9b051d38b9c96b83cc0803900b68b236b9f828b69bfd58",
+    "red-context_api.json": "d974b57a5243ddfa757e1646a56cf8c070571e8e8d83aba9288cb35553cbeafb",
+    "red-context_scheduler.json": "36cfb01d6f339f2cbb4f9fb7538da1ff6373b08d1450b9e7e7fad16694c3dc5d",
+    "red-process_resume.json": "222eb6d653711e1620ca22a268de06af50643b4af591ba74a47485485d6af34d",
+    "red-process_seed.json": "0f1c19e5ba6a75e3503bd60e30b6015cef629d79c4a7f8fa70a59f7c8ab6045f",
+    "ruff-final.json": "aab666f45b486bdf8e8b1afce9c95ec5265c7c2b2b07de0d4f0b040f2b6b1dcd",
+    "ruff.json": "d2c43ebe6abafa395c0c308b53536ff5f7a54a60c2c50088904d0f72d3448642"
+  },
+  "final_combined_suite": {
+    "passed": 145,
+    "seconds": 138.18,
+    "retained_initial": 106,
+    "additional_independently_integrated_07": 17,
+    "additional_shared_grant": 22,
+    "skips": 0,
+    "xfails": 0,
+    "cleared_environment": true
+  },
+  "one_145_case_invocation": true,
+  "verified_src_tree": "a2c7e1ce7bc30ee76428a24c6195b6058cdf96ce",
+  "verified_frontend_tree": "fdcd941bb28fda22b7a8e2d9e7d606a6f9a7f7ec",
+  "final_mypy": {
+    "passed": true,
+    "files": 14,
+    "follow_imports": "silent",
+    "after_code_integration_merge": true
+  },
+  "final_ruff": {
+    "baseline": "7fcc3ea27e815ccd0922c3c4c1fe08c3d3724bc9",
+    "files": 17,
+    "clean": 15,
+    "inherited_diagnostics": 18,
+    "added_diagnostics": 0,
+    "artifact": "ruff-final.json",
+    "latest_integration_changes_no_application_files": true
+  },
+  "workflow_test_files_sha256": {
+    "tests/test_collection_workflow.py": "12392c7654ecb2de45b03e6646fb51d0454a5269db0c348765c085e09c1ef17b",
+    "tests/test_correction_workflow.py": "4a0e2d19339f2c875e05665f04701581b89d412fec1752b3be6a9c1209c67696",
+    "tests/test_cost_workflow.py": "2f83f09811014821c748a0d0edcf753cfc74e484d190695391363268cafe13ae",
+    "tests/test_coupon_workflow.py": "b30d5d3e70d60b6fe9cf26160ae3552c4f4137ca3fa246e2594afbfc3100d3ce",
+    "tests/test_discovery_workflow.py": "59fa6a134c8a54a19fc45d9d5d552f47214495f457e36baa2c8a16bf8d9d7ef4",
+    "tests/test_history_workflow.py": "9f7e662a19cb7c3e36d1c67cb3a47d73ddbcbd32d3ac89968ec33ec456f1c8af",
+    "tests/test_monitoring_workflow.py": "099c0eb368e893b2cea367d82f8d049c8bdc082b457caea64d56956a8186a041",
+    "tests/test_qualification_workflow.py": "5e62b0f5b53aa91cd778b1f646a8d3a65d9fedb3c779bc33af453371431db82e",
+    "tests/test_shared_grant_workflow.py": "fb79f8a8f09b1ed71fe7b1d1bbddf888e9bbf7beb5f45a2a5c24d2a4a7ad37d9",
+    "tests/test_tracking_workflow.py": "648fc68a0046be6a52fa837053a5b54d43ef0ed9fee906b190ce939f63245408"
+  }
+}

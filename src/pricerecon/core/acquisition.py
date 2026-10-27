@@ -105,20 +105,23 @@ async def acquire_sources(
         from pricerecon.core.collection_transport import active_admission
         from pricerecon.core.rate_limiter import AdmissionDenied, DurableAdmission
 
-        policy = current_policy()
-        budget = DurableAdmission(policy, connector_id,
-            "verification" if connector_id in (verification_sources or set())
-            else "discovery" if purpose == "discovery" else "tracking", context_id,
-            query=source_queries.get(connector_id, query)) if policy else None
-        token = active_admission.set(budget)
-        deadline = (asyncio.get_running_loop().time() + min(
-            budget.policy.run_timeout_seconds,
-            (budget.policy.stops_at - datetime.now(UTC)).total_seconds(),
-        )) if budget else None
+        budget = None
+        token = active_admission.set(None)
+        deadline = None
         listing_start, lead_start = len(all_listings), len(leads)
         connector = None
         source_outcome = AcquisitionOutcome(source=connector_id, state="failed", reason="interrupted")
         try:
+            policy = current_policy()
+            budget = DurableAdmission(policy, connector_id,
+                "verification" if connector_id in (verification_sources or set())
+                else "discovery" if purpose == "discovery" else "tracking", context_id,
+                query=source_queries.get(connector_id, query)) if policy else None
+            active_admission.set(budget)
+            deadline = (asyncio.get_running_loop().time() + min(
+                budget.policy.run_timeout_seconds,
+                (budget.policy.stops_at - datetime.now(UTC)).total_seconds(),
+            )) if budget else None
             if budget:
                 budget.begin()
             logger.info(

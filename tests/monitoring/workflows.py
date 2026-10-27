@@ -73,8 +73,8 @@ async def check(client, watch_id):
     return response.json()["result"]
 
 
-async def legacy():
-    with MonitoringHarness() as harness:
+async def legacy(*, operating_envelope=True):
+    with MonitoringHarness(operating_envelope=operating_envelope) as harness:
         harness.seed_legacy(
             [
                 (7, LEGACY),

@@ -5,6 +5,7 @@ import sqlite3
 import time
 from collections.abc import Mapping
 from contextlib import closing
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta, timezone
 from threading import Lock
 from typing import Literal, Optional
@@ -310,8 +311,85 @@ class AdmissionDenied(BaseException):
         super().__init__(reason)
 
 
+@dataclass(frozen=True)
+class PolicySelection:
+    policy: OperatingPolicy | None
+    reason: str | None = None
+
+
 class DurableAdmission:
     """Native limiter's explicit, durable collection-accounting boundary."""
+
+    @staticmethod
+    def select_policy(connection: sqlite3.Connection | None = None) -> PolicySelection:
+        """Bind one immutable grant to this database before any reservable work.
+
+        A missing caller context is not a missing database policy. Selection is
+        committed separately from usage/evidence so a denied first reservation
+        cannot restore legacy eligibility. Multiple historical scopes require
+        operator reconciliation; this boundary never chooses/refills a grant.
+        """
+        from pydantic import ValidationError
+
+        from pricerecon.core.collection_policy import supplied_policy
+        from pricerecon.db.schema import DB_PATH
+
+        if connection is None:
+            with closing(sqlite3.connect(DB_PATH)) as owned, owned:
+                owned.execute("BEGIN IMMEDIATE")
+                return DurableAdmission.select_policy(owned)
+        supplied = supplied_policy()
+        selected = connection.execute(
+            "SELECT scope_id, reason FROM collection_policy_selection WHERE singleton=1"
+        ).fetchone()
+        policies = connection.execute(
+            "SELECT scope_id, payload_json FROM collection_policies"
+        ).fetchall()
+        if not selected:
+            if len(policies) > 1:
+                connection.execute(
+                    "INSERT INTO collection_policy_selection VALUES (1, NULL, ?) ",
+                    ("operating_policy_ambiguous",),
+                )
+                return PolicySelection(None, "operating_policy_ambiguous")
+            if policies:
+                scope = policies[0][0]
+            elif connection.execute(
+                "SELECT 1 FROM collection_usage UNION ALL SELECT 1 FROM collection_attempts LIMIT 1"
+            ).fetchone():
+                connection.execute(
+                    "INSERT INTO collection_policy_selection VALUES (1, NULL, ?)",
+                    ("operating_policy_required",),
+                )
+                return PolicySelection(None, "operating_policy_required")
+            elif supplied is not None:
+                scope = supplied.scope_id
+                connection.execute(
+                    "INSERT INTO collection_policies VALUES (?, ?)",
+                    (scope, supplied.model_dump_json()),
+                )
+                policies = [(scope, supplied.model_dump_json())]
+            else:
+                return PolicySelection(None)  # Truly never configured legacy database.
+            connection.execute(
+                "INSERT INTO collection_policy_selection VALUES (1, ?, NULL)", (scope,)
+            )
+            selected = (scope, None)
+        if selected[1]:
+            return PolicySelection(None, selected[1])
+        if len(policies) > 1:
+            return PolicySelection(None, "operating_policy_ambiguous")
+        if not policies or policies[0][0] != selected[0]:
+            return PolicySelection(None, "operating_policy_required")
+        try:
+            policy = OperatingPolicy.model_validate_json(policies[0][1])
+        except ValidationError:
+            return PolicySelection(None, "operating_policy_invalid")
+        if policy.scope_id != selected[0]:
+            return PolicySelection(None, "operating_policy_invalid")
+        if supplied is not None and supplied != policy:
+            return PolicySelection(policy, "operating_policy_changed")
+        return PolicySelection(policy)
 
     def __init__(self, policy: OperatingPolicy, source: str, purpose: Priority,
                  context_id: int | str, *, query: str = "") -> None:
@@ -335,15 +413,9 @@ class DurableAdmission:
                 owned.execute('BEGIN IMMEDIATE')
                 self.debit(costs, connection=owned)
             return
-        payload = self.policy.model_dump_json()
-        saved = connection.execute(
-            'SELECT payload_json FROM collection_policies WHERE scope_id=?',
-            (self.policy.scope_id,),
-        ).fetchone()
-        if saved and saved[0] != payload:
-            raise AdmissionDenied('operating_policy_changed', state='blocked')
-        connection.execute('INSERT OR IGNORE INTO collection_policies VALUES (?, ?)',
-                           (self.policy.scope_id, payload))
+        selection = self.select_policy(connection)
+        if selection.reason or selection.policy != self.policy:
+            raise AdmissionDenied(selection.reason or 'operating_policy_changed', state='blocked')
         for resource, amount in costs.items():
             if not isinstance(amount, int) or amount < 0:
                 raise ValueError('Resource debit must be a nonnegative integer')

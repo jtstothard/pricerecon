@@ -313,7 +313,7 @@ async def evaluate_tracking_capture(capture_id: str, *, policy: TrackingPolicy |
         from pricerecon.core.collection_policy import current_policy
         from pricerecon.db.collection import storage_size
 
-        operating = current_policy()
+        operating = current_policy(connection)
         before_bytes = storage_size(connection) if operating else 0
         candidates = load_capture_candidates(connection, capture_id)
         capture = DiscoveryCapture.model_validate_json(

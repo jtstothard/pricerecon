@@ -404,3 +404,216 @@ or accounts, production DB, activation, deployment, push, PR, delegation or unre
 cleanup occurred. Only the known source refresh/conflict merge and integration
 merge/probe/receipt/tracker changes were made. 07 stays open with its isolated
 repair owner; no 11 claim or implementation occurred.
+
+
+## Shared-grant repair handoff — 2026-10-27
+
+Implementation branch `t3/shared-grant-bypass-repair`, isolated checkout
+`/Users/jay/.t3/worktrees/pricerecon/t3-b00df60d`. Before edits this clean checkout
+fast-forward merged `integration/watch-category-discovery` at
+`f8ff7e5024401991ca33b9bf08468476dc708227`; `merge-base --is-ancestor` passed.
+The original dirty parent, integration checkout and 07 repair checkout were not
+edited. This is a local implementation handoff, not merger acceptance or ticket
+closure. The earlier merger disposition and operating prerequisites remain the
+acceptance record until independent integration review.
+
+### Durable selection and enforcement
+
+The existing `DurableAdmission` owner now selects one immutable database-wide
+envelope. Schema **2.1** adds only `collection_policy_selection`; 07's **2.0**
+remains untouched. Selection and the initial policy commit in a separate
+`BEGIN IMMEDIATE` transaction before acquisition or a reservable debit. A first
+request/provider/time denial, expired first grant, evidence rollback or restart
+cannot restore never-configured eligibility. Usage is still atomic and finite;
+there is no refill, refund, automatic new scope, catch-up, scheduler or queue.
+
+`current_policy()` now resolves persisted selection. `supplied_policy()` exposes
+only the caller's optional ContextVar for diagnostics. An absent context or
+explicit `operating_policy(None)` resolves the same existing envelope. Supplied
+values must equal that envelope, including scope, caps, version and references;
+a different scope cannot silently replace it. There is deliberately no grant
+renewal/reconciliation or policy-writing HTTP endpoint in this repair. A later
+explicitly designed transition would require its own authority and accounting
+contract. This supersedes the earlier implementation description that treated a
+new supplied scope alone as sufficient to change the shared grant.
+
+A single historical policy is selected during startup migration. Multiple
+historical policies are ambiguous and block work. Missing selected payloads,
+malformed payloads, mismatched identities or orphaned prior accounting fail
+closed; a supplied policy cannot silently repair or replace them. Selection
+survives removal of the selected payload. Provider lanes absent from the selected
+grant remain gated. A truly never-configured database with no selection, policies,
+usage or attempts retains existing saved-search monitoring behavior; discovery
+still requires operating policy and its separate admission prerequisites.
+
+API requests, registered scheduler callbacks and new processes resolve selection
+before connector construction. Existing actual-edge accounting remains on their
+resolved admission through OAuth, retries, redirects, fallbacks, cleanup and
+persistence. A hooked transport/browser/resource request without a run admission
+also checks durable selection and blocks governed work before transport. It
+cannot inherit legacy eligibility merely from an empty active-admission ContextVar.
+Discovery, snapshot/event persistence, exact assessment and pending-target dispatch
+now resolve the same durable envelope through their existing policy gates.
+
+`GET /api/discovery/collection` reports the selected grant and real usage outside
+caller policy contexts. Expired and damaged/ambiguous state remains visible with
+its gate and retained attempts. Watch checks denied by the policy/persistence
+boundary return a structured `blocked` or `capped` response with original error
+and acquisition outcomes, rather than a generic HTTP500. They do not advance a
+successful-check timestamp. Existing response shape and collection UI parser
+support these states; no frontend source change or new activation route is needed.
+Old listings/evidence and saved intent remain retained; capped/blocked attempts
+are unrefreshed, not successful empty markets.
+
+### Exact red and green evidence
+
+Applied the TDD skill at the explicitly approved API and normal-execution seams,
+with controlled transport/time and temporary SQLite. No private limiter method or
+fabricated usage establishes the results. Retained merger probes were first run
+unchanged on `f8ff7e5`: `context_api`, `context_scheduler` and `process_resume` each
+exit1 at the extra-transport assertion. The first two send twice under cap1;
+resume sends once with zero remaining. `process_seed` exits0.
+
+The same transport/API/scheduler/process probes now exit0. Outside API readback
+must equal supplied readback, provider/request usage stays at1, a denied attempt
+is retained, and its conservative ten-second run reservation is counted. The
+probe's former whole-ledger-equality assertion was strengthened to require this
+accounted denial; asserting unchanged attempts would conceal the repaired
+behavior. Raw-context assertions now use `supplied_policy()` so they continue to
+prove the caller supplied no policy. The no-grant legacy and actual redirect
+controls still pass: one legacy send without governing state; redirect denied
+before its second edge with request/page usage1 and detail usage0.
+
+Exact JSON evidence is under
+[shared-grant-repair](artifacts/watch-collection/shared-grant-repair/verification.json):
+`red-context_api.json`, `red-context_scheduler.json`, `red-process_seed.json`,
+`red-process_resume.json` and matching `green-*.json`, plus
+`green-legacy_no_grant.json` and `green-redirect.json`.
+
+Additional regressions are in `tests/monitoring/shared_grant_workflows.py` and
+`tests/test_shared_grant_workflow.py`. Baseline-source replay uses a temporary
+`git archive` of `f8ff7e5:src` with the current controlled drivers; its exact
+failures and the passing full legacy-intent control are in `red-additional.json`.
+These cover remaining allowance under explicit None, exhaustion, expiry, expired
+first grant, zero first elapsed/request/provider denial, changed scope/values,
+independent-context concurrency, standalone transport/browser/AI-resource gates,
+and missing/invalid/ambiguous persisted policy. Further green checks cover
+zero-first-denial fresh-process resumption, two simultaneous independent processes
+sharing one provider/global allowance, and startup migration of single/ambiguous
+historical grants. Those additional process/migration checks are green coverage;
+no separate initial-red claim is made for them.
+
+The new `legacy_intent` positive control runs every retained legacy workflow
+assertion with `operating_envelope=False`: filters, raw queries, enabled/paused
+state, schedule, editing, baseline, real captured price-drop channels, no duplicate
+send, listings/history and restart. The original governed legacy case also
+remains. Nothing weakens the missing-policy discovery regression.
+
+Two fixture adjustments were necessary and retain or strengthen assertions:
+
+- Standalone external-browser contracts now initialize a temporary SQLite with
+  genuinely empty collection state instead of consulting an uninitialized
+  workspace database. Every original browser assertion remains. New teardown
+  assertions require the operating-policy-required discovery gate and empty
+  scope, usage, provider usage and attempts. These contracts do not represent an
+  already-governed database with its required policy missing; dedicated damaged
+  policy workflows test that denial separately.
+- `target_storage_readback` no longer switches to a second zero-storage scope.
+  It supplies one immutable synthetic 200000-byte envelope from the outset, then
+  exceeds it with a 300000-character evidence title. Original above-target,
+  withheld, `source_refresh_unavailable` and no-send assertions remain; new
+  assertions require the exact storage-exhaustion reason, original scope and
+  usage within its original cap. No usage/ledger reset or internal debit mock.
+
+### Verification and remaining gates
+
+The cleared-environment combined command below passed **126 workflows in
+122.89s**: all **106 retained** plus the first **20 added**. The two subsequently
+added migration workflows pass separately in **1.61s**. After the final UTC alias
+lint fix, all seven affected expiry/changed/missing/invalid/ambiguous API cases
+pass again in **5.45s**, including the unchanged last-check timestamp assertion. There are **128 passing workflows** across these runs,
+no skipped/xfail cases or removed assertions. Do not represent these as one
+128-case invocation.
+
+```sh
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python -m pytest -q \
+  tests/test_collection_workflow.py tests/test_monitoring_workflow.py \
+  tests/test_discovery_workflow.py tests/test_qualification_workflow.py \
+  tests/test_cost_workflow.py tests/test_history_workflow.py \
+  tests/test_coupon_workflow.py tests/test_tracking_workflow.py \
+  tests/test_correction_workflow.py tests/test_shared_grant_workflow.py
+```
+
+The command now collects128, because the migration cases were added after the
+126-case run. The fresh-child driver is unchanged in its isolation guard; all
+application imports occur after guarded temporary storage is selected.
+
+- Exact native limiter/external-browser suite: **37 passed in 0.37s**, ten existing
+  Pydantic deprecation warnings (`test_rate_limiter.py`, `test_external_browser.py`).
+- Focused mypy: **14 source files pass**, existing unused-override notes only.
+- Focused Ruff: **17 changed Python files**, 15 clean, 18 inherited diagnostics
+  across two files, **zero added** code/message multiset entries against
+  `f8ff7e5`. Exact comparison: `shared-grant-repair/ruff.json`. No suppressions.
+- Frontend: **25 tests pass**, TypeScript/Vite build passes, **642 modules**;
+  retained large-chunk warning. Existing integration node_modules were linked,
+  not installed. No frontend edits, preview tools or new browser/UI claim.
+- `git diff --check` passes. Existing Python dependencies were reused. No full
+  repository pytest or potentially live fixture was run.
+
+Development failures were retained honestly: the first combined run had104 passes
+and two failures (Node absent from the cleared PATH, and the old scope-switching
+storage fixture); both were resolved as described before the final combined run.
+The standalone browser suite initially lacked a database fixture and failed closed;
+it created an empty worker-local SQLite file, which was removed before adding the
+temporary fixture. No configured/production database was involved. Early new tests
+also exposed the generic HTTP500 denial response, now covered by structured
+blocked/capped assertions. No failed run is presented as acceptance.
+
+Operating limitations from the merger receipt remain: unmapped browser origin,
+native and AI acquisition lanes, physical disk/WAL/log/control-metadata quotas,
+retention/deletion/backups/restore, source rights, measured sustainable cadence,
+costs and maintenance ownership, live history/offers/notification acceptance and
+buyer activation. This repair is offline shared-policy enforcement proof, not
+an accepted production envelope. 07 is separately owned; this worker made no
+configuration-scope repair. Its independently integrated repair arrived in the
+final integration refresh described below. No merge into the integration branch
+or ticket closure was performed by this implementation worker. No install/download,
+external network/live collection, credentials/accounts, production DB, activation,
+deployment, push, PR or delegation occurred. Local commits are authorized by the
+parent task. Final local commit and latest-integration ancestry receipts are
+recorded alongside this handoff.
+
+
+### Final integration refresh and local handoff
+
+Implementation commit: `24fd79e` (full SHA in the JSON receipt). After this local
+commit, integration had advanced to `7fcc3ea27e815ccd0922c3c4c1fe08c3d3724bc9`,
+containing the independently authored 07 scope repair. Merged it into this branch
+without conflicts as `3ce939b665e0f95779911e75856e978877fc23d1`; ancestry of both
+the required original `f8ff7e5` and latest code integration was confirmed.
+No 07 source edit or repair was made by this worker.
+
+Reran the entire named guarded suite on that refreshed tree: **145 passed in
+138.18s**, no skips/xfails. This is the original106, independently integrated07's
+17 further workflows, and this repair's22 workflows in one invocation. All three
+retained shared-grant probes, no-grant/redirect controls, zero-denial restart,
+concurrent independent processes and the two migration cases pass in this run.
+Focused mypy passes the14 source files again after the merge. Final Ruff compared
+this worker's17 Python changes against `7fcc3ea`:15 clean,18 inherited diagnostics,
+zero added; see `ruff-final.json`.
+
+Integration then advanced only its tracker, receipts and a standalone07 merger
+probe to `ce1b88ad9b9cc2a9ee513e9970475fd16bcfb99c`. Merged that update without
+conflicts as `6c18c65ebcaa1d0e835892effbcccc328ce0da1f`. Application/frontend trees
+and the named suite's test files did not change, so the145-case verification
+remains applicable; no redundant full rerun was needed. This update retains a
+separate **07 independent-target intent gap**, which remains open. Its standalone
+failing probe was not run, changed or fixed here and is not counted among the145
+passing workflows. Passing collection checks do not qualify that other behavior.
+The final JSON binds source/frontend tree IDs, source/test hashes, exact probe
+artifacts, local implementation/merge commits and scope exclusions. The frontend
+and37-contract files are unchanged by both refreshes; their passing results above
+are reused rather than claimed rerun. Only local commits and merges into this
+implementation branch occurred. Integration itself was not updated by this worker.

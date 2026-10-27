@@ -17,7 +17,7 @@ from .workflows import LEGACY, check, get
 async def main(case, output, storage=None):
     with MonitoringHarness(storage_root=storage, operating_envelope=False) as harness:
         from pricerecon import connectors
-        from pricerecon.core.collection_policy import current_policy, operating_policy
+        from pricerecon.core.collection_policy import operating_policy, supplied_policy
         from pricerecon.core.collection_transport import collection_http_client
         from pricerecon.models import SourceType
 
@@ -49,7 +49,7 @@ async def main(case, output, storage=None):
         with patch.object(connectors, "discover_connectors", lambda: {"cex": HTTPFixture}):
             async with harness.session() as (client, scheduler):
                 before = await get(client, "/api/watches/7")
-                assert current_policy() is None
+                assert supplied_policy() is None
                 if case == "legacy_no_grant":
                     await check(client, 7)
                     assert len(sends) == 1
@@ -61,13 +61,13 @@ async def main(case, output, storage=None):
                         ledger_before = await get(client, "/api/discovery/collection")
                         assert ledger_before["state"] == "supplied"
                         assert next(u for u in ledger_before["usage"] if u["resource"] == "requests")["used"] == 1
-                    assert current_policy() is None
+                    assert supplied_policy() is None
                     await check(client, 7)
                     expected_sends = 0
                     observed_status = await get(client, "/api/discovery/collection")
                     with operating_policy(policy):
                         ledger = await get(client, "/api/discovery/collection")
-                    assert ledger == ledger_before
+                    assert_denied(ledger_before, ledger, observed_status)
                 elif case == "redirect":
                     with operating_policy(policy):
                         result = await check(client, 7)
@@ -93,7 +93,7 @@ async def main(case, output, storage=None):
                             observed_status = ledger_before
                         else:
                             async def outside_entry():
-                                assert current_policy() is None
+                                assert supplied_policy() is None
                                 if case == "context_scheduler":
                                     job = scheduler.scheduler.get_job("watch_7")
                                     assert job is not None
@@ -108,7 +108,8 @@ async def main(case, output, storage=None):
                                 outside_entry(), context=Context()
                             )
                         ledger = await get(client, "/api/discovery/collection")
-                        assert ledger == ledger_before, "Unexpected accounted change"
+                        if case != "process_seed":
+                            assert_denied(ledger_before, ledger, observed_status)
                 after = await get(client, "/api/watches/7")
                 for key in ("enabled", "query", "source_queries", "sources", "filters", "notifications", "schedule"):
                     assert before[key] == after[key], key
@@ -131,6 +132,20 @@ async def main(case, output, storage=None):
                 }
                 output.write_text(json.dumps(receipt, indent=2) + "\n")
                 assert passed, "Provider transport ran outside shared exhausted grant without a debit"
+
+
+def assert_denied(before, after, outside):
+    assert outside == after, "Independent callers must see the governing grant and usage"
+    assert after["state"] == "supplied"
+    assert after["scope_id"] == before["scope_id"]
+    old = {u["resource"]: u["used"] for u in before["usage"]}
+    new = {u["resource"]: u["used"] for u in after["usage"]}
+    assert new == {**old, "elapsed_seconds": old["elapsed_seconds"] + 10}
+    assert after["provider_usage"] == before["provider_usage"]
+    assert len(after["attempts"]) == len(before["attempts"]) + 1
+    assert after["attempts"][0]["state"] == "capped"
+    assert after["attempts"][0]["reason"] == "resource_exhausted:requests"
+    assert after["attempts"][0]["evidence_state"] == "unrefreshed"
 
 
 if __name__ == "__main__":
