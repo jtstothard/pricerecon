@@ -295,3 +295,130 @@ failing merger probes were preserved and were not reclassified as passing tests
 or fixed here. Passing 77 workflows proves the retained suite and this tracking
 slice, not those separate acceptance gates. Parent-owned ticket closure and
 live/buyer/activation gates remain open.
+
+## Merger acceptance: 2026-10-27
+
+**Ticket05 is accepted for source implementation and deterministic offline
+verification only.** Verification resumed in
+`/Users/jay/.t3/worktrees/pricerecon/watch-category-integration`, branch
+`integration/watch-category-discovery`, clean HEAD
+`8facf4198d0f812f52cfb1dce055e5dd74d18e16`. This existing merge has parents
+`ef97ed1ac74b4f9d7b194960610819e56f86b3fb` and implementer
+`0cc5c47349b9e01e61188b116681f6dff4ac2ce6`; its tree matches the implementer
+tree. No duplicate merge, reset or application-source repair occurred. The prior
+interrupted merger was not counted as acceptance.
+
+Read the implementation spec, issue05, accepted watch-proof protocol, engineering
+standard and retained tracking receipt. Verification used the existing Python
+environment with this checkout's source, fresh guarded subprocesses, temporary
+SQLite, synthetic observations/time/policy and captured transports. The harness
+blocks real network, native curl, browser startup, subprocess and non-test SQLite
+edges before application imports. No fixture bypass or guard change was made.
+
+### Retained application suite
+
+Run from this integration checkout:
+
+```sh
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  -m pytest -q tests/test_cost_workflow.py tests/test_qualification_workflow.py \
+  tests/test_discovery_workflow.py tests/test_monitoring_workflow.py \
+  tests/test_tracking_workflow.py tests/test_history_workflow.py \
+  tests/test_coupon_workflow.py
+```
+
+The merger's initial invocation accidentally used `PATH=/usr/bin:/bin`, omitting
+the documented existing Node binary. Result: **76 passed, one failed in 68.94s**.
+The failure was `FileNotFoundError: 'node'` before the form-payload workflow
+started. Only that unchanged case was rerun with the documented PATH:
+
+```sh
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  -m pytest -q tests/test_monitoring_workflow.py::test_form_title_edits_retain_saved_intent_through_api_and_restart
+```
+
+Result: **one passed in 0.87s**. Thus all **77 retained application cases** passed
+across the two invocations, including all 12 tracking cases; this is not a claim
+of a single uninterrupted 77-pass merger run. No tests were weakened, skipped,
+xfailed or removed. Full repository pytest remains outside this safe suite
+because legacy fixtures may touch configured databases or live edges.
+
+### Additional delivery-boundary probes
+
+The retained tests cover pending cost withdrawal, preference changes between
+channels and abrupt process death. The merger added
+`tests/monitoring/tracking_merger_probe.py` for the uncovered cases of each exact
+revision withdrawal/expiry between channels and a transport returning false
+after possible external acceptance. Each case runs in its own guarded process.
+Run the following command once for each CASE: `configuration`, `binding`,
+`offer`, `cost`, `expiry`, `false_ack`, substituting CASE in both positions:
+
+```sh
+env -i PATH=/usr/bin:/bin PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  -m tests.monitoring.tracking_merger_probe CASE \
+  "$PWD/docs/testing/artifacts/watch-tracking/merger-CASE.json"
+```
+
+All **six probes passed**. Each of the four withdrawals uses the committed
+append-only exact-revision contract as an input during the first captured send;
+the next channel is withheld, the API reports withdrawn evidence, and target
+and configuration intent remain unchanged. Advancing time beyond validity in
+the first channel similarly withholds the second and exposes stale evidence.
+The false-ACK case remains `ambiguous` with one failed channel record. Two
+explicit recovery calls create no retry in every case. All probes retain staged
+collection and record zero escaped edges. The per-case JSON receipts under
+`docs/testing/artifacts/watch-tracking/merger-*.json` retain inputs/policy
+references, assessment revisions, delivery outcome and assertion observations.
+An already accepted first-channel send cannot be retracted; no exactly-once
+external delivery guarantee is asserted. These probes consume the withdrawal
+contract without implementing ticket07 corrections or accepting ticket06.
+
+### Checklist acceptance and retained proof
+
+| Ticket05 requirement | Evidence and bounded outcome |
+| --- | --- |
+| Explicit intent, target and legacy compatibility | `intent`, migration and retained keyboard/edit/reload browser receipt; API persists exact anchor, decimal target and explicit channels without creating Watch jobs or rewriting saved rules. |
+| Crossing and deduplication policy | `crossings`, `restart_before/after`, `route_conflict`; delivered totals cross, repeat suppresses, lower qualified price and rise/recross alert; duplicate routes, decimal spellings and old replay do not rearm. First qualified observation remains a baseline. |
+| Qualification and withholding | `withholding`, `combined_acquisition`, `combined_withdrawal`, changed-policy and six merger probes; missing/conditional costs, unresolved configuration/SKU, stale/withdrawn evidence, eligibility/preferences, partial/cache input and missing policy withhold. API/feed expose withheld reasons. |
+| Restart and interrupted delivery | Pre-send reservation recovers once through admitted normal execution; claimed external send remains ambiguous across restart and requires explicit operator reconciliation. Existing dispatcher/log/transports own delivery; no added scheduler, queue or service. |
+| Complete controlled workflow | All 12 retained tracking cases, six new delivery probes and retained tracking browser capture counts 0 → 1 → 1 → 2. Collection remains staged; HTTP target edits cannot supply execution policy. |
+
+All **43 SHA-256 entries** in the retained
+`artifacts/watch-tracking/source-manifest.json` match current source exactly.
+The merge tree also matches the source HEAD. The implementer's **25 frontend
+tests**, **638-module build** and **three actual-browser flows** therefore remain
+applicable and were not repeated. Retained browser receipts were read from
+`/tmp/pricerecon-ticket05-browser/receipt.json`,
+`/tmp/pricerecon-ticket05-combined-history/receipt.json` and
+`/tmp/pricerecon-ticket05-combined-coupons/receipt.json`; the tracking receipt and
+desktop/narrow screenshots are also committed under `artifacts/watch-tracking/`.
+Those synthetic history/coupon UI passes do not establish their open merger
+acceptance items or buyer walkthrough acceptance.
+
+Focused Ruff passed the retained 14 clean files plus the new merger probe.
+Focused `mypy --follow-imports=silent` passed 11 application files (tracking API,
+core, storage and models; discovery API, core, storage and models; notifications,
+schema and app), with existing unused-override notes. Diff whitespace checks
+passed. Retained 41 legacy Ruff findings, ESLint missing-config blocker and
+Vite large-chunk warning remain recorded; no suppression was added.
+
+**05 closed; 10 ready and unclaimed.** Ticket06's derived-capture lineage failure
+and ticket09's receipt-provenance failure remain open with their existing repair
+owners. Their intentionally failing probes were neither rerun nor changed.
+Ticket07 remains blocked until 06 is accepted. No other ticket was implemented
+or closed. Tracking deliberately consumes only verified standalone
+`public_no_coupon` totals. Later coupon integration must retain the same exact
+identity/binding, eligibility, revision, freshness and dispatcher gates.
+
+Only this integration worktree was edited. The original dirty parent and all
+other worktrees were left untouched; its existing Python executable was reused
+without dependency changes. No installs/downloads, live/network acquisition,
+credentials/accounts, production DB operations, activation, deployment, push,
+PR, delegation or cleanup occurred. Finite operating limits, source rights,
+real offer/history/coupon evidence, live delivery and buyer walkthrough remain
+separate unproven gates. Local receipt/probe/tracker commit only.

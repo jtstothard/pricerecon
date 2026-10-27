@@ -1,0 +1,45 @@
+{
+  "case": "binding",
+  "fixture": "original synthetic target evidence / captured transport",
+  "expected": "One first-channel attempt; no second send or automatic retry",
+  "captured_attempts": 1,
+  "assessment": {
+    "state": "withheld",
+    "reasons": [
+      "evidence_revision_withdrawn"
+    ],
+    "assessed_at": "2026-10-27T12:06:00Z",
+    "valid_until": "2026-10-27T14:06:00Z",
+    "policy_version": "synthetic-target-policy-v1",
+    "policy_fingerprint": "424b8160f598c1f21cde4896aaff44cc9f7df561b572201d43441add076dcbc5",
+    "preference_revision": 0,
+    "intent_revision": 1,
+    "capture_id": "12808b7b-70d8-4d3f-9b49-3d21781168d5",
+    "offer_id": "f1e47b93889122b85dc65e2bde6ab426ad01238e6a0ceae329b17268845b5f44",
+    "offer_revision": 3,
+    "binding_revision": 3,
+    "configuration_revision": 3,
+    "scenario_id": "2627ff82da4b0b991522f2aa35924aa27304121e8d96501d8271035b6f83ed74",
+    "scenario_revision": 3,
+    "delivered_gbp": "58.10"
+  },
+  "delivery": {
+    "event_id": 1,
+    "tracking_id": 1,
+    "intent_revision": 1,
+    "offer_key": "217dc9abdca49fc25b45453b91682005363217b621bd0d9d000c154d12216eeb",
+    "delivered_gbp": "58.10",
+    "reason": "target_crossing",
+    "status": "withheld",
+    "channels": {
+      "webhook": "sent",
+      "discord": "withheld"
+    },
+    "guarantee": "External send/ack crashes are ambiguous; no exactly-once guarantee."
+  },
+  "target_retained": true,
+  "configuration_retained": true,
+  "collection_state": "staged",
+  "blocked_edges": [],
+  "temporary_storage": true
+}
