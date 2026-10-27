@@ -1,0 +1,53 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_source_destination_stock_and_shipping_claims_survive_without_qualifying_a_total _
+
+    def test_source_destination_stock_and_shipping_claims_survive_without_qualifying_a_total():
+>       run_source("source_context")
+
+tests/test_source_evidence_workflow.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'source_context', storage = None
+
+    def run_source(name, storage=None):
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-m", "tests.monitoring.source_evidence_workflows", name]
+            + ([str(storage)] if storage else []),
+            cwd=root,
+            env={
+                "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                "PYTHONDONTWRITEBYTECODE": "1",
+            },
+            capture_output=True, text=True, timeout=40, check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Loaded 0 watches into scheduler
+E         Traceback (most recent call last):
+E           File "<frozen runpy>", line 203, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/tests/monitoring/source_evidence_workflows.py", line 391, in <module>
+E             asyncio.run(globals()[sys.argv[1]]())
+E             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+E             return runner.run(main)
+E                    ~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+E             return self._loop.run_until_complete(task)
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+E             return future.result()
+E                    ~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/tests/monitoring/source_evidence_workflows.py", line 378, in source_context
+E             assert observed["destination"] == "GB"
+E                    ~~~~~~~~^^^^^^^^^^^^^^^
+E         KeyError: 'destination'
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python', '-m', 'tests.monitoring.sou..._context\n    assert observed["destination"] == "GB"\n           ~~~~~~~~^^^^^^^^^^^^^^^\nKeyError: \'destination\'\n').returncode
+
+tests/test_source_evidence_workflow.py:22: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_source_evidence_workflow.py::test_source_destination_stock_and_shipping_claims_survive_without_qualifying_a_total
+1 failed, 7 deselected in 0.84s

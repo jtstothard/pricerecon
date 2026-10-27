@@ -1,0 +1,59 @@
+..F..................................................................... [ 41%]
+........................................................................ [ 83%]
+.............................                                            [100%]
+=================================== FAILURES ===================================
+_ test_real_http_attempts_count_auth_pages_and_retry_before_controlled_transport_send _
+
+    def test_real_http_attempts_count_auth_pages_and_retry_before_controlled_transport_send():
+>       run_collection("real_attempts")
+
+tests/test_collection_workflow.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'real_attempts', storage = None
+
+    def run_collection(name, storage=None):
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-m", "tests.monitoring.collection_workflows", name]
+            + ([str(storage)] if storage else []),
+            cwd=root,
+            env={
+                "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                "PYTHONDONTWRITEBYTECODE": "1",
+            },
+            capture_output=True,
+            text=True,
+            timeout=40,
+            check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Loaded 0 watches into scheduler
+E         discovery_connector_degraded
+E         Traceback (most recent call last):
+E           File "<frozen runpy>", line 203, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/tests/monitoring/collection_workflows.py", line 648, in <module>
+E             asyncio.run(globals()[sys.argv[1]]())
+E             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+E             return runner.run(main)
+E                    ~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+E             return self._loop.run_until_complete(task)
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+E             return future.result()
+E                    ~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/tests/monitoring/collection_workflows.py", line 192, in real_attempts
+E             assert result.outcomes[0].state == "capped", result
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E         AssertionError: correction_input_revision=0 publication_state='accepted' history_contract_version='observation-history-v1' capture_id='de46ed66-022d-4c5a-aff6-01c53ebca833' captured_at=datetime.datetime(2026, 10, 27, 12, 0, tzinfo=datetime.timezone.utc) request=DiscoveryOrigin(category='watches', query='watch', sources=['ebay'], source_queries={}) admission=DiscoveryAdmission(mode='offline_verification', policy_reference='synthetic', permission_reference='fixtures', activation_reference='isolated') outcomes=[AcquisitionOutcome(source_evidence=SourceReceipt(route='ebay_browse_search_v1', source_host=None, capture_id='23bfc7a6-bb7a-47af-90d8-9b3a5fe08017', retrieved_at=datetime.datetime(2026, 10, 27, 12, 0, tzinfo=TzInfo(0)), use=None, history_rights='unqualified', prerequisites=['provider-authorised capture/display use', 'separate retention/derivation grant', 'display freshness review; six hours is not archive duration'], pages_captured=0, page_limit=None, discovered_count=None, inspected_count=None, next_page=None, content_truncated=None, completeness='unknown', issues=[]), source='ebay', route='connector_search_v1', state='blocked', listing_count=0, reason='disabled', completeness='unknown', reused_capture_id=None)]
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python', '-m', 'tests.monitoring.col...h_v1\', state=\'blocked\', listing_count=0, reason=\'disabled\', completeness=\'unknown\', reused_capture_id=None)]\n').returncode
+
+tests/test_collection_workflow.py:24: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_collection_workflow.py::test_real_http_attempts_count_auth_pages_and_retry_before_controlled_transport_send
+1 failed, 172 passed in 188.94s (0:03:08)

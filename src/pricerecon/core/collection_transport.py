@@ -43,9 +43,11 @@ async def account_request(request: httpx.Request) -> None:
     previous = admission.requests.get(key, 0)
     path = request.url.path
     costs: dict[Resource, int] = {"requests": 1}
-    if "search" in path or "item_summary" in path:
+    if "search" in path or "item_summary" in path or path.endswith("/products.json"):
         costs["pages"] = 1
-    elif "/item/" in path or "/item.get" in path:
+    elif (
+        "/item/" in path or "/item.get" in path or ("/products/" in path and path.endswith(".json"))
+    ):
         costs["details"] = 1
     elif "oauth2" not in path:
         raise AdmissionDenied("request_classification_required", state="blocked")

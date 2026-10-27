@@ -1,0 +1,8 @@
+Loaded 1 watches into scheduler
+OFFLINE_UI_READY http://127.0.0.1:8891/discover; fictional connector leads; temporary SQLite; paused scheduler
+INFO:     Started server process [98723]
+INFO:     Uvicorn running on http://127.0.0.1:8891 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Finished server process [98723]
+{"blocked_edges": [], "notifications_sent": 0, "searches": 6, "temporary_storage": true}
+OFFLINE_UI_STOPPED

@@ -1,0 +1,80 @@
+docs/testing/artifacts/watch-source-evidence/build-merged.log:14: trailing whitespace.
++[plugin builtin:vite-reporter] 
+docs/testing/artifacts/watch-source-evidence/build.log:14: trailing whitespace.
++[plugin builtin:vite-reporter] 
+docs/testing/artifacts/watch-source-evidence/eslint.log:20: new blank line at EOF.
+docs/testing/artifacts/watch-source-evidence/frontend-tests-merged.log:14: new blank line at EOF.
+docs/testing/artifacts/watch-source-evidence/frontend-tests.log:14: new blank line at EOF.
+docs/testing/artifacts/watch-source-evidence/guarded-workflows-initial.log:10: trailing whitespace.
++tests/test_collection_workflow.py:36: 
+docs/testing/artifacts/watch-source-evidence/guarded-workflows-initial.log:11: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-source-evidence/guarded-workflows-initial.log:52: trailing whitespace.
++E         
+docs/testing/artifacts/watch-source-evidence/red-browse.log:8: trailing whitespace.
++tests/test_source_evidence_workflow.py:29: 
+docs/testing/artifacts/watch-source-evidence/red-browse.log:9: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-source-evidence/red-browse.log:47: trailing whitespace.
++E         
+docs/testing/artifacts/watch-source-evidence/red-browser.log:8: trailing whitespace.
++tests/test_source_evidence_workflow.py:25: 
+docs/testing/artifacts/watch-source-evidence/red-browser.log:9: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-source-evidence/red-browser.log:47: trailing whitespace.
++E         
+docs/testing/artifacts/watch-source-evidence/red-context.log:8: trailing whitespace.
++tests/test_source_evidence_workflow.py:57: 
+docs/testing/artifacts/watch-source-evidence/red-context.log:9: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-source-evidence/red-context.log:46: trailing whitespace.
++E         
+docs/testing/artifacts/watch-source-evidence/red-discovery-truncated.log:8: trailing whitespace.
++tests/test_source_evidence_workflow.py:79: 
+docs/testing/artifacts/watch-source-evidence/red-discovery-truncated.log:9: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-source-evidence/red-discovery-truncated.log:50: trailing whitespace.
++E         
+docs/testing/artifacts/watch-source-evidence/red-gates.log:8: trailing whitespace.
++tests/test_source_evidence_workflow.py:37: 
+docs/testing/artifacts/watch-source-evidence/red-gates.log:9: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-source-evidence/red-gates.log:47: trailing whitespace.
++E         
+docs/testing/artifacts/watch-source-evidence/red-gates.log:57: trailing whitespace.
++tests/test_source_evidence_workflow.py:41: 
+docs/testing/artifacts/watch-source-evidence/red-gates.log:58: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-source-evidence/red-gates.log:109: trailing whitespace.
++E         
+docs/testing/artifacts/watch-source-evidence/red-militado.log:8: trailing whitespace.
++tests/test_source_evidence_workflow.py:71: 
+docs/testing/artifacts/watch-source-evidence/red-militado.log:9: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-source-evidence/red-militado.log:46: trailing whitespace.
++E         
+docs/testing/artifacts/watch-source-evidence/red-retailer.log:8: trailing whitespace.
++tests/test_source_evidence_workflow.py:33: 
+docs/testing/artifacts/watch-source-evidence/red-retailer.log:9: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-source-evidence/red-retailer.log:46: trailing whitespace.
++E         
+docs/testing/artifacts/watch-source-evidence/red-roster.log:8: trailing whitespace.
++tests/test_source_evidence_workflow.py:46: 
+docs/testing/artifacts/watch-source-evidence/red-roster.log:9: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-source-evidence/red-roster.log:46: trailing whitespace.
++E         
+docs/testing/artifacts/watch-source-evidence/red-roster.log:58: trailing whitespace.
++tests/test_source_evidence_workflow.py:52: 
+docs/testing/artifacts/watch-source-evidence/red-roster.log:59: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-source-evidence/red-roster.log:98: trailing whitespace.
++E         
+docs/testing/artifacts/watch-source-evidence/red-truncated.log:8: trailing whitespace.
++tests/test_source_evidence_workflow.py:67: 
+docs/testing/artifacts/watch-source-evidence/red-truncated.log:9: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-source-evidence/red-truncated.log:46: trailing whitespace.
++E         
+docs/testing/artifacts/watch-source-evidence/red-ui.log:14: new blank line at EOF.

@@ -1,0 +1,1384 @@
+[
+  {
+    "cell": null,
+    "code": "SIM103",
+    "end_location": {
+      "column": 20,
+      "row": 398
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/aliexpress.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "return filters.get(\"affiliate_only\") is not False",
+          "end_location": {
+            "column": 20,
+            "row": 398
+          },
+          "location": {
+            "column": 9,
+            "row": 396
+          }
+        }
+      ],
+      "message": "Replace with `return filters.get(\"affiliate_only\") is not False`"
+    },
+    "location": {
+      "column": 9,
+      "row": 396
+    },
+    "message": "Return the condition `filters.get(\"affiliate_only\") is not False` directly",
+    "name": "needless-bool",
+    "noqa_row": 396,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/needless-bool"
+  },
+  {
+    "cell": null,
+    "code": "UP017",
+    "end_location": {
+      "column": 58,
+      "row": 439
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/aliexpress.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import UTC, datetime, timedelta, timezone",
+          "end_location": {
+            "column": 56,
+            "row": 13
+          },
+          "location": {
+            "column": 1,
+            "row": 13
+          }
+        },
+        {
+          "content": "UTC",
+          "end_location": {
+            "column": 58,
+            "row": 439
+          },
+          "location": {
+            "column": 46,
+            "row": 439
+          }
+        }
+      ],
+      "message": "Convert to `datetime.UTC` alias"
+    },
+    "location": {
+      "column": 46,
+      "row": 439
+    },
+    "message": "Use `datetime.UTC` alias",
+    "name": "datetime-timezone-utc",
+    "noqa_row": 439,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/datetime-timezone-utc"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 530
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/aliexpress.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 530
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 530,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "PERF402",
+    "end_location": {
+      "column": 32,
+      "row": 569
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/aliexpress.py",
+    "fix": null,
+    "location": {
+      "column": 13,
+      "row": 569
+    },
+    "message": "Use `list` or `list.copy` to create a copy of a list",
+    "name": "manual-list-copy",
+    "noqa_row": 569,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/manual-list-copy"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 25,
+      "row": 714
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/aliexpress.py",
+    "fix": null,
+    "location": {
+      "column": 16,
+      "row": 714
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 714,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 25,
+      "row": 787
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/aliexpress.py",
+    "fix": null,
+    "location": {
+      "column": 16,
+      "row": 787
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 787,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 25,
+      "row": 839
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/aliexpress.py",
+    "fix": null,
+    "location": {
+      "column": 16,
+      "row": 839
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 839,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 33,
+      "row": 950
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/aliexpress.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 950
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 950,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 33,
+      "row": 963
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/aliexpress.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 963
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 963,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 33,
+      "row": 973
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/aliexpress.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 973
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 973,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 33,
+      "row": 989
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/aliexpress.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 989
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 989,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 25,
+      "row": 1012
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/aliexpress.py",
+    "fix": null,
+    "location": {
+      "column": 16,
+      "row": 1012
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 1012,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 25,
+      "row": 1044
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/aliexpress.py",
+    "fix": null,
+    "location": {
+      "column": 16,
+      "row": 1044
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 1044,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "FURB157",
+    "end_location": {
+      "column": 54,
+      "row": 1223
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/aliexpress.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "0",
+          "end_location": {
+            "column": 54,
+            "row": 1223
+          },
+          "location": {
+            "column": 51,
+            "row": 1223
+          }
+        }
+      ],
+      "message": "Replace with `0`"
+    },
+    "location": {
+      "column": 51,
+      "row": 1223
+    },
+    "message": "Verbose expression in `Decimal` constructor",
+    "name": "verbose-decimal-constructor",
+    "noqa_row": 1223,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/verbose-decimal-constructor"
+  },
+  {
+    "cell": null,
+    "code": "UP017",
+    "end_location": {
+      "column": 41,
+      "row": 1353
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/aliexpress.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import UTC, datetime, timedelta, timezone",
+          "end_location": {
+            "column": 56,
+            "row": 13
+          },
+          "location": {
+            "column": 1,
+            "row": 13
+          }
+        },
+        {
+          "content": "UTC",
+          "end_location": {
+            "column": 41,
+            "row": 1353
+          },
+          "location": {
+            "column": 29,
+            "row": 1353
+          }
+        }
+      ],
+      "message": "Convert to `datetime.UTC` alias"
+    },
+    "location": {
+      "column": 29,
+      "row": 1353
+    },
+    "message": "Use `datetime.UTC` alias",
+    "name": "datetime-timezone-utc",
+    "noqa_row": 1353,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/datetime-timezone-utc"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 25,
+      "row": 1445
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/aliexpress.py",
+    "fix": null,
+    "location": {
+      "column": 16,
+      "row": 1445
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 1445,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "UP017",
+    "end_location": {
+      "column": 56,
+      "row": 1447
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/aliexpress.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import UTC, datetime, timedelta, timezone",
+          "end_location": {
+            "column": 56,
+            "row": 13
+          },
+          "location": {
+            "column": 1,
+            "row": 13
+          }
+        },
+        {
+          "content": "UTC",
+          "end_location": {
+            "column": 56,
+            "row": 1447
+          },
+          "location": {
+            "column": 44,
+            "row": 1447
+          }
+        }
+      ],
+      "message": "Convert to `datetime.UTC` alias"
+    },
+    "location": {
+      "column": 44,
+      "row": 1447
+    },
+    "message": "Use `datetime.UTC` alias",
+    "name": "datetime-timezone-utc",
+    "noqa_row": 1447,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/datetime-timezone-utc"
+  },
+  {
+    "cell": null,
+    "code": "UP017",
+    "end_location": {
+      "column": 41,
+      "row": 1528
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/aliexpress.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import UTC, datetime, timedelta, timezone",
+          "end_location": {
+            "column": 56,
+            "row": 13
+          },
+          "location": {
+            "column": 1,
+            "row": 13
+          }
+        },
+        {
+          "content": "UTC",
+          "end_location": {
+            "column": 41,
+            "row": 1528
+          },
+          "location": {
+            "column": 29,
+            "row": 1528
+          }
+        }
+      ],
+      "message": "Convert to `datetime.UTC` alias"
+    },
+    "location": {
+      "column": 29,
+      "row": 1528
+    },
+    "message": "Use `datetime.UTC` alias",
+    "name": "datetime-timezone-utc",
+    "noqa_row": 1528,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/datetime-timezone-utc"
+  },
+  {
+    "cell": null,
+    "code": "S110",
+    "end_location": {
+      "column": 21,
+      "row": 1883
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/aliexpress.py",
+    "fix": null,
+    "location": {
+      "column": 13,
+      "row": 1882
+    },
+    "message": "`try`-`except`-`pass` detected, consider logging the exception",
+    "name": "try-except-pass",
+    "noqa_row": 1882,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 1882
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/aliexpress.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 1882
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 1882,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "UP045",
+    "end_location": {
+      "column": 33,
+      "row": 30
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "str | None",
+          "end_location": {
+            "column": 33,
+            "row": 30
+          },
+          "location": {
+            "column": 20,
+            "row": 30
+          }
+        }
+      ],
+      "message": "Convert to `X | None`"
+    },
+    "location": {
+      "column": 20,
+      "row": 30
+    },
+    "message": "Use `X | None` for type annotations",
+    "name": "non-pep604-annotation-optional",
+    "noqa_row": 30,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
+  },
+  {
+    "cell": null,
+    "code": "UP017",
+    "end_location": {
+      "column": 83,
+      "row": 31
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, timedelta, timezone, UTC",
+          "end_location": {
+            "column": 51,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        },
+        {
+          "content": "UTC",
+          "end_location": {
+            "column": 83,
+            "row": 31
+          },
+          "location": {
+            "column": 71,
+            "row": 31
+          }
+        }
+      ],
+      "message": "Convert to `datetime.UTC` alias"
+    },
+    "location": {
+      "column": 71,
+      "row": 31
+    },
+    "message": "Use `datetime.UTC` alias",
+    "name": "datetime-timezone-utc",
+    "noqa_row": 31,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/datetime-timezone-utc"
+  },
+  {
+    "cell": null,
+    "code": "UP017",
+    "end_location": {
+      "column": 53,
+      "row": 43
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, timedelta, timezone, UTC",
+          "end_location": {
+            "column": 51,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        },
+        {
+          "content": "UTC",
+          "end_location": {
+            "column": 53,
+            "row": 43
+          },
+          "location": {
+            "column": 41,
+            "row": 43
+          }
+        }
+      ],
+      "message": "Convert to `datetime.UTC` alias"
+    },
+    "location": {
+      "column": 41,
+      "row": 43
+    },
+    "message": "Use `datetime.UTC` alias",
+    "name": "datetime-timezone-utc",
+    "noqa_row": 43,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/datetime-timezone-utc"
+  },
+  {
+    "cell": null,
+    "code": "UP017",
+    "end_location": {
+      "column": 45,
+      "row": 44
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, timedelta, timezone, UTC",
+          "end_location": {
+            "column": 51,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        },
+        {
+          "content": "UTC",
+          "end_location": {
+            "column": 45,
+            "row": 44
+          },
+          "location": {
+            "column": 33,
+            "row": 44
+          }
+        }
+      ],
+      "message": "Convert to `datetime.UTC` alias"
+    },
+    "location": {
+      "column": 33,
+      "row": 44
+    },
+    "message": "Use `datetime.UTC` alias",
+    "name": "datetime-timezone-utc",
+    "noqa_row": 44,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/datetime-timezone-utc"
+  },
+  {
+    "cell": null,
+    "code": "UP045",
+    "end_location": {
+      "column": 52,
+      "row": 53
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "eBayOAuthToken | None",
+          "end_location": {
+            "column": 52,
+            "row": 53
+          },
+          "location": {
+            "column": 28,
+            "row": 53
+          }
+        }
+      ],
+      "message": "Convert to `X | None`"
+    },
+    "location": {
+      "column": 28,
+      "row": 53
+    },
+    "message": "Use `X | None` for type annotations",
+    "name": "non-pep604-annotation-optional",
+    "noqa_row": 53,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
+  },
+  {
+    "cell": null,
+    "code": "UP017",
+    "end_location": {
+      "column": 60,
+      "row": 84
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, timedelta, timezone, UTC",
+          "end_location": {
+            "column": 51,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        },
+        {
+          "content": "UTC",
+          "end_location": {
+            "column": 60,
+            "row": 84
+          },
+          "location": {
+            "column": 48,
+            "row": 84
+          }
+        }
+      ],
+      "message": "Convert to `datetime.UTC` alias"
+    },
+    "location": {
+      "column": 48,
+      "row": 84
+    },
+    "message": "Use `datetime.UTC` alias",
+    "name": "datetime-timezone-utc",
+    "noqa_row": 84,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/datetime-timezone-utc"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 25,
+      "row": 86
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py",
+    "fix": null,
+    "location": {
+      "column": 16,
+      "row": 86
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 86,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 126
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 126
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 126,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "RUF012",
+    "end_location": {
+      "column": 66,
+      "row": 155
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py",
+    "fix": null,
+    "location": {
+      "column": 64,
+      "row": 155
+    },
+    "message": "Mutable default value for class attribute",
+    "name": "mutable-class-default",
+    "noqa_row": 155,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/mutable-class-default"
+  },
+  {
+    "cell": null,
+    "code": "PYI034",
+    "end_location": {
+      "column": 16,
+      "row": 158
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "from typing import Any, Optional, Self",
+          "end_location": {
+            "column": 33,
+            "row": 8
+          },
+          "location": {
+            "column": 1,
+            "row": 8
+          }
+        },
+        {
+          "content": "Self",
+          "end_location": {
+            "column": 53,
+            "row": 158
+          },
+          "location": {
+            "column": 25,
+            "row": 158
+          }
+        }
+      ],
+      "message": "Use `Self` as return type"
+    },
+    "location": {
+      "column": 9,
+      "row": 158
+    },
+    "message": "`__new__` methods in classes like `_EBayTokenFetchCoordinator` usually return `self` at runtime",
+    "name": "non-self-return-type",
+    "noqa_row": 158,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/non-self-return-type"
+  },
+  {
+    "cell": null,
+    "code": "UP045",
+    "end_location": {
+      "column": 31,
+      "row": 167
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "str | None",
+          "end_location": {
+            "column": 31,
+            "row": 167
+          },
+          "location": {
+            "column": 18,
+            "row": 167
+          }
+        }
+      ],
+      "message": "Convert to `X | None`"
+    },
+    "location": {
+      "column": 18,
+      "row": 167
+    },
+    "message": "Use `X | None` for type annotations",
+    "name": "non-pep604-annotation-optional",
+    "noqa_row": 167,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
+  },
+  {
+    "cell": null,
+    "code": "UP045",
+    "end_location": {
+      "column": 31,
+      "row": 223
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "str | None",
+          "end_location": {
+            "column": 31,
+            "row": 223
+          },
+          "location": {
+            "column": 18,
+            "row": 223
+          }
+        }
+      ],
+      "message": "Convert to `X | None`"
+    },
+    "location": {
+      "column": 18,
+      "row": 223
+    },
+    "message": "Use `X | None` for type annotations",
+    "name": "non-pep604-annotation-optional",
+    "noqa_row": 223,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
+  },
+  {
+    "cell": null,
+    "code": "UP017",
+    "end_location": {
+      "column": 55,
+      "row": 250
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, timedelta, timezone, UTC",
+          "end_location": {
+            "column": 51,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        },
+        {
+          "content": "UTC",
+          "end_location": {
+            "column": 55,
+            "row": 250
+          },
+          "location": {
+            "column": 43,
+            "row": 250
+          }
+        }
+      ],
+      "message": "Convert to `datetime.UTC` alias"
+    },
+    "location": {
+      "column": 43,
+      "row": 250
+    },
+    "message": "Use `datetime.UTC` alias",
+    "name": "datetime-timezone-utc",
+    "noqa_row": 250,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/datetime-timezone-utc"
+  },
+  {
+    "cell": null,
+    "code": "UP045",
+    "end_location": {
+      "column": 56,
+      "row": 311
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "str | None",
+          "end_location": {
+            "column": 56,
+            "row": 311
+          },
+          "location": {
+            "column": 43,
+            "row": 311
+          }
+        }
+      ],
+      "message": "Convert to `X | None`"
+    },
+    "location": {
+      "column": 43,
+      "row": 311
+    },
+    "message": "Use `X | None` for type annotations",
+    "name": "non-pep604-annotation-optional",
+    "noqa_row": 311,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
+  },
+  {
+    "cell": null,
+    "code": "UP045",
+    "end_location": {
+      "column": 59,
+      "row": 327
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "str | None",
+          "end_location": {
+            "column": 59,
+            "row": 327
+          },
+          "location": {
+            "column": 46,
+            "row": 327
+          }
+        }
+      ],
+      "message": "Convert to `X | None`"
+    },
+    "location": {
+      "column": 46,
+      "row": 327
+    },
+    "message": "Use `X | None` for type annotations",
+    "name": "non-pep604-annotation-optional",
+    "noqa_row": 327,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
+  },
+  {
+    "cell": null,
+    "code": "UP045",
+    "end_location": {
+      "column": 50,
+      "row": 332
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "httpx.AsyncClient | None",
+          "end_location": {
+            "column": 50,
+            "row": 332
+          },
+          "location": {
+            "column": 23,
+            "row": 332
+          }
+        }
+      ],
+      "message": "Convert to `X | None`"
+    },
+    "location": {
+      "column": 23,
+      "row": 332
+    },
+    "message": "Use `X | None` for type annotations",
+    "name": "non-pep604-annotation-optional",
+    "noqa_row": 332,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 424
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 424
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 424,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "UP045",
+    "end_location": {
+      "column": 60,
+      "row": 462
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "dict[str, Any] | None",
+          "end_location": {
+            "column": 60,
+            "row": 462
+          },
+          "location": {
+            "column": 36,
+            "row": 462
+          }
+        }
+      ],
+      "message": "Convert to `X | None`"
+    },
+    "location": {
+      "column": 36,
+      "row": 462
+    },
+    "message": "Use `X | None` for type annotations",
+    "name": "non-pep604-annotation-optional",
+    "noqa_row": 462,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
+  },
+  {
+    "cell": null,
+    "code": "S112",
+    "end_location": {
+      "column": 25,
+      "row": 570
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py",
+    "fix": null,
+    "location": {
+      "column": 13,
+      "row": 569
+    },
+    "message": "`try`-`except`-`continue` detected, consider logging the exception",
+    "name": "try-except-continue",
+    "noqa_row": 569,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/try-except-continue"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 569
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 569
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 569,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "UP017",
+    "end_location": {
+      "column": 61,
+      "row": 583
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, timedelta, timezone, UTC",
+          "end_location": {
+            "column": 51,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        },
+        {
+          "content": "UTC",
+          "end_location": {
+            "column": 61,
+            "row": 583
+          },
+          "location": {
+            "column": 49,
+            "row": 583
+          }
+        }
+      ],
+      "message": "Convert to `datetime.UTC` alias"
+    },
+    "location": {
+      "column": 49,
+      "row": 583
+    },
+    "message": "Use `datetime.UTC` alias",
+    "name": "datetime-timezone-utc",
+    "noqa_row": 583,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/datetime-timezone-utc"
+  },
+  {
+    "cell": null,
+    "code": "UP017",
+    "end_location": {
+      "column": 61,
+      "row": 625
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, timedelta, timezone, UTC",
+          "end_location": {
+            "column": 51,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        },
+        {
+          "content": "UTC",
+          "end_location": {
+            "column": 61,
+            "row": 625
+          },
+          "location": {
+            "column": 49,
+            "row": 625
+          }
+        }
+      ],
+      "message": "Convert to `datetime.UTC` alias"
+    },
+    "location": {
+      "column": 49,
+      "row": 625
+    },
+    "message": "Use `datetime.UTC` alias",
+    "name": "datetime-timezone-utc",
+    "noqa_row": 625,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/datetime-timezone-utc"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 648
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 648
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 648,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "SIM118",
+    "end_location": {
+      "column": 78,
+      "row": 71
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/shopify.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 78,
+            "row": 71
+          },
+          "location": {
+            "column": 71,
+            "row": 71
+          }
+        }
+      ],
+      "message": "Remove `.keys()`"
+    },
+    "location": {
+      "column": 57,
+      "row": 71
+    },
+    "message": "Use `key in dict` instead of `key in dict.keys()`",
+    "name": "in-dict-keys",
+    "noqa_row": 71,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/in-dict-keys"
+  },
+  {
+    "cell": null,
+    "code": "UP017",
+    "end_location": {
+      "column": 65,
+      "row": 152
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/shopify.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, timezone, UTC",
+          "end_location": {
+            "column": 40,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        },
+        {
+          "content": "UTC",
+          "end_location": {
+            "column": 65,
+            "row": 152
+          },
+          "location": {
+            "column": 53,
+            "row": 152
+          }
+        }
+      ],
+      "message": "Convert to `datetime.UTC` alias"
+    },
+    "location": {
+      "column": 53,
+      "row": 152
+    },
+    "message": "Use `datetime.UTC` alias",
+    "name": "datetime-timezone-utc",
+    "noqa_row": 152,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/datetime-timezone-utc"
+  }
+]

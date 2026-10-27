@@ -18,14 +18,24 @@ from .harness import MonitoringHarness
 from .workflows import LEGACY, listing
 
 
-async def main(port, qualification=False, costs=False, tracking=False, history=False, coupons=False, corrections=False, assessments=False):
+async def main(
+    port,
+    qualification=False,
+    costs=False,
+    tracking=False,
+    history=False,
+    coupons=False,
+    corrections=False,
+    source_evidence=False,
+    assessments=False,
+):
     with MonitoringHarness() as harness:
         from pricerecon.core.discovery import execute_discovery
         from pricerecon.models.discovery import DiscoveryAdmission, DiscoveryRequest
 
-        assert harness.application.frontend_dist.joinpath("index.html").is_file(), (
-            "Build frontend first"
-        )
+        assert harness.application.frontend_dist.joinpath(
+            "index.html"
+        ).is_file(), "Build frontend first"
         harness.seed_legacy(
             [(7, LEGACY), (8, {**LEGACY, "name": "Paused saved search", "enabled": False})]
         )
@@ -118,16 +128,36 @@ async def main(port, qualification=False, costs=False, tracking=False, history=F
             async def fixture_identity():
                 return {
                     "fixture": (
-                        "ticket08-assessment-ui" if assessments else
-                        "ticket07-correction-ui" if corrections else
-                        "ticket05-tracking-ui" if tracking else
-                        "ticket09-coupon-ui" if coupons else
-                        "ticket06-history-ui" if history else "ticket04-cost-ui"
-                        if costs
+                        "ticket11-source-evidence-ui"
+                        if source_evidence
                         else (
-                            "ticket03-qualification-ui"
-                            if qualification
-                            else "ticket02-discovery-ui"
+                            "ticket08-assessment-ui"
+                            if assessments
+                            else (
+                                "ticket07-correction-ui"
+                                if corrections
+                                else (
+                                    "ticket05-tracking-ui"
+                                    if tracking
+                                    else (
+                                        "ticket09-coupon-ui"
+                                        if coupons
+                                        else (
+                                            "ticket06-history-ui"
+                                            if history
+                                            else (
+                                                "ticket04-cost-ui"
+                                                if costs
+                                                else (
+                                                    "ticket03-qualification-ui"
+                                                    if qualification
+                                                    else "ticket02-discovery-ui"
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
                         )
                     ),
                     "temporary_storage": True,
@@ -140,6 +170,11 @@ async def main(port, qualification=False, costs=False, tracking=False, history=F
             # Test-server-only marker precedes the SPA fallback. The driver
             # verifies it before any edits, so a reused port fails closed.
             harness.application.app.router.routes[0:0] = fixture_router.routes
+            if source_evidence:
+                from .source_evidence_ui_fixture import populate
+
+                await populate(harness)
+                harness.outcomes["cex"] = []
             await execute_discovery(
                 DiscoveryRequest(
                     query="wristwatch", sources=[{"connector": "cex"}, {"connector": "scan"}]
@@ -170,14 +205,22 @@ async def main(port, qualification=False, costs=False, tracking=False, history=F
                 from .assessment_workflows import capture as assessment_capture
                 from .assessment_workflows import coupon_report, policy, priced_report
 
-                supplied = policy(harness, allowed_scenario_kinds=["public_no_coupon", "public_coupon"])
-                feed = await assessment_capture(harness, client, [priced_report(harness, "68", "fixture-1")], supplied)
+                supplied = policy(
+                    harness, allowed_scenario_kinds=["public_no_coupon", "public_coupon"]
+                )
+                feed = await assessment_capture(
+                    harness, client, [priced_report(harness, "68", "fixture-1")], supplied
+                )
                 harness.clock.advance(hours=0.01)
                 report = coupon_report(harness, 3, "fixture-1")
-                candidate = next(c for c in feed["candidates"] if c["source_listing_id"] == "fixture-1")
+                candidate = next(
+                    c for c in feed["candidates"] if c["source_listing_id"] == "fixture-1"
+                )
                 revision = candidate["configurations"][0]["revision"] + 1
                 report.coupons[0].application.expected_configuration_revision = revision
-                report.coupons[0].application.receipt.observation.expected_configuration_revision = revision
+                report.coupons[
+                    0
+                ].application.receipt.observation.expected_configuration_revision = revision
                 await assessment_capture(harness, client, [report], supplied)
             print(
                 f"OFFLINE_UI_READY http://127.0.0.1:{port}/discover; fictional connector leads; temporary SQLite; paused scheduler",
@@ -222,11 +265,27 @@ if __name__ == "__main__":
     mode.add_argument("--coupons", action="store_true")
     mode.add_argument("--history", action="store_true")
     mode.add_argument("--corrections", action="store_true")
+    mode.add_argument("--source-evidence", action="store_true")
     mode.add_argument("--assessments", action="store_true")
     args = parser.parse_args()
     try:
-        asyncio.run(main(args.port, qualification=args.qualification,
-            costs=args.costs or args.tracking or args.history or args.coupons or args.corrections or args.assessments,
-            tracking=args.tracking, history=args.history, coupons=args.coupons, corrections=args.corrections, assessments=args.assessments))
+        asyncio.run(
+            main(
+                args.port,
+                qualification=args.qualification,
+                costs=args.costs
+                or args.tracking
+                or args.history
+                or args.coupons
+                or args.corrections
+                or args.assessments,
+                tracking=args.tracking,
+                history=args.history,
+                coupons=args.coupons,
+                corrections=args.corrections,
+                source_evidence=args.source_evidence,
+                assessments=args.assessments,
+            )
+        )
     except KeyboardInterrupt:
         print("OFFLINE_UI_STOPPED", flush=True)

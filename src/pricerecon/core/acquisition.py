@@ -16,6 +16,7 @@ from pricerecon.core.connector_health import upsert_connector_health
 from pricerecon.models import NormalizedListing
 from pricerecon.models.discovery import AcquisitionOutcome
 from pricerecon.models.qualification import EvidenceSearchReport, MerchantEvidenceReport
+from pricerecon.models.source_evidence import SourceReceipt
 from pricerecon.models.watches import SourceConfig
 
 logger = logging.getLogger(__name__)
@@ -243,6 +244,9 @@ async def acquire_sources(
                     connector_id=connector_id,
                     detail={"error": str(exc), "error_type": exc.__class__.__name__},
                 ) from exc
+            validate_evidence = getattr(connector, "validate_evidence_access", None)
+            if purpose == "discovery" and callable(validate_evidence):
+                validate_evidence()
             if budget:
                 async with asyncio.timeout_at(deadline):
                     await connector.initialize()
@@ -292,6 +296,7 @@ async def acquire_sources(
                     reason=report.acquisition_reason,
                     completeness=report.completeness,
                     reused_capture_id=report.reused_capture_id,
+                    source_evidence=report.source_evidence,
                 )
             else:
                 if budget:
@@ -411,6 +416,23 @@ async def acquire_sources(
                 connector_id, exc.status.value, last_error=last_error, details=details
             )
             continue
+        except httpx.HTTPStatusError as exc:
+            status = exc.response.status_code
+            outcomes.append(
+                AcquisitionOutcome(
+                    source=connector_id,
+                    state="blocked" if status in {401, 403, 429} else "failed",
+                    reason={401: "auth_failed", 403: "access_denied", 429: "rate_limited"}.get(
+                        status, "http_error"
+                    ),
+                )
+            )
+            upsert_connector_health(
+                connector_id,
+                "rate_limited" if status == 429 else "unknown_error",
+                last_error=f"HTTP {status}",
+                details={"inference_source": purpose},
+            )
         except httpx.TimeoutException as exc:
             outcomes.append(
                 AcquisitionOutcome(source=connector_id, state="failed", reason="timeout")
@@ -464,8 +486,15 @@ async def acquire_sources(
                     outcomes = [o for o in outcomes if o.source != connector_id] + [source_outcome]
                     failed_sources.add(connector_id)
             finally:
+                outcome = next(
+                    (o for o in reversed(outcomes) if o.source == connector_id), source_outcome
+                )
+                source_receipt = getattr(connector, "evidence_receipt", None)
+                if outcome.source_evidence is None and isinstance(source_receipt, SourceReceipt):
+                    outcome.source_evidence = SourceReceipt.model_validate_json(
+                        source_receipt.model_dump_json()
+                    )
                 if budget:
-                    outcome = next((o for o in reversed(outcomes) if o.source == connector_id), source_outcome)
                     budget.finish(outcome.state, outcome.reason)
                     if outcome.state in {"blocked", "capped", "failed"}:
                         del all_listings[listing_start:]

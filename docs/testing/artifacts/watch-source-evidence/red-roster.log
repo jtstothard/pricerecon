@@ -1,0 +1,106 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+____ test_every_mandatory_source_family_is_visible_without_any_acquisition _____
+
+    def test_every_mandatory_source_family_is_visible_without_any_acquisition():
+>       run_source("roster")
+
+tests/test_source_evidence_workflow.py:46: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'roster', storage = None
+
+    def run_source(name, storage=None):
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-m", "tests.monitoring.source_evidence_workflows", name]
+            + ([str(storage)] if storage else []),
+            cwd=root,
+            env={
+                "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                "PYTHONDONTWRITEBYTECODE": "1",
+            },
+            capture_output=True, text=True, timeout=40, check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Loaded 0 watches into scheduler
+E         Traceback (most recent call last):
+E           File "<frozen runpy>", line 203, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/tests/monitoring/source_evidence_workflows.py", line 357, in <module>
+E             asyncio.run(globals()[sys.argv[1]]())
+E             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+E             return runner.run(main)
+E                    ~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+E             return self._loop.run_until_complete(task)
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+E             return future.result()
+E                    ~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/tests/monitoring/source_evidence_workflows.py", line 304, in roster
+E             rows = feed["source_coverage"]
+E                    ~~~~^^^^^^^^^^^^^^^^^^^
+E         KeyError: 'source_coverage'
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python', '-m', 'tests.monitoring.sou...4, in roster\n    rows = feed["source_coverage"]\n           ~~~~^^^^^^^^^^^^^^^^^^^\nKeyError: \'source_coverage\'\n').returncode
+
+tests/test_source_evidence_workflow.py:22: AssertionError
+____ test_adapter_evidence_and_limits_survive_fresh_process_without_refresh ____
+
+    def test_adapter_evidence_and_limits_survive_fresh_process_without_refresh():
+        with TemporaryDirectory(prefix="pricerecon-offline-") as storage:
+            Path(storage, ".offline-monitoring").write_text("ticket01-test-storage\n")
+>           run_source("restart_seed", storage)
+
+tests/test_source_evidence_workflow.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'restart_seed', storage = '/tmp/pricerecon-offline-hd61czpz'
+
+    def run_source(name, storage=None):
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-m", "tests.monitoring.source_evidence_workflows", name]
+            + ([str(storage)] if storage else []),
+            cwd=root,
+            env={
+                "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                "PYTHONDONTWRITEBYTECODE": "1",
+            },
+            capture_output=True, text=True, timeout=40, check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Loaded 0 watches into scheduler
+E         Traceback (most recent call last):
+E           File "<frozen runpy>", line 203, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/tests/monitoring/source_evidence_workflows.py", line 357, in <module>
+E             asyncio.run(globals()[sys.argv[1]]())
+E             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+E             return runner.run(main)
+E                    ~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+E             return self._loop.run_until_complete(task)
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+E             return future.result()
+E                    ~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/tests/monitoring/source_evidence_workflows.py", line 349, in restart_seed
+E             await restart(True)
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/tests/monitoring/source_evidence_workflows.py", line 342, in restart
+E             coverage = next(row for row in feed["source_coverage"] if row["route"] == "aliexpress_browser_first_v1")
+E                                            ~~~~^^^^^^^^^^^^^^^^^^^
+E         KeyError: 'source_coverage'
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python', '-m', 'tests.monitoring.sou...press_browser_first_v1")\n                                   ~~~~^^^^^^^^^^^^^^^^^^^\nKeyError: \'source_coverage\'\n').returncode
+
+tests/test_source_evidence_workflow.py:22: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_source_evidence_workflow.py::test_every_mandatory_source_family_is_visible_without_any_acquisition
+FAILED tests/test_source_evidence_workflow.py::test_adapter_evidence_and_limits_survive_fresh_process_without_refresh
+2 failed, 5 deselected in 1.71s

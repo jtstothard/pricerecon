@@ -94,6 +94,7 @@ export function fieldEvidence(value: unknown) {
     effective_at: claim.effective_at === null ? null : date(claim.effective_at),
     observed_at: claim.observed_at === null ? null : date(claim.observed_at),
     retrieved_at: date(claim.retrieved_at), capture_id: text(claim.capture_id), route: text(claim.route),
+    acquisition_capture_id: claim.acquisition_capture_id == null ? null : text(claim.acquisition_capture_id),
     pointer: link(claim.pointer), locator: text(claim.locator), retention: choice(claim.retention, ['minimal_fields', 'synthetic']),
     permission_reference: text(claim.permission_reference), derived_from: list(claim.derived_from, text),
     input_claim_ids: list(claim.input_claim_ids, text),
@@ -182,6 +183,7 @@ export function offer(value: unknown) {
   const item = record(value)
   choice(item.authenticity, ['unknown']); choice(item.internal_health, ['unknown'])
   return { id: text(item.id), revision: integer(item.revision), binding_id: text(item.binding_id),
+    source_evidence: item.source_evidence == null ? null : parseSourceOfferEvidence(item.source_evidence),
     binding_revision: integer(item.binding_revision), source: text(item.source), source_listing_id: text(item.source_listing_id),
     seller: nullableText(item.seller), condition: nullableText(item.condition),
     condition_description: nullableText(item.condition_description), visible_condition: nullableText(item.visible_condition),
@@ -308,19 +310,68 @@ export function parseDiscoveryFeed(value: unknown) {
     collection_reason: text(feed.collection_reason), preferences: parsePreferences(feed.preferences),
     candidates: list(feed.candidates, parseCandidate),
     tracking: parseTrackingList(feed.tracking),
+    source_coverage: list(feed.source_coverage, raw => {
+      const row = record(raw)
+      choice(row.activation, ['staged'])
+      return { family: choice(row.family, ['aliexpress', 'ebay_secondhand', 'brand_direct', 'uk_retail', 'uk_shipping_international', 'search_aggregator_community']),
+        source: text(row.source), route: text(row.route),
+        accepted_status: choice(row.accepted_status, ['reviewed_lead', 'blocked', 'unqualified', 'unsupported']),
+        reason: text(row.reason), prerequisites: list(row.prerequisites, text), decision_reference: text(row.decision_reference),
+        last_outcome: row.last_outcome === null ? null : parseSourceOutcome(row.last_outcome) }
+    }),
+    cohort_gaps: list(feed.cohort_gaps, text),
     captures: list(feed.captures, item => {
       const capture = record(item), request = record(capture.request), admission = record(capture.admission)
       return { capture_id: text(capture.capture_id), captured_at: date(capture.captured_at),
         query: text(request.query), mode: choice(admission.mode, ['staged', 'offline_verification']),
-        outcomes: list(capture.outcomes, raw => {
-          const outcome = record(raw)
-          return { source: text(outcome.source),
-            state: choice(outcome.state, ['success', 'success_empty', 'partial', 'cache_reuse', 'blocked', 'capped', 'failed', 'not_attempted']),
-            listing_count: integer(outcome.listing_count),
-            reason: outcome.reason === null ? null : text(outcome.reason) }
-        }) }
+        outcomes: list(capture.outcomes, parseSourceOutcome) }
     }),
   }
+}
+
+export function parseSourceReceipt(value: unknown) {
+  const receipt = record(value), use = receipt.use === null ? null : record(receipt.use)
+  const count = (raw: unknown) => raw === null ? null : integer(raw)
+  const boolean = (raw: unknown) => {
+    if (raw !== null && typeof raw !== 'boolean') throw new Error('Invalid source coverage flag')
+    return raw
+  }
+  choice(receipt.history_rights, ['unqualified'])
+  return { route: text(receipt.route), source_host: nullableText(receipt.source_host),
+    capture_id: text(receipt.capture_id), retrieved_at: date(receipt.retrieved_at),
+    use: use === null ? null : { permission_reference: text(use.permission_reference), retention: choice(use.retention, ['minimal_fields', 'synthetic']) },
+    prerequisites: list(receipt.prerequisites, text), pages_captured: integer(receipt.pages_captured),
+    page_limit: count(receipt.page_limit), discovered_count: count(receipt.discovered_count), inspected_count: count(receipt.inspected_count),
+    item_limit: count(receipt.item_limit), detail_limit: count(receipt.detail_limit),
+    next_page: boolean(receipt.next_page), content_truncated: boolean(receipt.content_truncated),
+    completeness: choice(receipt.completeness, ['unknown', 'partial', 'declared_scope']), issues: list(receipt.issues, text) }
+}
+
+export function parseSourceOutcome(value: unknown) {
+  const outcome = record(value)
+  return { source: text(outcome.source),
+    state: choice(outcome.state, ['success', 'success_empty', 'partial', 'cache_reuse', 'blocked', 'capped', 'failed', 'not_attempted']),
+    listing_count: integer(outcome.listing_count), reason: nullableText(outcome.reason),
+    completeness: choice(outcome.completeness, ['unknown', 'partial', 'declared_scope']),
+    reused_capture_id: nullableText(outcome.reused_capture_id),
+    source_evidence: outcome.source_evidence == null ? null : parseSourceReceipt(outcome.source_evidence) }
+}
+
+export function parseSourceOfferEvidence(value: unknown) {
+  const item = record(value)
+  return { merchant_role: choice(item.merchant_role, ['marketplace', 'independent_retailer', 'retailer', 'unknown']),
+    selected_options: Object.fromEntries(Object.entries(record(item.selected_options)).map(([name, value]) => [name, text(value)])),
+    selected_sku: nullableText(item.selected_sku),
+    price_scope: choice(item.price_scope, ['selected_variation', 'parent_listing', 'display_unbound', 'auction_bid', 'unknown']),
+    condition_literal: nullableText(item.condition_literal), purchase_modes: list(item.purchase_modes, text),
+    seller_literal: nullableText(item.seller_literal), destination: nullableText(item.destination),
+    destination_literal: nullableText(item.destination_literal),
+    quantity: item.quantity === null ? null : integer(item.quantity),
+    availability_literal: nullableText(item.availability_literal), stock_quantity: item.stock_quantity === null ? null : integer(item.stock_quantity),
+    shipping_claim: nullableText(item.shipping_claim),
+    vat_included_claim: item.vat_included_claim === null ? null : choice(String(item.vat_included_claim), ['true', 'false']),
+    other_price_claims: Object.fromEntries(Object.entries(record(item.other_price_claims)).map(([name, value]) => [name, text(value)])),
+    missing_fields: list(item.missing_fields, text) }
 }
 
 export type DiscoveryFeed = ReturnType<typeof parseDiscoveryFeed>

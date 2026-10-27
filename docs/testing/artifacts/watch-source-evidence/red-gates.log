@@ -1,0 +1,117 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_ test_missing_use_authority_and_real_browser_accounting_stop_before_transport _
+
+    def test_missing_use_authority_and_real_browser_accounting_stop_before_transport():
+>       run_source("gates")
+
+tests/test_source_evidence_workflow.py:37: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'gates', storage = None
+
+    def run_source(name, storage=None):
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-m", "tests.monitoring.source_evidence_workflows", name]
+            + ([str(storage)] if storage else []),
+            cwd=root,
+            env={
+                "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                "PYTHONDONTWRITEBYTECODE": "1",
+            },
+            capture_output=True, text=True, timeout=40, check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Loaded 0 watches into scheduler
+E         discovery_connector_degraded
+E         Traceback (most recent call last):
+E           File "<frozen runpy>", line 203, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/tests/monitoring/source_evidence_workflows.py", line 299, in <module>
+E             asyncio.run(globals()[sys.argv[1]]())
+E             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+E             return runner.run(main)
+E                    ~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+E             return self._loop.run_until_complete(task)
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+E             return future.result()
+E                    ~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/tests/monitoring/source_evidence_workflows.py", line 249, in gates
+E             assert outcome["source_evidence"]["use"] is None
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+E         TypeError: 'NoneType' object is not subscriptable
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python', '-m', 'tests.monitoring.sou...]["use"] is None\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^\nTypeError: \'NoneType\' object is not subscriptable\n').returncode
+
+tests/test_source_evidence_workflow.py:21: AssertionError
+_____ test_browse_failure_keeps_route_prerequisites_and_last_good_capture ______
+
+    def test_browse_failure_keeps_route_prerequisites_and_last_good_capture():
+>       run_source("failure")
+
+tests/test_source_evidence_workflow.py:41: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'failure', storage = None
+
+    def run_source(name, storage=None):
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-m", "tests.monitoring.source_evidence_workflows", name]
+            + ([str(storage)] if storage else []),
+            cwd=root,
+            env={
+                "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                "PYTHONDONTWRITEBYTECODE": "1",
+            },
+            capture_output=True, text=True, timeout=40, check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Loaded 0 watches into scheduler
+E         discovery_connector_error
+E         Traceback (most recent call last):
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/core/acquisition.py", line 265, in acquire_sources
+E             report = await inspect(effective_query, connector_filters)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py", line 353, in search_with_evidence
+E             await self.search(query, filters)
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/src/pricerecon/connectors/ebay.py", line 516, in search
+E             response.raise_for_status()
+E             ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/lib/python3.14/site-packages/httpx/_models.py", line 829, in raise_for_status
+E             raise HTTPStatusError(message, request=request, response=self)
+E         httpx.HTTPStatusError: Client error '429 Too Many Requests' for url 'https://api.ebay.com/buy/browse/v1/item_summary/search?q=Casio&limit=50'
+E         For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429
+E         Traceback (most recent call last):
+E           File "<frozen runpy>", line 203, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/tests/monitoring/source_evidence_workflows.py", line 299, in <module>
+E             asyncio.run(globals()[sys.argv[1]]())
+E             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+E             return runner.run(main)
+E                    ~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+E             return self._loop.run_until_complete(task)
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+E             return future.result()
+E                    ~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/tests/monitoring/source_evidence_workflows.py", line 290, in failure
+E             assert outcome["state"] == "blocked", outcome
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E         AssertionError: {'source_evidence': None, 'source': 'ebay', 'route': 'connector_search_v1', 'state': 'failed', 'listing_count': 0, 'reason': 'connector_error', 'completeness': 'unknown', 'reused_capture_id': None}
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python', '-m', 'tests.monitoring.sou... \'listing_count\': 0, \'reason\': \'connector_error\', \'completeness\': \'unknown\', \'reused_capture_id\': None}\n').returncode
+
+tests/test_source_evidence_workflow.py:21: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_source_evidence_workflow.py::test_missing_use_authority_and_real_browser_accounting_stop_before_transport
+FAILED tests/test_source_evidence_workflow.py::test_browse_failure_keeps_route_prerequisites_and_last_good_capture
+2 failed, 3 deselected in 1.66s
