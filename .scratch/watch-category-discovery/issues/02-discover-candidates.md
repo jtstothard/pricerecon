@@ -18,4 +18,13 @@
 
 ## Verification and authority
 
+Implementation handoff (2026-10-27): source implementation and offline checks are
+complete on isolated `t3/implement-ticket02-discovery`, pending the separate parent
+merger's verification. See [the verification receipt](../../../docs/testing/watch-discovery.md)
+for red/green gates, 20 workflows including all 15 legacy monitoring workflows,
+25 frontend tests, build/type checks and actual desktop/narrow browser proof.
+The user separately authorised local commits and integration merges. Acceptance
+checkboxes and ticket closure remain for the parent merger; no activation or buyer
+acceptance is claimed.
+
 Use the buyer-approved API plus normal execution seam, controlled external edges and isolated storage; assert observable behavior. Include persistence/API/UI behavior for this slice and keep legacy Watch semantics compatible. Source implementation and offline verification only: no live collection, production DB operations, account connections, activation, deployment, purchase, commit or push is authorised by this ticket.

@@ -1,0 +1,118 @@
+"""Repeatable local UI fixture. Run only with the guarded temporary application.
+
+    PYTHONPATH="$PWD/src:$PWD" <existing-venv>/bin/python -m tests.monitoring.discovery_ui_server --port 8877
+
+Build frontend first. No merchant/browser backend, credentials or production DB.
+The server accepts inbound loopback UI traffic; all acquisition/sending edges stay
+guarded by MonitoringHarness. Ctrl-C prints the guard/sending receipt.
+"""
+
+import argparse
+import asyncio
+import json
+
+import uvicorn
+from fastapi import APIRouter
+
+from .harness import MonitoringHarness
+from .workflows import LEGACY, listing
+
+
+async def main(port):
+    with MonitoringHarness() as harness:
+        from pricerecon.core.discovery import execute_discovery
+        from pricerecon.models.discovery import DiscoveryAdmission, DiscoveryRequest
+
+        assert harness.application.frontend_dist.joinpath("index.html").is_file(), (
+            "Build frontend first"
+        )
+        harness.seed_legacy(
+            [(7, LEGACY), (8, {**LEGACY, "name": "Paused saved search", "enabled": False})]
+        )
+        names = [
+            "Militado ML05/ML05B",
+            "Addiesdive AD2066 mint",
+            "San Martin SN0144",
+            "Merkur Lightning salmon",
+            "Casio MTP-B145D-2A2VEF",
+        ]
+        harness.outcomes["cex"] = [
+            listing(harness, "cex", f"fixture-{i}", name, "48.00") for i, name in enumerate(names)
+        ]
+        async with harness.session() as (_, scheduler):
+            fixture_router = APIRouter()
+
+            @fixture_router.get("/api/offline-verification")
+            async def fixture_identity():
+                return {
+                    "fixture": "ticket02-discovery-ui",
+                    "temporary_storage": True,
+                    "automatic_checks": False,
+                    "blocked_edges": harness.blocked_edges,
+                    "notifications_sent": len(harness.deliveries),
+                }
+
+            # Test-server-only marker precedes the SPA fallback. The driver
+            # verifies it before any edits, so a reused port fails closed.
+            harness.application.app.router.routes[0:0] = fixture_router.routes
+            await execute_discovery(
+                DiscoveryRequest(
+                    query="wristwatch", sources=[{"connector": "cex"}, {"connector": "scan"}]
+                ),
+                admission=DiscoveryAdmission(
+                    mode="offline_verification",
+                    policy_reference="fixture-policy-v1",
+                    permission_reference="original-test-data",
+                    activation_reference="offline-ui-harness",
+                ),
+            )
+            harness.outcomes["scan"] = RuntimeError("offline simulated acquisition failure")
+            harness.clock.advance()
+            await execute_discovery(
+                DiscoveryRequest(query="wristwatch", sources=[{"connector": "scan"}]),
+                admission=DiscoveryAdmission(
+                    mode="offline_verification",
+                    policy_reference="fixture-policy-v1",
+                    permission_reference="original-test-data",
+                    activation_reference="offline-ui-harness",
+                ),
+            )
+            print(
+                f"OFFLINE_UI_READY http://127.0.0.1:{port}/discover; fictional connector leads; temporary SQLite; paused scheduler",
+                flush=True,
+            )
+            try:
+                await uvicorn.Server(
+                    uvicorn.Config(
+                        harness.application.app,
+                        host="127.0.0.1",
+                        port=port,
+                        loop="asyncio",
+                        lifespan="off",
+                        access_log=False,
+                    )
+                ).serve()
+            finally:
+                assert harness.blocked_edges == []
+                assert harness.deliveries == []
+                assert len(scheduler.list_watches()) == 1
+                print(
+                    json.dumps(
+                        {
+                            "blocked_edges": harness.blocked_edges,
+                            "notifications_sent": len(harness.deliveries),
+                            "searches": len(harness.searches),
+                            "temporary_storage": True,
+                        }
+                    ),
+                    flush=True,
+                )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--port", type=int, default=8877)
+    try:
+        asyncio.run(main(parser.parse_args().port))
+    except KeyboardInterrupt:
+        print("OFFLINE_UI_STOPPED", flush=True)

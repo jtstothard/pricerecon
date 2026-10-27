@@ -306,6 +306,9 @@ def init_db(path: Path | None = None) -> None:
         VALUES ('1.0', 'Initial schema');
         """)
 
+    from pricerecon.db.discovery import init_discovery_tables
+
+    init_discovery_tables(conn)
     conn.commit()
     _seed_sources(conn)
     _migrate_connector_ids(conn)
