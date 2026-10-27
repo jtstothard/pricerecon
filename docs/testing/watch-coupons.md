@@ -519,3 +519,13 @@ overlapping correction/acquisition invalidation remain unproven here, as do
 live coupon application, buyer acceptance, source mapping/rights/retention,
 freshness, comparisons/savings and activation. Passing no-coupon behavior does
 not settle any coupon-success or operational gate.
+
+Final refresh: merge `f1174ded38bbce90dff87f21e0d9110d5842076f` incorporated
+integration `61ab075703e64b9589deb34b12f8acbacd929972` without conflicts, after
+the repair source and verification receipts were committed. The delta from
+`6b93262` contains tracker/evidence documentation only; `git diff --quiet` confirms
+no `src`, `tests` or `frontend` change, and the final tested source at `81d2d41`
+is unchanged. No test rerun was needed for that documentation-only merge. The
+temporary `.venv` symlink was removed at handoff; the existing parent environment
+and ignored frontend dependency symlink were left intact. No ticket09 status or
+integration-branch write was performed by this repair.
