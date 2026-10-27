@@ -1,7 +1,7 @@
 """Guarded application probe for ticket09 receipt provenance and shipping.
 
-Run in a fresh process. Intentionally fails while compatibility/eligibility
-evidence alone can support a reproduced payable. Not part of pytest collection.
+Run in a fresh process. Also exercised by the collected coupon regression.
+The original intentionally failing merger receipt is retained separately.
 """
 
 import asyncio
@@ -30,6 +30,12 @@ async def probe(output: Path) -> None:
                 # Reusing the base's GBP 2.10 would produce the wrong payable.
                 application.payable.components[1].amount = Decimal("4.20")
                 application.quoted_total = Decimal("47.20")
+                # The typed direct source quote must independently observe the
+                # changed shipping and bind this configuration revision.
+                observed = application.receipt.observation
+                observed.expected_configuration_revision = revision
+                observed.after.components[1].amount = Decimal("4.20")
+                observed.quoted_total = Decimal("47.20")
             else:
                 claims = (
                     coupon.terms.compatibility_evidence
@@ -46,7 +52,15 @@ async def probe(output: Path) -> None:
                     component.evidence = [claim.model_copy(deep=True) for claim in claims]
                 for line in application.lines:
                     line.evidence = [claim.model_copy(deep=True) for claim in claims]
+                # Remove the new typed receipt too: this remains the ENTIRE
+                # provenance substitution, with no checkout source left behind.
+                application.receipt = None
             reports.append(report)
+
+        originals = {
+            report.source_listing_id: report.coupons[0].model_dump(mode="json")
+            for report in reports
+        }
 
         async with harness.session() as (client, _):
             feed = await read_capture(harness, client, reports)
@@ -56,6 +70,9 @@ async def probe(output: Path) -> None:
                 coupon = offer["coupons"][0]
                 history = await get(client, f"/api/discovery/offers/{offer['id']}/coupons")
                 assert history["assessments"] == [coupon]
+                original = originals[candidate["source_listing_id"]]
+                for field in ("opportunity_evidence", "terms", "eligibility", "application"):
+                    assert coupon[field] == original[field]
                 result = coupon["resulting_cost"]
                 cases[candidate["source_listing_id"]] = {
                     "state": coupon["state"],
@@ -85,6 +102,9 @@ async def probe(output: Path) -> None:
                 "currency": "GBP",
             }
             assert cases["shipping-recalculated"]["merchant_payable"] == {"GBP": "47.20"}
+            for name in names[:2]:
+                assert cases[name]["state"] == "applicable_not_reproduced"
+                assert "application_receipt_missing" in cases[name]["issues"]
             unsupported = [name for name in names[:2] if cases[name]["payable"] is not None]
             assert not unsupported, f"Non-application evidence accepted as receipt: {unsupported}"
 

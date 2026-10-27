@@ -59,6 +59,17 @@ def sanitize_pointers(coupon: CouponInput) -> None:
         claims.extend(e for part in application.payable.components for e in part.evidence)
         claims.extend(e for fx in application.payable.fx_quotes for e in fx.evidence)
         claims.extend(e for benefit in application.payable.benefits for e in benefit.evidence)
+        if application.receipt:
+            receipt = application.receipt
+            claims.append(receipt)
+            observed = receipt.observation
+            claims.extend(observed.eligibility.evidence)
+            claims.extend(e for line in observed.lines for e in line.evidence)
+            for scenario in (observed.before, observed.after):
+                claims.extend(scenario.context_evidence)
+                claims.extend(e for part in scenario.components for e in part.evidence)
+                claims.extend(e for fx in scenario.fx_quotes for e in fx.evidence)
+                claims.extend(e for benefit in scenario.benefits for e in benefit.evidence)
     for claim in claims:
         claim.pointer = safe_pointer(claim.pointer)
 
@@ -75,6 +86,13 @@ def read_coupons(connection: sqlite3.Connection, offer: MerchantOffer) -> list[C
 
 def project_lineage(connection: sqlite3.Connection, coupon: CouponAssessment) -> CouponAssessment:
     """Fail closed on newer source revisions; never rewrite stored receipts."""
+    if coupon.resulting_cost is not None and (
+        coupon.application is None or coupon.application.receipt is None
+    ):
+        coupon.state = "invalidated"
+        coupon.historical_resulting_cost = coupon.resulting_cost
+        coupon.resulting_cost = None
+        coupon.issues = list(dict.fromkeys([*coupon.issues, "application_receipt_missing"]))
     row = connection.execute(
         "SELECT revision, binding_id, binding_revision, capture_id, candidate_id FROM discovery_offers WHERE id = ? ORDER BY revision DESC LIMIT 1",
         (coupon.offer_id,),
@@ -112,7 +130,8 @@ def project_lineage(connection: sqlite3.Connection, coupon: CouponAssessment) ->
     if not current:
         coupon.lineage = "superseded"
         coupon.state = "invalidated"
-        coupon.historical_resulting_cost = coupon.resulting_cost
+        if coupon.resulting_cost is not None:
+            coupon.historical_resulting_cost = coupon.resulting_cost
         coupon.resulting_cost = None
         coupon.issues = list(dict.fromkeys([*coupon.issues, "source_revision_superseded"]))
     return coupon
