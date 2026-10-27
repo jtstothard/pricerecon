@@ -9,6 +9,8 @@ from typing import Any, Optional
 from urllib.parse import quote_plus
 
 import httpx
+
+from pricerecon.core.collection_transport import collection_http_client
 from pydantic import BaseModel, Field, field_validator
 
 from pricerecon.connectors.base import BaseConnector
@@ -315,6 +317,8 @@ def _get_basic_auth(app_id: str, cert_id: Optional[str]) -> str:
 
 
 class eBayConnector(BaseConnector):
+    collection_accounting = "http_v1"
+
     """eBay Browse API connector with startup burst protection."""
 
     CONNECTOR_ID = "ebay"
@@ -331,7 +335,7 @@ class eBayConnector(BaseConnector):
         return SourceType.MARKETPLACE
 
     async def initialize(self) -> None:
-        self._client = httpx.AsyncClient(timeout=30.0)
+        self._client = collection_http_client(timeout=30.0)
         await self.ensure_token()
 
     async def cleanup(self) -> None:

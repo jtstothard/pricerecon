@@ -666,6 +666,9 @@ class BrowserClient:
         ) or bool((self.config.camofox_url or "").strip())
 
     async def start(self) -> None:
+        from pricerecon.core.collection_transport import require_bounded_browser
+
+        require_bounded_browser()
         if (
             self._active_backend is not None
             or self._browser is not None

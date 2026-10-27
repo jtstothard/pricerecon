@@ -32,8 +32,9 @@ class Clock:
 
 
 class MonitoringHarness:
-    def __init__(self, *, storage_root=None):
+    def __init__(self, *, storage_root=None, operating_envelope=True):
         self.storage_root = storage_root
+        self.operating_envelope = operating_envelope
         self.clock = Clock()
         self.outcomes = {"cex": [], "scan": []}
         self.searches = []
@@ -156,6 +157,7 @@ class MonitoringHarness:
         def connector_for(source):
             class ControlledConnector:
                 source_role = SourceType.RETAILER
+                collection_accounting = "controlled_v1"
 
                 async def initialize(self):
                     pass
@@ -174,6 +176,9 @@ class MonitoringHarness:
                     )
 
                 async def search(self, query, filters=None):
+                    from pricerecon.core.collection_transport import debit_resources
+
+                    debit_resources(requests=1, pages=1)
                     harness.searches.append((source, query, filters))
                     harness.search_started.set()
                     outcome = harness.outcomes[source]
@@ -193,15 +198,18 @@ class MonitoringHarness:
         self.application = importlib.import_module("pricerecon.app")
         from pricerecon.api import watches
         from pricerecon.core import (
+            acquisition,
             connector_health,
             diff_engine,
             discovery,
             exact_tracking,
             notifications,
+            rate_limiter,
             schedule,
             scheduler,
             watch_executor,
         )
+        from pricerecon.db import collection as collection_storage
         from pricerecon.db import corrections as correction_storage
         from pricerecon.db import discovery as discovery_storage
         from pricerecon.db import history as history_storage
@@ -215,6 +223,9 @@ class MonitoringHarness:
                 return clock.now.astimezone(tz) if tz else clock.now.replace(tzinfo=None)
 
         for module in (
+            rate_limiter,
+            acquisition,
+            collection_storage,
             self.application,
             discovery_storage,
             history_storage,
@@ -250,6 +261,27 @@ class MonitoringHarness:
         ):
             self.stack.enter_context(patch.object(notifications, name, transport))
         self.scheduler_module = scheduler
+        if self.operating_envelope:
+            from pricerecon.core.collection_policy import operating_policy
+            from pricerecon.models.collection import OperatingPolicy
+
+            # Explicit synthetic policy for retained offline workflows. These
+            # values confer no production limits, rights, cadence or ownership.
+            self.test_policy = OperatingPolicy(
+                scope_id="retained-offline-regressions", version="synthetic-v1",
+                owner_reference="test-harness", permission_reference="original-fixtures",
+                retention_reference="temporary-directory-only",
+                starts_at=datetime(2026, 1, 1, tzinfo=UTC),
+                stops_at=datetime(2030, 1, 1, tzinfo=UTC),
+                recovery_spacing_seconds=0, run_timeout_seconds=30,
+                provider_request_caps={source: {"limit":100000, "tracking_reserve":0}
+                                       for source in self.outcomes},
+                caps={name: {"limit": amount, "tracking_reserve": 0} for name, amount in (
+                    ("requests", 100000), ("pages", 100000), ("details", 100000),
+                    ("retries", 100000), ("fallbacks", 100000),
+                    ("storage_bytes", 1000000000), ("elapsed_seconds", 1000000))},
+            )
+            self.stack.enter_context(operating_policy(self.test_policy))
         return self
 
     def __exit__(self, *exc):

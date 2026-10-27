@@ -4,7 +4,7 @@
 
 **Blocked by:** [05: Track exact products and send qualified target alerts](05-track-exact-products.md)
 
-**Status:** in-progress
+**Status:** open — merger repair required 2026-10-27
 
 **Assignee:** Codex implementer (isolated worktree)
 
@@ -28,3 +28,42 @@ This ticket is **READY and unclaimed**, reserved for parent dispatch. No 10
 implementation or verification occurred in that acceptance. Shared admission,
 prioritisation and operating-policy requirements above remain this ticket's work;
 05's synthetic tracking policy supplies no production collection defaults.
+
+
+## Merger disposition — 2026-10-27
+
+**10 remains open; 11 remains blocked and unclaimed.** Source `072a2f8` was
+refreshed against clean integration `f561d76` in the existing source checkout,
+resolving four actual conflicts while retaining 07 publication/invalidation and
+10 admission wiring. Refresh merge `fd02625` was merged into integration with
+`--no-ff` as `5cca859` (first parent `f561d76`). Full history is retained.
+
+All **106 combined guarded workflows** pass, including all 96 source cases and
+07's ten cases. The 37 limiter/browser contracts, focused Ruff/mypy, repeated
+25 frontend tests/build and actual desktop/narrow collection/correction UI proof
+pass. These checks do not establish complete shared admission.
+
+Three additional controlled probes fail: after a one-request global/provider grant
+is exhausted, an independent API context and registered scheduler callback each
+send again without debiting it. A fresh process with the same marked temporary DB
+also sends with no policy context despite the persisted active exhausted grant.
+The outside caller's collection status reports `operating_policy_required` while
+its controlled transport ran. Persisted usage and attempts remain unchanged.
+No live transport, real credentials, escaped edges or notifications are involved.
+
+`current_policy()` has only a ContextVar lookup; policy-less acquisition constructs
+`budget=None`. This is optional per-context participation, not complete shared
+admission. Repair must apply/resolve the applicable finite durable grant (or
+withhold ambiguous callers before work) across API/scheduler/process entry points,
+while preserving saved monitoring intent and the passing no-grant legacy control.
+No architecture was rejected solely on inspection; actual transport/API probes
+establish this acceptance gap. No repair was implemented by the merger.
+
+See the [dated merger receipt, results, prerequisites and reproducer](../../../docs/testing/watch-collection.md#merger-disposition--2026-10-27).
+The redirect control caps the second actual edge, and the retained suite proves
+supplied-context accounting/priority/storage/withholding/recovery behavior. The
+unchecked shared-admission and bypass requirements remain unmet. Unsupported
+browser/AI lanes and physical disk/log/backup/retention controls remain prerequisites,
+not zero-cost resources or production operating acceptance. 07's separate
+multi-configuration gap remains open and was neither fixed nor used to excuse
+these collection failures. No 11 work, live operation, activation or push occurred.

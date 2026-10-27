@@ -1,0 +1,149 @@
+{
+  "baseline": "f561d76d55bf037ddec705ad488ebbc403934306",
+  "files": [
+    {
+      "path": "src/pricerecon/api/discovery.py",
+      "before": 0,
+      "after": 0,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/connectors/aliexpress.py",
+      "before": 20,
+      "after": 20,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/connectors/browser_client.py",
+      "before": 25,
+      "after": 25,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/connectors/ebay.py",
+      "before": 25,
+      "after": 25,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/connectors/external_browser.py",
+      "before": 19,
+      "after": 19,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/core/acquisition.py",
+      "before": 0,
+      "after": 0,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/core/collection_policy.py",
+      "before": 0,
+      "after": 0,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/core/collection_transport.py",
+      "before": 0,
+      "after": 0,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/core/diff_engine.py",
+      "before": 2,
+      "after": 2,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/core/discovery.py",
+      "before": 0,
+      "after": 0,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/core/exact_tracking.py",
+      "before": 0,
+      "after": 0,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/core/rate_limiter.py",
+      "before": 6,
+      "after": 5,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/core/watch_executor.py",
+      "before": 0,
+      "after": 0,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/db/collection.py",
+      "before": 0,
+      "after": 0,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/db/discovery.py",
+      "before": 0,
+      "after": 0,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/db/schema.py",
+      "before": 2,
+      "after": 2,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/db/tracking.py",
+      "before": 0,
+      "after": 0,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/models/collection.py",
+      "before": 0,
+      "after": 0,
+      "added": []
+    },
+    {
+      "path": "tests/monitoring/collection_browser_check.py",
+      "before": 0,
+      "after": 0,
+      "added": []
+    },
+    {
+      "path": "tests/monitoring/collection_ui_server.py",
+      "before": 0,
+      "after": 0,
+      "added": []
+    },
+    {
+      "path": "tests/monitoring/collection_workflows.py",
+      "before": 0,
+      "after": 0,
+      "added": []
+    },
+    {
+      "path": "tests/monitoring/harness.py",
+      "before": 0,
+      "after": 0,
+      "added": []
+    },
+    {
+      "path": "tests/test_collection_workflow.py",
+      "before": 0,
+      "after": 0,
+      "added": []
+    },
+    {
+      "path": "tests/monitoring/collection_merger_probe.py",
+      "before": 0,
+      "after": 0,
+      "added": []
+    }
+  ]
+}
