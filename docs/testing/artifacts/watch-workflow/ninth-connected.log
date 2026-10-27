@@ -1,0 +1,69 @@
+F.                                                                       [100%]
+=================================== FAILURES ===================================
+__________ test_five_watch_discovery_to_correction_and_alert_restart ___________
+
+    def test_five_watch_discovery_to_correction_and_alert_restart():
+        with TemporaryDirectory(prefix="pricerecon-offline-", dir="/tmp") as directory:
+            storage = Path(directory)
+            (storage / ".offline-monitoring").write_text("ticket01-test-storage\n")
+>           run_workflow("connected", storage)
+
+tests/test_watch_workflow.py:32: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'connected', storage = PosixPath('/tmp/pricerecon-offline-be7q2o7a')
+
+    def run_workflow(name, storage):
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-m", "tests.monitoring.watch_workflow", name, str(storage)],
+            cwd=root,
+            env={
+                "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                "PYTHONDONTWRITEBYTECODE": "1",
+            },
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Loaded 1 watches into scheduler
+E         discovery_connector_error
+E         Traceback (most recent call last):
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/src/pricerecon/core/acquisition.py", line 266, in acquire_sources
+E             report = await inspect(effective_query, connector_filters)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/tests/monitoring/harness.py", line 175, in search_with_evidence
+E             listings=await self.search(query, filters),
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/tests/monitoring/harness.py", line 187, in search
+E             raise outcome
+E         RuntimeError: Synthetic source outage
+E         Traceback (most recent call last):
+E           File "<frozen runpy>", line 203, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/tests/monitoring/watch_workflow.py", line 309, in <module>
+E             asyncio.run({"connected": connected, "resume": resume, "recovery": recovery}[sys.argv[1]](Path(sys.argv[2])))
+E             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+E             return runner.run(main)
+E                    ~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+E             return self._loop.run_until_complete(task)
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+E             return future.result()
+E                    ~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/tests/monitoring/watch_workflow.py", line 242, in connected
+E             assert other["target_gbp"] == "40.00"
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E         AssertionError
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python', '-m', 'tests.monitoring.wat... in connected\n    assert other["target_gbp"] == "40.00"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n').returncode
+
+tests/test_watch_workflow.py:25: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_watch_workflow.py::test_five_watch_discovery_to_correction_and_alert_restart
+1 failed, 1 passed in 3.77s

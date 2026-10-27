@@ -1,0 +1,161 @@
+# Parent-run buyer walkthrough: synthetic watch workflow
+
+**Feedback gate: unproven.** The parent must present this concrete package and
+obtain actual buyer feedback. No buyer was contacted by the implementer. The
+screenshots and automated pass are review aids, not a substitute for that feedback.
+Ticket12 remains open for parent acceptance/closure and final two-axis review.
+
+This is the implemented application running against invented watch evidence in
+temporary SQLite. It has no production data, live collection, merchant sessions,
+accounts or real notification transport. All five names remain in the feed;
+Militado and Merkur remain unresolved. Illustrations are original placeholders,
+not product photos. Positive dimensions and prices are fictional test inputs.
+
+## Launch safely
+
+Use this source worktree, or the parent's integration checkout **after** it merges
+this source. Build first, with no fixture running. The implementer linked only
+this worktree's `frontend/node_modules` to the existing integration dependencies;
+no packages or browsers were installed.
+
+```sh
+cd /Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  npm --prefix frontend run build
+```
+
+After the build finishes, run in the same directory:
+
+```sh
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  -m tests.monitoring.discovery_ui_server --workflow --port 8892
+```
+
+Wait for `OFFLINE_UI_READY`. Open **http://127.0.0.1:8892/discover** in a clean
+local browser session. Before edits, the parent must verify
+`http://127.0.0.1:8892/api/offline-verification` returns fixture
+`ticket12-connected-ui-v1`, `temporary_storage=true`, `automatic_checks=false`,
+`blocked_edges=[]` and zero initial notifications. If the port is occupied or the
+marker differs, stop; do not use an existing backend as a fallback. The fixture
+binds only 127.0.0.1; outbound application edges stay audit-guarded. Avoid merchant
+links: all review interactions belong to this synthetic local application.
+
+The parent advances deterministic time/prices between buyer tasks, from a second
+terminal in the same directory. This helper verifies the fixture marker and
+per-run identity before posting a bounded fixture action:
+
+```sh
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  -m tests.monitoring.watch_workflow_ui --port 8892 --step baseline
+```
+
+Replace only the final step name with `cross`, `duplicate`, `drop`, `costs`,
+`coupon` or `stale` as directed below. Reload the buyer page after each step.
+These controls are test-only endpoints; there is no production collection HTTP
+action. They send only to captured transports. Clicking Track alone does not
+start polling. Ctrl-C stops the fixture, prints its final guard receipt and removes
+its temporary database. Starting again gives a fresh five-case seed; there is no
+persisted buyer state to clean from another checkout.
+
+## Walkthrough tasks and expected observations
+
+Let the buyer describe what they understand before explaining the expected state.
+Record their actual words, confusions and preferences; do not fill the feedback
+form with automated observations.
+
+1. **Discover and edit preferences.** Find the five watch cases without changing
+   the saved Watch queue. Set compact 38mm, colourful mint/salmon and delivered
+   budget £150, then reload. Try375px width as well as1280px. Militado/Merkur
+   dimensions stay unknown; a £1 item lead does not satisfy a delivered budget.
+   Ask what the buyer believes is known about fit, price and source coverage.
+2. **Explain payable and benefits.** Expand Addiesdive's Price and evidence and
+   Delivered cost scenarios. Initial base payable is £70.10: item£68 plus£2.10
+   shipping, with quoted VAT already included. Cashback£10 is conditional and
+   excluded from payable. There is no ordinary-price or savings claim. Ask the
+   buyer which amount they would need to pay and what remains conditional.
+3. **Track and see meaningful price changes.** Save an Addiesdive delivered target
+   of £60; optionally choose webhook to inspect **captured** delivery records.
+   Parent runs `baseline` **after target creation**, then `cross`, `duplicate`,
+   `drop`, reloading each time. Baseline£70.10 is above target;£58.10 crosses;
+   duplicate£58.10 sends nothing extra;£56.10 is a further drop. With webhook
+   selected the marker shows0/1/1/2 captured sends. No actual webhook is sent.
+   Ask what would make a target alert eligible and whether the explanation is clear.
+4. **Inspect uncertain costs, coupon and scope.** Before changing Addiesdive's
+   identity, parent runs `costs`: San Martin moves from a selected-dial trap,
+   through missing shipping, to a conditional regional quote; Casio shows an
+   evidenced synthetic FX path. Parent then runs `coupon`. Addiesdive's base
+   stays £50.10; the separately reproduced synthetic public receipt is £45.10.
+   The scoped comparison/dated observed low can show£45.10 while the default
+   no-coupon target uses£50.10. Usual and personal prices remain unavailable,
+   savings absent. Expand coverage: sixteen source lanes, unchecked real routes
+   and synthetic dates do not establish a complete market or a usual price.
+   Ask the buyer to explain current-best versus dated-low versus usual price.
+5. **Correct identity and inspect consequences.** Correct Addiesdive dial from
+   mint to salmon with an attributed rationale. Reload. Target£60 remains;
+   prior prices/coupon/assessments are historical or withdrawn; alerts are withheld
+   until independent fresh compatible evidence exists. Expand original evidence
+   and history: original mint observations were not relabelled salmon. Repeat
+   keyboard interaction at both widths. Ask what they expect the app to do next.
+6. **Discuss freshness and errors.** Parent runs `stale`, which advances the
+   controlled clock three hours without collecting anything. Reload and inspect
+   withholding/age. The retained conflict screenshots show an actual API409
+   rendered by the UI, followed by reload and resolution. Ask whether stale,
+   disputed, outside-preference and above-target states are distinguishable and
+   what additional explanation/noise control they would need.
+
+The automated browser driver additionally exercises an actual competing correction
+writer, a rejected stale form, and reload/resolution. To reproduce that entire
+script against a **fresh** fixture (it changes the temporary buyer state), use:
+
+```sh
+/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  -m tests.monitoring.watch_workflow_browser --port 8892 \
+  --artifacts "$PWD/docs/testing/artifacts/watch-workflow/browser"
+```
+
+This uses installed Chrome and agent-browser, a unique owned session, and
+`--allowed-domains 127.0.0.1`; it closes its browser in `finally`. The installed
+agent-browser lacks the newer skill's `skills get core` command; its installed
+`--help` and the retained drivers were used, with no install/update.
+
+## Review images
+
+All images are actual implemented UI screenshots, opened and inspected by the
+implementer. Dense evidence panels scroll; the buyer must judge their usability.
+They are not mockups or live merchant screenshots.
+
+| Topic | Desktop 1280×900 | Narrow 375×812 |
+| --- | --- | --- |
+| Feed | [Feed](artifacts/watch-workflow/browser/desktop-feed.png) | [Feed](artifacts/watch-workflow/browser/narrow-feed.png) |
+| Preferences | [Editable interpretations](artifacts/watch-workflow/browser/desktop-preferences.png) | [Persisted edits](artifacts/watch-workflow/browser/narrow-preferences.png) |
+| Payable/benefits | [VAT and payable](artifacts/watch-workflow/browser/desktop-prices.png), [cashback](artifacts/watch-workflow/browser/desktop-cashback.png) | [Cashback excluded](artifacts/watch-workflow/browser/narrow-cashback.png) |
+| Conditional shipping | [Conditional quote](artifacts/watch-workflow/browser/desktop-conditional.png) | [Conditional quote](artifacts/watch-workflow/browser/narrow-conditional.png) |
+| Target | [Qualifying further drop](artifacts/watch-workflow/browser/desktop-tracking.png) | [Edited intent retained/staged](artifacts/watch-workflow/browser/narrow-tracking.png) |
+| Price claims | [Scoped assessment](artifacts/watch-workflow/browser/desktop-assessments.png) | [Dated low/missing baseline](artifacts/watch-workflow/browser/narrow-prices.png) |
+| Coverage | [Sources/gaps](artifacts/watch-workflow/browser/desktop-coverage.png) | [Sources/gaps](artifacts/watch-workflow/browser/narrow-coverage.png) |
+| Correction | [Lineage and resolution](artifacts/watch-workflow/browser/desktop-correction.png) | [Saved correction](artifacts/watch-workflow/browser/narrow-correction.png) |
+| Error | [Stale writer conflict](artifacts/watch-workflow/browser/desktop-error.png) | [Stale writer conflict](artifacts/watch-workflow/browser/narrow-error.png) |
+
+## Feedback record for the parent
+
+Status: **unproven — not yet conducted**. Leave every answer empty until the actual
+buyer participates. Retain timestamp, presented build/source identity, viewport,
+fixture operations and any assistance provided.
+
+| Task | Buyer explanation / difficulty / requested change | Acceptance decision |
+| --- | --- | --- |
+| Payable versus conditional/cashback | Pending actual buyer | Pending |
+| Missing baseline/current-best/dated-low | Pending actual buyer | Pending |
+| Source coverage and age | Pending actual buyer | Pending |
+| Preferences and unknown dimensions | Pending actual buyer | Pending |
+| Correction and preserved target | Pending actual buyer | Pending |
+| Alert eligibility/noise and errors | Pending actual buyer | Pending |
+| Desktop/narrow/keyboard usability | Pending actual buyer | Pending |
+
+The parent owns feedback, acceptance/closure, final Standards-versus-Spec review
+and later cleanup. No live access/retention/freshness/budget/ownership/migration or
+activation gate is resolved by this walkthrough.

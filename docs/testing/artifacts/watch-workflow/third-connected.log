@@ -1,0 +1,70 @@
+F.                                                                       [100%]
+=================================== FAILURES ===================================
+__________ test_five_watch_discovery_to_correction_and_alert_restart ___________
+
+    def test_five_watch_discovery_to_correction_and_alert_restart():
+        with TemporaryDirectory(prefix="pricerecon-offline-", dir="/tmp") as directory:
+            storage = Path(directory)
+            (storage / ".offline-monitoring").write_text("ticket01-test-storage\n")
+>           run_workflow("connected", storage)
+
+tests/test_watch_workflow.py:32: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'connected', storage = PosixPath('/tmp/pricerecon-offline-xet7o5et')
+
+    def run_workflow(name, storage):
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-m", "tests.monitoring.watch_workflow", name, str(storage)],
+            cwd=root,
+            env={
+                "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                "PYTHONDONTWRITEBYTECODE": "1",
+            },
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "<frozen runpy>", line 203, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/tests/monitoring/watch_workflow.py", line 272, in <module>
+E             asyncio.run({"connected": connected, "resume": resume, "recovery": recovery}[sys.argv[1]](Path(sys.argv[2])))
+E             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+E             return runner.run(main)
+E                    ~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+E             return self._loop.run_until_complete(task)
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+E             return future.result()
+E                    ~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/tests/monitoring/watch_workflow.py", line 117, in connected
+E             harness.test_policy.caps["requests"].limit = 12
+E             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/lib/python3.14/site-packages/pydantic/main.py", line 1111, in __setattr__
+E             elif (setattr_handler := self._setattr_handler(name, value)) is not None:
+E                                      ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/lib/python3.14/site-packages/pydantic/main.py", line 1147, in _setattr_handler
+E             _check_frozen(cls, name, value)
+E             ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/lib/python3.14/site-packages/pydantic/main.py", line 104, in _check_frozen
+E             raise ValidationError.from_exception_data(
+E                 model_cls.__name__, [{'type': error_type, 'loc': (name,), 'input': value}]
+E             )
+E         pydantic_core._pydantic_core.ValidationError: 1 validation error for ResourceCap
+E         limit
+E           Instance is frozen [type=frozen_instance, input_value=12, input_type=int]
+E             For further information visit https://errors.pydantic.dev/2.14/v/frozen_instance
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python', '-m', 'tests.monitoring.wat...put_value=12, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.14/v/frozen_instance\n').returncode
+
+tests/test_watch_workflow.py:25: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_watch_workflow.py::test_five_watch_discovery_to_correction_and_alert_restart
+1 failed, 1 passed in 2.13s

@@ -28,7 +28,13 @@ async def main(
     corrections=False,
     source_evidence=False,
     assessments=False,
+    workflow=False,
 ):
+    if workflow:
+        from .watch_workflow_ui import serve
+
+        await serve(port)
+        return
     with MonitoringHarness() as harness:
         from pricerecon.core.discovery import execute_discovery
         from pricerecon.models.discovery import DiscoveryAdmission, DiscoveryRequest
@@ -261,6 +267,7 @@ if __name__ == "__main__":
     parser.add_argument("--qualification", action="store_true")
     parser.add_argument("--costs", action="store_true")
     mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--workflow", action="store_true")
     mode.add_argument("--tracking", action="store_true")
     mode.add_argument("--coupons", action="store_true")
     mode.add_argument("--history", action="store_true")
@@ -285,6 +292,7 @@ if __name__ == "__main__":
                 corrections=args.corrections,
                 source_evidence=args.source_evidence,
                 assessments=args.assessments,
+                workflow=args.workflow,
             )
         )
     except KeyboardInterrupt:

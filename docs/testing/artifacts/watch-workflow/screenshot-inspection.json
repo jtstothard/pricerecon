@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "inspection": "Opened all saved UI screenshots; inspected new/reframed benefit, conditional and error captures after final pass",
+  "viewports": [
+    "1280x900",
+    "375x812"
+  ],
+  "readability": "state text and controls readable, long evidence panels scroll; no buyer acceptance inferred",
+  "buyer_feedback": "unproven",
+  "count": 19,
+  "screenshots": {
+    "desktop-assessments.png": "29fb8e6835fc9cfaec44f2af86e33145f333d4df188a8a4feb714524d115f821",
+    "desktop-cashback.png": "ec1e209ee13478d39de43905b2330c04255b7ee756c5c79d9668a82ca1102587",
+    "desktop-conditional.png": "3150e2683dac4aa77bd963cead9297630d29e2862d3e52a67f7d6d779926d511",
+    "desktop-correction.png": "3b47300146563c62c0dbd7bff5e367156875f800b73c2aef432b714e6f636f4e",
+    "desktop-coverage.png": "6dffbf99d59aecc4d1046ea388387643f001ebf28891b5d158d5e2af2271acc8",
+    "desktop-error.png": "15b3d920293888d77d31f7ac935b2c3f3c73385b3d263f0f6e39e4e5419d29be",
+    "desktop-feed.png": "5a01508cd0f8d9b0bdf1511cc6c5def64c5eb4bc70d29f4767ae82c48a2b3be0",
+    "desktop-preferences.png": "f4b2c90fa4c6cdb03b569e10316194e48729f8b51aa48a8f44619ffe7303eb1e",
+    "desktop-prices.png": "acf41825a771122d556b6605811c3674ed47f773aef9610681211d1288a4239e",
+    "desktop-tracking.png": "98bf6bf5710d527d878fba2831221fe867e2e9321957d03a9bfd754596eb4bce",
+    "narrow-cashback.png": "fcb1e519b0497642d6cf3679fe19e40fe259b381691228cffdfc24ab29674b74",
+    "narrow-conditional.png": "8a2445fc3e57d43a00937db6f1133f33f63516ce608a2e54fb44962ed507649f",
+    "narrow-correction.png": "e991538019af2f0a65f09d162799ea2c48ed965ca2dd919e55b8790a57c77990",
+    "narrow-coverage.png": "a4718ee3e03f79ad371990a5daea165e189a7f6fbac236c1b293b320ccc7916c",
+    "narrow-error.png": "5c8bd828b8c9908a2ea64dd68fdbf866346fa00f0efc2005935f30b8582965e0",
+    "narrow-feed.png": "c5cd8fd797ddd8a93796a569a6bab448e1e3b358ab6c7764fbab9c494d0b75e4",
+    "narrow-preferences.png": "03b42162ca2f86c4b3b8fffc299d860b41799a954ccd8e45335c63c566ea3306",
+    "narrow-prices.png": "bd212439e6084809b05f3e08d8a93a1d3b207fc4a2ac2e9f369c5b27e2c18828",
+    "narrow-tracking.png": "83d99ff61108d2d87fa8c6ecdb3b9401cad68d831c5f68dc42a83a71d11cc622"
+  }
+}

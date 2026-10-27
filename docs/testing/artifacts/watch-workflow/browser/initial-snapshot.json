@@ -1,0 +1,42 @@
+{
+  "origin": "http://127.0.0.1:8892/discover",
+  "refs": {
+    "e1": {
+      "name": "Skip to main content",
+      "role": "link"
+    },
+    "e2": {
+      "name": "Discover watches",
+      "role": "link"
+    },
+    "e3": {
+      "name": "Watch queue 2",
+      "role": "link"
+    },
+    "e4": {
+      "name": "Event stream 0",
+      "role": "link"
+    },
+    "e5": {
+      "name": "Connectors 1",
+      "role": "link"
+    },
+    "e6": {
+      "name": "Notifications",
+      "role": "link"
+    },
+    "e7": {
+      "name": "Runs & history",
+      "role": "link"
+    },
+    "e8": {
+      "name": "Exports",
+      "role": "link"
+    },
+    "e9": {
+      "name": "Settings",
+      "role": "link"
+    }
+  },
+  "snapshot": "- link \"Skip to main content\" [ref=e1]\n- link \"Discover watches\" [ref=e2]\n- link \"Watch queue 2\" [ref=e3]\n- link \"Event stream 0\" [ref=e4]\n- link \"Connectors 1\" [ref=e5]\n- link \"Notifications\" [ref=e6]\n- link \"Runs & history\" [ref=e7]\n- link \"Exports\" [ref=e8]\n- link \"Settings\" [ref=e9]"
+}

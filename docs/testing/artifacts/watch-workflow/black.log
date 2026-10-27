@@ -1,0 +1,7 @@
+reformatted tests/monitoring/watch_workflow_receipts.py
+reformatted tests/monitoring/watch_workflow_ui.py
+reformatted tests/monitoring/watch_workflow_browser.py
+reformatted tests/monitoring/watch_workflow.py
+
+All done! ✨ 🍰 ✨
+4 files reformatted, 1 file left unchanged.

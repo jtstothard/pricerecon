@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "source_commit": "5486fa2661b4550007cb2371077089c0249ee8a3",
+  "source_branch": "t3/watch-workflow-verification",
+  "worktree": "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28",
+  "included_integration": "9ce8d31236192a8e6b98152a835ff68b4dd03bda",
+  "integration_worktree": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration",
+  "integration_ancestor": true,
+  "original_base_ancestor": true,
+  "source_clean_before_metadata_receipt": true,
+  "source_build_artifact_hashes": "all matched at final handoff readback",
+  "receipt_tail_commit": "commit containing this file; source commit above is the tested code/package; resolve final branch SHA with git rev-parse HEAD",
+  "passed": {
+    "guarded_workflows": 191,
+    "contracts": 37,
+    "frontend_tests": 25,
+    "build": true,
+    "uncached_mypy_files": 17,
+    "ruff_added_findings": 0,
+    "browser_viewports": [
+      "1280x900",
+      "375x812"
+    ],
+    "inspected_screenshots": 19,
+    "source_doc_diff": true
+  },
+  "failed_product_gates": [],
+  "blocked": {
+    "eslint": "existing missing eslint.config.*",
+    "real_militado": "missing manufacturer/store/selection/UK evidence",
+    "real_merkur": "missing reconciled identity/offer evidence"
+  },
+  "unproven": [
+    "actual buyer feedback",
+    "live selected offers/coupon/delivery",
+    "real retained history and baseline calibration",
+    "complete market coverage",
+    "source-specific access/retention/deletion/backup",
+    "numerical live resource/freshness/study/spend/operator ceilings",
+    "named maintenance and stop/resume owners",
+    "migration approval",
+    "activation"
+  ],
+  "collection": "staged",
+  "ticket12": "open/in-progress; parent owns acceptance/closure and final two-axis review",
+  "protected_worktrees": "original 77 manifest entries unchanged; integration clean and untouched",
+  "sessions": "all owned fixture/browser sessions closed; see server shutdown logs",
+  "buyer_guide": "../../watch-workflow-buyer-guide.md",
+  "safe_fixture": {
+    "launch": "with documented cleared env: python -m tests.monitoring.discovery_ui_server --workflow --port 8892",
+    "mode": "synthetic temporary SQLite; paused scheduler; captured notifications; all outbound app edges guarded",
+    "url": "http://127.0.0.1:8892/discover",
+    "marker": "ticket12-connected-ui-v1",
+    "parent_operations": "create target, run baseline then cross/duplicate/drop; costs then coupon before correction; stale; reload after each; Ctrl-C closes/removes temp data"
+  },
+  "no_push_pr": true
+}

@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/tests/monitoring/watch_workflow_browser.py", line 164, in <module>
+    main()
+    ~~~~^^
+  File "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/tests/monitoring/watch_workflow_browser.py", line 90, in main
+    assert step("cross")["notifications_sent"] == 1
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "gate": "passed",
+  "temporary_storage": true,
+  "closed_database_copy": true,
+  "rollback": "pre-migration bytes restored then additive migration repeated",
+  "recovery": "post-migration snapshot restores five candidates and legacy intent",
+  "blocked_edges": [],
+  "limitations": "no live migration approval; no online/WAL backup qualification"
+}

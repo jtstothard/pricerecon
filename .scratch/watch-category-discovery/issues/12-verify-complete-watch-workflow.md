@@ -10,13 +10,13 @@
 
 **Parent:** [Trustworthy UK watch discovery alongside existing monitoring](../../../docs/specs/watch-category-discovery.md)
 
-- [ ] Run the accepted application seam across the five named watch cases: Militado ML05/ML05B, Addiesdive AD2066 mint, San Martin SN0144, Merkur Lightning salmon and Casio MTP-B145D-2A2VEF. Missing evidence remains abstention, not substitute-product success.
-- [ ] Verify discovery independent of existing Watches, selected-variation traps, UK cost, no-coupon/coupon states, retained history/gaps, comparisons, correction invalidation and qualified alert deduplication together.
-- [ ] Exercise legacy migration on isolated copies, saved settings, enabled/disabled schedules, restart, overlap, partial-source failure and cap recovery; provide recovery/rollback evidence before later migration approval.
+- [x] Run the accepted application seam across the five named watch cases: Militado ML05/ML05B, Addiesdive AD2066 mint, San Martin SN0144, Merkur Lightning salmon and Casio MTP-B145D-2A2VEF. Missing evidence remains abstention, not substitute-product success.
+- [x] Verify discovery independent of existing Watches, selected-variation traps, UK cost, no-coupon/coupon states, retained history/gaps, comparisons, correction invalidation and qualified alert deduplication together.
+- [x] Exercise legacy migration on isolated copies, saved settings, enabled/disabled schedules, restart, overlap, partial-source failure and cap recovery; provide recovery/rollback evidence before later migration approval.
 - [ ] Complete desktop and narrow-width keyboard/browser checks for feed, expandable evidence, preference editing, tracking and corrections; obtain and record actual buyer walkthrough feedback without inventing usability acceptance.
-- [ ] Produce versioned deterministic receipts with expected/observed results and passed/failed/blocked/unproven gates. Separate no-coupon completion from live coupon success and fixture history from real retained history.
-- [ ] Hand off source rights/access, retention/deletion/backup, finite numerical limits, duration/spend/operator-time ceilings, freshness and named maintenance/stop-resume ownership as explicit prerequisites for separately authorised live study/activation.
-- [ ] No full-coverage, current market-best, usual-price calibration, live workflow proof or release readiness claim follows from offline success; PC/pens and personal-benefit execution remain later scope.
+- [x] Produce versioned deterministic receipts with expected/observed results and passed/failed/blocked/unproven gates. Separate no-coupon completion from live coupon success and fixture history from real retained history.
+- [x] Hand off source rights/access, retention/deletion/backup, finite numerical limits, duration/spend/operator-time ceilings, freshness and named maintenance/stop-resume ownership as explicit prerequisites for separately authorised live study/activation.
+- [x] No full-coverage, current market-best, usual-price calibration, live workflow proof or release readiness claim follows from offline success; PC/pens and personal-benefit execution remain later scope.
 
 ## Verification and authority
 
@@ -39,3 +39,25 @@ malformed-sibling probe and actual-adapter legacy Watch control. This ticket is
 claimed for an isolated implementer. Actual buyer walkthrough feedback remains
 required and must be obtained from the buyer, separately from automated browser
 proof; no feedback is asserted by this claim. Live/operating gates remain open.
+
+
+## Isolated implementation handoff — 2026-10-27
+
+The connected offline package is implemented on `t3/watch-workflow-verification`
+in the T3-created isolated checkout `t3-dbe22e28`, based on integration `9ce8d31`.
+See [workflow receipt](../../../docs/testing/watch-workflow.md) and
+[parent-run buyer guide](../../../docs/testing/watch-workflow-buyer-guide.md).
+The dispatch explicitly authorized local commits/merges; it supersedes this
+issue's historical no-commit wording. No push/PR or live operation was performed.
+
+- [x] Automated actual application/browser checks for feed/evidence/preferences/
+  tracking/corrections/price scenarios/source coverage at 1280×900 and 375×812,
+  keyboard use, reload, conflict error and overflow; screenshots inspected.
+- [ ] Parent obtains actual buyer task-by-task walkthrough feedback and decides
+  acceptance. Automated checks and planning prototype approval are not feedback.
+
+**Status remains in-progress/open.** The combined browser/buyer checklist item
+above remains unchecked until the actual buyer participates. Parent merger owns
+acceptance, closure, final two-axis code review and cleanup. All source/live/
+rights/retention/freshness/operating/migration/activation prerequisites remain
+separately unproven; positive fixture qualifications are not real market proof.
