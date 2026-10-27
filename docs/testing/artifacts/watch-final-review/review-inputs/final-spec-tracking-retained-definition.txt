@@ -1,0 +1,64 @@
+Loaded 0 watches into scheduler
+{
+  "mode": "retained-definition",
+  "marked_temporary_storage": "/private/tmp/pricerecon-offline-final-spec-zzuvbk5h/pricerecon.db",
+  "definition_observed_at": "2026-10-27 12:00:00+00:00",
+  "price_observed_at": "2026-10-27 12:30:00+00:00",
+  "before": {
+    "state": "above_target",
+    "reasons": [
+      "above_target"
+    ],
+    "assessed_at": "2026-10-27T12:00:00Z",
+    "valid_until": "2026-10-27T14:00:00Z",
+    "policy_version": "synthetic-target-policy-v1",
+    "policy_fingerprint": "5fb3dcb56ddb260c5352ebaccccebe0848ed7c36d9ab986bc2a4976d30f4ef9c",
+    "preference_revision": 0,
+    "intent_revision": 1,
+    "capture_id": "da4c12fc-2e84-4a0d-903c-a24eeedbb4fd",
+    "offer_id": "b0b87917cc52cbefe692637f82477c60c9bce5e11145477f204b798bd5780131",
+    "offer_revision": 2,
+    "binding_revision": 2,
+    "configuration_id": "59c72dc2203cb6fc29b450eddc15b7660654da5d87012c6e32cbccb1973f5ab7",
+    "configuration_revision": 2,
+    "scenario_id": "dc78ce4945a1bc7fe02496d83ac89aaef187065aacfb285f4e1e0439a948d43c",
+    "scenario_revision": 2,
+    "coupon_id": null,
+    "coupon_revision": null,
+    "coupon_fingerprint": null,
+    "base_scenario_id": null,
+    "base_scenario_revision": null,
+    "delivered_gbp": "70.10"
+  },
+  "after": {
+    "state": "eligible",
+    "reasons": [
+      "duplicate_or_older_evidence"
+    ],
+    "assessed_at": "2026-10-27T12:30:00Z",
+    "valid_until": "2026-10-27T14:00:00Z",
+    "policy_version": "synthetic-target-policy-v1",
+    "policy_fingerprint": "5fb3dcb56ddb260c5352ebaccccebe0848ed7c36d9ab986bc2a4976d30f4ef9c",
+    "preference_revision": 0,
+    "intent_revision": 1,
+    "capture_id": "e89ad1f4-85fd-4340-be80-e9d020b0ace5",
+    "offer_id": "b0b87917cc52cbefe692637f82477c60c9bce5e11145477f204b798bd5780131",
+    "offer_revision": 3,
+    "binding_revision": 3,
+    "configuration_id": "59c72dc2203cb6fc29b450eddc15b7660654da5d87012c6e32cbccb1973f5ab7",
+    "configuration_revision": 3,
+    "scenario_id": "dc78ce4945a1bc7fe02496d83ac89aaef187065aacfb285f4e1e0439a948d43c",
+    "scenario_revision": 3,
+    "coupon_id": null,
+    "coupon_revision": null,
+    "coupon_fingerprint": null,
+    "base_scenario_id": null,
+    "base_scenario_revision": null,
+    "delivered_gbp": "58.10"
+  },
+  "latest_history_validity": "supported_at_capture",
+  "latest_history_change": "decreased",
+  "event_count": 0,
+  "delivery_count": 0,
+  "blocked_edges": []
+}

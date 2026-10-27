@@ -4,7 +4,7 @@
 
 **Blocked by:** [08: Compare qualified offers and explain price claims](08-compare-qualified-offers.md), [09: Evaluate public coupons without assuming stacks](09-evaluate-public-coupons.md), [11: Carry source evidence and access limits through acquisition](11-carry-source-evidence.md)
 
-**Status:** open — technical proof accepted 2026-10-27; actual buyer feedback and parent's final two-axis review pending
+**Status:** open — technical proof and final review repairs verified 2026-10-27; actual buyer walkthrough feedback pending
 
 **Assignee:** Codex implementer (isolated worktree)
 
@@ -82,3 +82,17 @@ checkboxes remain unchecked; the parent owns buyer participation, final Standard
 and Spec review, any resulting fixes, closure and cleanup. Live evidence, source
 rights, real history/calibration, operating/physical-resource policy, migration
 approval and activation remain unproven; collection stays staged.
+
+## Parent final review repairs — 2026-10-27
+
+Independent Standards and Spec reviews are complete. Their two P2 Standards
+findings and P1/P2 Spec findings were repaired by the parent with 24 focused
+regressions and the full **215-workflow** suite, 37 contracts, uncached five-file
+types, zero-finding focused Ruff and seven original reviewer script runs. All
+77 original dirty files remain unchanged. See the [separate reports and repair
+receipt](../../../docs/testing/watch-final-review.md).
+
+**Only actual buyer walkthrough feedback/acceptance remains for this offline
+ticket.** The existing feedback request and running synthetic fixture are not
+an acceptance response. The unchecked buyer gate remains unchecked. Source/
+live/operating/activation gates stay independently unproven; no release claim.

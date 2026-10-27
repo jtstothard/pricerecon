@@ -68,48 +68,48 @@ def shopify_evidence(
         for position, raw_variant in enumerate(product.variants):
             try:
                 variant = StoreVariant.model_validate(raw_variant)
-            except ValidationError:
-                capture.issues.append(f"invalid_variant:{index}:{position}")
-                continue
-            options = {
-                option.name.casefold(): value
-                for option in product.options
-                if (value := getattr(variant, f"option{option.position}")) is not None
-            }
-            pointer = f"{base_url}/products/{product.handle}?variant={variant.id}"
-            context = EvidenceContext(
-                scope="selected_variation",
-                merchant_key=merchant,
-                product_id=str(product.id),
-                variation_id=str(variant.id),
-                currency=variant.currency,
-            )
-            fields: list[tuple[IdentityField | OfferField, str]] = [("seller", merchant)]
-            fields.extend(
-                (name, options[name]) for name in ("movement", "dial", "strap") if name in options
-            )
-            if variant.price is not None:
-                fields.append(("item_price", str(variant.price)))
-            if variant.currency:
-                fields.append(("currency", variant.currency))
-            if variant.available is not None:
-                fields.append(("availability", "in_stock" if variant.available else "out_of_stock"))
-            claims = [
-                claim(
-                    capture,
-                    subject="selection" if name in {"movement", "dial", "strap"} else "offer",
-                    field=name,
-                    value=value,
-                    issuer=merchant,
-                    issuer_kind="seller",
-                    pointer=pointer,
-                    locator=f"products[{index}].variants[{position}].{name}",
-                    context=context,
+                options = {
+                    option.name.casefold(): value
+                    for option in product.options
+                    if (value := getattr(variant, f"option{option.position}")) is not None
+                }
+                pointer = f"{base_url}/products/{product.handle}?variant={variant.id}"
+                context = EvidenceContext(
+                    scope="selected_variation",
+                    merchant_key=merchant,
+                    product_id=str(product.id),
+                    variation_id=str(variant.id),
+                    currency=variant.currency,
                 )
-                for name, value in fields
-            ]
-            listings.append(
-                NormalizedListing.model_validate(
+                fields: list[tuple[IdentityField | OfferField, str]] = [("seller", merchant)]
+                fields.extend(
+                    (name, options[name])
+                    for name in ("movement", "dial", "strap")
+                    if name in options
+                )
+                if variant.price is not None:
+                    fields.append(("item_price", str(variant.price)))
+                if variant.currency:
+                    fields.append(("currency", variant.currency))
+                if variant.available is not None:
+                    fields.append(
+                        ("availability", "in_stock" if variant.available else "out_of_stock")
+                    )
+                claims = [
+                    claim(
+                        capture,
+                        subject="selection" if name in {"movement", "dial", "strap"} else "offer",
+                        field=name,
+                        value=value,
+                        issuer=merchant,
+                        issuer_kind="seller",
+                        pointer=pointer,
+                        locator=f"products[{index}].variants[{position}].{name}",
+                        context=context,
+                    )
+                    for name, value in fields
+                ]
+                listing = NormalizedListing.model_validate(
                     {
                         "source": "shopify",
                         "source_type": SourceType.RETAILER,
@@ -121,9 +121,7 @@ def shopify_evidence(
                         "timestamp_seen": capture.retrieved_at,
                     }
                 )
-            )
-            reports.append(
-                MerchantEvidenceReport(
+                report = MerchantEvidenceReport(
                     source_listing_id=str(variant.id),
                     merchant_key=merchant,
                     product_id=str(product.id),
@@ -154,7 +152,12 @@ def shopify_evidence(
                         ],
                     ),
                 )
-            )
+            except ValidationError:
+                capture.issues.append(f"invalid_variant:{index}:{position}")
+                continue
+            # Keep the listing/report pair atomic at the item boundary.
+            listings.append(listing)
+            reports.append(report)
     capture.inspected_count = len(listings)
     return EvidenceSearchReport(
         listings=listings,

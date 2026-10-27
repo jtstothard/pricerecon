@@ -1,0 +1,30 @@
+Loaded 0 watches into scheduler
+{
+  "mode": "expired-first",
+  "marked_temporary_storage": "/private/tmp/pricerecon-offline-final-spec-refrpcj0/pricerecon.db",
+  "input_reports": 2,
+  "input_term_end_times": [
+    "2026-10-27 12:00:00+00:00",
+    "2026-10-27 13:00:00+00:00"
+  ],
+  "state": "invalidated",
+  "issues": [
+    "expired",
+    "conflicting_coupon_inputs",
+    "application_lineage_changed"
+  ],
+  "retained_terms": "Contradictory synthetic terms: expired now, exclusive end",
+  "source_conflicts_count": 1,
+  "result_total": null,
+  "no_coupon": {
+    "state": "verified_at_observation",
+    "amount": "50.10",
+    "currency": "GBP",
+    "scenario_id": "c0cb59efe5fd626c3494ae8fbdf7a0eb4044c8dbee2518a6acf365b30942d085",
+    "scenario_revision": 1,
+    "reason": "Cost at observation only; freshness and comparison acceptance remain unvalidated."
+  },
+  "coupon_history_count": 1,
+  "blocked_edges": [],
+  "deliveries": []
+}

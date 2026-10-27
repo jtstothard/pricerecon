@@ -15,6 +15,7 @@ from pricerecon.core import notifications
 from pricerecon.core.coupons import public_cost_paths
 from pricerecon.core.qualification import identity_key
 from pricerecon.db.discovery import get_preferences, load_capture_candidates
+from pricerecon.db.history_lineage import temporal_claims
 from pricerecon.db.schema import DB_PATH
 from pricerecon.db.tracking import evidence_revision_withdrawn, store, target_delivery_valid
 from pricerecon.models import EventType
@@ -282,7 +283,14 @@ def offer_key(binding: SelectionBinding, offer: MerchantOffer) -> str:
 
 
 def evidence_time(offer: MerchantOffer) -> datetime:
-    stamps = [e.observed_at for e in offer.evidence if e.observed_at is not None]
+    # Reusable definitions and selection identity still pass freshness checks,
+    # but their age does not order independently acquired price observations.
+    qualified = set(offer.qualification.evidence_ids)
+    stamps = [
+        e.observed_at
+        for e in temporal_claims(offer)
+        if e.id in qualified and e.observed_at is not None
+    ]
     for cost in offer.cost_scenarios:
         if cost.kind == "public_no_coupon":
             stamps.extend(e.observed_at for e in cost.context_evidence if e.observed_at is not None)

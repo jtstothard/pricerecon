@@ -364,3 +364,19 @@ unproven. Existing ESLint configuration remains blocked. No release/global-best/
 complete-coverage claim follows. Collection stays staged. No push/PR, live/network
 acquisition, account/production operation, install, activation, purchase or
 unrelated cleanup occurred; the original 77 dirty files and source are preserved.
+
+## Parent final review and repairs — 2026-10-27
+
+The final independent Standards and Spec reviews found four concrete defects;
+parent repaired all four. [Separate review reports and remediation proof](watch-final-review.md)
+record two Standards P2 findings and Spec P1/P2 findings without cross-axis reranking.
+The full suite now passes **215 guarded workflows** (191 retained plus 24 new),
+37 contracts and seven original reviewer script runs. Uncached five-file types
+and focused zero-finding Ruff pass. Frontend 25-test/build and 19-screenshot evidence
+is reused because UI/schema did not change. Original 77 dirty files remain unchanged.
+
+The buyer guide now targets the retained integration checkout for use after
+implementation-worktree cleanup. Actual buyer feedback remains pending; no
+response has been inferred from the running fixture, tests or elapsed time.
+Ticket12 stays open for that gate. Collection remains staged and all separately
+unproven live/rights/calibration/operating/activation prerequisites remain explicit.

@@ -3,7 +3,8 @@
 **Feedback gate: unproven.** The parent must present this concrete package and
 obtain actual buyer feedback. No buyer was contacted by the implementer. The
 screenshots and automated pass are review aids, not a substitute for that feedback.
-Ticket12 remains open for parent acceptance/closure and final two-axis review.
+Ticket12 remains open for actual buyer feedback and acceptance/closure. The
+[final two-axis review and verified repairs](watch-final-review.md) are complete.
 
 This is the implemented application running against invented watch evidence in
 temporary SQLite. It has no production data, live collection, merchant sessions,
@@ -11,15 +12,19 @@ accounts or real notification transport. All five names remain in the feed;
 Militado and Merkur remain unresolved. Illustrations are original placeholders,
 not product photos. Positive dimensions and prices are fictional test inputs.
 
+The parent may already have presented a verified running session at
+http://127.0.0.1:8892/discover. Use that session for feedback; the launch steps
+below are for starting a fresh fixture after the existing one has stopped.
+
 ## Launch safely
 
-Use this source worktree, or the parent's integration checkout **after** it merges
-this source. Build first, with no fixture running. The implementer linked only
+Use the retained integration checkout below. The implementation worktree is
+historical provenance and may be removed after its committed history is merged. Build first, with no fixture running. The implementer linked only
 this worktree's `frontend/node_modules` to the existing integration dependencies;
 no packages or browsers were installed.
 
 ```sh
-cd /Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28
+cd /Users/jay/.t3/worktrees/pricerecon/watch-category-integration
 env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
   npm --prefix frontend run build
 ```

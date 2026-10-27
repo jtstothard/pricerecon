@@ -65,10 +65,26 @@ def safe_pointer(value: str | None) -> str | None:
                 "secret",
                 "signature",
                 "credential",
+                "clientsecret",
+                "clientassertion",
+                "idtoken",
+                "oauthtoken",
+                "oauthtokensecret",
+                "oauthsignature",
+                "oauthconsumersecret",
+                "awsaccesskeyid",
+                "xamzcredential",
+                "xamzsignature",
+                "xamzsecuritytoken",
+                "xgoogcredential",
+                "xgoogsignature",
+                "xgoogsecuritytoken",
+                "sig",
+                "sharedaccesssignature",
             }
             if any(
                 "".join(ch for ch in key.casefold() if ch.isalnum()) in sensitive
-                for key, _ in parse_qsl(parts.query)
+                for key, _ in parse_qsl(parts.query, keep_blank_values=True)
             ):
                 return None
             return parts._replace(fragment="").geturl()

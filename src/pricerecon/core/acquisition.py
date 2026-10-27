@@ -323,6 +323,12 @@ async def acquire_sources(
                             for cost in report.cost_scenarios
                             if cost.model_dump_json() not in known_costs
                         )
+                        known_coupons = {coupon.model_dump_json() for coupon in retained.coupons}
+                        retained.coupons.extend(
+                            coupon
+                            for coupon in report.coupons
+                            if coupon.model_dump_json() not in known_coupons
+                        )
                         known = {claim.model_dump_json() for claim in retained.claims}
                         retained.claims.extend(
                             claim for claim in report.claims if claim.model_dump_json() not in known

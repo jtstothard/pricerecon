@@ -73,56 +73,52 @@ def browse_evidence(payload: object, capture: SourceReceipt) -> EvidenceSearchRe
     for index, raw in enumerate(page.itemSummaries):
         try:
             item = BrowseItem.model_validate(raw)
-        except ValidationError:
-            capture.issues.append(f"invalid_item:{index}")
-            continue
-        bid = "AUCTION" in item.buyingOptions
-        price = item.currentBidPrice if bid else item.price
-        context = EvidenceContext(
-            scope="generic_listing",
-            merchant_key="ebay",
-            product_id=item.itemId,
-            currency=price.currency if price else None,
-        )
-        fields: list[tuple[OfferField, str]] = []
-        if item.seller.username:
-            fields.append(("seller", item.seller.username))
-        if item.condition:
-            fields.append(("condition_description", item.condition))
-        condition = {"1000": "new", "3000": "used", "2000": "refurbished"}.get(
-            item.conditionId or ""
-        )
-        if condition:
-            fields.append(("condition", condition))
-        if item.buyingOptions == ["AUCTION"]:
-            fields.append(("purchase_mode", "auction"))
-        elif item.buyingOptions == ["FIXED_PRICE"]:
-            fields.append(("purchase_mode", "buy_now"))
-        statuses = {entry.estimatedAvailabilityStatus for entry in item.estimatedAvailabilities}
-        if statuses == {"IN_STOCK"}:
-            fields.append(("availability", "in_stock"))
-        elif statuses == {"OUT_OF_STOCK"}:
-            fields.append(("availability", "out_of_stock"))
-        if price:
-            fields.append(("item_price", str(price.value)))
-            if price.currency:
-                fields.append(("currency", price.currency))
-        claims = [
-            claim(
-                capture,
-                subject="offer",
-                field=name,
-                value=value,
-                issuer=item.seller.username or "eBay seller unspecified",
-                issuer_kind="seller",
-                pointer=item.itemWebUrl,
-                locator=f"itemSummaries[{index}].{name}",
-                context=context,
+            bid = "AUCTION" in item.buyingOptions
+            price = item.currentBidPrice if bid else item.price
+            context = EvidenceContext(
+                scope="generic_listing",
+                merchant_key="ebay",
+                product_id=item.itemId,
+                currency=price.currency if price else None,
             )
-            for name, value in fields
-        ]
-        listings.append(
-            NormalizedListing.model_validate(
+            fields: list[tuple[OfferField, str]] = []
+            if item.seller.username:
+                fields.append(("seller", item.seller.username))
+            if item.condition:
+                fields.append(("condition_description", item.condition))
+            condition = {"1000": "new", "3000": "used", "2000": "refurbished"}.get(
+                item.conditionId or ""
+            )
+            if condition:
+                fields.append(("condition", condition))
+            if item.buyingOptions == ["AUCTION"]:
+                fields.append(("purchase_mode", "auction"))
+            elif item.buyingOptions == ["FIXED_PRICE"]:
+                fields.append(("purchase_mode", "buy_now"))
+            statuses = {entry.estimatedAvailabilityStatus for entry in item.estimatedAvailabilities}
+            if statuses == {"IN_STOCK"}:
+                fields.append(("availability", "in_stock"))
+            elif statuses == {"OUT_OF_STOCK"}:
+                fields.append(("availability", "out_of_stock"))
+            if price:
+                fields.append(("item_price", str(price.value)))
+                if price.currency:
+                    fields.append(("currency", price.currency))
+            claims = [
+                claim(
+                    capture,
+                    subject="offer",
+                    field=name,
+                    value=value,
+                    issuer=item.seller.username or "eBay seller unspecified",
+                    issuer_kind="seller",
+                    pointer=item.itemWebUrl,
+                    locator=f"itemSummaries[{index}].{name}",
+                    context=context,
+                )
+                for name, value in fields
+            ]
+            listing = NormalizedListing.model_validate(
                 {
                     "source": "ebay",
                     "source_type": SourceType.MARKETPLACE,
@@ -134,9 +130,7 @@ def browse_evidence(payload: object, capture: SourceReceipt) -> EvidenceSearchRe
                     "timestamp_seen": capture.retrieved_at,
                 }
             )
-        )
-        reports.append(
-            MerchantEvidenceReport(
+            report = MerchantEvidenceReport(
                 source_listing_id=item.itemId,
                 merchant_key="ebay",
                 product_id=item.itemId,
@@ -184,7 +178,12 @@ def browse_evidence(payload: object, capture: SourceReceipt) -> EvidenceSearchRe
                     + ([] if statuses else ["availability"]),
                 ),
             )
-        )
+        except ValidationError:
+            capture.issues.append(f"invalid_item:{index}")
+            continue
+        # Keep the listing/report pair atomic at the item boundary.
+        listings.append(listing)
+        reports.append(report)
     partial = bool(page.next or capture.issues)
     return EvidenceSearchReport(
         listings=listings,
