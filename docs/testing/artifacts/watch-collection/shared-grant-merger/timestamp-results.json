@@ -1,0 +1,54 @@
+[
+  {
+    "case": "request_cap",
+    "exit": 1,
+    "result": "failed",
+    "failures": [
+      "denied Watch status is completed, expected capped",
+      "denied Watch reports success=true",
+      "denied Watch advanced last_check_at"
+    ],
+    "before_last_check": "2026-10-27T12:00:00Z",
+    "after_last_check": "2026-10-27T13:00:00Z",
+    "additional_sends": 0,
+    "error": null
+  },
+  {
+    "case": "zero_elapsed",
+    "exit": 1,
+    "result": "failed",
+    "failures": [
+      "denied Watch status is completed, expected capped",
+      "denied Watch reports success=true",
+      "denied Watch advanced last_check_at"
+    ],
+    "before_last_check": null,
+    "after_last_check": "2026-10-27T13:00:00Z",
+    "additional_sends": 0,
+    "error": null
+  },
+  {
+    "case": "zero_provider",
+    "exit": 1,
+    "result": "failed",
+    "failures": [
+      "denied Watch status is completed, expected capped",
+      "denied Watch reports success=true",
+      "denied Watch advanced last_check_at"
+    ],
+    "before_last_check": null,
+    "after_last_check": "2026-10-27T13:00:00Z",
+    "additional_sends": 0,
+    "error": null
+  },
+  {
+    "case": "expired",
+    "exit": 0,
+    "result": "passed",
+    "failures": [],
+    "before_last_check": "2026-10-27T12:00:00Z",
+    "after_last_check": "2026-10-27T12:00:00Z",
+    "additional_sends": 0,
+    "error": null
+  }
+]

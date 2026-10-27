@@ -617,3 +617,157 @@ artifacts, local implementation/merge commits and scope exclusions. The frontend
 and37-contract files are unchanged by both refreshes; their passing results above
 are reused rather than claimed rerun. Only local commits and merges into this
 implementation branch occurred. Integration itself was not updated by this worker.
+
+## Shared-grant repair merger review — 2026-10-27
+
+**10 remains open for denied Watch status/timestamp repair. 11 remains blocked
+and unclaimed.** The original shared-grant API/scheduler/process bypasses are
+repaired, but separate acceptance probes reproduce incorrect completion and
+timestamp behavior after acquisition caps. No application repair was made by
+this merger. Collection remains staged; this is offline review, not production
+operating acceptance.
+
+### Integration and retained scope
+
+Verified clean integration `c84f1f166a3bd6688cbfbafc6fe350e7a80f987c` and clean
+source `2ac8eff897318572f50dff4ecfc77a2b32f05c9b` on the requested branches and
+existing worktrees. Source contains `ce1b88a` but lacked the parent's latest
+independent-target ownership repair. Refreshed that same source worktree with a
+conflict-free history-preserving merge of `c84f1f1`, producing
+`f61bc3cab241f86795bcf320276151b69480bc29`. Then merged it into integration with
+`--no-ff`, producing `906ef0f690c5a5545d8845878d34fa91c9fd1ff6`, first parent
+`c84f1f1`, second parent `f61bc3c`. Source and integration merge trees match.
+Both original source and latest integration are ancestors. No history was rewritten.
+
+The parent's 07 correction implementation, standalone merger probe, three
+`test_correction_target_ownership.py` cases and target-ownership receipts match
+`c84f1f1` exactly. Those three cases pass in the combined run. 07 remains closed;
+08 remains in progress with its separate owner. Neither 08's worktree nor the
+original dirty parent was edited. Only the known source refresh and integration
+merge/review/probe/receipt/tracker work were performed.
+
+Read the spec, issue10, engineering standard, accepted operating-envelope
+research/resolution and the original merger disposition plus repair handoff above.
+Reviewed the original versus repaired probes. Replacing raw `current_policy()`
+assertions with `supplied_policy()` preserves proof that the caller supplied no
+context while allowing durable resolution. Replacing whole-ledger equality with
+an additional capped attempt and ten-second conservative run reservation reflects
+actual denied work; transport/provider/request caps and unrefreshed assertions
+remain enforced. No per-context participation exception or new-scope refill is
+accepted. The immutable storage fixture now exhausts one grant with real retained
+payload growth rather than switching to a fresh scope. No assertion was removed
+to accept a bypass.
+
+### Merged-tree verification
+
+Ran the existing parent interpreter with integration's source in the cleared
+environment below. All **148 guarded workflows passed in 144.31s**, with no skips
+or xfails: all 126 current integration cases plus 22 shared-grant repair cases.
+This includes concurrent independent processes, None/empty contexts, zero-first
+elapsed/request/provider denials, zero-denial restart, expiry/expired-first grant,
+scope/value changes, damaged/ambiguous/removed payloads, historical migration,
+priority, retries/fallbacks, storage rollback, last-good/readback withholding and
+finite crash/recovery behavior. No full-repository or potentially live/configured
+database suite was used.
+
+```sh
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python -m pytest -q \
+  tests/test_collection_workflow.py tests/test_monitoring_workflow.py \
+  tests/test_discovery_workflow.py tests/test_qualification_workflow.py \
+  tests/test_cost_workflow.py tests/test_history_workflow.py \
+  tests/test_coupon_workflow.py tests/test_tracking_workflow.py \
+  tests/test_correction_workflow.py tests/test_correction_target_ownership.py \
+  tests/test_shared_grant_workflow.py
+```
+
+- Independently reran all exact retained probes and controls, retaining fresh
+  JSON/logs under [shared-grant-merger](artifacts/watch-collection/shared-grant-merger/probe-results.json).
+  API and scheduler each retain one actual send under cap1. The separately invoked
+  process seed sends once; fresh-process resume sends zero. Legacy no-grant sends
+  once. Redirect sends only the initial search and denies its detail edge.
+  All exit0, with zero notifications or escaped edges and retained legacy intent.
+- Limiter/external-browser contracts: **37 passed in 0.39s**, ten inherited
+  Pydantic deprecation warnings. Exact modules are `tests/test_rate_limiter.py`
+  and `tests/test_external_browser.py`.
+- Focused `mypy --follow-imports=silent`: **14 source files pass**, comprising
+  the previous merger's 13 plus `api/watches.py`; existing unused-override notes.
+- Focused Ruff: all **17 repair-changed Python files**, 15 clean, 18 inherited
+  diagnostics across two legacy files, **zero added** code/message multiset entries
+  against `c84f1f1`. The new timestamp probe also passes Ruff. No suppression or
+  unrelated fix. [Comparison](artifacts/watch-collection/shared-grant-merger/ruff.json).
+- Frontend tree `fdcd941bb28fda22b7a8e2d9e7d606a6f9a7f7ec` exactly matches the
+  original merger and repair source. Reuse the retained **25 tests**, **642-module
+  TypeScript/Vite build**, and desktop/narrow collection/correction UI receipts.
+  No frontend change, repeated build/browser run, preview tool or new UI proof.
+  Existing chunk warning and ESLint10 missing-config blockage remain recorded.
+- `git diff --check` passes. Verification binds source/test/frontend identities,
+  retained 07 paths and artifact hashes in
+  [verification.json](artifacts/watch-collection/shared-grant-merger/verification.json).
+
+### Remaining reproduced failure
+
+[The new standalone probe](../../tests/monitoring/collection_timestamp_merger_probe.py)
+uses the unchanged guarded temporary-SQLite harness, real Watch API, controlled
+clock and HTTPX request hook/MockTransport. No private limiter call or fabricated
+usage supplies the evidence. It stores the complete API response, before/after
+Watch, collection ledger, row-preservation result and guard receipts before its
+acceptance assertion.
+
+After one successful request at 12:00 exhausts a one-request grant, move the
+controlled clock to 13:00 and call the Watch API with explicit None context.
+No additional transport runs; the ledger correctly records
+`capped/resource_exhausted:requests`, `unrefreshed`, last-good 12:00 and age 3600.
+Rows and saved intent remain unchanged. Nevertheless the API reports
+`status=completed`, `result.success=true`, and changes `last_check_at` from 12:00
+to 13:00. A zero-first elapsed grant and zero-first provider grant reproduce the
+same false completion, changing a null timestamp to 13:00 without any acquisition.
+Their specific exhaustion reasons remain in `acquisition_outcomes`.
+
+These **three acceptance cases exit1** and remain failed; they are not part of
+the 148 passing workflows. The matching expired-policy control exits0, reports
+blocked and retains 12:00. All four cases preserve rows, send zero additional
+requests/notifications, and record zero escaped edges. Collection last-good
+retention passes; Watch completion/timestamp propagation fails.
+[Exact result summary](artifacts/watch-collection/shared-grant-merger/timestamp-results.json).
+
+Acquisition catches a cap into its source outcome. `execute_watch` then continues
+through `run_check`; a zero-growth storage debit can succeed even when the
+acquisition request/time/provider grant is exhausted. Only a persistence denial
+sets the new `collection_state` response discriminator. Without it, execution
+returns success and both executor/API reach their timestamp updates. This is a
+status/timestamp propagation gap, not another observed transport bypass. The
+repair handoff's blanket claim that denied Watch checks are blocked/capped and
+do not advance the timestamp is therefore only established for its tested
+persistence/expired/damaged-policy paths.
+
+Reproduce from integration using the same cleared environment and interpreter:
+
+```sh
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  -m tests.monitoring.collection_timestamp_merger_probe request_cap \
+  "$PWD/docs/testing/artifacts/watch-collection/shared-grant-merger/request_cap.json"
+```
+
+`zero_elapsed` and `zero_provider` also exit1; `expired` exits0. Each can use its
+own corresponding output filename. Repair must propagate actual all-source
+admission denial without advancing a successful-check timestamp or weakening
+successful-empty/partial/legacy behavior. Merger left application source unchanged.
+
+### Retained prerequisites
+
+Unsupported browser-origin/native/AI acquisition lanes remain blocked before work;
+they are not accepted zero-cost capabilities. SQLite retained btree payload is
+not physical disk allocation, WAL/journal/free-page/control-metadata/log/backup
+quota. Measured finite controls, retention/deletion/restore qualification, source
+rights, sustainable breadth/freshness/cost, named maintenance ownership, live
+offer/history/delivery evidence and buyer/activation acceptance remain separate
+live prerequisites. No budget or owner was inferred from fixtures.
+
+No installs, downloads, network/live collection, credentials/accounts, production
+DB, activation, deployment, push, PR, delegation or unrelated cleanup occurred.
+Local commits/merges alone were authorised. Ticket10 stays open for the reproduced
+gap; 11 stays blocked and unclaimed. No 11 implementation was performed.

@@ -17,7 +17,7 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 | [07: Corrections](issues/07-correct-identities.md) | 05, 06 | Closed |
 | [08: Comparisons](issues/08-compare-qualified-offers.md) | 07 | In progress |
 | [09: Public coupons](issues/09-evaluate-public-coupons.md) | 04 | Closed |
-| [10: Shared limits](issues/10-prioritise-tracking.md) | 05 | Open — shared-admission repair |
+| [10: Shared limits](issues/10-prioritise-tracking.md) | 05 | Open — denied Watch status/timestamp repair |
 | [11: Source evidence](issues/11-carry-source-evidence.md) | 03, 10 | Blocked |
 | [12: Integrated verification](issues/12-verify-complete-watch-workflow.md) | 08, 09, 11 | Blocked |
 
@@ -27,15 +27,14 @@ Work is limited to source implementation and deterministic offline verification 
 
 Ticket 01 source was integrated on 2026-10-27 in merge `a0e5c1a612252c61a62eabc7b56ebc3b3297ed85`, preserving implementer HEAD `9312871f269137d7b98ba7155d9523350e41e62e`. The subsequent rendered-form preservation repair was integrated in merge `3243c8f00e3f9dd9efde79327b6905eb3d4354b2`, preserving implementer HEAD `534cecaece62e30f50c680b40af5b4c7f561b6e4`. Integration checks passed **15 isolated workflow tests**, **25 frontend tests** and the frontend build. The parent subsequently passed the rendered edit/save/reload/manual-check regression. See the dated resolution log below and the [repair integration receipt](issues/01-verify-existing-monitoring.md#preservation-repair-integration-receipt-2026-10-27).
 
-Current frontier, 2026-10-27: tickets 01–06 and 09 are closed for their offline
-scope. Ticket07's multi-configuration withdrawal/requalification repair is merged:
-the original multi/single probes and all 123 guarded workflows pass. A further
-probe reproduces independent blue→red target intent being rewritten to gold by
-recorrection of a different mint→blue journal, persisting across restart. Ticket07
-therefore remains open for independent-target intent repair. Ticket08 stays blocked
-and unclaimed. Ticket10 is merged but open for the reproduced out-of-context shared-admission
-bypass. Ticket11 remains blocked and unclaimed; 12 remains blocked. Earlier dated readiness/ownership entries below describe
-their state at that time.
+Current frontier, 2026-10-27: tickets 01–07 and 09 are closed for their offline
+scope. The parent's 07 target-ownership repair and its three tests are preserved;
+08 remains in progress with its independent worktree owner. Ticket10's durable
+shared-grant repair is merged and all 148 guarded workflows pass, including the
+original API/scheduler/fresh-process bypass probes. Separate request/zero-time/
+zero-provider denial probes still report completed/success and advance the Watch
+timestamp without acquisition, so 10 stays open. Ticket11 remains blocked and
+unclaimed; 12 remains blocked. Earlier dated entries describe their historical state.
 
 Actual buyer walkthrough feedback, current source rights, live offer/history/cost proof, finite operating limits and named maintenance ownership cannot be fabricated by passing fixture tests. Keep these gates explicit in the final receipt.
 
@@ -226,3 +225,17 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
 - 2026-10-27:07 closed after the parent target-ownership repair and126 guarded
   workflows;08 claimed. See the [dated acceptance](issues/07-correct-identities.md#final-offline-acceptance--2026-10-27).
   10 remains open pending independent acceptance of its retained grant repair.
+
+- 2026-10-27: 10 grant repair `2ac8eff` refreshed with `c84f1f1` as `f61bc3c`
+  and merged without conflicts using `--no-ff` as `906ef0f`. The parent's 07
+  source, three tests and receipts remain unchanged; 08's active worktree is
+  untouched. All 148 guarded workflows, 37 contracts, focused types/lint and the
+  original API/scheduler/fresh-process plus no-grant/redirect probes pass.
+  Unchanged frontend/build/UI evidence is reused. Three additional acceptance
+  cases fail: request exhaustion and zero-first elapsed/provider grants return
+  completed/success and advance `last_check_at` despite no new send; rows and
+  collection last-good evidence remain retained. Expired-policy control passes.
+  **10 stays open; 11 stays blocked/unclaimed; 08 stays in progress.** See the
+  [repair merger receipt](../../docs/testing/watch-collection.md#shared-grant-repair-merger-review--2026-10-27).
+  No application repair, later-ticket implementation, live operation, activation,
+  push or production acceptance occurred. Collection stays staged.

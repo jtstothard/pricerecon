@@ -1,0 +1,103 @@
+{
+  "case": "legacy_no_grant",
+  "result": "passed",
+  "expected_transport_sends": 1,
+  "actual_transport_sends": 1,
+  "sends": [
+    "https://fixture.invalid/search"
+  ],
+  "outside_status": {
+    "state": "blocked",
+    "activation": "staged",
+    "gates": [
+      "operating_policy_required",
+      "live_activation_not_authorized",
+      "production_operating_envelope_unproven"
+    ],
+    "scope_id": null,
+    "version": null,
+    "stops_at": null,
+    "usage": [],
+    "provider_usage": [],
+    "attempts": []
+  },
+  "supplied_ledger": {
+    "state": "blocked",
+    "activation": "staged",
+    "gates": [
+      "operating_policy_required",
+      "live_activation_not_authorized",
+      "production_operating_envelope_unproven"
+    ],
+    "scope_id": null,
+    "version": null,
+    "stops_at": null,
+    "usage": [],
+    "provider_usage": [],
+    "attempts": []
+  },
+  "operating_policy": {
+    "scope_id": "synthetic-finite-study",
+    "version": "fixture-v1",
+    "owner_reference": "test-only",
+    "permission_reference": "original-fixtures",
+    "retention_reference": "temporary-test-directory",
+    "starts_at": "2026-10-27T12:00:00Z",
+    "stops_at": "2026-10-28T12:00:00Z",
+    "recovery_spacing_seconds": 0,
+    "run_timeout_seconds": 10,
+    "caps": {
+      "requests": {
+        "limit": 1,
+        "tracking_reserve": 0
+      },
+      "pages": {
+        "limit": 20,
+        "tracking_reserve": 1
+      },
+      "details": {
+        "limit": 20,
+        "tracking_reserve": 1
+      },
+      "retries": {
+        "limit": 20,
+        "tracking_reserve": 1
+      },
+      "fallbacks": {
+        "limit": 20,
+        "tracking_reserve": 1
+      },
+      "storage_bytes": {
+        "limit": 10000000,
+        "tracking_reserve": 100000
+      },
+      "elapsed_seconds": {
+        "limit": 1000,
+        "tracking_reserve": 100
+      }
+    },
+    "provider_request_caps": {
+      "cex": {
+        "limit": 1,
+        "tracking_reserve": 0
+      },
+      "scan": {
+        "limit": 1,
+        "tracking_reserve": 0
+      },
+      "ebay": {
+        "limit": 1,
+        "tracking_reserve": 0
+      },
+      "amazon_uk": {
+        "limit": 1,
+        "tracking_reserve": 0
+      }
+    }
+  },
+  "temporary_storage": true,
+  "blocked_edges": [],
+  "notifications_sent": 0,
+  "legacy_intent_preserved": true,
+  "activation": "staged"
+}
