@@ -1,0 +1,26 @@
+[
+  {
+    "case": "process_seed",
+    "exit": 0,
+    "stdout": "Loaded 1 watches into scheduler\n",
+    "stderr": ""
+  },
+  {
+    "case": "process_resume",
+    "exit": 0,
+    "stdout": "Loaded 1 watches into scheduler\n",
+    "stderr": ""
+  },
+  {
+    "case": "legacy_no_grant",
+    "exit": 0,
+    "stdout": "Loaded 1 watches into scheduler\n",
+    "stderr": ""
+  },
+  {
+    "case": "redirect",
+    "exit": 0,
+    "stdout": "Loaded 1 watches into scheduler\n",
+    "stderr": ""
+  }
+]

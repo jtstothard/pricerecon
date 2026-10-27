@@ -71,19 +71,14 @@ async def check_watch(watch_id: int) -> None:
     print(f"[scheduler] Executing watch {watch_id}")
     from pricerecon.core.watch_executor import execute_watch
 
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    try:
-        cursor.execute(
-            "UPDATE watches SET last_check_at = ? WHERE id = ?",
-            (datetime.now(timezone.utc).isoformat(), watch_id),
-        )
-        conn.commit()
-    finally:
-        conn.close()
-
     try:
         result = await execute_watch(watch_id)
+        if not result["success"]:
+            print(
+                f"[scheduler] Watch {watch_id} {result.get('collection_state', 'failed')}: "
+                f"{result.get('error', 'Unknown error')}"
+            )
+            return
         events = result.get("events", [])
         notifications = result.get("notifications_sent", 0)
         listings = result.get("listings_found", 0)

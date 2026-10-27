@@ -15,19 +15,28 @@ from pricerecon.models.collection import Resource
 active_admission: ContextVar[DurableAdmission | None] = ContextVar("active_admission", default=None)
 
 
-def debit_resources(**costs: int) -> None:
+def _admission() -> DurableAdmission | None:
+    from pricerecon.core.collection_policy import current_policy
+
     admission = active_admission.get()
+    if admission is None and current_policy() is not None:
+        raise AdmissionDenied("collection_attempt_required", state="blocked")
+    return admission
+
+
+def debit_resources(**costs: int) -> None:
+    admission = _admission()
     if admission:
         admission.debit(TypeAdapter(dict[Resource, int]).validate_python(costs))
 
 
 def require_bounded_browser() -> None:
-    if active_admission.get():
+    if _admission():
         raise AdmissionDenied("browser_origin_accounting_unavailable", state="blocked")
 
 
 async def account_request(request: httpx.Request) -> None:
-    admission = active_admission.get()
+    admission = _admission()
     if admission is None:
         return
     key = f"{request.method} {request.url}"

@@ -1,0 +1,505 @@
+[
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 2,
+      "row": 17
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/api/watches.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "import json\nimport sqlite3\nfrom datetime import UTC, datetime, timezone\nfrom typing import Any\n\nfrom fastapi import APIRouter, HTTPException, Query, status\nfrom pydantic import BaseModel\n\nfrom pricerecon.db.schema import DB_PATH\nfrom pricerecon.models import (\n    Watch,\n    WatchCheckResponse,\n    WatchCreate,\n    WatchUpdate,\n)\n\n",
+          "end_location": {
+            "column": 1,
+            "row": 19
+          },
+          "location": {
+            "column": 1,
+            "row": 3
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 1,
+      "row": 3
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 3,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 21,
+      "row": 44
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/api/watches.py",
+    "fix": null,
+    "location": {
+      "column": 12,
+      "row": 44
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 44,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "UP017",
+    "end_location": {
+      "column": 42,
+      "row": 182
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/api/watches.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import UTC, datetime, timezone",
+          "end_location": {
+            "column": 45,
+            "row": 3
+          },
+          "location": {
+            "column": 1,
+            "row": 3
+          }
+        },
+        {
+          "content": "UTC",
+          "end_location": {
+            "column": 42,
+            "row": 182
+          },
+          "location": {
+            "column": 30,
+            "row": 182
+          }
+        }
+      ],
+      "message": "Convert to `datetime.UTC` alias"
+    },
+    "location": {
+      "column": 30,
+      "row": 182
+    },
+    "message": "Use `datetime.UTC` alias",
+    "name": "datetime-timezone-utc",
+    "noqa_row": 182,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/datetime-timezone-utc"
+  },
+  {
+    "cell": null,
+    "code": "UP017",
+    "end_location": {
+      "column": 42,
+      "row": 183
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/api/watches.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import UTC, datetime, timezone",
+          "end_location": {
+            "column": 45,
+            "row": 3
+          },
+          "location": {
+            "column": 1,
+            "row": 3
+          }
+        },
+        {
+          "content": "UTC",
+          "end_location": {
+            "column": 42,
+            "row": 183
+          },
+          "location": {
+            "column": 30,
+            "row": 183
+          }
+        }
+      ],
+      "message": "Convert to `datetime.UTC` alias"
+    },
+    "location": {
+      "column": 30,
+      "row": 183
+    },
+    "message": "Use `datetime.UTC` alias",
+    "name": "datetime-timezone-utc",
+    "noqa_row": 183,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/datetime-timezone-utc"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 21,
+      "row": 208
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/api/watches.py",
+    "fix": null,
+    "location": {
+      "column": 12,
+      "row": 208
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 208,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "RUF010",
+    "end_location": {
+      "column": 53,
+      "row": 212
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/api/watches.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "f\"Failed to create watch: {e!s}\"",
+          "end_location": {
+            "column": 55,
+            "row": 212
+          },
+          "location": {
+            "column": 20,
+            "row": 212
+          }
+        }
+      ],
+      "message": "Replace with conversion flag"
+    },
+    "location": {
+      "column": 47,
+      "row": 212
+    },
+    "message": "Use explicit conversion flag",
+    "name": "explicit-f-string-type-conversion",
+    "noqa_row": 212,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/explicit-f-string-type-conversion"
+  },
+  {
+    "cell": null,
+    "code": "UP017",
+    "end_location": {
+      "column": 42,
+      "row": 280
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/api/watches.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import UTC, datetime, timezone",
+          "end_location": {
+            "column": 45,
+            "row": 3
+          },
+          "location": {
+            "column": 1,
+            "row": 3
+          }
+        },
+        {
+          "content": "UTC",
+          "end_location": {
+            "column": 42,
+            "row": 280
+          },
+          "location": {
+            "column": 30,
+            "row": 280
+          }
+        }
+      ],
+      "message": "Convert to `datetime.UTC` alias"
+    },
+    "location": {
+      "column": 30,
+      "row": 280
+    },
+    "message": "Use `datetime.UTC` alias",
+    "name": "datetime-timezone-utc",
+    "noqa_row": 280,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/datetime-timezone-utc"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 21,
+      "row": 295
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/api/watches.py",
+    "fix": null,
+    "location": {
+      "column": 12,
+      "row": 295
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 295,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "RUF010",
+    "end_location": {
+      "column": 53,
+      "row": 299
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/api/watches.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "f\"Failed to update watch: {e!s}\"",
+          "end_location": {
+            "column": 55,
+            "row": 299
+          },
+          "location": {
+            "column": 20,
+            "row": 299
+          }
+        }
+      ],
+      "message": "Replace with conversion flag"
+    },
+    "location": {
+      "column": 47,
+      "row": 299
+    },
+    "message": "Use explicit conversion flag",
+    "name": "explicit-f-string-type-conversion",
+    "noqa_row": 299,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/explicit-f-string-type-conversion"
+  },
+  {
+    "cell": null,
+    "code": "S110",
+    "end_location": {
+      "column": 13,
+      "row": 327
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/api/watches.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 326
+    },
+    "message": "`try`-`except`-`pass` detected, consider logging the exception",
+    "name": "try-except-pass",
+    "noqa_row": 326,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 21,
+      "row": 326
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/api/watches.py",
+    "fix": null,
+    "location": {
+      "column": 12,
+      "row": 326
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 326,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "UP017",
+    "end_location": {
+      "column": 45,
+      "row": 362
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/api/watches.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import UTC, datetime, timezone",
+          "end_location": {
+            "column": 45,
+            "row": 3
+          },
+          "location": {
+            "column": 1,
+            "row": 3
+          }
+        },
+        {
+          "content": "UTC",
+          "end_location": {
+            "column": 45,
+            "row": 362
+          },
+          "location": {
+            "column": 33,
+            "row": 362
+          }
+        }
+      ],
+      "message": "Convert to `datetime.UTC` alias"
+    },
+    "location": {
+      "column": 33,
+      "row": 362
+    },
+    "message": "Use `datetime.UTC` alias",
+    "name": "datetime-timezone-utc",
+    "noqa_row": 362,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/datetime-timezone-utc"
+  },
+  {
+    "cell": null,
+    "code": "UP035",
+    "end_location": {
+      "column": 34,
+      "row": 8
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/app.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from collections.abc import AsyncGenerator",
+          "end_location": {
+            "column": 34,
+            "row": 8
+          },
+          "location": {
+            "column": 1,
+            "row": 8
+          }
+        }
+      ],
+      "message": "Import from `collections.abc`"
+    },
+    "location": {
+      "column": 1,
+      "row": 8
+    },
+    "message": "Import from `collections.abc` instead: `AsyncGenerator`",
+    "name": "deprecated-import",
+    "noqa_row": 8,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
+  },
+  {
+    "cell": null,
+    "code": "UP017",
+    "end_location": {
+      "column": 44,
+      "row": 34
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/app.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, timezone, UTC",
+          "end_location": {
+            "column": 40,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        },
+        {
+          "content": "UTC",
+          "end_location": {
+            "column": 44,
+            "row": 34
+          },
+          "location": {
+            "column": 32,
+            "row": 34
+          }
+        }
+      ],
+      "message": "Convert to `datetime.UTC` alias"
+    },
+    "location": {
+      "column": 32,
+      "row": 34
+    },
+    "message": "Use `datetime.UTC` alias",
+    "name": "datetime-timezone-utc",
+    "noqa_row": 34,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/datetime-timezone-utc"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 62
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/app.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 62
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 62,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 21,
+      "row": 90
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/app.py",
+    "fix": null,
+    "location": {
+      "column": 12,
+      "row": 90
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 90,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  }
+]

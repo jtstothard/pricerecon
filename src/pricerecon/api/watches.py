@@ -1,6 +1,6 @@
 """Watches CRUD API endpoints."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any
 
 import sqlite3
@@ -340,21 +340,20 @@ async def trigger_watch_check(watch_id: int) -> WatchCheckResponse:
     # Run the check
     result = await execute_watch(watch_id)
 
+    if result.get("collection_state") in {"blocked", "capped"}:
+        return WatchCheckResponse(
+            watch_id=watch_id,
+            status=result["collection_state"],
+            message=result["error"],
+            started_at=datetime.now(UTC),
+            result=result,
+        )
+
     if not result["success"]:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=result.get("error", "Unknown error"),
         )
-
-    # Update last_check timestamp
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute(
-        "UPDATE watches SET last_check_at = ? WHERE id = ?",
-        (datetime.now(timezone.utc).isoformat(), watch_id),
-    )
-    conn.commit()
-    conn.close()
 
     return WatchCheckResponse(
         watch_id=watch_id,

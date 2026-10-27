@@ -533,6 +533,9 @@ async def target_storage_readback():
 
         async with harness.session() as (client, _):
             initial = envelope(harness, requests=10, reserve=0)
+            caps = dict(initial.caps)
+            caps["storage_bytes"] = {"limit": 200_000, "tracking_reserve": 0}
+            initial = type(initial).model_validate({**initial.model_dump(), "caps": caps})
             with operating_policy(initial):
                 _, feed = await capture(harness, client, priced_report(harness, "68.00"))
                 saved = await track(client, feed["candidates"][0])
@@ -542,18 +545,16 @@ async def target_storage_readback():
                     "state"
                 ] == "above_target"
             harness.clock.advance(hours=0.01)
-            caps = dict(initial.caps)
-            caps["storage_bytes"] = {"limit": 0, "tracking_reserve": 0}
-            limited = type(initial).model_validate(
-                {
-                    **initial.model_dump(),
-                    "scope_id": "explicit-second-synthetic-grant",
-                    "caps": caps,
-                }
-            )
-            with operating_policy(limited):
-                result, _ = await capture(harness, client, priced_report(harness, "48.00"))
+            # Exhaust the same immutable envelope with a larger evidence write;
+            # switching policy scope is no longer permission to reset resources.
+            with operating_policy(initial):
+                result, _ = await capture(harness, client, priced_report(harness, "48.00"),
+                    title="Synthetic exact watch " + "x" * 300_000)
                 assert result.outcomes[0].state == "capped"
+                assert result.outcomes[0].reason == "resource_exhausted:storage_bytes"
+                state = await get(client, "/api/discovery/collection")
+                assert state["scope_id"] == initial.scope_id
+                assert next(u for u in state["usage"] if u["resource"] == "storage_bytes")["used"] <= 200_000
                 current = await get(client, f"/api/discovery/tracking/{saved['id']}")
                 assert current["assessment"]["state"] == "withheld"
                 assert "source_refresh_unavailable" in current["assessment"]["reasons"]

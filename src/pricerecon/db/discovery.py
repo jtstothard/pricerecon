@@ -103,7 +103,7 @@ def save_capture(capture: DiscoveryCapture, candidates: list[DiscoveryCandidate]
         from pricerecon.core.collection_policy import current_policy
         from pricerecon.db.collection import storage_size
 
-        policy = current_policy()
+        policy = current_policy(connection)
         before_bytes = storage_size(connection) if policy else 0
         connection.execute(
             "INSERT INTO discovery_captures VALUES (?, ?, ?, ?)",

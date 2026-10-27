@@ -1,0 +1,82 @@
+{
+  "date": "2026-10-27",
+  "base": "66631227da92c759680df780adb77c197a8095f9",
+  "scope": "deterministic offline source acceptance; collection staged",
+  "application_workflows": {
+    "passed": 160,
+    "seconds": 157.64,
+    "retained": 148,
+    "added": 12,
+    "skips": 0,
+    "xfails": 0
+  },
+  "retained_denial_probes": {
+    "passed": 8,
+    "entrypoints": [
+      "api",
+      "scheduler"
+    ]
+  },
+  "contracts": {
+    "passed": 37,
+    "warnings": 10
+  },
+  "mypy": {
+    "passed": true,
+    "source_files": 3
+  },
+  "ruff": {
+    "base": "66631227da92c759680df780adb77c197a8095f9",
+    "added": [],
+    "removed": [
+      [
+        "app.py",
+        "UP017",
+        "Use `datetime.UTC` alias",
+        1
+      ],
+      [
+        "watches.py",
+        "UP017",
+        "Use `datetime.UTC` alias",
+        1
+      ]
+    ],
+    "retained_findings": 16
+  },
+  "frontend_tree_unchanged": "fdcd941bb28fda22b7a8e2d9e7d606a6f9a7f7ec",
+  "frontend_proof": "prior 25 tests, build and desktop/narrow receipts reused",
+  "original_parent_files_unchanged": 77,
+  "sha256": {
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/api-expired.json": "d96680df091d7be4c2d3453a8bc733aab3d94da64a2891a74357435535a1a255",
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/api-expired.log": "023c009b72409015f77ff50d1a52c01b5bbb35a30eba238e43fce32c593feb2b",
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/api-red.log": "263adcf7a363f2f58f7be053909025bc61ee2d11a06c534bfaaf2ddb18041193",
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/api-request_cap.json": "933abb2fc8e7fd0b255821e33a5f5ce9013c2c2824af03ae489ad858bd0e4793",
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/api-request_cap.log": "023c009b72409015f77ff50d1a52c01b5bbb35a30eba238e43fce32c593feb2b",
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/api-zero_elapsed.json": "e02aa532ecf4f80b3a7878c8eb0dca7109d704ddba663b27c2e48dc469d202a4",
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/api-zero_elapsed.log": "023c009b72409015f77ff50d1a52c01b5bbb35a30eba238e43fce32c593feb2b",
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/api-zero_provider.json": "3695d09e10a67a80a9ee21ed10698cee713d6834884f6468c2ed7b7a5b5fe215",
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/api-zero_provider.log": "023c009b72409015f77ff50d1a52c01b5bbb35a30eba238e43fce32c593feb2b",
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/contracts.log": "7bd6f28b33d81efb9ff464385dcd2d819f091971146334fe5225862ff5ae9275",
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/mypy.log": "0d6d9e448dd07fdae1a21105481e516b0d6bc72917b1ead94dc272d4d56afb5f",
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/probe-results.json": "1761f8b5673a0ce1b6d7253c6124518d4bd56205785d78ab8511d8b309917aa6",
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/ruff-comparison.json": "9a7f9e4768f654d70d4504b06cc1c9d97f2b195b42c2ada81bc59c78b8eb5377",
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/ruff.json": "79b75ce952503da8d84704d067a0adf24d8e6dbb5a658f3595fa397011ec9ed9",
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/scheduler-expired.json": "2beaaf7e46cf7107584198de54b73fc80c0f33bd18da2282395d5645ccf67fcf",
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/scheduler-expired.log": "023c009b72409015f77ff50d1a52c01b5bbb35a30eba238e43fce32c593feb2b",
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/scheduler-red.log": "c8ecd10c99508c9fe9930e964ff8967d683bbfe4fd19d4603f2c86b4fb2f20d8",
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/scheduler-request_cap.json": "04a405894436f04f1825cff32689edc5b56d25cf6d1d58f813a0dd592da283b3",
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/scheduler-request_cap.log": "023c009b72409015f77ff50d1a52c01b5bbb35a30eba238e43fce32c593feb2b",
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/scheduler-zero_elapsed.json": "776f991e08c2665c6783adae7a94fba4f1f1858b0a7bc9beb00a11b1891be61c",
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/scheduler-zero_elapsed.log": "023c009b72409015f77ff50d1a52c01b5bbb35a30eba238e43fce32c593feb2b",
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/scheduler-zero_provider.json": "e587136ee0dffa30347d6a4f2939bbc3728014b9ffaebb5d2be1a114e69ea658",
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/scheduler-zero_provider.log": "023c009b72409015f77ff50d1a52c01b5bbb35a30eba238e43fce32c593feb2b",
+    "docs/testing/artifacts/watch-collection/watch-denial-repair/workflows.log": "28c9353ca3d5447a1af2e243578a7f39b51b95677dd84308e6f7364fae3e7ba6",
+    "src/pricerecon/api/watches.py": "89914ed53fa3aa276eed22f5ca2aead856e874e6c4f10a2b4f6677cb0331f636",
+    "src/pricerecon/app.py": "7aef3c06a9169eb2c40321287dbb391d607db56e6f1c20a5124d2c4ef26c83e8",
+    "src/pricerecon/core/watch_executor.py": "7ff68ca2c8057892710f4f625977c50777cf4fd470ec42302f7c773eaadf781a",
+    "tests/monitoring/collection_timestamp_merger_probe.py": "867a8b2ad8ecf371e25d512d19533eb89cd8fb8848dc1a91b78d98cbbd260fbf",
+    "tests/monitoring/watch_completion_controls.py": "f0d30ff0e7c94892f4d3b861413498a5f7e7688baf312e37a14163c95278d9d5",
+    "tests/test_shared_grant_workflow.py": "5595215fe6f1464ac425636e9d04207d41bb4cb9e2d893363670d334bb80cf62"
+  }
+}

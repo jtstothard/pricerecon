@@ -4,17 +4,17 @@
 
 **Blocked by:** [05: Track exact products and send qualified target alerts](05-track-exact-products.md)
 
-**Status:** open — merger repair required 2026-10-27
+**Status:** closed — offline acceptance 2026-10-27
 
 **Assignee:** Codex implementer (isolated worktree)
 
 **Parent:** [Trustworthy UK watch discovery alongside existing monitoring](../../../docs/specs/watch-category-discovery.md)
 
-- [ ] Reuse native scheduler, execution, health and notification facilities with shared admission accounting for provider calls, detail/page requests, retries/fallbacks and applicable browser/AI/storage resources.
-- [ ] Under explicitly supplied test limits, prioritise existing tracking and potential-alert verification, reduce discovery breadth first, and expose capped/blocked/failed/empty outcomes separately through API and coverage UI.
-- [ ] Preserve aged last-good evidence without certifying semantic freshness from transport health; withhold alerts when required evidence cannot be refreshed.
-- [ ] Exercise concurrent demand, exhaustion, partial failure, restart and resumption; no retry/fallback bypass or unbounded catch-up burst is allowed.
-- [ ] Missing required operating policy keeps collection/activation gated. Do not invent numerical budgets, freshness schedules or a maintenance owner; present unmet prerequisites visibly.
+- [x] Reuse native scheduler, execution, health and notification facilities with shared admission accounting for provider calls, detail/page requests, retries/fallbacks and applicable browser/AI/storage resources. Unsupported lanes remain explicitly gated; physical resource controls remain live prerequisites.
+- [x] Under explicitly supplied test limits, prioritise existing tracking and potential-alert verification, reduce discovery breadth first, and expose capped/blocked/failed/empty outcomes separately through API and coverage UI.
+- [x] Preserve aged last-good evidence without certifying semantic freshness from transport health; withhold alerts when required evidence cannot be refreshed.
+- [x] Exercise concurrent demand, exhaustion, partial failure, restart and resumption; no retry/fallback bypass or unbounded catch-up burst is allowed.
+- [x] Missing required operating policy keeps collection/activation gated. Do not invent numerical budgets, freshness schedules or a maintenance owner; present unmet prerequisites visibly.
 
 ## Verification and authority
 
@@ -67,3 +67,51 @@ browser/AI lanes and physical disk/log/backup/retention controls remain prerequi
 not zero-cost resources or production operating acceptance. 07's separate
 multi-configuration gap remains open and was neither fixed nor used to excuse
 these collection failures. No 11 work, live operation, activation or push occurred.
+
+## Shared-grant repair merger review — 2026-10-27
+
+The original three grant bypasses are repaired. Clean source `2ac8eff` was
+refreshed with integration `c84f1f1` as `f61bc3c`, then merged with `--no-ff`
+as `906ef0f` without conflicts. The parent's 07 repair, its three tests and
+receipts are unchanged. All **148 guarded workflows** pass in one invocation,
+as do **37 contracts**, focused types and zero-added-finding lint checks.
+Independent API/scheduler/fresh-process probes and no-grant/redirect controls
+pass. Concurrent processes, None/empty contexts, immutable scopes, first-denial
+registration, expiry, damaged/ambiguous/removed payloads and migration are covered.
+
+**10 remains open; 11 remains blocked and unclaimed.** A separate normal Watch
+API probe advances the controlled clock after exhausting a one-request grant.
+The next request sends nothing, preserves rows and records the correct capped,
+unrefreshed attempt with the old last-good time. However, its API envelope says
+`status=completed`, `success=true`, and advances `last_check_at` from 12:00 to 13:00.
+Zero-first elapsed/provider grants also report completed/success and change a
+null timestamp to 13:00 despite no acquisition. The expired-policy control returns
+blocked and retains 12:00 correctly. These three failing acceptance cases are
+retained as failures, outside the 148 passing workflows.
+
+Acquisition denial is retained in `acquisition_outcomes`, but only a later
+persistence denial sets the `collection_state` consumed by the new API response
+branch. This leaves the API's normal completed path and both timestamp updates
+reachable after these all-source caps. Repair must carry actual acquisition
+denial through the Watch result and preserve the timestamp without weakening
+legacy successful/empty/partial behavior or fabricating a refreshed assessment.
+The merger made no application-source repair.
+
+See the [repair merger receipt and exact reproducer](../../../docs/testing/watch-collection.md#shared-grant-repair-merger-review--2026-10-27).
+The two unchecked checklist items retain this gap; live/browser/AI/physical
+storage/retention/source-rights/buyer gates remain separate. Ticket08 stays with
+its active owner; no 08 or 11 implementation occurred. Collection remains staged.
+
+## Final offline acceptance — 2026-10-27
+
+The parent repaired the denied Watch status/timestamp finding directly. API and
+scheduler now retain successful timestamps on all-source admission denial and
+report capped/blocked rather than completed. Successful empty/partial controls
+remain compatible. All **160 guarded workflows**, **37 contracts**, focused
+mypy and zero-added-finding Ruff checks pass. Eight fresh retained denial probes
+pass; original dirty parent remains unchanged. Existing frontend proof is reused.
+See the [dated repair and acceptance receipt](../../../docs/testing/watch-collection.md#denied-watch-completion-repair-and-offline-acceptance--2026-10-27).
+
+**Closed for offline scope.** 11 is ready and claimed for isolated implementation;
+08 remains with its existing owner. Collection stays staged; the documented live,
+source-rights, physical-resource, operating-owner and buyer gates remain unproven.

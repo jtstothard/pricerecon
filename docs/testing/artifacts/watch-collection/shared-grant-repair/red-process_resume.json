@@ -1,0 +1,228 @@
+{
+  "case": "process_resume",
+  "result": "failed",
+  "expected_transport_sends": 0,
+  "actual_transport_sends": 1,
+  "sends": [
+    "https://fixture.invalid/search"
+  ],
+  "outside_status": {
+    "state": "blocked",
+    "activation": "staged",
+    "gates": [
+      "operating_policy_required",
+      "live_activation_not_authorized",
+      "production_operating_envelope_unproven"
+    ],
+    "scope_id": null,
+    "version": null,
+    "stops_at": null,
+    "usage": [],
+    "provider_usage": [],
+    "attempts": [
+      {
+        "id": "575df988-99bc-4db5-83ef-f32a7dcd5bcf",
+        "source": "cex",
+        "purpose": "tracking",
+        "context_id": "watch:7:3f9bc171-424b-4f09-9662-2a85b33096e8",
+        "query": " (ML05 OR \"ML05B\") -parts  ",
+        "attempted_at": "2026-10-27T12:00:00Z",
+        "state": "capped",
+        "reason": "resource_exhausted:requests",
+        "next_eligible_at": "2026-10-27T12:00:00Z",
+        "last_good_at": "2026-10-27T12:00:00Z",
+        "last_good_age_seconds": 0,
+        "evidence_state": "unrefreshed"
+      },
+      {
+        "id": "de451d04-0887-4319-8327-2d358bd01b29",
+        "source": "cex",
+        "purpose": "tracking",
+        "context_id": "watch:7:69cdd9d4-6405-4003-a2f0-637312d40456",
+        "query": " (ML05 OR \"ML05B\") -parts  ",
+        "attempted_at": "2026-10-27T12:00:00Z",
+        "state": "success_empty",
+        "reason": null,
+        "next_eligible_at": "2026-10-27T12:00:00Z",
+        "last_good_at": "2026-10-27T12:00:00Z",
+        "last_good_age_seconds": 0,
+        "evidence_state": "observed_at_attempt"
+      }
+    ]
+  },
+  "supplied_ledger": {
+    "state": "supplied",
+    "activation": "staged",
+    "gates": [
+      "live_activation_not_authorized",
+      "production_operating_envelope_unproven"
+    ],
+    "scope_id": "synthetic-finite-study",
+    "version": "fixture-v1",
+    "stops_at": "2026-10-28T12:00:00Z",
+    "usage": [
+      {
+        "resource": "requests",
+        "used": 1,
+        "limit": 1,
+        "tracking_reserve": 0
+      },
+      {
+        "resource": "pages",
+        "used": 1,
+        "limit": 20,
+        "tracking_reserve": 1
+      },
+      {
+        "resource": "details",
+        "used": 0,
+        "limit": 20,
+        "tracking_reserve": 1
+      },
+      {
+        "resource": "retries",
+        "used": 0,
+        "limit": 20,
+        "tracking_reserve": 1
+      },
+      {
+        "resource": "fallbacks",
+        "used": 0,
+        "limit": 20,
+        "tracking_reserve": 1
+      },
+      {
+        "resource": "storage_bytes",
+        "used": 0,
+        "limit": 10000000,
+        "tracking_reserve": 100000
+      },
+      {
+        "resource": "elapsed_seconds",
+        "used": 20,
+        "limit": 1000,
+        "tracking_reserve": 100
+      }
+    ],
+    "provider_usage": [
+      {
+        "source": "cex",
+        "used": 1,
+        "limit": 1,
+        "tracking_reserve": 0
+      },
+      {
+        "source": "scan",
+        "used": 0,
+        "limit": 1,
+        "tracking_reserve": 0
+      },
+      {
+        "source": "ebay",
+        "used": 0,
+        "limit": 1,
+        "tracking_reserve": 0
+      },
+      {
+        "source": "amazon_uk",
+        "used": 0,
+        "limit": 1,
+        "tracking_reserve": 0
+      }
+    ],
+    "attempts": [
+      {
+        "id": "575df988-99bc-4db5-83ef-f32a7dcd5bcf",
+        "source": "cex",
+        "purpose": "tracking",
+        "context_id": "watch:7:3f9bc171-424b-4f09-9662-2a85b33096e8",
+        "query": " (ML05 OR \"ML05B\") -parts  ",
+        "attempted_at": "2026-10-27T12:00:00Z",
+        "state": "capped",
+        "reason": "resource_exhausted:requests",
+        "next_eligible_at": "2026-10-27T12:00:00Z",
+        "last_good_at": "2026-10-27T12:00:00Z",
+        "last_good_age_seconds": 0,
+        "evidence_state": "unrefreshed"
+      },
+      {
+        "id": "de451d04-0887-4319-8327-2d358bd01b29",
+        "source": "cex",
+        "purpose": "tracking",
+        "context_id": "watch:7:69cdd9d4-6405-4003-a2f0-637312d40456",
+        "query": " (ML05 OR \"ML05B\") -parts  ",
+        "attempted_at": "2026-10-27T12:00:00Z",
+        "state": "success_empty",
+        "reason": null,
+        "next_eligible_at": "2026-10-27T12:00:00Z",
+        "last_good_at": "2026-10-27T12:00:00Z",
+        "last_good_age_seconds": 0,
+        "evidence_state": "observed_at_attempt"
+      }
+    ]
+  },
+  "operating_policy": {
+    "scope_id": "synthetic-finite-study",
+    "version": "fixture-v1",
+    "owner_reference": "test-only",
+    "permission_reference": "original-fixtures",
+    "retention_reference": "temporary-test-directory",
+    "starts_at": "2026-10-27T12:00:00Z",
+    "stops_at": "2026-10-28T12:00:00Z",
+    "recovery_spacing_seconds": 0,
+    "run_timeout_seconds": 10,
+    "caps": {
+      "requests": {
+        "limit": 1,
+        "tracking_reserve": 0
+      },
+      "pages": {
+        "limit": 20,
+        "tracking_reserve": 1
+      },
+      "details": {
+        "limit": 20,
+        "tracking_reserve": 1
+      },
+      "retries": {
+        "limit": 20,
+        "tracking_reserve": 1
+      },
+      "fallbacks": {
+        "limit": 20,
+        "tracking_reserve": 1
+      },
+      "storage_bytes": {
+        "limit": 10000000,
+        "tracking_reserve": 100000
+      },
+      "elapsed_seconds": {
+        "limit": 1000,
+        "tracking_reserve": 100
+      }
+    },
+    "provider_request_caps": {
+      "cex": {
+        "limit": 1,
+        "tracking_reserve": 0
+      },
+      "scan": {
+        "limit": 1,
+        "tracking_reserve": 0
+      },
+      "ebay": {
+        "limit": 1,
+        "tracking_reserve": 0
+      },
+      "amazon_uk": {
+        "limit": 1,
+        "tracking_reserve": 0
+      }
+    }
+  },
+  "temporary_storage": true,
+  "blocked_edges": [],
+  "notifications_sent": 0,
+  "legacy_intent_preserved": true,
+  "activation": "staged"
+}

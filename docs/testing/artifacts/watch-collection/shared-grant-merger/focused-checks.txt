@@ -1,0 +1,3 @@
+Merged-tree limiter/external-browser contracts: 37 passed, 10 inherited Pydantic deprecation warnings in 0.39s.
+Focused mypy --follow-imports=silent: Success: no issues found in 14 source files; existing unused-override notes.
+Focused Ruff: 17 repair-changed Python files, 15 clean, 18 inherited diagnostics, zero added versus c84f1f1. New standalone timestamp probe also passes Ruff.

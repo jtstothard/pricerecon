@@ -1,0 +1,232 @@
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+____ test_scheduler_denial_retains_successful_check_timestamp[request_cap] _____
+
+case = 'request_cap'
+tmp_path = PosixPath('/private/tmp/pytest-of-jay/pytest-19/test_scheduler_denial_retains_0')
+
+    @pytest.mark.parametrize("case", ["request_cap", "zero_elapsed", "zero_provider", "expired"])
+    def test_scheduler_denial_retains_successful_check_timestamp(case, tmp_path):
+>       run("collection_timestamp_merger_probe", case, tmp_path / f"{case}.json",
+            "--entrypoint", "scheduler")
+
+tests/test_shared_grant_workflow.py:43: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+module = 'collection_timestamp_merger_probe', case = 'request_cap'
+args = (PosixPath('/private/tmp/pytest-of-jay/pytest-19/test_scheduler_denial_retains_0/request_cap.json'), '--entrypoint', 'scheduler')
+
+    def run(module, case, *args):
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-m", f"tests.monitoring.{module}", case, *map(str, args)],
+            cwd=root,
+            env={
+                "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                "PYTHONDONTWRITEBYTECODE": "1",
+            },
+            capture_output=True,
+            text=True,
+            timeout=40,
+            check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Loaded 1 watches into scheduler
+E         Traceback (most recent call last):
+E           File "<frozen runpy>", line 203, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/tests/monitoring/collection_timestamp_merger_probe.py", line 133, in <module>
+E             asyncio.run(main(args.case, args.output.resolve(), args.entrypoint))
+E             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+E             return runner.run(main)
+E                    ~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+E             return self._loop.run_until_complete(task)
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+E             return future.result()
+E                    ~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/tests/monitoring/collection_timestamp_merger_probe.py", line 124, in main
+E             assert not failures, "; ".join(failures)
+E                    ^^^^^^^^^^^^
+E         AssertionError: scheduler did not report the denied state; scheduler reported denied work as done; denied Watch advanced last_check_at
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python', '-m', 'tests.monitoring.col...eduler did not report the denied state; scheduler reported denied work as done; denied Watch advanced last_check_at\n').returncode
+
+tests/test_shared_grant_workflow.py:27: AssertionError
+____ test_scheduler_denial_retains_successful_check_timestamp[zero_elapsed] ____
+
+case = 'zero_elapsed'
+tmp_path = PosixPath('/private/tmp/pytest-of-jay/pytest-19/test_scheduler_denial_retains_1')
+
+    @pytest.mark.parametrize("case", ["request_cap", "zero_elapsed", "zero_provider", "expired"])
+    def test_scheduler_denial_retains_successful_check_timestamp(case, tmp_path):
+>       run("collection_timestamp_merger_probe", case, tmp_path / f"{case}.json",
+            "--entrypoint", "scheduler")
+
+tests/test_shared_grant_workflow.py:43: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+module = 'collection_timestamp_merger_probe', case = 'zero_elapsed'
+args = (PosixPath('/private/tmp/pytest-of-jay/pytest-19/test_scheduler_denial_retains_1/zero_elapsed.json'), '--entrypoint', 'scheduler')
+
+    def run(module, case, *args):
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-m", f"tests.monitoring.{module}", case, *map(str, args)],
+            cwd=root,
+            env={
+                "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                "PYTHONDONTWRITEBYTECODE": "1",
+            },
+            capture_output=True,
+            text=True,
+            timeout=40,
+            check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Loaded 1 watches into scheduler
+E         Traceback (most recent call last):
+E           File "<frozen runpy>", line 203, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/tests/monitoring/collection_timestamp_merger_probe.py", line 133, in <module>
+E             asyncio.run(main(args.case, args.output.resolve(), args.entrypoint))
+E             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+E             return runner.run(main)
+E                    ~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+E             return self._loop.run_until_complete(task)
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+E             return future.result()
+E                    ~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/tests/monitoring/collection_timestamp_merger_probe.py", line 124, in main
+E             assert not failures, "; ".join(failures)
+E                    ^^^^^^^^^^^^
+E         AssertionError: scheduler did not report the denied state; scheduler reported denied work as done; denied Watch advanced last_check_at
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python', '-m', 'tests.monitoring.col...eduler did not report the denied state; scheduler reported denied work as done; denied Watch advanced last_check_at\n').returncode
+
+tests/test_shared_grant_workflow.py:27: AssertionError
+___ test_scheduler_denial_retains_successful_check_timestamp[zero_provider] ____
+
+case = 'zero_provider'
+tmp_path = PosixPath('/private/tmp/pytest-of-jay/pytest-19/test_scheduler_denial_retains_2')
+
+    @pytest.mark.parametrize("case", ["request_cap", "zero_elapsed", "zero_provider", "expired"])
+    def test_scheduler_denial_retains_successful_check_timestamp(case, tmp_path):
+>       run("collection_timestamp_merger_probe", case, tmp_path / f"{case}.json",
+            "--entrypoint", "scheduler")
+
+tests/test_shared_grant_workflow.py:43: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+module = 'collection_timestamp_merger_probe', case = 'zero_provider'
+args = (PosixPath('/private/tmp/pytest-of-jay/pytest-19/test_scheduler_denial_retains_2/zero_provider.json'), '--entrypoint', 'scheduler')
+
+    def run(module, case, *args):
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-m", f"tests.monitoring.{module}", case, *map(str, args)],
+            cwd=root,
+            env={
+                "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                "PYTHONDONTWRITEBYTECODE": "1",
+            },
+            capture_output=True,
+            text=True,
+            timeout=40,
+            check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Loaded 1 watches into scheduler
+E         Traceback (most recent call last):
+E           File "<frozen runpy>", line 203, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/tests/monitoring/collection_timestamp_merger_probe.py", line 133, in <module>
+E             asyncio.run(main(args.case, args.output.resolve(), args.entrypoint))
+E             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+E             return runner.run(main)
+E                    ~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+E             return self._loop.run_until_complete(task)
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+E             return future.result()
+E                    ~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/tests/monitoring/collection_timestamp_merger_probe.py", line 124, in main
+E             assert not failures, "; ".join(failures)
+E                    ^^^^^^^^^^^^
+E         AssertionError: scheduler did not report the denied state; scheduler reported denied work as done; denied Watch advanced last_check_at
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python', '-m', 'tests.monitoring.col...eduler did not report the denied state; scheduler reported denied work as done; denied Watch advanced last_check_at\n').returncode
+
+tests/test_shared_grant_workflow.py:27: AssertionError
+______ test_scheduler_denial_retains_successful_check_timestamp[expired] _______
+
+case = 'expired'
+tmp_path = PosixPath('/private/tmp/pytest-of-jay/pytest-19/test_scheduler_denial_retains_3')
+
+    @pytest.mark.parametrize("case", ["request_cap", "zero_elapsed", "zero_provider", "expired"])
+    def test_scheduler_denial_retains_successful_check_timestamp(case, tmp_path):
+>       run("collection_timestamp_merger_probe", case, tmp_path / f"{case}.json",
+            "--entrypoint", "scheduler")
+
+tests/test_shared_grant_workflow.py:43: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+module = 'collection_timestamp_merger_probe', case = 'expired'
+args = (PosixPath('/private/tmp/pytest-of-jay/pytest-19/test_scheduler_denial_retains_3/expired.json'), '--entrypoint', 'scheduler')
+
+    def run(module, case, *args):
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-m", f"tests.monitoring.{module}", case, *map(str, args)],
+            cwd=root,
+            env={
+                "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                "PYTHONDONTWRITEBYTECODE": "1",
+            },
+            capture_output=True,
+            text=True,
+            timeout=40,
+            check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Loaded 1 watches into scheduler
+E         Traceback (most recent call last):
+E           File "<frozen runpy>", line 203, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/tests/monitoring/collection_timestamp_merger_probe.py", line 133, in <module>
+E             asyncio.run(main(args.case, args.output.resolve(), args.entrypoint))
+E             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+E             return runner.run(main)
+E                    ~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+E             return self._loop.run_until_complete(task)
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+E             return future.result()
+E                    ~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/tests/monitoring/collection_timestamp_merger_probe.py", line 124, in main
+E             assert not failures, "; ".join(failures)
+E                    ^^^^^^^^^^^^
+E         AssertionError: scheduler did not report the denied state; scheduler reported denied work as done; denied Watch advanced last_check_at
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python', '-m', 'tests.monitoring.col...eduler did not report the denied state; scheduler reported denied work as done; denied Watch advanced last_check_at\n').returncode
+
+tests/test_shared_grant_workflow.py:27: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_shared_grant_workflow.py::test_scheduler_denial_retains_successful_check_timestamp[request_cap]
+FAILED tests/test_shared_grant_workflow.py::test_scheduler_denial_retains_successful_check_timestamp[zero_elapsed]
+FAILED tests/test_shared_grant_workflow.py::test_scheduler_denial_retains_successful_check_timestamp[zero_provider]
+FAILED tests/test_shared_grant_workflow.py::test_scheduler_denial_retains_successful_check_timestamp[expired]
+4 failed, 26 deselected in 3.14s

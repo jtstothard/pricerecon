@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import json
+import sqlite3
+from contextlib import closing
 
 import httpx
+import pytest
 
 from pricerecon.connectors.external_browser import (
     BrowserDegradation,
@@ -16,6 +19,31 @@ CONFIG = {
     },
     "browser_default": ["cloak", "camo"],
 }
+
+
+@pytest.fixture(autouse=True)
+def never_configured_collection_database(tmp_path, monkeypatch):
+    """Standalone adapter contracts must not consult a workspace/live database.
+
+    These are genuine never-configured legacy transports, not permission to
+    ignore a missing policy in a database already governed by a finite grant.
+    """
+    from pricerecon.db import collection, schema
+
+    database = tmp_path / "unconfigured-contract.sqlite"
+    monkeypatch.setattr(schema, "DB_PATH", database)
+    monkeypatch.setattr(collection, "DB_PATH", database)
+    with closing(sqlite3.connect(database)) as connection:
+        connection.execute(
+            "CREATE TABLE schema_migrations (version TEXT PRIMARY KEY, description TEXT)"
+        )
+        collection.init_collection_tables(connection)
+    yield
+    state = collection.collection_status()
+    assert state.state == "blocked"
+    assert "operating_policy_required" in state.gates
+    assert state.scope_id is None
+    assert state.usage == state.provider_usage == state.attempts == []
 
 
 def make_transport(handler: httpx.MockTransport) -> object:

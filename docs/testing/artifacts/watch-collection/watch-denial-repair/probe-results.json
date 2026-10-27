@@ -1,0 +1,42 @@
+[
+  {
+    "entrypoint": "api",
+    "case": "request_cap",
+    "exit_code": 0
+  },
+  {
+    "entrypoint": "api",
+    "case": "zero_elapsed",
+    "exit_code": 0
+  },
+  {
+    "entrypoint": "api",
+    "case": "zero_provider",
+    "exit_code": 0
+  },
+  {
+    "entrypoint": "api",
+    "case": "expired",
+    "exit_code": 0
+  },
+  {
+    "entrypoint": "scheduler",
+    "case": "request_cap",
+    "exit_code": 0
+  },
+  {
+    "entrypoint": "scheduler",
+    "case": "zero_elapsed",
+    "exit_code": 0
+  },
+  {
+    "entrypoint": "scheduler",
+    "case": "zero_provider",
+    "exit_code": 0
+  },
+  {
+    "entrypoint": "scheduler",
+    "case": "expired",
+    "exit_code": 0
+  }
+]

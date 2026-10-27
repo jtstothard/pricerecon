@@ -1,0 +1,19 @@
+{
+  "base": "66631227da92c759680df780adb77c197a8095f9",
+  "added": [],
+  "removed": [
+    [
+      "app.py",
+      "UP017",
+      "Use `datetime.UTC` alias",
+      1
+    ],
+    [
+      "watches.py",
+      "UP017",
+      "Use `datetime.UTC` alias",
+      1
+    ]
+  ],
+  "retained_findings": 16
+}

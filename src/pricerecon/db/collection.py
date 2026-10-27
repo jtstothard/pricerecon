@@ -8,7 +8,6 @@ from pricerecon.db.schema import DB_PATH
 from pricerecon.models.collection import (
     CollectionAttempt,
     CollectionStatus,
-    OperatingPolicy,
     ProviderRequestUsage,
     ResourceUsage,
 )
@@ -32,12 +31,26 @@ def init_collection_tables(connection: sqlite3.Connection) -> None:
         );
         CREATE INDEX IF NOT EXISTS idx_collection_attempt_source
             ON collection_attempts(scope_id, source, attempted_at);
+        CREATE TABLE IF NOT EXISTS collection_policy_selection (
+            singleton INTEGER PRIMARY KEY CHECK(singleton=1),
+            scope_id TEXT, reason TEXT
+        );
+        INSERT OR IGNORE INTO collection_policy_selection
+            SELECT 1, CASE WHEN COUNT(*)=1 THEN MIN(scope_id) END,
+                CASE WHEN COUNT(*)>1 THEN 'operating_policy_ambiguous' END
+            FROM collection_policies HAVING COUNT(*)>0;
+        INSERT OR IGNORE INTO schema_migrations(version, description)
+            VALUES ('2.1', 'Durable database-wide collection policy selection');
         INSERT OR IGNORE INTO schema_migrations(version, description)
             VALUES ('1.9', 'Shared finite operating envelopes and durable attempt accounting');
     """)
 
 
-def collection_status(policy: OperatingPolicy | None) -> CollectionStatus:
+def collection_status() -> CollectionStatus:
+    from pricerecon.core.rate_limiter import DurableAdmission
+
+    selection = DurableAdmission.select_policy()
+    policy = selection.policy
     now = datetime.now(UTC)
     with closing(sqlite3.connect(DB_PATH)) as connection:
         connection.row_factory = sqlite3.Row
@@ -67,14 +80,10 @@ def collection_status(policy: OperatingPolicy | None) -> CollectionStatus:
                     else "unrefreshed",
                 )
             )
-        changed_policy = False
+        policy_gate = selection.reason
         usage = []
         provider_usage = []
         if policy:
-            saved = connection.execute(
-                "SELECT payload_json FROM collection_policies WHERE scope_id=?", (policy.scope_id,)
-            ).fetchone()
-            changed_policy = bool(saved and saved[0] != policy.model_dump_json())
             values = dict(
                 connection.execute(
                     "SELECT resource, used FROM collection_usage WHERE scope_id=?",
@@ -99,18 +108,14 @@ def collection_status(policy: OperatingPolicy | None) -> CollectionStatus:
                 )
                 for resource, cap in policy.caps.items()
             ]
-    valid = policy is not None and policy.starts_at <= now < policy.stops_at and not changed_policy
+    valid = policy is not None and policy.starts_at <= now < policy.stops_at and not policy_gate
     return CollectionStatus(
-        state="supplied" if valid else "expired" if policy and not changed_policy else "blocked",
+        state="supplied" if valid else "expired" if policy and not policy_gate else "blocked",
         gates=(
             []
             if valid
             else [
-                "operating_policy_changed"
-                if changed_policy
-                else "operating_policy_expired"
-                if policy
-                else "operating_policy_required"
+                policy_gate or ("operating_policy_expired" if policy else "operating_policy_required")
             ]
         )
         + ["live_activation_not_authorized", "production_operating_envelope_unproven"],

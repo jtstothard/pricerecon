@@ -69,7 +69,6 @@ async def discovery_observation_history(candidate_id: str) -> ObservationHistory
 
 @router.get("/discovery/collection", response_model=CollectionStatus)
 async def discovery_collection() -> CollectionStatus:
-    from pricerecon.core.collection_policy import current_policy
     from pricerecon.db.collection import collection_status
 
-    return collection_status(current_policy())
+    return collection_status()
