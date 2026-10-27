@@ -2,7 +2,14 @@
 
 from fastapi import APIRouter, HTTPException
 
-from pricerecon.db.discovery import PreferenceConflict, get_feed, get_preferences, save_preferences
+from pricerecon.db.discovery import (
+    PreferenceConflict,
+    get_cost_history,
+    get_feed,
+    get_preferences,
+    save_preferences,
+)
+from pricerecon.models.costs import CostHistory
 from pricerecon.models.discovery import DiscoveryFeed, PreferenceProfile, PreferenceUpdate
 
 router = APIRouter()
@@ -26,3 +33,8 @@ async def update_discovery_preferences(update: PreferenceUpdate) -> PreferencePr
         raise HTTPException(
             status_code=409, detail="Preferences changed; reload before saving."
         ) from exc
+
+
+@router.get("/discovery/offers/{offer_id}/costs", response_model=CostHistory)
+async def discovery_cost_history(offer_id: str) -> CostHistory:
+    return get_cost_history(offer_id)

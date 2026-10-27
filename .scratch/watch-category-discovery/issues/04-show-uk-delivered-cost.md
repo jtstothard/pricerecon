@@ -28,3 +28,12 @@ Claimed after ticket03's offline repair acceptance and history-preserving merge
 No ticket04 implementation or cost verification was performed by the merger.
 All checklist items remain open. Collection stays staged and totals remain
 unknown; live/source/buyer and activation gates remain separate.
+
+## Implementation handoff: 2026-10-27
+
+Source implementation and deterministic verification are ready for merger review
+on `t3/ticket04-offer-cost-evidence`. See the [dated cost receipt](../../../docs/testing/watch-costs.md)
+for checklist coverage, application red/green, retained desktop/narrow browser
+proof, commands and remaining gates. Checklist acceptance and ticket closure are
+left to the merger. Collection remains staged; observation-time cost verification
+does not establish current freshness, comparison acceptance or a live offer.

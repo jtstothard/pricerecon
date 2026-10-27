@@ -1,0 +1,28 @@
+{
+  "result": "passed",
+  "fixture": "synthetic verified / conditional / unknown costs; Militado/Merkur abstain",
+  "fixture_identity_checked_before_writes": true,
+  "gates": [
+    "image-led feed",
+    "keyboard save",
+    "preferences survive reload",
+    "expanded evidence",
+    "375px no overflow",
+    "legacy queue navigation"
+  ],
+  "cost_workflow": true,
+  "viewports": [
+    "1280x900",
+    "375x812"
+  ],
+  "cost_gates": [
+    "verified / conditional / unknown",
+    "included VAT once",
+    "separate cashback",
+    "known subtotal",
+    "visible provenance",
+    "conditional assumptions"
+  ],
+  "buyer_acceptance": "unproven",
+  "live_acquisition": "not attempted"
+}
