@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, HTTPException
 
+from pricerecon.db.coupons import get_coupon_history
 from pricerecon.db.discovery import (
     PreferenceConflict,
     get_cost_history,
@@ -10,6 +11,7 @@ from pricerecon.db.discovery import (
     save_preferences,
 )
 from pricerecon.models.costs import CostHistory
+from pricerecon.models.coupons import CouponHistory
 from pricerecon.models.discovery import DiscoveryFeed, PreferenceProfile, PreferenceUpdate
 from pricerecon.models.history import ObservationHistory
 
@@ -39,6 +41,11 @@ async def update_discovery_preferences(update: PreferenceUpdate) -> PreferencePr
 @router.get("/discovery/offers/{offer_id}/costs", response_model=CostHistory)
 async def discovery_cost_history(offer_id: str) -> CostHistory:
     return get_cost_history(offer_id)
+
+
+@router.get("/discovery/offers/{offer_id}/coupons", response_model=CouponHistory)
+async def discovery_coupon_history(offer_id: str) -> CouponHistory:
+    return get_coupon_history(offer_id)
 
 
 @router.get("/discovery/candidates/{candidate_id}/history", response_model=ObservationHistory)

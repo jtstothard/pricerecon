@@ -8,8 +8,9 @@ from uuid import uuid4
 from pricerecon.categories.watches import resolve_watch
 from pricerecon.core.acquisition import acquire_sources
 from pricerecon.core.costs import evaluate_costs
-from pricerecon.core.qualification import qualify_offer
+from pricerecon.core.qualification import identity_key, qualify_offer
 from pricerecon.db.discovery import save_capture
+from pricerecon.models.coupons import CouponAssessment
 from pricerecon.models.discovery import (
     AcquisitionOutcome,
     DiscoveryAdmission,
@@ -111,6 +112,30 @@ async def execute_discovery(
             candidate.offers[0].cost_scenarios = evaluate_costs(
                 report, candidate.offers[0], binding, captured_at
             )
+            candidate.offers[0].coupons = [
+                CouponAssessment(
+                    **coupon.model_dump(),
+                    id=identity_key(candidate.offers[0].id, coupon.key),
+                    offer_id=candidate.offers[0].id,
+                    captured_at=captured_at,
+                    identity_policy_version=candidate.configuration.policy_version,
+                )
+                for coupon in report.coupons
+            ]
+            grouped_coupons: dict[str, CouponAssessment] = {}
+            for coupon in candidate.offers[0].coupons:
+                previous_coupon = grouped_coupons.get(coupon.id)
+                if previous_coupon is None:
+                    grouped_coupons[coupon.id] = coupon
+                elif coupon.model_dump_json() != previous_coupon.model_dump_json():
+                    from pricerecon.models.coupons import CouponInput
+
+                    previous_coupon.source_conflicts.append(
+                        CouponInput.model_validate(
+                            coupon.model_dump(include=set(CouponInput.model_fields))
+                        )
+                    )
+            candidate.offers[0].coupons = list(grouped_coupons.values())
             public_costs = [
                 c for c in candidate.offers[0].cost_scenarios if c.kind == "public_no_coupon"
             ]

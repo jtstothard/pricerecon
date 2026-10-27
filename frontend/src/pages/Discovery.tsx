@@ -177,6 +177,7 @@ function Candidate({ candidate, tracking, onSaved }: { candidate: DiscoveryCandi
           <p>Comparison {offer.comparison.state}. Cohort: {offer.comparison_cohort ?? 'unresolved'}.</p>
           <ul>{[...offer.qualification.issues, ...offer.comparison.issues].map((issue, i) => <li key={i}>{issue.field}: {issue.code} {issue.evidence_ids.join(', ')}</li>)}</ul>
           <Costs costs={offer.cost_scenarios} />
+          <CouponPanel coupons={offer.coupons} renderCost={cost => <Costs costs={[cost]} />} />
           <details><summary>Field claims and rejected evidence</summary>
             <ul>{offer.evidence.map((claim, i) => <li key={`${claim.id}-${i}`}>
               <strong>{claim.subject} · {claim.field}:</strong> {claim.value} ({claim.assertion_state})
@@ -254,3 +255,4 @@ export default function Discovery() {
     </>}
   </div>
 }
+import { CouponPanel } from '../components/CouponPanel'

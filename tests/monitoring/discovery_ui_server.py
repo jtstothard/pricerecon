@@ -18,14 +18,14 @@ from .harness import MonitoringHarness
 from .workflows import LEGACY, listing
 
 
-async def main(port, qualification=False, costs=False, tracking=False, history=False):
+async def main(port, qualification=False, costs=False, tracking=False, history=False, coupons=False):
     with MonitoringHarness() as harness:
         from pricerecon.core.discovery import execute_discovery
         from pricerecon.models.discovery import DiscoveryAdmission, DiscoveryRequest
 
-        assert harness.application.frontend_dist.joinpath(
-            "index.html"
-        ).is_file(), "Build frontend first"
+        assert harness.application.frontend_dist.joinpath("index.html").is_file(), (
+            "Build frontend first"
+        )
         harness.seed_legacy(
             [(7, LEGACY), (8, {**LEGACY, "name": "Paused saved search", "enabled": False})]
         )
@@ -97,6 +97,14 @@ async def main(port, qualification=False, costs=False, tracking=False, history=F
                 from .tracking_workflows import priced_report
 
                 harness.reports["cex"][0] = priced_report(harness, listing_id="fixture-1")
+        if coupons:
+            from .coupon_workflows import advertised_report, reproduced_report
+
+            harness.reports["cex"] = [
+                reproduced_report(harness, "fixture-1"),
+                advertised_report(harness, "fixture-2"),
+                cost_report(harness, "fixture-4"),
+            ]
         async with harness.session() as (client, scheduler):
             fixture_router = APIRouter()
             fixture_id = None
@@ -111,6 +119,7 @@ async def main(port, qualification=False, costs=False, tracking=False, history=F
                 return {
                     "fixture": (
                         "ticket05-tracking-ui" if tracking else
+                        "ticket09-coupon-ui" if coupons else
                         "ticket06-history-ui" if history else "ticket04-cost-ui"
                         if costs
                         else (
@@ -193,12 +202,14 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=8877)
     parser.add_argument("--qualification", action="store_true")
     parser.add_argument("--costs", action="store_true")
-    parser.add_argument("--tracking", action="store_true")
-    parser.add_argument("--history", action="store_true")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--tracking", action="store_true")
+    mode.add_argument("--coupons", action="store_true")
+    mode.add_argument("--history", action="store_true")
     args = parser.parse_args()
     try:
         asyncio.run(main(args.port, qualification=args.qualification,
-            costs=args.costs or args.tracking or args.history, tracking=args.tracking,
-            history=args.history))
+            costs=args.costs or args.tracking or args.history or args.coupons,
+            tracking=args.tracking, history=args.history, coupons=args.coupons))
     except KeyboardInterrupt:
         print("OFFLINE_UI_STOPPED", flush=True)

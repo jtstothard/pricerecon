@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from pricerecon.models import NormalizedListing
 from pricerecon.models.costs import CostScenario, CostScenarioInput
+from pricerecon.models.coupons import CouponAssessment, CouponInput
 
 IdentityField = Literal[
     "maker",
@@ -188,6 +189,7 @@ class MerchantEvidenceReport(Contract):
     quantity: int | None = Field(default=None, gt=0, le=9007199254740991)
     claims: list[FieldEvidence] = Field(default_factory=list, max_length=250)
     cost_scenarios: list[CostScenarioInput] = Field(default_factory=list, max_length=50)
+    coupons: list[CouponInput] = Field(default_factory=list, max_length=50)
 
 
 class EvidenceSearchReport(Contract):
@@ -266,3 +268,4 @@ class MerchantOffer(Contract):
     policy_version: str = "offer-comparison-v1"
     evidence: list[FieldEvidence] = Field(default_factory=list)
     cost_scenarios: list[CostScenario] = Field(default_factory=list)
+    coupons: list[CouponAssessment] = Field(default_factory=list)
