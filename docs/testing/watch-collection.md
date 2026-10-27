@@ -576,10 +576,44 @@ native and AI acquisition lanes, physical disk/WAL/log/control-metadata quotas,
 retention/deletion/backups/restore, source rights, measured sustainable cadence,
 costs and maintenance ownership, live history/offers/notification acceptance and
 buyer activation. This repair is offline shared-policy enforcement proof, not
-an accepted production envelope. 07 remains separately owned and open; its known
-configuration-scope gap was not repaired here. No integration merge or ticket
-closure was performed by this implementation worker. No install/download,
+an accepted production envelope. 07 is separately owned; this worker made no
+configuration-scope repair. Its independently integrated repair arrived in the
+final integration refresh described below. No merge into the integration branch
+or ticket closure was performed by this implementation worker. No install/download,
 external network/live collection, credentials/accounts, production DB, activation,
 deployment, push, PR or delegation occurred. Local commits are authorized by the
 parent task. Final local commit and latest-integration ancestry receipts are
 recorded alongside this handoff.
+
+
+### Final integration refresh and local handoff
+
+Implementation commit: `24fd79e` (full SHA in the JSON receipt). After this local
+commit, integration had advanced to `7fcc3ea27e815ccd0922c3c4c1fe08c3d3724bc9`,
+containing the independently authored 07 scope repair. Merged it into this branch
+without conflicts as `3ce939b665e0f95779911e75856e978877fc23d1`; ancestry of both
+the required original `f8ff7e5` and latest code integration was confirmed.
+No 07 source edit or repair was made by this worker.
+
+Reran the entire named guarded suite on that refreshed tree: **145 passed in
+138.18s**, no skips/xfails. This is the original106, independently integrated07's
+17 further workflows, and this repair's22 workflows in one invocation. All three
+retained shared-grant probes, no-grant/redirect controls, zero-denial restart,
+concurrent independent processes and the two migration cases pass in this run.
+Focused mypy passes the14 source files again after the merge. Final Ruff compared
+this worker's17 Python changes against `7fcc3ea`:15 clean,18 inherited diagnostics,
+zero added; see `ruff-final.json`.
+
+Integration then advanced only its tracker, receipts and a standalone07 merger
+probe to `ce1b88ad9b9cc2a9ee513e9970475fd16bcfb99c`. Merged that update without
+conflicts as `6c18c65ebcaa1d0e835892effbcccc328ce0da1f`. Application/frontend trees
+and the named suite's test files did not change, so the145-case verification
+remains applicable; no redundant full rerun was needed. This update retains a
+separate **07 independent-target intent gap**, which remains open. Its standalone
+failing probe was not run, changed or fixed here and is not counted among the145
+passing workflows. Passing collection checks do not qualify that other behavior.
+The final JSON binds source/frontend tree IDs, source/test hashes, exact probe
+artifacts, local implementation/merge commits and scope exclusions. The frontend
+and37-contract files are unchanged by both refreshes; their passing results above
+are reused rather than claimed rerun. Only local commits and merges into this
+implementation branch occurred. Integration itself was not updated by this worker.

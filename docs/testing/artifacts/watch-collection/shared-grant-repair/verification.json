@@ -4,8 +4,17 @@
   "worktree": "/Users/jay/.t3/worktrees/pricerecon/t3-b00df60d",
   "initial_integration": "f8ff7e5024401991ca33b9bf08468476dc708227",
   "initial_merge": "fast-forward before edits; merge-base --is-ancestor passed",
-  "implementation_commit": "pending local commit",
-  "final_integration_merge": "pending after implementation commit",
+  "implementation_commit": "24fd79e7346a227c494a3b5d0de86d639702e42b",
+  "final_integration_merge": {
+    "code_integration": "7fcc3ea27e815ccd0922c3c4c1fe08c3d3724bc9",
+    "code_merge_commit": "3ce939b665e0f95779911e75856e978877fc23d1",
+    "latest_integration": "ce1b88ad9b9cc2a9ee513e9970475fd16bcfb99c",
+    "latest_merge_commit": "6c18c65ebcaa1d0e835892effbcccc328ce0da1f",
+    "conflicts": false,
+    "initial_and_latest_ancestry_confirmed": true,
+    "latest_update_only_receipts_tracker_and_standalone_07_probe": true,
+    "verified_application_and_selected_suite_files_unchanged_by_receipt_merge": true
+  },
   "schema": "2.1",
   "authority": "offline source/tests, temporary SQLite, controlled time/transports; local commits authorized",
   "application_suite": {
@@ -25,9 +34,10 @@
   },
   "final_affected_API_recheck": {
     "passed": 7,
-    "reason": "UTC alias fix and retained last-check timestamp assertion"
+    "reason": "UTC alias fix and retained last-check timestamp assertion",
+    "seconds": 5.45
   },
-  "total_distinct_passing_workflows": 128,
+  "total_distinct_passing_workflows": 145,
   "one_128_case_invocation": false,
   "limiter_external_browser_contracts": {
     "passed": 37,
@@ -91,7 +101,7 @@
   "no_installs_downloads_push_PR_or_delegation": true,
   "original_dirty_parent_integration_and_07_checkout_untouched": true,
   "gaps": [
-    "ticket07 configuration-scope repair remains separate/open",
+    "ticket07 independent-target intent gap remains open and separate; standalone failing probe retained by integration, not run or repaired here",
     "unsupported origin-browser/native/AI acquisition lanes remain gated",
     "physical disk/WAL/log/control metadata quotas",
     "retention/deletion/backups/restore qualification",
@@ -132,6 +142,47 @@
     "red-context_scheduler.json": "36cfb01d6f339f2cbb4f9fb7538da1ff6373b08d1450b9e7e7fad16694c3dc5d",
     "red-process_resume.json": "222eb6d653711e1620ca22a268de06af50643b4af591ba74a47485485d6af34d",
     "red-process_seed.json": "0f1c19e5ba6a75e3503bd60e30b6015cef629d79c4a7f8fa70a59f7c8ab6045f",
+    "ruff-final.json": "aab666f45b486bdf8e8b1afce9c95ec5265c7c2b2b07de0d4f0b040f2b6b1dcd",
     "ruff.json": "d2c43ebe6abafa395c0c308b53536ff5f7a54a60c2c50088904d0f72d3448642"
+  },
+  "final_combined_suite": {
+    "passed": 145,
+    "seconds": 138.18,
+    "retained_initial": 106,
+    "additional_independently_integrated_07": 17,
+    "additional_shared_grant": 22,
+    "skips": 0,
+    "xfails": 0,
+    "cleared_environment": true
+  },
+  "one_145_case_invocation": true,
+  "verified_src_tree": "a2c7e1ce7bc30ee76428a24c6195b6058cdf96ce",
+  "verified_frontend_tree": "fdcd941bb28fda22b7a8e2d9e7d606a6f9a7f7ec",
+  "final_mypy": {
+    "passed": true,
+    "files": 14,
+    "follow_imports": "silent",
+    "after_code_integration_merge": true
+  },
+  "final_ruff": {
+    "baseline": "7fcc3ea27e815ccd0922c3c4c1fe08c3d3724bc9",
+    "files": 17,
+    "clean": 15,
+    "inherited_diagnostics": 18,
+    "added_diagnostics": 0,
+    "artifact": "ruff-final.json",
+    "latest_integration_changes_no_application_files": true
+  },
+  "workflow_test_files_sha256": {
+    "tests/test_collection_workflow.py": "12392c7654ecb2de45b03e6646fb51d0454a5269db0c348765c085e09c1ef17b",
+    "tests/test_correction_workflow.py": "4a0e2d19339f2c875e05665f04701581b89d412fec1752b3be6a9c1209c67696",
+    "tests/test_cost_workflow.py": "2f83f09811014821c748a0d0edcf753cfc74e484d190695391363268cafe13ae",
+    "tests/test_coupon_workflow.py": "b30d5d3e70d60b6fe9cf26160ae3552c4f4137ca3fa246e2594afbfc3100d3ce",
+    "tests/test_discovery_workflow.py": "59fa6a134c8a54a19fc45d9d5d552f47214495f457e36baa2c8a16bf8d9d7ef4",
+    "tests/test_history_workflow.py": "9f7e662a19cb7c3e36d1c67cb3a47d73ddbcbd32d3ac89968ec33ec456f1c8af",
+    "tests/test_monitoring_workflow.py": "099c0eb368e893b2cea367d82f8d049c8bdc082b457caea64d56956a8186a041",
+    "tests/test_qualification_workflow.py": "5e62b0f5b53aa91cd778b1f646a8d3a65d9fedb3c779bc33af453371431db82e",
+    "tests/test_shared_grant_workflow.py": "fb79f8a8f09b1ed71fe7b1d1bbddf888e9bbf7beb5f45a2a5c24d2a4a7ad37d9",
+    "tests/test_tracking_workflow.py": "648fc68a0046be6a52fa837053a5b54d43ef0ed9fee906b190ce939f63245408"
   }
 }
