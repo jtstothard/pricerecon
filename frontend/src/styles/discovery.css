@@ -45,3 +45,10 @@
 .discovery-qualification dt { font-weight: 600; }
 .discovery-qualification dd { margin: 0; }
 .discovery-qualification p, .discovery-qualification li, .discovery-qualification dd { overflow-wrap: anywhere; }
+
+.discovery-history { margin-block: 1rem; overflow-wrap: anywhere; }
+.discovery-history li { margin-block: .75rem; }
+.discovery-history h3, .discovery-history h4 { margin-block: .65rem .3rem; }
+.discovery-history dl > div { display: flex; flex-wrap: wrap; gap: .5rem; }
+.discovery-history dt { font-weight: 600; }
+.discovery-history dd { margin: 0; }

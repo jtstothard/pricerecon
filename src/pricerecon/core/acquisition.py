@@ -223,6 +223,7 @@ async def acquire_sources(
             # Use per-connector query if available, otherwise fall back to watch.query
             effective_query = source_queries.get(connector_id, query)
             evidence_reports: list[MerchantEvidenceReport] = []
+            source_outcome = AcquisitionOutcome(source=connector_id, state="success")
             inspect = getattr(connector, "search_with_evidence", None)
             if purpose == "discovery" and callable(inspect):
                 try:
@@ -251,6 +252,13 @@ async def acquire_sources(
                     ) from None
                 listings = report.listings
                 evidence_reports = report.evidence
+                source_outcome = AcquisitionOutcome(
+                    source=connector_id,
+                    state=report.acquisition_state,
+                    reason=report.acquisition_reason,
+                    completeness=report.completeness,
+                    reused_capture_id=report.reused_capture_id,
+                )
             else:
                 listings = await connector.search(effective_query, connector_filters)
             all_listings.extend(listings)
@@ -300,14 +308,12 @@ async def acquire_sources(
                     )
                 else:
                     leads.append(AcquiredLead(connector_id, effective_query, listing))
-            failed_sources.discard(connector_id)
-            outcomes.append(
-                AcquisitionOutcome(
-                    source=connector_id,
-                    state="success" if listings else "success_empty",
-                    listing_count=len(listings),
-                )
-            )
+            source_outcome.listing_count = len(listings)
+            if source_outcome.state == "success":
+                failed_sources.discard(connector_id)
+                if not listings:
+                    source_outcome.state = "success_empty"
+            outcomes.append(source_outcome)
             logger.info(
                 f"{purpose}_connector_result",
                 extra={

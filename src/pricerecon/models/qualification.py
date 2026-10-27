@@ -191,6 +191,21 @@ class MerchantEvidenceReport(Contract):
 
 
 class EvidenceSearchReport(Contract):
+    acquisition_state: Literal["success", "partial", "cache_reuse"] = "success"
+    acquisition_reason: str | None = Field(default=None, min_length=1, max_length=500)
+    completeness: Literal["unknown", "partial", "declared_scope"] = "unknown"
+    reused_capture_id: str | None = Field(default=None, min_length=1, max_length=250)
+
+    @model_validator(mode="after")
+    def validate_acquisition(self) -> Self:
+        if self.acquisition_state != "success" and not self.acquisition_reason:
+            raise ValueError("Partial/cache acquisition requires an explicit reason")
+        if (self.acquisition_state == "cache_reuse") != (self.reused_capture_id is not None):
+            raise ValueError("Cache reuse must name the original capture")
+        if self.completeness == "partial" and self.acquisition_state == "success":
+            raise ValueError("Partial scope must be reported as partial acquisition")
+        return self
+
     listings: list[NormalizedListing]
     evidence: list[MerchantEvidenceReport] = Field(default_factory=list)
 

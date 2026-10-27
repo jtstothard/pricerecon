@@ -7,6 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from pricerecon.models.costs import PublicCostSummary
+from pricerecon.models.history import HistorySummary
 from pricerecon.models.qualification import Configuration, MerchantOffer, SelectionBinding
 from pricerecon.models.watches import SourceConfig
 
@@ -18,10 +19,13 @@ class DiscoveryModel(BaseModel):
 class AcquisitionOutcome(DiscoveryModel):
     source: str
     route: Literal["connector_search_v1"] = "connector_search_v1"
-    state: Literal["success", "success_empty", "blocked", "capped", "failed", "not_attempted"]
+    state: Literal[
+        "success", "success_empty", "partial", "cache_reuse", "blocked", "capped", "failed", "not_attempted"
+    ]
     listing_count: int = 0
     reason: str | None = None
-    completeness: Literal["unknown"] = "unknown"
+    completeness: Literal["unknown", "partial", "declared_scope"] = "unknown"
+    reused_capture_id: str | None = None
 
 
 class DiscoveryRequest(DiscoveryModel):
@@ -61,6 +65,7 @@ class DiscoveryOrigin(DiscoveryModel):
 
 
 class DiscoveryCapture(DiscoveryModel):
+    history_contract_version: Literal["observation-history-v1"] | None = None
     capture_id: str
     captured_at: datetime
     request: DiscoveryOrigin
@@ -146,6 +151,7 @@ class PreferenceFit(DiscoveryModel):
 
 
 class DiscoveryCandidate(DiscoveryModel):
+    history: HistorySummary = Field(default_factory=HistorySummary)
     id: str
     category: Literal["watches"] = "watches"
     origin: Literal["category_discovery"] = "category_discovery"
