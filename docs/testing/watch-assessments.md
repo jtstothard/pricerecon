@@ -382,3 +382,37 @@ The review artifact manifest binds the new raw checks/scripts. The subsequent
 local review commit records this disposition; its full HEAD is in the handoff.
 08's checklist is not closed while its added mypy diagnostic remains. No 12
 workflow or 11 implementation acceptance is claimed.
+
+## Parent type repair and offline acceptance — 2026-10-27
+
+**08 is closed for offline scope.** On integration based on `fbe2758`, the parent
+first reproduced the exact one-file uncached `default_factory` argument error.
+A named factory now explicitly returns
+`list[Literal["public_no_coupon", "public_coupon"]]`, retaining a fresh
+`["public_no_coupon"]` default. No cast, ignore, suppression, opt-in expansion,
+API/frontend change or test assertion change was introduced.
+
+Uncached mypy over the merger's eight affected modules now passes. All **23**
+existing assessment/tracking workflows pass in **32.62s**, including ordinary
+default opt-out, explicit coupon crossing, expiry/changed receipts, pending sends,
+cohorts, contradictions, correction, restart and deduplication. Model Ruff and
+Black checks and the local diff whitespace check pass. The merger's retained
+**171 guarded workflows, 37 contracts, 25 frontend tests, build, three independent
+external-edge probes and actual desktop/narrow/withdrawal browser proof** are reused;
+this contained factory annotation repair does not justify repeating those runs.
+Existing ESLint missing-config and preserved raw-log whitespace limitations remain
+reported in the preceding review.
+
+Of the merger's 45 source/receipt hashes, the tracking model is the single intended
+change; all other 44 remain matched. All **77** original dirty-parent files still
+match their initial manifest. The source checkout and active11 were untouched.
+[Red/green logs and updated file hashes](artifacts/watch-assessments/type-repair/verification.json)
+bind the repair. The exact green command is the preceding merger's eight-file
+mypy invocation with `--no-incremental`; focused runtime command adds only
+`tests/test_assessment_workflow.py tests/test_tracking_workflow.py` to the same
+cleared Python environment. No new tests, installs, live operations or push/PR.
+
+11 remains with its isolated implementer; 12 stays blocked on 11. Collection is
+staged. Buyer walkthrough acceptance, empirical history/calibration, live source/
+coupon/delivery evidence, source access/retention, finite operating/physical
+resource controls, ownership and activation remain separate and unproven.
