@@ -176,7 +176,7 @@ class ConditionalBenefit(CostModel):
 
 class CostScenarioInput(CostModel):
     key: Token
-    kind: Literal["public_no_coupon", "personal", "payment", "cashback"]
+    kind: Literal["public_no_coupon", "public_coupon", "personal", "payment", "cashback"]
     context: CostContext
     context_evidence: list[CostEvidence] = Field(default_factory=list, max_length=50)
     fx_quotes: list[FxQuote] = Field(default_factory=list, max_length=50)

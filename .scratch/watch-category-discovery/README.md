@@ -16,7 +16,7 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 | [06: Observation history](issues/06-show-observation-history.md) | 04 | Open — repair required |
 | [07: Corrections](issues/07-correct-identities.md) | 05, 06 | Blocked |
 | [08: Comparisons](issues/08-compare-qualified-offers.md) | 07 | Blocked |
-| [09: Public coupons](issues/09-evaluate-public-coupons.md) | 04 | In progress |
+| [09: Public coupons](issues/09-evaluate-public-coupons.md) | 04 | Open — receipt-provenance repair required |
 | [10: Shared limits](issues/10-prioritise-tracking.md) | 05 | Blocked |
 | [11: Source evidence](issues/11-carry-source-evidence.md) | 03, 10 | Blocked |
 | [12: Integrated verification](issues/12-verify-complete-watch-workflow.md) | 08, 09, 11 | Blocked |
@@ -25,7 +25,7 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 
 Work is limited to source implementation and deterministic offline verification with isolated storage and controlled external edges. The buyer explicitly authorised local commits/merges for this continuation, overriding the older issue-level prohibition. No live collection, accounts, production database, activation, deployment, purchases, pushes or PRs are authorised.
 
-Ticket 01 source was integrated on 2026-10-27 in merge `a0e5c1a612252c61a62eabc7b56ebc3b3297ed85`, preserving implementer HEAD `9312871f269137d7b98ba7155d9523350e41e62e`. The subsequent rendered-form preservation repair was integrated in merge `3243c8f00e3f9dd9efde79327b6905eb3d4354b2`, preserving implementer HEAD `534cecaece62e30f50c680b40af5b4c7f561b6e4`. Integration checks passed **15 isolated workflow tests**, **25 frontend tests** and the frontend build. The parent subsequently passed the rendered edit/save/reload/manual-check regression. Tickets 01–04 are now closed for their offline scope. Tickets05/09 remain in progress; ticket06 remains open for the derived-capture repair documented below. Ticket07 remains blocked by05/06. See the dated resolution log below and the [repair integration receipt](issues/01-verify-existing-monitoring.md#preservation-repair-integration-receipt-2026-10-27).
+Ticket 01 source was integrated on 2026-10-27 in merge `a0e5c1a612252c61a62eabc7b56ebc3b3297ed85`, preserving implementer HEAD `9312871f269137d7b98ba7155d9523350e41e62e`. The subsequent rendered-form preservation repair was integrated in merge `3243c8f00e3f9dd9efde79327b6905eb3d4354b2`, preserving implementer HEAD `534cecaece62e30f50c680b40af5b4c7f561b6e4`. Integration checks passed **15 isolated workflow tests**, **25 frontend tests** and the frontend build. The parent subsequently passed the rendered edit/save/reload/manual-check regression. Tickets 01–04 are now closed for their offline scope. Ticket05 remains in progress; ticket06 remains open for the derived-capture repair and ticket09 for the receipt-provenance repair documented below. Ticket07 remains blocked by05/06. See the dated resolution log below and the [repair integration receipt](issues/01-verify-existing-monitoring.md#preservation-repair-integration-receipt-2026-10-27).
 
 Actual buyer walkthrough feedback, current source rights, live offer/history/cost proof, finite operating limits and named maintenance ownership cannot be fabricated by passing fixture tests. Keep these gates explicit in the final receipt.
 
@@ -104,3 +104,18 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   [merger receipt and reproducer](../../docs/testing/watch-history.md#merger-verification--2026-10-27).
   No production repair or dependent implementation occurred. Collection stays
   staged; source/live/history/buyer/activation gates remain separate and open.
+
+- 2026-10-27: 09 source `db08536` integrated without conflicts in
+  history-preserving merge `2b4686b`, with parents `b97f37a` and `db08536`.
+  All **65 isolated workflows** passed (48 baseline, seven history, ten coupon),
+  plus 25 frontend tests, build and focused Ruff/mypy. Actual retained desktop/
+  narrow browser proof was inspected. An additional guarded application probe
+  found compatibility and eligibility evidence can each be reused as the whole
+  application receipt provenance, exposing a reproduced GBP 45.10 payable with
+  no checkout evidence. **09 remains open for repair; 12 remains blocked.**
+  The no-coupon GBP 50.10 path is preserved; a changed-shipping control correctly
+  reconciles GBP 47.20. See the [merger receipt and reproducer](../../docs/testing/watch-coupons.md#merger-verification--2026-10-27).
+  Ticket06's separate lineage gap and active05/06 repair worktrees are untouched.
+  Absent07 correction UI remains a later integration gate, including overlapping
+  correction/acquisition. No production repair or later implementation occurred;
+  collection stays staged, with live/buyer/activation gates open.

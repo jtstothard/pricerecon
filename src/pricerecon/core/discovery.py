@@ -8,8 +8,9 @@ from uuid import uuid4
 from pricerecon.categories.watches import resolve_watch
 from pricerecon.core.acquisition import acquire_sources
 from pricerecon.core.costs import evaluate_costs
-from pricerecon.core.qualification import qualify_offer
+from pricerecon.core.qualification import identity_key, qualify_offer
 from pricerecon.db.discovery import save_capture
+from pricerecon.models.coupons import CouponAssessment
 from pricerecon.models.discovery import (
     AcquisitionOutcome,
     DiscoveryAdmission,
@@ -20,19 +21,27 @@ from pricerecon.models.discovery import (
     LeadEvidence,
 )
 from pricerecon.models.qualification import MerchantEvidenceReport, safe_pointer
+from pricerecon.models.tracking import TrackingPolicy
 
 
 async def execute_discovery(
     request: DiscoveryRequest,
     *,
     admission: DiscoveryAdmission | None = None,
+    tracking_policy: TrackingPolicy | None = None,
 ) -> DiscoveryCapture:
-    """Normal one-shot entry point. No scheduler, notifications or live activation path.
+    """Normal one-shot entry point, without scheduler or live activation paths.
 
     Offline verification must explicitly name its policy, permission and activation
     receipts. The default records a denied attempt without constructing connectors.
+    An explicitly supplied tracking policy also evaluates exact delivered targets
+    through the existing notification owner; HTTP intent writes cannot supply it.
     """
     admission = admission or DiscoveryAdmission()
+    if admission.admitted and tracking_policy is not None:
+        from pricerecon.core.exact_tracking import deliver_pending_targets
+
+        await deliver_pending_targets(policy=tracking_policy)
     capture_id = str(uuid4())
     captured_at = datetime.now(UTC)
     candidates: list[DiscoveryCandidate] = []
@@ -103,6 +112,30 @@ async def execute_discovery(
             candidate.offers[0].cost_scenarios = evaluate_costs(
                 report, candidate.offers[0], binding, captured_at
             )
+            candidate.offers[0].coupons = [
+                CouponAssessment(
+                    **coupon.model_dump(),
+                    id=identity_key(candidate.offers[0].id, coupon.key),
+                    offer_id=candidate.offers[0].id,
+                    captured_at=captured_at,
+                    identity_policy_version=candidate.configuration.policy_version,
+                )
+                for coupon in report.coupons
+            ]
+            grouped_coupons: dict[str, CouponAssessment] = {}
+            for coupon in candidate.offers[0].coupons:
+                previous_coupon = grouped_coupons.get(coupon.id)
+                if previous_coupon is None:
+                    grouped_coupons[coupon.id] = coupon
+                elif coupon.model_dump_json() != previous_coupon.model_dump_json():
+                    from pricerecon.models.coupons import CouponInput
+
+                    previous_coupon.source_conflicts.append(
+                        CouponInput.model_validate(
+                            coupon.model_dump(include=set(CouponInput.model_fields))
+                        )
+                    )
+            candidate.offers[0].coupons = list(grouped_coupons.values())
             public_costs = [
                 c for c in candidate.offers[0].cost_scenarios if c.kind == "public_no_coupon"
             ]
@@ -202,4 +235,8 @@ async def execute_discovery(
         outcomes=outcomes,
     )
     save_capture(capture, candidates)
+    from pricerecon.core.exact_tracking import evaluate_tracking_capture
+
+    await evaluate_tracking_capture(capture.capture_id,
+                                    policy=tracking_policy if admission.admitted else None)
     return capture

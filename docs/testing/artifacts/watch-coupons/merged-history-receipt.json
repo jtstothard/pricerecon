@@ -1,0 +1,19 @@
+{
+  "result": "passed",
+  "fixture": "ticket06-history-ui",
+  "fixture_identity_checked_before_writes": true,
+  "gates": [
+    "initial unchanged increased decreased",
+    "copied lineage",
+    "cache partial failed capped empty",
+    "unobserved intervals",
+    "retained age 28 hours",
+    "complete basis and policy evidence",
+    "reload retained history",
+    "375px no overflow",
+    "legacy navigation"
+  ],
+  "buyer_acceptance": "unproven",
+  "live_acquisition": "not attempted",
+  "real_longitudinal_history": "not established"
+}
