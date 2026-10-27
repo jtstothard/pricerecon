@@ -36,6 +36,14 @@ def test_reproduced_exact_basket_reconciles_complete_payable_without_replacing_p
     run_coupon("reproduced")
 
 
+def test_compatibility_and_eligibility_cannot_replace_the_entire_checkout_receipt():
+    run_coupon("receipt_provenance")
+
+
+def test_direct_receipt_role_contents_context_and_lineage_are_independently_required():
+    run_coupon("receipt_boundary_controls")
+
+
 def test_coupon_terms_evaluate_time_quantity_channel_membership_new_customer_and_stacks():
     run_coupon("eligibility_boundaries")
 

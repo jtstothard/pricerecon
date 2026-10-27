@@ -5,7 +5,7 @@ import hashlib
 from pricerecon.core.costs import basket_allocation_issues, evaluate_cost, evidence_issue
 from pricerecon.core.qualification import identity_key
 from pricerecon.models.costs import CostEvidence, CostScenarioInput
-from pricerecon.models.coupons import CouponAssessment
+from pricerecon.models.coupons import CouponApplicationLineage, CouponAssessment
 from pricerecon.models.qualification import (
     MerchantEvidenceReport,
     MerchantOffer,
@@ -25,6 +25,131 @@ def check_evidence(coupon: CouponAssessment, evidence: list[CostEvidence], label
         if reason:
             coupon.issues.append(f"{label}:{reason}")
         claim.pointer = safe_pointer(claim.pointer)
+
+
+def scenario_values(scenario: CostScenarioInput) -> dict[str, object]:
+    """Compare observed values, without mistaking their attribution for values."""
+    return {
+        **scenario.model_dump(include={"key", "kind", "context", "assumptions"}),
+        "components": [part.model_dump(exclude={"evidence"}) for part in scenario.components],
+        "fx_quotes": [quote.model_dump(exclude={"evidence"}) for quote in scenario.fx_quotes],
+        "benefits": [benefit.model_dump(exclude={"evidence"}) for benefit in scenario.benefits],
+    }
+
+
+def receipt_issues(coupon: CouponAssessment, offer: MerchantOffer) -> list[str]:
+    """Validate proof role AND observed contents before accepting any payable.
+
+    This is an acquisition assertion boundary, not source authentication. A
+    production collector still needs independent route/retention qualification.
+    Neither matching context nor a receipt role token upgrades generic evidence.
+    """
+    application = coupon.application
+    if application is None or application.receipt is None:
+        return ["application_receipt_missing"]
+    receipt = application.receipt
+    issues = []
+    scenario = CostScenarioInput(key=coupon.key, kind="public_no_coupon", context=coupon.context)
+    reason = evidence_issue(receipt, scenario, coupon.captured_at)
+    if reason:
+        issues.append(f"receipt:{reason}")
+    if (
+        receipt.issuer_kind != "seller"
+        or receipt.extractor_kind not in {"structured_data", "deterministic_dom"}
+        or len(receipt.derived_from) != 1
+    ):
+        issues.append("application_receipt_not_direct")
+
+    non_application = list(coupon.opportunity_evidence)
+    if coupon.terms:
+        non_application.extend(coupon.terms.evidence + coupon.terms.compatibility_evidence)
+    if coupon.eligibility:
+        non_application.extend(coupon.eligibility.evidence)
+    identities = {
+        token
+        for claim in non_application
+        for token in (claim.id, *claim.derived_from, *claim.input_claim_ids)
+    }
+    # Reissuing IDs/roots cannot make the same retained source field independent.
+    # Match opaque source coordinates exactly; no locator naming convention
+    # establishes that the source observed a coupon being applied.
+    source_fields = set(CostEvidence.model_fields) - {"id", "derived_from", "input_claim_ids"}
+    non_application_sources = {
+        claim.model_dump_json(include=source_fields) for claim in non_application
+    }
+    if identities.intersection((receipt.id, *receipt.derived_from, *receipt.input_claim_ids)) or (
+        receipt.model_dump_json(include=source_fields) in non_application_sources
+    ):
+        issues.append("non_application_evidence_is_not_receipt")
+
+    claims = (
+        application.evidence
+        + application.payable.context_evidence
+        + [claim for part in application.payable.components for claim in part.evidence]
+        + [claim for quote in application.payable.fx_quotes for claim in quote.evidence]
+        + [claim for line in application.lines for claim in line.evidence]
+    )
+    # IDs and locators can select fields in the same capture. They are never
+    # parsed for words such as 'checkout'. All provenance coordinates must bind
+    # the direct receipt, including synthetic status and observation time.
+    coordinates = {
+        "issuer",
+        "issuer_kind",
+        "extractor",
+        "extractor_kind",
+        "observed_at",
+        "retrieved_at",
+        "capture_id",
+        "route",
+        "derived_from",
+        "retention",
+        "context",
+    }
+    if not application.evidence or any(
+        claim.model_dump(include=coordinates) != receipt.model_dump(include=coordinates)
+        or identities.intersection((claim.id, *claim.derived_from, *claim.input_claim_ids))
+        or claim.model_dump_json(include=source_fields) in non_application_sources
+        for claim in claims
+    ):
+        issues.append("application_claims_not_bound_to_direct_receipt")
+
+    observed = receipt.observation
+    if observed.model_dump(include=set(CouponApplicationLineage.model_fields)) != (
+        application.model_dump(include=set(CouponApplicationLineage.model_fields))
+    ):
+        issues.append("receipt_lineage_mismatch")
+    fields = {
+        "applied_codes",
+        "other_promotions",
+        "result",
+        "selected_member",
+        "selected_item_price",
+        "before_total",
+        "quoted_total",
+        "currency",
+    }
+    if observed.model_dump(include=fields) != application.model_dump(include=fields):
+        issues.append("receipt_application_values_mismatch")
+    if coupon.eligibility is None or observed.eligibility.model_dump(exclude={"evidence"}) != (
+        coupon.eligibility.model_dump(exclude={"evidence"})
+    ):
+        issues.append("receipt_eligibility_mismatch")
+    if [line.model_dump(exclude={"evidence"}) for line in observed.lines] != [
+        line.model_dump(exclude={"evidence"}) for line in application.lines
+    ]:
+        issues.append("receipt_allocations_mismatch")
+    bases = [
+        base
+        for base in offer.cost_scenarios
+        if base.key == application.base_key
+        and base.kind == "public_no_coupon"
+        and base.context == coupon.context
+    ]
+    if len(bases) != 1 or scenario_values(observed.before) != scenario_values(bases[0]):
+        issues.append("receipt_before_scenario_mismatch")
+    if scenario_values(observed.after) != scenario_values(application.payable):
+        issues.append("receipt_after_scenario_mismatch")
+    return issues
 
 
 def assess_coupon(
@@ -147,6 +272,7 @@ def assess_application(
         coupon.issues.append("conflicting_coupon_inputs")
     if application is None:
         return
+    proof_issues = receipt_issues(coupon, offer)
     check_evidence(coupon, application.evidence, "application")
     terms = coupon.terms
     if terms is None:
@@ -243,6 +369,7 @@ def assess_application(
     if not roots or not claims or any(not set(e.derived_from).issubset(roots) for e in claims):
         coupon.issues.append("payable_not_bound_to_application_receipt")
     if coupon.state != "applicable_not_reproduced" or coupon.issues:
+        coupon.issues.extend(proof_issues)
         return
     context = coupon.context
     report = MerchantEvidenceReport(
@@ -262,12 +389,17 @@ def assess_application(
     )
     if result.state != "verified_at_observation" or result.total is None:
         coupon.issues.extend(["reproduced_payable_unverified", *result.issues])
+        coupon.issues.extend(proof_issues)
         return
     if (
         result.total.amount != application.quoted_total
         or result.total.currency != application.currency
     ):
         coupon.issues.append("quoted_payable_does_not_reconcile")
+        coupon.issues.extend(proof_issues)
+        return
+    coupon.issues.extend(proof_issues)
+    if coupon.issues:
         return
     result.kind = "public_coupon"
     result.id = identity_key("coupon-payable", coupon.id, result.id)
