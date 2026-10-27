@@ -305,3 +305,116 @@ documentation was changed after the merge. No live collection, credentials,
 accounts, production DB access, installs, delegation, cleanup, push, PR,
 deployment or activation was performed. Buyer acceptance and real source,
 retention, cost, freshness and operating gates remain unproven.
+
+## Implementation repair: 2026-10-27
+
+Repair checkout: `/Users/jay/.t3/worktrees/pricerecon/t3-c29cc91b`, branch
+`t3/ticket03-evidence-repair`. This fresh checkout started clean at `ef86af6`;
+`integration/watch-category-discovery` at
+`95f675e7450d7c2c18e5f76537ee969ead2f3b83` was merged before editing, with
+`git merge-base --is-ancestor` confirming ancestry. The integration tip was
+merged again after verification (`Already up to date`), and ancestry rechecked.
+The local repair commit is identified in the handoff. No merge into integration
+or ticket closure is performed here; merger acceptance remains pending.
+
+### Observed red and green
+
+The TDD skill and the spec's approved seams were used: concrete typed connector
+reports through normal `execute_discovery`, with assertions through
+`GET /api/discovery/watches` (and preference edits through the existing API).
+Every application process used the existing isolation harness, a controlled UTC
+clock, marked temporary SQLite, controlled connectors and captured notifications.
+No production database, real connector or network was used.
+
+- **Currency repro red:**
+  `pytest -q tests/test_qualification_workflow.py -k currency` failed before the
+  fix: the unchanged GBP report/price context plus a USD currency claim returned
+  binding `supported`, with no issues. **Green:** the same test passed after the
+  shared field resolver enforced asserted currency/quantity/destination agreement
+  with purchase context. Both binding and offer are now `conflicting`, with
+  `currency: purchase_context_mismatch` naming the currency evidence ID. The
+  literal USD claim and GBP price context are both retained; no currency is
+  substituted or inferred.
+- **Distinct-subject repro red:**
+  `pytest -q tests/test_qualification_workflow.py -k distinct_unresolved` failed
+  before the ID fix: two mint/blue variation subjects missing generation returned
+  only one configuration, containing mint. **Green:** the same test passed after
+  unresolved IDs were scoped to the source and explicit definition subject.
+  Separate subjects retain separate dimensions, claim IDs and binding revisions;
+  missing generation remains missing. Preference readback now keeps colourful
+  fit unknown across differing dials instead of selecting the first subject.
+- **Missing-key lineage red:** the new restart/recapture test initially failed
+  its own-variation claim-lineage assertion: two absent definition keys caused
+  acquisition to pool unrelated manufacturer claims. **Green:** claim pooling
+  now requires an explicit shared definition key. The three added workflow tests
+  (`-k 'price_currency or shared_definition or partial_definition'`) then passed.
+- **Expanded repair verification:**
+  `-k 'currency or distinct_unresolved or shared_definition or partial_definition'`
+  passed **5 tests**. This covers contradictory currency claims on new, used and
+  auction variations; explicit consistent USD and GBP contexts; missing currency
+  context; a mismatched price currency; quantity/destination value conflicts;
+  and an advertised GBP lead that cannot replace an evidenced USD purchase
+  currency or certify identity. USD/GBP purchase contexts leave the supported
+  manufacturer identity unchanged; comparison remains withheld.
+
+The independent-definition restart workflow retains five subjects: mint, blue,
+a separate definition with identical blue partial dimensions, and two selections
+without definition keys. All five stable IDs, original claim/derivation lineage,
+binding/configuration revision relations and exact API readback survive a fresh
+process. Reversed connector order, a duplicate report and a changed partial width
+retain the same subject IDs at revision 2. Keyless subjects have no invented
+manufacturer identity. A separate shared-definition workflow combines conflicting
+VH31/2035 manufacturer claims across variations: repeated reports and five
+re-extractions of the VH31 claim cannot outvote the conflict or support a binding.
+
+No schema/payload-shape change or migration was necessary. Existing versioned
+configuration, binding, offer and comparison tables retain the new opaque IDs
+and their references. Existing stored rows/evidence are not rewritten or promoted
+to new proof; this repair does not reconstruct already-collapsed historical
+configuration records. The existing legacy migration and persistence/restart
+workflows remain in the complete run below. No frontend source was changed.
+
+### Complete local verification
+
+Use the existing interpreter and this checkout's source. The installed Node
+directory is required by one baseline test that generates the real Watch form
+payload before starting its isolated application process:
+
+```sh
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python -m pytest -q \
+  tests/test_qualification_workflow.py tests/test_discovery_workflow.py \
+  tests/test_monitoring_workflow.py
+```
+
+- **Passed: 34 tests in 37.73s**: all 29 prior workflows plus five repair tests.
+  An earlier run with only `/usr/bin:/bin` in PATH passed 33 and failed the legacy
+  form-payload test with `FileNotFoundError: node`; correcting the command's PATH
+  produced the complete pass without changing that test or the application.
+- **Passed:** frontend `npm test -- --run`, **25 tests**, and `npm run build`
+  (TypeScript/Vite, 633 modules). Existing integration `node_modules` is reused
+  through a symlink. The existing greater-than-500-kB bundle warning remains.
+  Build completed before the full application run; there was no build/test race.
+- **Passed:** focused Ruff across qualification/discovery model/core/storage/API,
+  acquisition/category/Watch executor and qualification workflows/harness; focused
+  mypy `--follow-imports=silent` on the same **12 source files** used by the merger,
+  plus `git diff --check`. Existing unused-mypy-override notes remain.
+- **Blocked:** frontend `npm run lint`, exit 2: ESLint 10.12.0 cannot find
+  `eslint.config.*`. No lint workaround, suppression or dependency change was made.
+
+All new application workflows assert `blocked_edges=[]` and zero notifications.
+Public delivered totals stay unknown, usual price unavailable, savings null,
+alerts disabled and collection staged. Auction comparison stays rejected;
+complete cost/freshness qualification remains unavailable. The retained desktop
+and narrow browser artifacts above are unchanged; this repair used API/execution
+proof and frontend tests/build, without a new browser run or buyer walkthrough.
+
+The dirty original parent `/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e` was
+untouched. Its tracked-diff SHA-256 before and after repair was
+`38ab9795757655e9119022af759fe392bfb901bce1ce8175038fc6c0b73e8914`, with no staged
+changes. No install/download, live collection/network, credentials/accounts,
+production DB, activation, delegation, push or PR was used. Local commits only.
+Ticket03 acceptance/closure and integration remain the merger's responsibility;
+ticket04 stays blocked and unclaimed. Real source identity/offer evidence,
+retention, buyer acceptance, UK costs, freshness and operating gates remain open.

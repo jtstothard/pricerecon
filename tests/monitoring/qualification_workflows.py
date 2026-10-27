@@ -584,6 +584,289 @@ async def migration():
             assert harness.searches == harness.deliveries == harness.blocked_edges == []
 
 
+def partial_reports(harness):
+    reports = []
+    for variation, dial, definition in (
+        ("mint", "mint", "synthetic:partial-mint"),
+        ("blue", "blue", "synthetic:partial-blue"),
+        # Identical partial dimensions do not establish definition equivalence.
+        ("twin", "blue", "synthetic:partial-twin"),
+        ("no-definition-a", "mint", None),
+        ("no-definition-b", "blue", None),
+    ):
+        report = synthetic_report(harness, "partial", variation=variation, dial=dial)
+        report.configuration_key = definition
+        report.claims = [c for c in report.claims if c.field != "generation"]
+        for claim in report.claims:
+            claim.id = variation + ":" + claim.id
+            claim.context.configuration_key = definition
+            claim.derived_from = [f"synthetic-original:partial:{variation}:{claim.subject}"]
+        reports.append(report)
+    return reports
+
+
+async def partial_definitions():
+    with MonitoringHarness() as harness:
+        mint, blue = partial_reports(harness)[:2]
+        harness.reports["cex"] = [mint, blue, blue]
+        harness.outcomes["cex"] = [listing(harness, "cex", "partial", "AD2066")]
+        async with harness.session() as (client, _):
+            response = await client.put(
+                "/api/discovery/watches/preferences",
+                json={
+                    "expected_revision": 0,
+                    "values": {"compact_max_width_mm": "37.5", "colourful_dials": ["mint"]},
+                },
+            )
+            assert response.status_code == 200, response.text
+            await acquire(harness)
+            candidate = (await get(client, "/api/discovery/watches"))["candidates"][0]
+            assert len(candidate["configurations"]) == 2, candidate["configurations"]
+            configurations = {c["id"]: c for c in candidate["configurations"]}
+            assert len(candidate["bindings"]) == len(candidate["offers"]) == 2
+            for binding in candidate["bindings"]:
+                configuration = configurations[binding["configuration_id"]]
+                assert configuration["values"]["dial"] == binding["variation_id"]
+                assert configuration["state"] == "unresolved"
+                assert "generation" not in configuration["values"]
+                assert binding["resolution"]["state"] == "unresolved"
+                assert binding["configuration_revision"] == configuration["revision"]
+            fits = {f["field"]: f["state"] for f in candidate["preference_fit"]}
+            assert fits["compact"] == "fits"
+            assert fits["colourful"] == "unknown"
+            assert harness.deliveries == harness.blocked_edges == []
+
+
+async def partial_persistence():
+    import json
+    from pathlib import Path
+
+    shared = Path(sys.argv[2])
+    before = sys.argv[1] == "partial_before"
+    with MonitoringHarness(storage_root=shared) as harness:
+        async with harness.session() as (client, _):
+            if before:
+                harness.reports["cex"] = partial_reports(harness)
+                harness.outcomes["cex"] = [listing(harness, "cex", "partial", "AD2066")]
+                await acquire(harness)
+            initial = (await get(client, "/api/discovery/watches"))["candidates"][0]
+            if before:
+                (shared / "partial.json").write_text(json.dumps(initial))
+            else:
+                assert initial == json.loads((shared / "partial.json").read_text())
+                assert harness.searches == []
+                harness.clock.advance()
+                reports = partial_reports(harness)
+                # Resolution changes and connector order must not change the
+                # retained subject's ID or transfer another variation's claims.
+                for claim in reports[0].claims:
+                    if claim.field == "case_width_mm":
+                        claim.value = "37"
+                harness.reports["cex"] = list(reversed(reports)) + [reports[1]]
+                harness.outcomes["cex"] = [listing(harness, "cex", "partial", "AD2066")]
+                await acquire(harness)
+            feed = await get(client, "/api/discovery/watches")
+            candidate = feed["candidates"][0]
+            assert feed["collection_state"] == "staged"
+            assert len(candidate["configurations"]) == 5
+            configurations = {c["id"]: c for c in candidate["configurations"]}
+            bindings = {b["variation_id"]: b for b in candidate["bindings"]}
+            initial_bindings = {b["variation_id"]: b for b in initial["bindings"]}
+            assert len(bindings) == len(candidate["offers"]) == 5
+            for variation, binding in bindings.items():
+                configuration = configurations[binding["configuration_id"]]
+                assert (
+                    binding["configuration_id"] == initial_bindings[variation]["configuration_id"]
+                )
+                assert binding["id"] == initial_bindings[variation]["id"]
+                assert (
+                    binding["revision"] == binding["configuration_revision"] == (1 if before else 2)
+                )
+                assert configuration["revision"] == binding["configuration_revision"]
+                assert configuration["state"] == binding["resolution"]["state"] == "unresolved"
+                if variation.startswith("no-definition"):
+                    assert configuration["values"] == {}
+                else:
+                    assert configuration["values"]["dial"] == (
+                        "mint" if variation == "mint" else "blue"
+                    )
+                    assert "generation" not in configuration["values"]
+                offer = next(o for o in candidate["offers"] if o["binding_id"] == binding["id"])
+                assert offer["binding_revision"] == binding["revision"]
+                assert offer["qualification"]["state"] == "unresolved"
+                assert all(c["id"].startswith(variation + ":") for c in offer["evidence"])
+                assert all(variation in c["derived_from"][0] for c in offer["evidence"])
+                assert set(configuration["evidence_ids"]) <= {c["id"] for c in offer["evidence"]}
+            if not before:
+                assert (
+                    configurations[bindings["mint"]["configuration_id"]]["values"]["case_width_mm"]
+                    == "37"
+                )
+            assert candidate["public_delivered_total"]["amount"] is None
+            assert candidate["usual_price"]["amount"] is candidate["savings"] is None
+            assert candidate["alert_eligible"] is False
+            assert harness.deliveries == harness.blocked_edges == []
+
+
+async def partial_before():
+    await partial_persistence()
+
+
+async def partial_after():
+    await partial_persistence()
+
+
+async def shared_definition_conflict():
+    with MonitoringHarness() as harness:
+        first = synthetic_report(harness, "shared", variation="first")
+        second = synthetic_report(harness, "shared", variation="second")
+        movement = next(
+            c for c in second.claims if c.subject == "configuration" and c.field == "movement"
+        )
+        movement.id = "conflicting-definition-movement"
+        movement.value = "2035"
+        direct = next(
+            c for c in first.claims if c.subject == "configuration" and c.field == "movement"
+        )
+        first.claims.extend(direct.model_copy(update={"id": f"re-extracted-{i}"}) for i in range(5))
+        harness.reports["cex"] = [first, first, second, first]
+        harness.outcomes["cex"] = [listing(harness, "cex", "shared", "AD2066")]
+        async with harness.session() as (client, _):
+            await acquire(harness)
+            candidate = (await get(client, "/api/discovery/watches"))["candidates"][0]
+            assert len(candidate["configurations"]) == 1
+            configuration = candidate["configuration"]
+            assert configuration["state"] == candidate["identity_state"] == "conflicting"
+            assert "movement" not in configuration["values"]
+            assert any(
+                i["field"] == "movement"
+                and i["code"] == "conflicting_claims"
+                and movement.id in i["evidence_ids"]
+                for i in configuration["issues"]
+            )
+            assert len(candidate["bindings"]) == len(candidate["offers"]) == 2
+            assert all(
+                b["configuration_id"] == configuration["id"]
+                and b["resolution"]["state"] != "supported"
+                for b in candidate["bindings"]
+            )
+            assert all(o["qualification"]["state"] != "supported" for o in candidate["offers"])
+            assert harness.deliveries == harness.blocked_edges == []
+
+
+async def purchase_contexts():
+    with MonitoringHarness() as harness:
+        reports = [
+            synthetic_report(harness, "currency-modes", variation="new"),
+            synthetic_report(harness, "currency-modes", variation="used", condition="used"),
+            synthetic_report(harness, "currency-modes", variation="auction", mode="auction"),
+        ]
+        for report in reports:
+            for claim in report.claims:
+                claim.id = report.variation_id + ":" + claim.id
+                if claim.field == "currency":
+                    claim.value = "USD"
+        for key in (
+            "usd",
+            "gbp",
+            "unknown",
+            "price-context",
+            "quantity-value",
+            "destination-value",
+        ):
+            report = synthetic_report(harness, key)
+            if key in {"usd", "unknown"}:
+                report.currency = "USD" if key == "usd" else None
+                for claim in report.claims:
+                    if claim.subject != "configuration":
+                        claim.context.currency = report.currency
+                    if claim.field == "currency":
+                        claim.value = "USD"
+            elif key == "price-context":
+                next(c for c in report.claims if c.field == "item_price").context.currency = "USD"
+            elif key == "quantity-value":
+                next(c for c in report.claims if c.field == "quantity").value = "2"
+            elif key == "destination-value":
+                next(c for c in report.claims if c.field == "destination").value = "US"
+            reports.append(report)
+        harness.reports["cex"] = reports
+        # An advertised GBP display is only a lead. It cannot replace the
+        # explicitly evidenced USD purchase currency or supply missing context.
+        harness.outcomes["cex"] = [
+            listing(harness, "cex", key, "AD2066")
+            for key in dict.fromkeys(r.source_listing_id for r in reports)
+        ]
+        async with harness.session() as (client, _):
+            await acquire(harness)
+            feed = await get(client, "/api/discovery/watches")
+            candidates = {c["source_listing_id"]: c for c in feed["candidates"]}
+            for key, candidate in candidates.items():
+                assert candidate["configuration"]["state"] == "supported"
+                for binding in candidate["bindings"]:
+                    assert (binding["resolution"]["state"] == "supported") == (
+                        key in {"usd", "gbp"}
+                    )
+                for offer in candidate["offers"]:
+                    assert (offer["qualification"]["state"] == "supported") == (
+                        key in {"usd", "gbp"}
+                    )
+                    assert offer["comparison"]["state"] != "supported"
+                assert candidate["public_delivered_total"]["amount"] is None
+                assert candidate["usual_price"]["amount"] is candidate["savings"] is None
+                assert candidate["alert_eligible"] is False
+            assert candidates["usd"]["offers"][0]["currency"] == "USD"
+            assert candidates["usd"]["reported_currency"] == "GBP"
+            assert (
+                candidates["usd"]["configuration"]["id"] == candidates["gbp"]["configuration"]["id"]
+            )
+            assert candidates["unknown"]["offers"][0]["currency"] is None
+            modes = candidates["currency-modes"]
+            assert len(modes["offers"]) == 3
+            assert {o["condition"] for o in modes["offers"]} == {"new", "used"}
+            assert {o["purchase_mode"] for o in modes["offers"]} == {"buy_now", "auction"}
+            assert (
+                next(o for o in modes["offers"] if o["purchase_mode"] == "auction")["comparison"][
+                    "state"
+                ]
+                == "rejected"
+            )
+            assert feed["collection_state"] == "staged"
+            assert harness.deliveries == harness.blocked_edges == []
+
+
+async def currency_binding():
+    with MonitoringHarness() as harness:
+        report = synthetic_report(harness, "currency-context")
+        currency = next(c for c in report.claims if c.field == "currency")
+        currency.value = "USD"
+        harness.reports["cex"] = [report]
+        harness.outcomes["cex"] = [listing(harness, "cex", "currency-context", "AD2066")]
+        async with harness.session() as (client, _):
+            await acquire(harness)
+            candidate = (await get(client, "/api/discovery/watches"))["candidates"][0]
+            binding = candidate["bindings"][0]
+            offer = candidate["offers"][0]
+            assert binding["resolution"]["state"] == "conflicting", binding
+            assert offer["qualification"]["state"] == "conflicting", offer
+            for resolution in (binding["resolution"], offer["qualification"]):
+                assert {
+                    "field": "currency",
+                    "code": "purchase_context_mismatch",
+                    "evidence_ids": [currency.id],
+                } in resolution["issues"]
+            assert offer["currency"] == "USD"
+            assert (
+                next(c for c in offer["evidence"] if c["field"] == "item_price")["context"][
+                    "currency"
+                ]
+                == "GBP"
+            )
+            assert candidate["public_delivered_total"]["amount"] is None
+            assert candidate["usual_price"]["amount"] is candidate["savings"] is None
+            assert candidate["alert_eligible"] is False
+            assert harness.deliveries == harness.blocked_edges == []
+
+
 async def numeric_safety():
     with MonitoringHarness() as harness:
         report = synthetic_report(harness)

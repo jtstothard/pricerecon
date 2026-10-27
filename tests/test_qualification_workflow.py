@@ -63,3 +63,26 @@ def test_additive_migration_keeps_old_leads_and_saved_rules_without_inventing_pr
 
 def test_extreme_numeric_claim_is_a_parse_failure_without_crashing_or_creating_proof():
     run_qualification("numeric_safety")
+
+
+def test_currency_claim_must_match_the_selected_price_purchase_context():
+    run_qualification("currency_binding")
+
+
+def test_distinct_unresolved_definitions_retain_their_own_dimensions_and_bindings():
+    run_qualification("partial_definitions")
+
+
+def test_price_currency_is_explicit_across_purchase_modes_without_display_inference():
+    run_qualification("purchase_contexts")
+
+
+def test_shared_definition_conflicts_survive_duplicate_claims_without_majority_voting():
+    run_qualification("shared_definition_conflict")
+
+
+def test_partial_definition_ids_and_lineage_survive_restart_and_reordered_recapture():
+    with TemporaryDirectory(prefix="pricerecon-offline-") as root:
+        Path(root, ".offline-monitoring").write_text("ticket01-test-storage\n")
+        run_qualification("partial_before", root)
+        run_qualification("partial_after", root)

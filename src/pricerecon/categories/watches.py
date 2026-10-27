@@ -100,8 +100,8 @@ def resolve_watch(
     if identity.values.get("product_kind") in {"accessory", "component"}:
         identity.state = "rejected"
         identity.issues.append(ResolutionIssue(field="product_kind", code="not_complete_watch"))
-    config_id = (
-        identity_key(
+    if identity.state == "supported":
+        config_id = identity_key(
             "watches",
             *(
                 (
@@ -112,9 +112,20 @@ def resolve_watch(
                 for field in IDENTITY_FIELDS
             ),
         )
-        if identity.state == "supported"
-        else f"{fallback_id}:configuration"
-    )
+    elif report.configuration_key:
+        # An unresolved ID identifies the retained definition subject, never an
+        # exact product inferred from incomplete dimensions. Separate subjects
+        # remain separate even when their currently known attributes coincide.
+        config_id = identity_key("watches", "definition-subject", source, report.configuration_key)
+    else:
+        config_id = identity_key(
+            "watches",
+            "unresolved-selection",
+            source,
+            report.merchant_key or "",
+            report.product_id or fallback_id,
+            report.variation_id or "unresolved",
+        )
     configuration = Configuration(id=config_id, **identity.model_dump())
     selection = resolve_fields(
         report,

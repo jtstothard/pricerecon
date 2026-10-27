@@ -93,11 +93,33 @@ def resolve_fields(
             )
             result.values[field] = str(int(Decimal(original))) if field == "quantity" else original
             result.evidence_ids.extend(claim.id for claim in claims)
+            if subject == "offer" and field in {"quantity", "destination", "currency"}:
+                # The asserted purchase value must agree with its selected-price
+                # context. Keep both the literal claim and its context for review;
+                # neither a report code nor a display currency repairs a conflict.
+                mismatched = [
+                    claim.id
+                    for claim in claims
+                    if {
+                        "quantity": str(claim.context.quantity),
+                        "destination": claim.context.destination,
+                        "currency": claim.context.currency,
+                    }[field]
+                    != result.values[field]
+                ]
+                if mismatched:
+                    result.issues.append(
+                        ResolutionIssue(
+                            field=field,
+                            code="purchase_context_mismatch",
+                            evidence_ids=mismatched,
+                        )
+                    )
         else:
             result.issues.append(ResolutionIssue(field=field, code="missing_evidence"))
     result.state = (
         "conflicting"
-        if any(i.code == "conflicting_claims" for i in result.issues)
+        if any(i.code in {"conflicting_claims", "purchase_context_mismatch"} for i in result.issues)
         else "supported"
         if len(result.values) == len(fields)
         else "unresolved"
@@ -180,18 +202,6 @@ def qualify_offer(
 ) -> MerchantOffer:
     result = resolve_fields(report, OFFER_FIELDS, subject="offer", captured_at=captured_at)
     values = result.values
-    for claim in report.claims:
-        if claim.id not in result.evidence_ids:
-            continue
-        if str(claim.context.quantity) != values.get(
-            "quantity"
-        ) or claim.context.destination != values.get("destination"):
-            result.issues.append(
-                ResolutionIssue(
-                    field=claim.field, code="purchase_context_mismatch", evidence_ids=[claim.id]
-                )
-            )
-            result.state = "conflicting"
     if binding.resolution.state != "supported":
         result.issues.append(ResolutionIssue(field="binding", code="selection_not_supported"))
         result.state = "unresolved" if result.state == "supported" else result.state
