@@ -3,10 +3,11 @@
 import hashlib
 from datetime import UTC, datetime
 from typing import Literal
-from urllib.parse import urlsplit
 from uuid import uuid4
 
+from pricerecon.categories.watches import resolve_watch
 from pricerecon.core.acquisition import acquire_sources
+from pricerecon.core.qualification import qualify_offer
 from pricerecon.db.discovery import save_capture
 from pricerecon.models.discovery import (
     AcquisitionOutcome,
@@ -17,6 +18,7 @@ from pricerecon.models.discovery import (
     DiscoveryRequest,
     LeadEvidence,
 )
+from pricerecon.models.qualification import MerchantEvidenceReport, safe_pointer
 
 
 async def execute_discovery(
@@ -51,11 +53,7 @@ async def execute_discovery(
             ).hexdigest()
             # No normalized confidence, title, stock or total flag certifies any
             # watch dimension, offer binding, landed cost or image permission.
-            try:
-                parts = urlsplit(listing.url)
-                url = listing.url if parts.scheme in {"http", "https"} and parts.hostname else None
-            except ValueError:
-                url = None
+            url = safe_pointer(listing.url)
             price = listing.price
             if price is not None and (not price.is_finite() or price < 0):
                 price = None
@@ -93,11 +91,43 @@ async def execute_discovery(
                 advertised_item_price=price,
                 reported_currency=listing.currency or None,
             )
+            report = lead.evidence_report or MerchantEvidenceReport(
+                source_listing_id=listing.source_listing_id
+            )
+            candidate.configuration, binding = resolve_watch(report, captured_at, key, lead.source)
+            candidate.configurations = [candidate.configuration]
+            candidate.identity_state = candidate.configuration.state
+            candidate.bindings = [binding]
+            candidate.offers = [qualify_offer(lead.source, report, binding, captured_at)]
+            candidate.missing_data = list(
+                dict.fromkeys(
+                    f"{issue.field}: {issue.code}"
+                    for resolution in (
+                        candidate.configuration,
+                        binding.resolution,
+                        candidate.offers[0].qualification,
+                        candidate.offers[0].comparison,
+                    )
+                    for issue in resolution.issues
+                )
+            )
             previous = by_id.get(key)
             if previous is None:
                 by_id[key] = candidate
                 candidates.append(candidate)
             else:
+                for configuration in candidate.configurations:
+                    if configuration.id not in {c.id for c in previous.configurations}:
+                        previous.configurations.append(configuration)
+                for binding in candidate.bindings:
+                    if binding.id not in {b.id for b in previous.bindings}:
+                        previous.bindings.append(binding)
+                for offer in candidate.offers:
+                    if offer.id not in {o.id for o in previous.offers}:
+                        previous.offers.append(offer)
+                previous.missing_data = list(
+                    dict.fromkeys(previous.missing_data + candidate.missing_data)
+                )
                 # Duplicated extraction within one capture is not independent
                 # confirmation. Retain differing claims without resolving them.
                 known_claims = {(claim.field, claim.value) for claim in previous.evidence}
@@ -122,6 +152,17 @@ async def execute_discovery(
             )
             for source in request.sources
         ]
+    for candidate in candidates:
+        states = {config.state for config in candidate.configurations}
+        candidate.identity_state = (
+            "conflicting"
+            if "conflicting" in states
+            else "supported"
+            if states == {"supported"}
+            else "rejected"
+            if states == {"rejected"}
+            else "unresolved"
+        )
     capture = DiscoveryCapture(
         capture_id=capture_id,
         captured_at=captured_at,

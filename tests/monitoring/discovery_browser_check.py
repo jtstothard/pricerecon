@@ -23,6 +23,7 @@ def main():
         type=Path,
         default=Path(tempfile.gettempdir()) / "pricerecon-ticket02-browser",
     )
+    parser.add_argument("--qualification", action="store_true")
     args = parser.parse_args()
     args.artifacts.mkdir(exist_ok=True)
     config = args.artifacts / "config.json"
@@ -55,7 +56,9 @@ def main():
     try:
         command("open", f"http://127.0.0.1:{args.port}/discover")
         fixture = evaluate('fetch("/api/offline-verification").then(response => response.json())')
-        assert fixture["fixture"] == "ticket02-discovery-ui", fixture
+        assert fixture["fixture"] == (
+            "ticket03-qualification-ui" if args.qualification else "ticket02-discovery-ui"
+        ), fixture
         assert fixture["temporary_storage"] is True, fixture
         assert fixture["automatic_checks"] is False, fixture
         assert fixture["blocked_edges"] == [], fixture
@@ -85,6 +88,32 @@ def main():
         assert evaluate('document.querySelector("#discovery-budget").value') == "120.25"
         assert evaluate('document.querySelector("#discovery-colours").value') == "mint, salmon"
         assert evaluate('document.querySelectorAll(".discovery-row").length') == 5
+        if args.qualification:
+            assert evaluate('document.querySelectorAll(".discovery-qualification").length') == 5
+            command(
+                "click",
+                ".discovery-row:has(h2:text-is('Addiesdive AD2066 mint')) > details > summary",
+            )
+            assert evaluate('document.body.textContent.includes("Synthetic merchant")')
+            assert evaluate('document.body.textContent.includes("Configuration supported")')
+            assert evaluate('document.body.textContent.includes("Selected variation supported")')
+            assert evaluate('document.body.textContent.includes("Comparison unresolved")')
+            command(
+                "click",
+                ".discovery-row:has(h2:text-is('Addiesdive AD2066 mint')) details details > summary:has-text('Field claims')",
+            )
+            assert evaluate(
+                'Array.from(document.querySelectorAll(".discovery-row")).find(row => row.querySelector("h2").textContent === "Addiesdive AD2066 mint").innerText.includes("synthetic-fixture-v1")'
+            )
+            command(
+                "click", ".discovery-row:has(h2:text-is('San Martin SN0144')) > details > summary"
+            )
+            assert evaluate('document.body.textContent.includes("configuration_mismatch")')
+            assert evaluate('document.body.textContent.includes("Space Gray")')
+            assert evaluate(
+                'document.body.textContent.includes("Authenticity unknown; internal health unknown")'
+            )
+            assert evaluate('document.body.textContent.includes("used · auction")')
         command("click", ".discovery-row:first-of-type > details > summary")
         assert evaluate('document.querySelector(".discovery-row:first-of-type details").open')
         assert evaluate('document.body.textContent.includes("Usual price unavailable")')
@@ -100,7 +129,9 @@ def main():
         assert command("errors")["errors"] == []
         receipt = {
             "result": "passed",
-            "fixture": "five unresolved original test leads",
+            "fixture": "five named synthetic cases; Militado/Merkur abstain"
+            if args.qualification
+            else "five unresolved original test leads",
             "fixture_identity_checked_before_writes": True,
             "gates": [
                 "image-led feed",
@@ -109,6 +140,16 @@ def main():
                 "expanded evidence",
                 "375px no overflow",
                 "legacy queue navigation",
+                *(
+                    [
+                        "separate qualification states",
+                        "visible synthetic provenance",
+                        "rejected dial mapping",
+                        "used auction separation",
+                    ]
+                    if args.qualification
+                    else []
+                ),
             ],
             "buyer_acceptance": "unproven",
             "live_acquisition": "not attempted",

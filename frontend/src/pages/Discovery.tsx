@@ -89,8 +89,9 @@ function Candidate({ candidate }: { candidate: DiscoveryCandidate }) {
     <div className="discovery-description">
       <p className="discovery-quiet">Category discovery from {candidate.source}</p>
       <h2>{candidate.title}</h2>
-      <p className="discovery-caution">Exact identity unresolved</p>
-      <p>Movement, size, dial and merchant selection need checking.</p>
+      <p className="discovery-caution">Configuration {candidate.identity_state}</p>
+      <p>Merchant selection and comparison are assessed separately.</p>
+      {candidate.offers.map(offer => <p key={offer.id}>{offer.seller ?? 'Seller unknown'} · {offer.condition ?? 'condition unknown'} · {offer.purchase_mode ?? 'purchase mode unknown'}</p>)}
       <ul className="discovery-fit">{candidate.preference_fit.filter(fit => fit.state !== 'unset').map(fit => <li key={fit.field}>
         <strong>{strengthLabel[fit.strength]}:</strong> {fit.reason}
       </li>)}</ul>
@@ -106,6 +107,41 @@ function Candidate({ candidate }: { candidate: DiscoveryCandidate }) {
     </div>
     <details className="discovery-evidence">
       <summary>Price and evidence</summary>
+      <div className="discovery-qualification">
+        {candidate.configurations.length === 0 && <p>Configuration unresolved: no typed evidence supplied.</p>}
+        {candidate.configurations.map(config => <section key={config.id}>
+          <h3>Configuration {config.state}</h3>
+          <p>Revision {config.revision}; policy {config.policy_version}.</p>
+          <dl>{Object.entries(config.values).map(([field, value]) => <div key={field}><dt>{field.replace(/_/g, ' ')}</dt><dd>{value}</dd></div>)}</dl>
+          <ul>{config.issues.map((issue, i) => <li key={i}>{issue.field}: {issue.code} {issue.evidence_ids.join(', ')}</li>)}</ul>
+        </section>)}
+        {candidate.bindings.map(binding => <section key={binding.id}>
+          <h3>Selected variation {binding.resolution.state}</h3>
+          <p>{binding.merchant_key ?? 'Merchant unknown'} / {binding.product_id ?? 'product unknown'} / {binding.variation_id ?? 'variation unknown'}; binding revision {binding.revision}, configuration revision {binding.configuration_revision}.</p>
+          <ul>{binding.resolution.issues.map((issue, i) => <li key={i}>{issue.field}: {issue.code} {issue.evidence_ids.join(', ')}</li>)}</ul>
+        </section>)}
+        {candidate.offers.map(offer => <section key={offer.id}>
+          <h3>Merchant offer {offer.qualification.state}</h3>
+          <p>{offer.seller ?? 'Seller unknown'} · {offer.condition ?? 'condition unknown'} · {offer.purchase_mode ?? 'purchase mode unknown'}</p>
+          <p>Quantity {offer.quantity ?? 'unknown'}; availability {offer.availability ?? 'unknown'}; destination {offer.destination ?? 'unknown'}. Selected item price: {offer.currency ?? 'currency unknown'} {offer.item_price ?? 'unknown'}.</p>
+          {offer.condition_description && <p>Seller condition description: {offer.condition_description}</p>}
+          {offer.visible_condition && <p>Visible-condition claim: {offer.visible_condition}</p>}
+          <p>Authenticity unknown; internal health unknown. Photos and catalogue claims provide no assurance.</p>
+          <p>Comparison {offer.comparison.state}. Cohort: {offer.comparison_cohort ?? 'unresolved'}.</p>
+          <ul>{[...offer.qualification.issues, ...offer.comparison.issues].map((issue, i) => <li key={i}>{issue.field}: {issue.code} {issue.evidence_ids.join(', ')}</li>)}</ul>
+          <details><summary>Field claims and rejected evidence</summary>
+            <ul>{offer.evidence.map((claim, i) => <li key={`${claim.id}-${i}`}>
+              <strong>{claim.subject} · {claim.field}:</strong> {claim.value} ({claim.assertion_state})
+              <p>{claim.retention === 'synthetic' ? 'Synthetic test evidence. ' : ''}{claim.issuer_kind}: {claim.issuer}; extractor {claim.extractor} ({claim.extractor_kind}); route {claim.route}; locator {claim.locator}.</p>
+              <p>Extractor version {claim.extractor_version ?? 'unknown'}; model {claim.extractor_model ?? 'unknown'}; run {claim.extraction_run_id ?? 'unknown'}; uncertainty {claim.uncertainty ?? 'not stated'}. Effective time {claim.effective_at ?? 'unknown'}.</p>
+              <p>Claim {claim.id}; capture {claim.capture_id}. Observed {claim.observed_at ?? 'unknown'}; retrieved {claim.retrieved_at}.</p>
+              <p>Context: {claim.context.scope}; {claim.context.merchant_key ?? 'merchant unknown'} / {claim.context.product_id ?? 'product unknown'} / {claim.context.variation_id ?? 'variation unknown'}; {claim.context.destination ?? 'destination unknown'}; {claim.context.currency ?? 'currency unknown'}; quantity {claim.context.quantity ?? 'unknown'}.</p>
+              <p>Lineage: {claim.derived_from.join(', ')}; input claims: {claim.input_claim_ids.join(', ') || 'none'}. Retention: {claim.retention}; permission: {claim.permission_reference}.</p>
+              {claim.pointer && <a href={claim.pointer} target="_blank" rel="noreferrer">Evidence source</a>}
+            </li>)}</ul>
+          </details>
+        </section>)}
+      </div>
       <p>{candidate.price_caveat}</p>
       <p>{candidate.total_reason}</p>
       <p><strong>Usual price unavailable.</strong> {candidate.usual_reason} No savings claim.</p>

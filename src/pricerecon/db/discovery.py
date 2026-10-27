@@ -4,7 +4,8 @@ import sqlite3
 from contextlib import closing
 from datetime import UTC, datetime
 
-from pricerecon.categories.watches import interpret, lead_preference_fit
+from pricerecon.categories.watches import configuration_preference_fit, interpret, resolve_watch
+from pricerecon.core.qualification import qualify_offer
 from pricerecon.db.schema import DB_PATH
 from pricerecon.models.discovery import (
     DiscoveryCandidate,
@@ -12,6 +13,13 @@ from pricerecon.models.discovery import (
     DiscoveryFeed,
     PreferenceProfile,
     PreferenceUpdate,
+)
+from pricerecon.models.qualification import (
+    Configuration,
+    MerchantEvidenceReport,
+    MerchantOffer,
+    Resolution,
+    SelectionBinding,
 )
 
 
@@ -36,6 +44,36 @@ def init_discovery_tables(connection: sqlite3.Connection) -> None:
             revision INTEGER NOT NULL,
             payload_json TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS discovery_configurations (
+            id TEXT NOT NULL, revision INTEGER NOT NULL, capture_id TEXT NOT NULL,
+            payload_json TEXT NOT NULL, PRIMARY KEY(id, revision)
+        );
+        CREATE TABLE IF NOT EXISTS discovery_bindings (
+            id TEXT NOT NULL, revision INTEGER NOT NULL, capture_id TEXT NOT NULL,
+            candidate_id TEXT NOT NULL, configuration_id TEXT NOT NULL,
+            configuration_revision INTEGER NOT NULL, payload_json TEXT NOT NULL,
+            PRIMARY KEY(id, revision),
+            FOREIGN KEY(configuration_id, configuration_revision)
+                REFERENCES discovery_configurations(id, revision)
+        );
+        CREATE INDEX IF NOT EXISTS idx_discovery_bindings_capture
+            ON discovery_bindings(candidate_id, capture_id);
+        CREATE TABLE IF NOT EXISTS discovery_offers (
+            id TEXT NOT NULL, revision INTEGER NOT NULL, capture_id TEXT NOT NULL,
+            candidate_id TEXT NOT NULL, binding_id TEXT NOT NULL, binding_revision INTEGER NOT NULL,
+            payload_json TEXT NOT NULL, PRIMARY KEY(id, revision),
+            FOREIGN KEY(binding_id, binding_revision) REFERENCES discovery_bindings(id, revision)
+        );
+        CREATE INDEX IF NOT EXISTS idx_discovery_offers_capture
+            ON discovery_offers(candidate_id, capture_id);
+        CREATE TABLE IF NOT EXISTS discovery_assessments (
+            offer_id TEXT NOT NULL, offer_revision INTEGER NOT NULL,
+            kind TEXT NOT NULL CHECK(kind = 'comparison'), policy_version TEXT NOT NULL,
+            payload_json TEXT NOT NULL, PRIMARY KEY(offer_id, offer_revision, kind),
+            FOREIGN KEY(offer_id, offer_revision) REFERENCES discovery_offers(id, revision)
+        );
+        INSERT OR IGNORE INTO schema_migrations (version, description)
+            VALUES ('1.4', 'Separate configuration, selection, offer and comparison evidence revisions');
         INSERT OR IGNORE INTO schema_migrations (version, description)
             VALUES ('1.3', 'Add staged category discovery captures, leads and preferences');
     """)
@@ -43,6 +81,8 @@ def init_discovery_tables(connection: sqlite3.Connection) -> None:
 
 def save_capture(capture: DiscoveryCapture, candidates: list[DiscoveryCandidate]) -> None:
     with closing(sqlite3.connect(DB_PATH)) as connection, connection:
+        connection.execute("PRAGMA foreign_keys = ON")
+        connection.execute("BEGIN IMMEDIATE")
         connection.execute(
             "INSERT INTO discovery_captures VALUES (?, ?, ?, ?)",
             (
@@ -52,13 +92,129 @@ def save_capture(capture: DiscoveryCapture, candidates: list[DiscoveryCandidate]
                 capture.model_dump_json(),
             ),
         )
-        connection.executemany(
-            "INSERT INTO discovery_leads VALUES (?, ?, ?)",
-            [
-                (candidate.id, capture.capture_id, candidate.model_dump_json())
-                for candidate in candidates
-            ],
+        # Capture revisions are retained even when values are unchanged. They
+        # identify the inputs used, not new independent corroboration/freshness.
+        for candidate in candidates:
+            config_revisions: dict[str, int] = {}
+            for configuration in candidate.configurations:
+                if configuration.id not in config_revisions:
+                    row = connection.execute(
+                        "SELECT COALESCE(MAX(revision), 0) + 1 FROM discovery_configurations WHERE id = ?",
+                        (configuration.id,),
+                    ).fetchone()
+                    configuration.revision = row[0]
+                    config_revisions[configuration.id] = configuration.revision
+                    connection.execute(
+                        "INSERT INTO discovery_configurations VALUES (?, ?, ?, ?)",
+                        (
+                            configuration.id,
+                            configuration.revision,
+                            capture.capture_id,
+                            configuration.model_dump_json(),
+                        ),
+                    )
+                configuration.revision = config_revisions[configuration.id]
+            for binding in candidate.bindings:
+                binding.configuration_revision = config_revisions[binding.configuration_id]
+                binding.revision = connection.execute(
+                    "SELECT COALESCE(MAX(revision), 0) + 1 FROM discovery_bindings WHERE id = ?",
+                    (binding.id,),
+                ).fetchone()[0]
+                connection.execute(
+                    "INSERT INTO discovery_bindings VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        binding.id,
+                        binding.revision,
+                        capture.capture_id,
+                        candidate.id,
+                        binding.configuration_id,
+                        binding.configuration_revision,
+                        binding.model_dump_json(),
+                    ),
+                )
+            for offer in candidate.offers:
+                offer.binding_revision = next(
+                    b.revision for b in candidate.bindings if b.id == offer.binding_id
+                )
+                offer.revision = connection.execute(
+                    "SELECT COALESCE(MAX(revision), 0) + 1 FROM discovery_offers WHERE id = ?",
+                    (offer.id,),
+                ).fetchone()[0]
+                connection.execute(
+                    "INSERT INTO discovery_offers VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        offer.id,
+                        offer.revision,
+                        capture.capture_id,
+                        candidate.id,
+                        offer.binding_id,
+                        offer.binding_revision,
+                        offer.model_dump_json(exclude={"comparison"}),
+                    ),
+                )
+                connection.execute(
+                    "INSERT INTO discovery_assessments VALUES (?, ?, 'comparison', ?, ?)",
+                    (
+                        offer.id,
+                        offer.revision,
+                        offer.policy_version,
+                        offer.comparison.model_dump_json(),
+                    ),
+                )
+            connection.execute(
+                "INSERT INTO discovery_leads VALUES (?, ?, ?)",
+                (
+                    candidate.id,
+                    capture.capture_id,
+                    candidate.model_dump_json(
+                        exclude={"configuration", "configurations", "bindings", "offers"}
+                    ),
+                ),
+            )
+
+
+def _hydrate(connection: sqlite3.Connection, candidate: DiscoveryCandidate) -> None:
+    candidate.bindings = [
+        SelectionBinding.model_validate_json(row[0])
+        for row in connection.execute(
+            "SELECT payload_json FROM discovery_bindings WHERE candidate_id = ? AND capture_id = ? ORDER BY rowid",
+            (candidate.id, candidate.capture_id),
         )
+    ]
+    if not candidate.bindings:
+        # Pre-1.4 leads retain their original lead price and intent. Project
+        # explicit unknowns on read without backfilling qualified evidence.
+        report = MerchantEvidenceReport(source_listing_id=candidate.source_listing_id)
+        candidate.configuration, binding = resolve_watch(
+            report, candidate.captured_at, candidate.id, candidate.source
+        )
+        candidate.configurations = [candidate.configuration]
+        candidate.bindings = [binding]
+        candidate.offers = [qualify_offer(candidate.source, report, binding, candidate.captured_at)]
+        return
+    configurations = {}
+    for binding in candidate.bindings:
+        row = connection.execute(
+            "SELECT payload_json FROM discovery_configurations WHERE id = ? AND revision = ?",
+            (binding.configuration_id, binding.configuration_revision),
+        ).fetchone()
+        configurations[binding.configuration_id] = Configuration.model_validate_json(row[0])
+    candidate.configurations = list(configurations.values())
+    if candidate.configurations:
+        candidate.configuration = candidate.configurations[0]
+    candidate.offers = [
+        MerchantOffer.model_validate_json(row[0])
+        for row in connection.execute(
+            "SELECT payload_json FROM discovery_offers WHERE candidate_id = ? AND capture_id = ? ORDER BY rowid",
+            (candidate.id, candidate.capture_id),
+        )
+    ]
+    for offer in candidate.offers:
+        row = connection.execute(
+            "SELECT payload_json FROM discovery_assessments WHERE offer_id = ? AND offer_revision = ? AND kind = 'comparison'",
+            (offer.id, offer.revision),
+        ).fetchone()
+        offer.comparison = Resolution.model_validate_json(row[0])
 
 
 def get_feed() -> DiscoveryFeed:
@@ -73,12 +229,16 @@ def get_feed() -> DiscoveryFeed:
         latest: dict[str, DiscoveryCandidate] = {}
         for row in rows:
             candidate = DiscoveryCandidate.model_validate_json(row[0])
-            latest.setdefault(candidate.id, candidate)
+            if candidate.id not in latest:
+                _hydrate(connection, candidate)
+                latest[candidate.id] = candidate
     preferences = get_preferences()
     candidates = [
         candidate.model_copy(
             update={
-                "preference_fit": lead_preference_fit(preferences.values),
+                "preference_fit": configuration_preference_fit(
+                    preferences.values, candidate.configurations
+                ),
             }
         )
         for candidate in latest.values()

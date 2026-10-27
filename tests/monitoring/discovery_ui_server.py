@@ -18,7 +18,7 @@ from .harness import MonitoringHarness
 from .workflows import LEGACY, listing
 
 
-async def main(port):
+async def main(port, qualification=False):
     with MonitoringHarness() as harness:
         from pricerecon.core.discovery import execute_discovery
         from pricerecon.models.discovery import DiscoveryAdmission, DiscoveryRequest
@@ -39,13 +39,39 @@ async def main(port):
         harness.outcomes["cex"] = [
             listing(harness, "cex", f"fixture-{i}", name, "48.00") for i, name in enumerate(names)
         ]
+        if qualification:
+            from .qualification_workflows import synthetic_report
+
+            harness.reports["cex"] = [
+                synthetic_report(harness, "fixture-1"),
+                synthetic_report(
+                    harness, "fixture-2", reference="SN0144", maker="San Martin", width="39"
+                ),
+                synthetic_report(
+                    harness,
+                    "fixture-4",
+                    reference="MTP-B145D-2A2VEF",
+                    maker="Casio",
+                    width="35",
+                    condition="used",
+                    mode="auction",
+                ),
+            ]
+            # A selected dial conflict must appear as a rejected binding.
+            next(
+                c
+                for c in harness.reports["cex"][1].claims
+                if c.subject == "selection" and c.field == "dial"
+            ).value = "Space Gray"
         async with harness.session() as (_, scheduler):
             fixture_router = APIRouter()
 
             @fixture_router.get("/api/offline-verification")
             async def fixture_identity():
                 return {
-                    "fixture": "ticket02-discovery-ui",
+                    "fixture": "ticket03-qualification-ui"
+                    if qualification
+                    else "ticket02-discovery-ui",
                     "temporary_storage": True,
                     "automatic_checks": False,
                     "blocked_edges": harness.blocked_edges,
@@ -112,7 +138,9 @@ async def main(port):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=8877)
+    parser.add_argument("--qualification", action="store_true")
+    args = parser.parse_args()
     try:
-        asyncio.run(main(parser.parse_args().port))
+        asyncio.run(main(args.port, args.qualification))
     except KeyboardInterrupt:
         print("OFFLINE_UI_STOPPED", flush=True)

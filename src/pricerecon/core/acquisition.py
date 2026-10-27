@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Literal
 
 import httpx
+from pydantic import ValidationError
 
 from pricerecon.config import load_config
 from pricerecon.connectors.browser_client import BrowserClient, BrowserSessionConfig
@@ -12,6 +13,7 @@ from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 from pricerecon.core.connector_health import upsert_connector_health
 from pricerecon.models import NormalizedListing
 from pricerecon.models.discovery import AcquisitionOutcome
+from pricerecon.models.qualification import EvidenceSearchReport, MerchantEvidenceReport
 from pricerecon.models.watches import SourceConfig
 
 logger = logging.getLogger(__name__)
@@ -26,6 +28,7 @@ class AcquiredLead:
     source: str
     query: str
     listing: NormalizedListing
+    evidence_report: MerchantEvidenceReport | None = None
 
 
 @dataclass
@@ -219,11 +222,73 @@ async def acquire_sources(
             connector_filters.update(filters)
             # Use per-connector query if available, otherwise fall back to watch.query
             effective_query = source_queries.get(connector_id, query)
-            listings = await connector.search(effective_query, connector_filters)
+            evidence_reports: list[MerchantEvidenceReport] = []
+            inspect = getattr(connector, "search_with_evidence", None)
+            if purpose == "discovery" and callable(inspect):
+                try:
+                    report = await inspect(effective_query, connector_filters)
+                except ValidationError:
+                    raise ConnectorDegradedError(
+                        status=ConnectorStatus.parse_error,
+                        message="Invalid typed evidence report",
+                        connector_id=connector_id,
+                    ) from None
+                if not isinstance(report, EvidenceSearchReport):
+                    raise ConnectorDegradedError(
+                        status=ConnectorStatus.parse_error,
+                        message="Expected a typed evidence report",
+                        connector_id=connector_id,
+                    )
+                try:
+                    # Revalidate nested models as adapters may have constructed
+                    # or mutated them without normal Pydantic validation.
+                    report = EvidenceSearchReport.model_validate_json(report.model_dump_json())
+                except ValidationError:
+                    raise ConnectorDegradedError(
+                        status=ConnectorStatus.parse_error,
+                        message="Invalid typed evidence report",
+                        connector_id=connector_id,
+                    ) from None
+                listings = report.listings
+                evidence_reports = report.evidence
+            else:
+                listings = await connector.search(effective_query, connector_filters)
             all_listings.extend(listings)
-            leads.extend(
-                AcquiredLead(connector_id, effective_query, listing) for listing in listings
-            )
+            for listing in listings:
+                matching: dict[
+                    tuple[str | None, str | None, str | None], MerchantEvidenceReport
+                ] = {}
+                for report in evidence_reports:
+                    if report.source_listing_id != listing.source_listing_id:
+                        continue
+                    locator = (report.merchant_key, report.product_id, report.variation_id)
+                    if locator not in matching:
+                        matching[locator] = report.model_copy(deep=True)
+                    else:
+                        retained = matching[locator]
+                        known = {claim.model_dump_json() for claim in retained.claims}
+                        retained.claims.extend(
+                            claim for claim in report.claims if claim.model_dump_json() not in known
+                        )
+                for retained in matching.values():
+                    known = {claim.model_dump_json() for claim in retained.claims}
+                    for related in matching.values():
+                        if retained.configuration_key != related.configuration_key:
+                            continue
+                        retained.claims.extend(
+                            claim
+                            for claim in related.claims
+                            if claim.subject == "configuration"
+                            and claim.model_dump_json() not in known
+                        )
+                        known = {claim.model_dump_json() for claim in retained.claims}
+                if matching:
+                    leads.extend(
+                        AcquiredLead(connector_id, effective_query, listing, report)
+                        for report in matching.values()
+                    )
+                else:
+                    leads.append(AcquiredLead(connector_id, effective_query, listing))
             failed_sources.discard(connector_id)
             outcomes.append(
                 AcquisitionOutcome(
