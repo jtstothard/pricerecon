@@ -128,10 +128,64 @@ Stop the fixture with Ctrl-C. It asserts zero blocked-edge escapes, zero sends a
 retention of the one enabled legacy job. Final observed server receipt:
 `blocked_edges=[], notifications_sent=0, searches=3, temporary_storage=true`.
 
+## Merger verification: 2026-10-27
+
+Merger checkout: `/Users/jay/.t3/worktrees/pricerecon/watch-category-integration`,
+branch `integration/watch-category-discovery`. Both this checkout at `15beae4`
+and the implementer checkout at `2b8325c027566e945fd70287b1fc8953a2bd5939`
+were clean before the merge. `15beae4` was the merge base and an ancestor of
+the implementer HEAD. The reviewed 26-file diff contains discovery, the shared
+acquisition extraction, additive schema/API/navigation changes, tests and receipts.
+
+`git merge --no-ff 2b8325c027566e945fd70287b1fc8953a2bd5939` produced merge
+`970bd255ab9f1caead2ed735be0f4ebe9e9ca4e6` with parents `15beae4` and
+`2b8325c`, preserving history without conflicts. `git diff --exit-code 2b8325c HEAD`
+then confirmed an identical tree. The following checks were rerun from integration
+using the existing Python environment and integration frontend dependencies:
+
+- **Passed:** the documented isolated pytest command: **20 passed in 23.47s**,
+  comprising 5 discovery and all 15 legacy monitoring workflows. Temporary SQLite,
+  controlled acquisition and captured deliveries remained behind the harness guards.
+- **Passed:** `npm test -- --run`: **25 passed**.
+- **Passed:** `npm run build`: TypeScript plus Vite, 633 modules; main JS
+  624.84 kB before gzip. Existing greater-than-500-kB chunk warning remains.
+- **Passed:** `python -m ruff check` on discovery API/category/model/storage/core,
+  extracted acquisition, Watch executor and the discovery workflow/browser/harness
+  files. `git diff --check 15beae4..HEAD` also passed.
+- **Passed:** `python -m mypy --follow-imports=silent` on discovery API,
+  category `__init__`/rules, acquisition, discovery core, Watch executor,
+  discovery storage/model, app and schema: **10 source files**. Existing unused
+  override notes remain.
+- **Unchanged baseline:** compared Ruff code/message counts using `git show`
+  plus Ruff stdin at `15beae4` and merged HEAD: app `UP035:1, UP017:2, BLE001:2`;
+  schema `BLE001:2`. An initial comparison command could not find `ruff` on PATH;
+  rerunning through the existing environment's `python -m ruff` passed.
+- **Blocked:** `npm run lint`, exit 2: ESLint 10.12.0 cannot find an
+  `eslint.config.*` file. No install, configuration change or suppression was made.
+- **Reviewed retained browser proof:** both linked screenshots, receipt, fixture
+  identity guard and driver assertions cover illustrated simultaneous candidates,
+  keyboard save/reload, uncertainty/evidence, narrow overflow and legacy queue
+  navigation. No substantive concern or source difference justified repeating it.
+  This is inspection of prior browser evidence, not a new browser execution.
+
+All five ticket02 checklist items are evidenced within the accepted offline seam;
+the local issue is closed. Ticket03 was read and claimed for the parent continuation,
+with its implementation checklist untouched. Only tracker/receipt documentation
+was changed after the merge. The dirty original parent was not edited or used for
+application execution; only its existing Python environment was reused. No broad
+legacy API/global/live suite, credentials, accounts, production DB, install, push,
+PR, deployment or activation was used. Collection remains staged, with no new
+collection HTTP action or scheduler job.
+
+Preservation readback: implementer remains clean at `2b8325c`; original parent
+status is unchanged, with no staged diff and the same tracked-diff SHA-256 before
+and after verification:
+`38ab9795757655e9119022af759fe392bfb901bce1ce8175038fc6c0b73e8914`.
+
 ## Remaining gates
 
-Ticket02 remains **in-progress pending parent merger verification**. This is
-agent-observed offline implementation proof, not buyer acceptance. Exact identity/
+Ticket02 is **closed for deterministic offline acceptance after merger verification**.
+This is agent-observed offline implementation proof, not buyer acceptance. Exact identity/
 selection qualification is ticket03; public UK costs ticket04. Every current lead
 has unresolved identity, unknown delivered total, unavailable usual price, null
 savings and `alert_eligible=false`. Titles/artwork establish no size or colour fit.

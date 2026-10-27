@@ -4,7 +4,9 @@
 
 **Blocked by:** [02: Discover candidates in an image-led feed](02-discover-candidates.md)
 
-**Status:** ready-for-agent
+**Status:** in-progress
+
+**Assignee:** Codex (parent continuation)
 
 **Parent:** [Trustworthy UK watch discovery alongside existing monitoring](../../../docs/specs/watch-category-discovery.md)
 
@@ -15,5 +17,9 @@
 - [ ] Use the named five-case cohort for deterministic qualification/abstention examples, retaining missing Merkur/Militado evidence as missing rather than substituting a different product.
 
 ## Verification and authority
+
+Claimed 2026-10-27 after ticket02's offline integration closure. The merger read
+this ticket for scope and handoff only; no ticket03 implementation or acceptance
+work was performed. All checklist items remain open for the parent continuation.
 
 Use the buyer-approved API plus normal execution seam, controlled external edges and isolated storage; assert observable behavior. Include persistence/API/UI behavior for this slice and keep legacy Watch semantics compatible. Source implementation and offline verification only: no live collection, production DB operations, account connections, activation, deployment, purchase, commit or push is authorised by this ticket.
