@@ -23,10 +23,6 @@ class IsolationViolation(BaseException):
     """Bypass broad application exception handlers when an edge escapes."""
 
 
-class MonitoringRequirementGap(AssertionError):
-    """A reproduced baseline requirement failure, distinct from harness errors."""
-
-
 class Clock:
     def __init__(self):
         self.now = datetime(2026, 10, 27, 12, tzinfo=UTC)
@@ -75,6 +71,8 @@ class MonitoringHarness:
                 "socket.connect",
                 "socket.connect_ex",
                 "socket.getaddrinfo",
+                "socket.gethostbyname",
+                "socket.gethostbyaddr",
                 "socket.sendto",
                 "subprocess.Popen",
                 "os.system",
@@ -120,6 +118,33 @@ class MonitoringHarness:
                 block_sync_http,
             )
         )
+
+        # libcurl performs native I/O outside Python's socket audit events.
+        from curl_cffi import AsyncCurl, Curl
+        from curl_cffi.requests import AsyncSession, Session
+
+        def block_curl(*args, **kwargs):
+            self.blocked_edges.append("curl_cffi.transport")
+            raise IsolationViolation("Offline monitoring blocked native curl transport")
+
+        async def block_async_curl(*args, **kwargs):
+            block_curl()
+
+        for owner, method, replacement in (
+            (Session, "request", block_curl),
+            (AsyncSession, "request", block_async_curl),
+            (Curl, "perform", block_curl),
+            (AsyncCurl, "add_handle", block_curl),
+        ):
+            self.stack.enter_context(patch.object(owner, method, replacement))
+
+        from pricerecon.connectors.browser_client import BrowserClient
+
+        async def block_browser(*args, **kwargs):
+            self.blocked_edges.append("browser.start")
+            raise IsolationViolation("Offline monitoring blocked browser startup")
+
+        self.stack.enter_context(patch.object(BrowserClient, "start", block_browser))
 
         from pricerecon import connectors
         from pricerecon.models import SourceType

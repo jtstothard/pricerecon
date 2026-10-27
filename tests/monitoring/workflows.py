@@ -5,7 +5,7 @@ import sys
 from decimal import Decimal
 from pathlib import Path
 
-from .harness import IsolationViolation, MonitoringHarness, MonitoringRequirementGap
+from .harness import IsolationViolation, MonitoringHarness
 
 LEGACY = {
     "name": "Saved wristwatch search",
@@ -174,10 +174,22 @@ async def legacy():
     print("PASS legacy: saved intent, matching, queries, baseline, drop transports and restart")
 
 
-async def partial_failure():
+async def partial_failure(mode="timeout"):
     import httpx
 
+    failures = {
+        "timeout": httpx.ReadTimeout("Controlled source timeout"),
+        "unknown_error": RuntimeError("Controlled unexpected error"),
+    }
+
     with MonitoringHarness() as harness:
+        from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
+
+        failures["auth_failed"] = ConnectorDegradedError(
+            status=ConnectorStatus.auth_failed,
+            message="Controlled authentication failure",
+            connector_id="scan",
+        )
         notifications = {
             **LEGACY["notifications"],
             "events": ["new_listing", "price_drop"],
@@ -192,44 +204,101 @@ async def partial_failure():
             baseline_rows = (await get(client, "/api/watches/7/listings"))["items"]
             assert len(baseline_rows) == 2
             harness.clock.advance()
-            harness.outcomes["scan"] = httpx.ReadTimeout("Controlled source timeout")
+            harness.outcomes["scan"] = failures[mode]
             harness.outcomes["cex"] = [
                 listing(harness, "cex", "cex-good", "Militado ML05 blue", "80.00")
             ]
             partial = await check(client, 7)
             assert partial["success"] is True
             states = (await get(client, "/api/health"))["connector_states"]
-            assert states["scan"]["status"] == "timeout"
-            assert states["scan"]["last_error"] == "Controlled source timeout"
+            assert states["scan"]["status"] == mode
+            assert states["scan"]["last_error"] == str(failures[mode])
+            assert partial["listings_found"] == 1  # Retained evidence is not a fresh result.
+            assert partial["listings_gone"] == 0
             assert states["cex"]["status"] == "ok"
             during_failure = (await get(client, "/api/watches/7/listings"))["items"]
             partial_events = (await get(client, "/api/watches/7/events"))["items"]
             assert [delivery[2]["event_type"] for delivery in harness.deliveries] == ["price_drop"]
-        harness.clock.advance()
+            if mode == "auth_failed":
+                searches = list(harness.searches)
+                skipped = await check(client, 7)
+                assert harness.searches[len(searches) :] == [
+                    ("cex", LEGACY["source_queries"]["cex"], {"price_max": Decimal("100.00")})
+                ]
+                assert skipped["listings_gone"] == 0
+                assert (await get(client, "/api/watches/7/listings"))["items"] == during_failure
+        harness.clock.advance(hours=2)  # Let fresh auth failure expire before retry.
         harness.outcomes["scan"] = [last_good]
         async with harness.session() as (client, _):
             recovered = await check(client, 7)
             assert (await get(client, "/api/health"))["connector_states"]["scan"]["status"] == "ok"
             assert (await get(client, "/api/watches/7/listings"))["total"] == 2
             assert recovered["first_run"] is False
-            # Ticket requirement: failed collection must retain last-good evidence,
-            # and restarting/recovering the same listing must not make it new.
-            gaps = []
-            if [row for row in during_failure if row["source"] == "scan"] != [
+            assert [row for row in during_failure if row["source"] == "scan"] == [
                 row for row in baseline_rows if row["source"] == "scan"
-            ]:
-                gaps.append("Failed source lost its last-good listing")
-            event_types = sorted(event["event_type"] for event in partial_events)
-            if event_types != ["price_drop"]:
-                gaps.append(f"Partial failure emitted events {event_types}")
-            if recovered["new_listings"] != 0:
-                gaps.append(f"Recovery treated {recovered['new_listings']} retained listing as new")
-            delivered_events = [delivery[2]["event_type"] for delivery in harness.deliveries]
-            if delivered_events != ["price_drop"]:
-                gaps.append(f"Recovery caused duplicate notification: {delivered_events}")
+            ]
+            assert [event["event_type"] for event in partial_events] == ["price_drop"]
+            assert recovered["new_listings"] == 0
+            assert recovered["events"] == []
+            assert recovered["notifications_sent"] == 0
+            assert [delivery[2]["event_type"] for delivery in harness.deliveries] == ["price_drop"]
+            harness.clock.advance()
+            harness.outcomes["scan"] = [
+                listing(harness, "scan", "scan-good", "Militado ML05 mint", "75.00")
+            ]
+            dropped = await check(client, 7)
+            assert dropped["price_drops"] == 1
+            assert dropped["notifications_sent"] == 1
+            assert len(harness.deliveries) == 2
+            assert harness.deliveries[-1][2]["listing"]["previous_price"] == 90.0
         assert harness.blocked_edges == []
-        if gaps:
-            raise MonitoringRequirementGap("; ".join(gaps))
+    print(f"PASS partial_failure: {mode} preserves last-good evidence and silent recovery")
+
+
+async def successful_empty():
+    with MonitoringHarness() as harness:
+        harness.seed_legacy([(7, LEGACY)])
+        harness.outcomes["scan"] = [listing(harness, "scan", "gone", "Militado ML05 mint")]
+        harness.outcomes["cex"] = [listing(harness, "cex", "kept", "Militado ML05 blue")]
+        async with harness.session() as (client, _):
+            assert (await check(client, 7))["first_run"] is True
+            harness.clock.advance()
+            harness.outcomes["scan"] = []
+            empty = await check(client, 7)
+            assert empty["listings_gone"] == 1
+            rows = (await get(client, "/api/watches/7/listings"))["items"]
+            assert [row["source_listing_id"] for row in rows] == ["kept"]
+            events = (await get(client, "/api/watches/7/events"))["items"]
+            assert [event["event_type"] for event in events] == ["listing_gone"]
+            assert events[0]["data"]["source_listing_id"] == "gone"
+            assert (await get(client, "/api/health"))["connector_states"]["scan"]["status"] == "ok"
+            assert harness.deliveries == []
+        assert harness.blocked_edges == []
+    print("PASS successful_empty: empty success removes old evidence and records disappearance")
+
+
+async def all_sources_failed():
+    import httpx
+
+    with MonitoringHarness() as harness:
+        harness.seed_legacy([(7, LEGACY)])
+        harness.outcomes["cex"] = [listing(harness, "cex", "kept", "Militado ML05 blue")]
+        harness.outcomes["scan"] = [listing(harness, "scan", "retained", "Militado ML05 mint")]
+        async with harness.session() as (client, _):
+            assert (await check(client, 7))["first_run"] is True
+            baseline = await get(client, "/api/watches/7/listings")
+            harness.clock.advance()
+            harness.outcomes["cex"] = httpx.ReadTimeout("Controlled cex timeout")
+            harness.outcomes["scan"] = httpx.ReadTimeout("Controlled scan timeout")
+            failed = await check(client, 7)
+            assert failed["first_run"] is False
+            assert failed["listings_found"] == 0
+            assert failed["listings_gone"] == 0
+            assert await get(client, "/api/watches/7/listings") == baseline
+            assert (await get(client, "/api/watches/7/events"))["items"] == []
+            assert harness.deliveries == []
+        assert harness.blocked_edges == []
+    print("PASS all_sources_failed: total acquisition failure preserves the existing baseline")
 
 
 async def automatic_startup():
@@ -260,7 +329,9 @@ async def simple_query():
                     {
                         "name": "Simple saved search",
                         "query": "Casio blue",
-                        "sources": [{"connector": "cex"}],
+                        "display_title": "A label that is not a title filter",
+                        "source_queries": {"cex": "  (Casio OR Seiko) blue -parts  "},
+                        "sources": [{"connector": "cex"}, {"connector": "scan"}],
                         "filters": {"spec_match": {"excluded_title_terms": ["parts"]}},
                         "notifications": {
                             "events": ["price_drop"],
@@ -274,18 +345,63 @@ async def simple_query():
         harness.outcomes["cex"] = [
             listing(harness, "cex", "matching", "Casio blue wristwatch"),
             listing(harness, "cex", "unrelated", "Unrelated black wristwatch"),
+            listing(harness, "cex", "one-term", "Casio black wristwatch"),
+            listing(harness, "cex", "reordered", "BLUE wristwatch CASIO"),
             listing(harness, "cex", "parts", "Casio blue parts"),
         ]
         async with harness.session() as (client, _):
             baseline = await check(client, 7)
             assert baseline["first_run"] is True
-            assert harness.searches == [("cex", "Casio blue", {})]
+            assert harness.searches == [
+                ("cex", "  (Casio OR Seiko) blue -parts  ", {}),
+                ("scan", "Casio blue", {}),
+            ]
             rows = (await get(client, "/api/watches/7/listings"))["items"]
-            if [row["source_listing_id"] for row in rows] != ["matching"]:
-                raise MonitoringRequirementGap(
-                    "ADR fallback query-title filter admitted unrelated listings: "
-                    f"{[row['source_listing_id'] for row in rows]}"
-                )
+            assert sorted(row["source_listing_id"] for row in rows) == ["matching", "reordered"]
+            assert harness.deliveries == []
+        assert harness.blocked_edges == []
+    print("PASS simple_query: fallback title terms and exclusions survive raw source override")
+
+
+async def advanced_query(location="watch"):
+    with MonitoringHarness() as harness:
+        groups = [["sea gull", "ST19+"], ["38mm"]]
+        spec = {"excluded_title_terms": ["parts", "leather strap"]}
+        watch = {
+            **LEGACY,
+            "synonym_groups": groups if location != "spec" else [],
+            "filters": {"spec_match": spec},
+        }
+        if location == "spec":
+            spec["synonym_groups"] = groups
+        elif location == "defaults":
+            watch.pop("filters")  # Watch-level groups apply even with default filters.
+        harness.seed_legacy([(7, watch)])
+        harness.outcomes["cex"] = [
+            listing(harness, "cex", "phrase", "Sea-Gull 38mm watch"),
+            listing(harness, "cex", "symbol", "ST19+ 38mm chronograph"),
+            listing(harness, "cex", "wrong-model", "ST190 38mm chronograph"),
+            listing(harness, "cex", "wrong-size", "ST19+ 138mm clock"),
+            listing(harness, "cex", "split-phrase", "Sea mechanical Gull 38mm watch"),
+        ]
+        if location != "defaults":
+            harness.outcomes["cex"] += [
+                listing(harness, "cex", "parts", "ST19+ 38mm parts"),
+                listing(harness, "cex", "strap", "Sea Gull 38mm leather strap"),
+            ]
+        async with harness.session() as (client, _):
+            assert (await check(client, 7))["first_run"] is True
+            assert [entry[:2] for entry in harness.searches] == [
+                ("cex", LEGACY["source_queries"]["cex"]),
+                ("scan", LEGACY["query"]),
+            ]
+            rows = (await get(client, "/api/watches/7/listings"))["items"]
+            assert sorted(row["source_listing_id"] for row in rows) == ["phrase", "symbol"]
+            assert harness.deliveries == []
+        assert harness.blocked_edges == []
+    print(
+        f"PASS advanced_query: {location} groups replace fallback matching with token/phrase rules"
+    )
 
 
 async def schedule_window():
@@ -332,12 +448,12 @@ async def process_restart(*, before):
                         7,
                         {
                             **LEGACY,
-                            "sources": [{"connector": "cex"}],
                             "notifications": {**LEGACY["notifications"], "channels": ["webhook"]},
                         },
                     )
                 ]
             )
+        harness.outcomes["scan"] = [listing(harness, "scan", "retained", "Militado ML05 mint")]
         harness.outcomes["cex"] = [listing(harness, "cex", "saved", "Militado ML05 blue", "80.00")]
         async with harness.session() as (client, scheduler):
             if before:
@@ -349,7 +465,11 @@ async def process_restart(*, before):
                 harness.outcomes["cex"] = [
                     listing(harness, "cex", "saved", "Militado ML05 blue", "80.00")
                 ]
+                import httpx
+
+                harness.outcomes["scan"] = httpx.ReadTimeout("Controlled pre-restart failure")
                 assert (await check(client, 7))["notifications_sent"] == 1
+                assert (await get(client, "/api/watches/7/listings"))["total"] == 2
                 assert len(harness.deliveries) == 1
             else:
                 assert (await get(client, "/api/watches/7"))[
@@ -365,6 +485,10 @@ async def process_restart(*, before):
                 assert unchanged["events"] == []
                 assert unchanged["notifications_sent"] == 0
                 assert harness.deliveries == []
+                assert (await get(client, "/api/watches/7/listings"))["total"] == 2
+                assert (await get(client, "/api/health"))["connector_states"]["scan"][
+                    "status"
+                ] == "ok"
             assert [job["watch_id"] for job in scheduler.list_watches()] == [7]
         assert harness.blocked_edges == []
     print(f"PASS process_restart: {'before' if before else 'after'} cold process")
@@ -395,6 +519,10 @@ async def isolation():
         import subprocess
 
         import httpx
+        from curl_cffi import Curl
+        from curl_cffi.requests import AsyncSession, Session
+
+        from pricerecon.connectors.browser_client import BrowserClient
 
         assert harness.application.settings.api_key is None
         assert harness.application.settings.database_path == "pricerecon.db"
@@ -403,6 +531,9 @@ async def isolation():
             lambda: sqlite3.connect(harness.root.parent / "must-not-open.db"),
             lambda: socket.getaddrinfo("example.invalid", 443),
             lambda: subprocess.run([sys.executable, "-c", "pass"], check=False),
+            lambda: httpx.get("https://must-not-connect.invalid/"),
+            lambda: Session().get("https://must-not-connect.invalid/"),
+            lambda: Curl().perform(),
         ):
             try:
                 attempt()
@@ -417,30 +548,49 @@ async def isolation():
             pass
         else:
             raise AssertionError("Isolation guard allowed a real HTTP transport")
+        async with AsyncSession() as curl_session:
+            for attempt in (
+                lambda: curl_session.get("https://must-not-connect.invalid/"),
+                lambda: BrowserClient().start(),
+            ):
+                try:
+                    await attempt()
+                except IsolationViolation:
+                    pass
+                else:
+                    raise AssertionError("Isolation guard allowed native curl/browser I/O")
         assert harness.blocked_edges == [
             "sqlite3.connect",
             "socket.getaddrinfo",
             "subprocess.Popen",
+            "httpx.sync_transport",
+            "curl_cffi.transport",
+            "curl_cffi.transport",
             "httpx.async_transport",
+            "curl_cffi.transport",
+            "browser.start",
         ]
         assert harness.deliveries == []
     print("PASS isolation: startup suppressed; explicit API check; DB/network/process guards")
 
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(
-            {
-                "isolation": isolation,
-                "legacy": legacy,
-                "partial_failure": partial_failure,
-                "automatic_startup": automatic_startup,
-                "simple_query": simple_query,
-                "schedule_window": schedule_window,
-                "before_process_restart": lambda: process_restart(before=True),
-                "after_process_restart": lambda: process_restart(before=False),
-            }[sys.argv[1]]()
-        )
-    except MonitoringRequirementGap as gap:
-        print(f"UNMET_REQUIREMENT: {gap}")
-        sys.exit(3)
+    asyncio.run(
+        {
+            "isolation": isolation,
+            "legacy": legacy,
+            "partial_failure": partial_failure,
+            "unexpected_failure": lambda: partial_failure("unknown_error"),
+            "auth_failure": lambda: partial_failure("auth_failed"),
+            "successful_empty": successful_empty,
+            "all_sources_failed": all_sources_failed,
+            "advanced_query": advanced_query,
+            "spec_groups": lambda: advanced_query("spec"),
+            "default_groups": lambda: advanced_query("defaults"),
+            "automatic_startup": automatic_startup,
+            "simple_query": simple_query,
+            "schedule_window": schedule_window,
+            "before_process_restart": lambda: process_restart(before=True),
+            "after_process_restart": lambda: process_restart(before=False),
+        }[sys.argv[1]]()
+    )

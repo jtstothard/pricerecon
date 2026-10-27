@@ -6,10 +6,6 @@ import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-import pytest
-
-from tests.monitoring.harness import MonitoringRequirementGap
-
 
 def run_scenario(name, shared_root=None):
     root = Path(__file__).resolve().parents[1]
@@ -27,8 +23,6 @@ def run_scenario(name, shared_root=None):
         timeout=30,
         check=False,
     )
-    if result.returncode == 3 and "UNMET_REQUIREMENT: " in result.stdout:
-        raise MonitoringRequirementGap(result.stdout)
     assert result.returncode == 0, result.stdout + result.stderr
 
 
@@ -40,24 +34,42 @@ def test_legacy_searches_settings_matching_and_notifications_survive_restart():
     run_scenario("legacy")
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=MonitoringRequirementGap,
-    reason="Baseline deletes failed-source snapshots and re-alerts on recovery",
-)
 def test_partial_source_failure_retains_last_good_evidence_without_recovery_alerts():
     run_scenario("partial_failure")
+
+
+def test_unexpected_source_error_retains_last_good_evidence():
+    run_scenario("unexpected_failure")
+
+
+def test_fresh_auth_failure_skips_collection_without_erasing_last_good_evidence():
+    run_scenario("auth_failure")
+
+
+def test_successful_empty_source_removes_its_previous_listings():
+    run_scenario("successful_empty")
+
+
+def test_all_sources_failed_does_not_clear_the_existing_baseline():
+    run_scenario("all_sources_failed")
+
+
+def test_advanced_groups_match_tokens_and_phrases_with_exclusions():
+    run_scenario("advanced_query")
+
+
+def test_existing_spec_groups_replace_fallback_query_matching():
+    run_scenario("spec_groups")
+
+
+def test_watch_groups_apply_with_default_filters():
+    run_scenario("default_groups")
 
 
 def test_default_application_startup_still_checks_enabled_saved_searches():
     run_scenario("automatic_startup")
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=MonitoringRequirementGap,
-    reason="Baseline executor omits the ADR fallback query-title filter",
-)
 def test_simple_saved_search_filters_by_fallback_query_after_collection():
     run_scenario("simple_query")
 
