@@ -12,11 +12,11 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 | [02: Candidate discovery](issues/02-discover-candidates.md) | 01 | Closed |
 | [03: Qualification](issues/03-explain-offer-qualification.md) | 02 | Closed |
 | [04: UK delivered cost](issues/04-show-uk-delivered-cost.md) | 03 | Closed |
-| [05: Exact tracking](issues/05-track-exact-products.md) | 04 | READY; unclaimed |
-| [06: Observation history](issues/06-show-observation-history.md) | 04 | READY; unclaimed |
+| [05: Exact tracking](issues/05-track-exact-products.md) | 04 | In progress |
+| [06: Observation history](issues/06-show-observation-history.md) | 04 | In progress |
 | [07: Corrections](issues/07-correct-identities.md) | 05, 06 | Blocked |
 | [08: Comparisons](issues/08-compare-qualified-offers.md) | 07 | Blocked |
-| [09: Public coupons](issues/09-evaluate-public-coupons.md) | 04 | READY; unclaimed |
+| [09: Public coupons](issues/09-evaluate-public-coupons.md) | 04 | In progress |
 | [10: Shared limits](issues/10-prioritise-tracking.md) | 05 | Blocked |
 | [11: Source evidence](issues/11-carry-source-evidence.md) | 03, 10 | Blocked |
 | [12: Integrated verification](issues/12-verify-complete-watch-workflow.md) | 08, 09, 11 | Blocked |
