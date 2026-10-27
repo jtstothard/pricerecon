@@ -318,6 +318,7 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
     )
 
     all_listings = []
+    failed_sources: set[str] = set()
 
     for source in watch.sources:
         if not source.enabled:
@@ -327,6 +328,10 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
         connector_id = canonical_connector_id(source.connector)
         if not connector_id:
             continue
+
+        # Failed/skipped acquisition is not evidence of disappearance. Only a
+        # completed search (including an empty result) replaces this snapshot.
+        failed_sources.add(connector_id)
 
         # Check health state: skip connectors with fresh auth_failed errors
         from pricerecon.core.connector_health import is_health_stale, list_connector_health
@@ -470,6 +475,7 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
             effective_query = watch.source_queries.get(connector_id, watch.query)
             listings = await connector.search(effective_query, connector_filters)
             all_listings.extend(listings)
+            failed_sources.discard(connector_id)
             logger.info(
                 "watch_connector_result",
                 extra={
@@ -539,12 +545,24 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
     filtered_listings = apply_post_normalization_filters(
         all_listings, watch.filters, watch.synonym_groups if watch.synonym_groups else None
     )
+    # ADR 0001: raw connector queries never replace title matching. Watches
+    # without synonym groups retain the legacy all-query-terms safety net.
+    if not watch.synonym_groups and not watch.filters.spec_match.synonym_groups:
+        from pricerecon.core.title_matching import legacy_query_match
+
+        filtered_listings = [
+            listing
+            for listing in filtered_listings
+            if legacy_query_match(listing.title_raw, watch.query)
+        ]
     # Keep shadow evaluation against the complete post-fetch set for auditing,
     # then enforce P1 component pattern + price floors before the alert pipeline.
     shadow_entries = evaluate_shadow_filters(all_listings, watch.filters, watch_id)
     filtered_listings = apply_component_pattern_filter(filtered_listings, watch.filters)
     filtered_listings = apply_price_floor_filter(filtered_listings, watch.filters)
-    first_run, diff_result, event_ids = run_check(watch_id, filtered_listings)
+    first_run, diff_result, event_ids = run_check(
+        watch_id, filtered_listings, failed_sources=failed_sources
+    )
 
     conn = get_db()
     cursor = conn.cursor()

@@ -21,9 +21,14 @@ class WatchScheduler:
     Supports time-window filtering to skip executions outside configured windows.
     """
 
-    def __init__(self) -> None:
-        """Initialize the scheduler."""
+    def __init__(self, *, automatic_checks: bool = True) -> None:
+        """Initialize scheduling, optionally retaining jobs without running checks.
+
+        Offline application workflows can register real schedules while driving
+        checks explicitly. Normal application startup keeps automatic execution.
+        """
         self.scheduler = AsyncIOScheduler(timezone="UTC")
+        self.automatic_checks = automatic_checks
         self._watch_jobs: dict[int, str] = {}  # watch_id -> job_id mapping
         self._watch_check_fn: Optional[Callable] = None
 
@@ -39,7 +44,7 @@ class WatchScheduler:
         """Start the scheduler."""
         if not self.scheduler.running:
             logger.info("Starting watch scheduler")
-            self.scheduler.start()
+            self.scheduler.start(paused=not self.automatic_checks)
             # Log scheduler events for debugging
             self.scheduler.add_listener(self._on_job_executed, EVENT_JOB_EXECUTED | EVENT_JOB_ERROR)
 
@@ -105,7 +110,8 @@ class WatchScheduler:
         )
 
         # Fire the first run immediately in a background task
-        asyncio.create_task(self._execute_watch(watch_id, schedule))
+        if self.automatic_checks:
+            asyncio.create_task(self._execute_watch(watch_id, schedule))
 
         self._watch_jobs[watch_id] = job_id
         logger.info(
