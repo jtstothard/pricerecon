@@ -1,0 +1,34 @@
+{
+  "source_head": "072a2f873b5c0ac071401d2eabc6a912d0e5aaa4",
+  "source_manifest_entries_verified": 26,
+  "current_matches": [
+    "frontend/src/components/discovery/CollectionCoverage.tsx",
+    "frontend/src/lib/collection.ts",
+    "src/pricerecon/api/discovery.py",
+    "src/pricerecon/connectors/aliexpress.py",
+    "src/pricerecon/connectors/browser_client.py",
+    "src/pricerecon/connectors/ebay.py",
+    "src/pricerecon/connectors/external_browser.py",
+    "src/pricerecon/core/acquisition.py",
+    "src/pricerecon/core/collection_policy.py",
+    "src/pricerecon/core/collection_transport.py",
+    "src/pricerecon/core/diff_engine.py",
+    "src/pricerecon/core/rate_limiter.py",
+    "src/pricerecon/core/watch_executor.py",
+    "src/pricerecon/db/collection.py",
+    "src/pricerecon/models/collection.py",
+    "tests/monitoring/collection_browser_check.py",
+    "tests/monitoring/collection_ui_server.py",
+    "tests/monitoring/collection_workflows.py",
+    "tests/test_collection_workflow.py"
+  ],
+  "changed_by_07_integration_and_conflict_resolution": [
+    "frontend/src/pages/Discovery.tsx",
+    "src/pricerecon/core/discovery.py",
+    "src/pricerecon/core/exact_tracking.py",
+    "src/pricerecon/db/discovery.py",
+    "src/pricerecon/db/schema.py",
+    "src/pricerecon/db/tracking.py",
+    "tests/monitoring/harness.py"
+  ]
+}

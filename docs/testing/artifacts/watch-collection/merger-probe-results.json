@@ -1,0 +1,56 @@
+[
+  {
+    "case": "context_api",
+    "exit": 1,
+    "result": "failed",
+    "actual_transport_sends": 2,
+    "expected_transport_sends": 1,
+    "blocked_edges": [],
+    "notifications_sent": 0
+  },
+  {
+    "case": "context_scheduler",
+    "exit": 1,
+    "result": "failed",
+    "actual_transport_sends": 2,
+    "expected_transport_sends": 1,
+    "blocked_edges": [],
+    "notifications_sent": 0
+  },
+  {
+    "case": "process_seed",
+    "exit": 0,
+    "result": "passed",
+    "actual_transport_sends": 1,
+    "expected_transport_sends": 1,
+    "blocked_edges": [],
+    "notifications_sent": 0
+  },
+  {
+    "case": "process_resume",
+    "exit": 1,
+    "result": "failed",
+    "actual_transport_sends": 1,
+    "expected_transport_sends": 0,
+    "blocked_edges": [],
+    "notifications_sent": 0
+  },
+  {
+    "case": "legacy_no_grant",
+    "exit": 0,
+    "result": "passed",
+    "actual_transport_sends": 1,
+    "expected_transport_sends": 1,
+    "blocked_edges": [],
+    "notifications_sent": 0
+  },
+  {
+    "case": "redirect",
+    "exit": 0,
+    "result": "passed",
+    "actual_transport_sends": 1,
+    "expected_transport_sends": 1,
+    "blocked_edges": [],
+    "notifications_sent": 0
+  }
+]

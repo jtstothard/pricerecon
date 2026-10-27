@@ -17,7 +17,7 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 | [07: Corrections](issues/07-correct-identities.md) | 05, 06 | Open — merger repair required |
 | [08: Comparisons](issues/08-compare-qualified-offers.md) | 07 | Blocked |
 | [09: Public coupons](issues/09-evaluate-public-coupons.md) | 04 | Closed |
-| [10: Shared limits](issues/10-prioritise-tracking.md) | 05 | In progress |
+| [10: Shared limits](issues/10-prioritise-tracking.md) | 05 | Open — shared-admission repair |
 | [11: Source evidence](issues/11-carry-source-evidence.md) | 03, 10 | Blocked |
 | [12: Integrated verification](issues/12-verify-complete-watch-workflow.md) | 08, 09, 11 | Blocked |
 
@@ -32,8 +32,8 @@ scope. Ticket07 is merged but remains open for its reproduced multi-configuratio
 withdrawal/requalification defect. Its correction transaction/UI, acquisition and
 dispatch races are connected to the accepted history/coupon repairs and pass the
 95-workflow suite, but the additional merger probe fails. Ticket08 stays blocked
-and unclaimed. Ticket10 remains active separately and has not landed here;
-11/12 remain blocked. Earlier dated readiness/ownership entries below describe
+and unclaimed. Ticket10 is merged but open for the reproduced out-of-context shared-admission
+bypass. Ticket11 remains blocked and unclaimed; 12 remains blocked. Earlier dated readiness/ownership entries below describe
 their state at that time.
 
 Actual buyer walkthrough feedback, current source rights, live offer/history/cost proof, finite operating limits and named maintenance ownership cannot be fabricated by passing fixture tests. Keep these gates explicit in the final receipt.
@@ -190,3 +190,19 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   No application repair, later implementation or acceptance occurred. Source07,
   active10 and the dirty original parent were not edited. Collection stays staged;
   live/buyer/source-rights/freshness/operating/activation gates remain separate.
+
+
+- 2026-10-27: 10 source `072a2f8` refreshed against `f561d76` in merge `fd02625`,
+  preserving 07 publication/invalidation and 10 admission through four actual
+  conflicts. Full refreshed history merged with `--no-ff` as `5cca859`, first
+  parent `f561d76`. All **106 guarded application workflows**, **37 limiter/browser
+  contracts**, focused Ruff/mypy, repeated **25 frontend tests**, build and actual
+  collection/correction desktop/narrow UI checks pass. Three additional probes
+  fail: independent API/scheduler contexts and a fresh process sharing the marked
+  DB reach the controlled HTTP transport outside an exhausted active durable
+  grant, with unchanged usage/attempts. No-grant legacy and redirect controls pass.
+  **10 remains open for shared-admission repair; 11 remains blocked/unclaimed.**
+  See the [dated merger disposition and reproducer](../../docs/testing/watch-collection.md#merger-disposition--2026-10-27).
+  The 07 multi-configuration repair remains separate and untouched; no 11 work
+  or production acceptance occurred. Browser/AI and physical disk/log/backup/
+  retention prerequisites remain explicit; collection stays staged.

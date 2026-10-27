@@ -1,0 +1,257 @@
+{
+  "date": "2026-10-27",
+  "disposition": "ticket10 open for shared-admission repair; ticket11 blocked and unclaimed",
+  "integration_before": "f561d76d55bf037ddec705ad488ebbc403934306",
+  "source_before": "072a2f873b5c0ac071401d2eabc6a912d0e5aaa4",
+  "source_refresh_merge": "fd026255bf98dd7c66a58d06afc31c297bb47731",
+  "integration_merge": "5cca8599c91a742829db695faab12915c842c3df",
+  "source_and_integration_merge_trees_equal": true,
+  "verified_trees": {
+    "src": "386047af69e1efa8926a5222096fda8fbd1d755d",
+    "frontend": "fdcd941bb28fda22b7a8e2d9e7d606a6f9a7f7ec",
+    "tests": "d74b975f4e67891b2fe8f7d8106bd8a7e4cb1b35"
+  },
+  "conflicts_resolved": [
+    "frontend/src/pages/Discovery.tsx",
+    "src/pricerecon/db/schema.py",
+    "src/pricerecon/db/discovery.py",
+    "tests/monitoring/harness.py"
+  ],
+  "application_suite": {
+    "passed": 106,
+    "seconds": 104.02,
+    "cleared_environment": true,
+    "skips": 0,
+    "xfails": 0
+  },
+  "limiter_external_browser_contracts": {
+    "passed": 37,
+    "seconds": 0.23,
+    "pydantic_deprecation_warnings": 10
+  },
+  "broader_contract_run": {
+    "passed": 73,
+    "seconds": 0.47,
+    "additional_warning": "unawaited _FakeStream.readline in BrowserClient timeout fixture"
+  },
+  "frontend": {
+    "tests_passed": 25,
+    "build_passed": true,
+    "modules": 642,
+    "large_chunk_warning": true,
+    "eslint_missing_config_blocker_retained": true
+  },
+  "ruff": {
+    "checked_files": [
+      "src/pricerecon/api/discovery.py",
+      "src/pricerecon/connectors/aliexpress.py",
+      "src/pricerecon/connectors/browser_client.py",
+      "src/pricerecon/connectors/ebay.py",
+      "src/pricerecon/connectors/external_browser.py",
+      "src/pricerecon/core/acquisition.py",
+      "src/pricerecon/core/collection_policy.py",
+      "src/pricerecon/core/collection_transport.py",
+      "src/pricerecon/core/diff_engine.py",
+      "src/pricerecon/core/discovery.py",
+      "src/pricerecon/core/exact_tracking.py",
+      "src/pricerecon/core/rate_limiter.py",
+      "src/pricerecon/core/watch_executor.py",
+      "src/pricerecon/db/collection.py",
+      "src/pricerecon/db/discovery.py",
+      "src/pricerecon/db/schema.py",
+      "src/pricerecon/db/tracking.py",
+      "src/pricerecon/models/collection.py",
+      "tests/monitoring/collection_browser_check.py",
+      "tests/monitoring/collection_ui_server.py",
+      "tests/monitoring/collection_workflows.py",
+      "tests/monitoring/harness.py",
+      "tests/test_collection_workflow.py",
+      "tests/monitoring/collection_merger_probe.py"
+    ],
+    "clean_files": 17,
+    "legacy_findings": 98,
+    "added_rule_message_diagnostics": 0,
+    "baseline": "f561d76d55bf037ddec705ad488ebbc403934306"
+  },
+  "mypy": {
+    "passed": true,
+    "follow_imports": "silent",
+    "source_files": [
+      "src/pricerecon/api/discovery.py",
+      "src/pricerecon/core/acquisition.py",
+      "src/pricerecon/core/collection_policy.py",
+      "src/pricerecon/core/collection_transport.py",
+      "src/pricerecon/core/diff_engine.py",
+      "src/pricerecon/core/discovery.py",
+      "src/pricerecon/core/exact_tracking.py",
+      "src/pricerecon/core/rate_limiter.py",
+      "src/pricerecon/core/watch_executor.py",
+      "src/pricerecon/db/collection.py",
+      "src/pricerecon/db/discovery.py",
+      "src/pricerecon/db/tracking.py",
+      "src/pricerecon/models/collection.py"
+    ],
+    "existing_unused_override_notes": true
+  },
+  "concern_probe_results": [
+    {
+      "case": "context_api",
+      "exit": 1,
+      "result": "failed",
+      "actual_transport_sends": 2,
+      "expected_transport_sends": 1,
+      "blocked_edges": [],
+      "notifications_sent": 0
+    },
+    {
+      "case": "context_scheduler",
+      "exit": 1,
+      "result": "failed",
+      "actual_transport_sends": 2,
+      "expected_transport_sends": 1,
+      "blocked_edges": [],
+      "notifications_sent": 0
+    },
+    {
+      "case": "process_seed",
+      "exit": 0,
+      "result": "passed",
+      "actual_transport_sends": 1,
+      "expected_transport_sends": 1,
+      "blocked_edges": [],
+      "notifications_sent": 0
+    },
+    {
+      "case": "process_resume",
+      "exit": 1,
+      "result": "failed",
+      "actual_transport_sends": 1,
+      "expected_transport_sends": 0,
+      "blocked_edges": [],
+      "notifications_sent": 0
+    },
+    {
+      "case": "legacy_no_grant",
+      "exit": 0,
+      "result": "passed",
+      "actual_transport_sends": 1,
+      "expected_transport_sends": 1,
+      "blocked_edges": [],
+      "notifications_sent": 0
+    },
+    {
+      "case": "redirect",
+      "exit": 0,
+      "result": "passed",
+      "actual_transport_sends": 1,
+      "expected_transport_sends": 1,
+      "blocked_edges": [],
+      "notifications_sent": 0
+    }
+  ],
+  "probe_sha256": "263909960de187d87999d655b8d3589d124b0d290222e5dfd3ad14899cd4614b",
+  "preliminary_context_receipts": [
+    "merger-context-api.json",
+    "merger-context-scheduler.json"
+  ],
+  "preliminary_receipt_note": "First independently failing runs retained; final underscore-named receipts rerun all cases with final probe source.",
+  "ui": {
+    "collection": {
+      "passed": true,
+      "port": 8896,
+      "session": "ticket10-collection-fe9910c9",
+      "viewports": [
+        "1280x900",
+        "375x812"
+      ],
+      "session_closed": true,
+      "server_stopped": true,
+      "server_exit": 130,
+      "reason": "intentional Ctrl-C",
+      "blocked_edges": [],
+      "notifications_sent": 0
+    },
+    "corrections": {
+      "passed": true,
+      "port": 8897,
+      "viewports": [
+        "1280x900",
+        "375x812"
+      ],
+      "session_closed": true,
+      "server_stopped": true,
+      "server_exit": 0,
+      "blocked_edges": [],
+      "notifications_sent": 0
+    },
+    "visually_inspected": [
+      "merger-ui/desktop-collection.png",
+      "merger-correction-ui/narrow-correction.png"
+    ]
+  },
+  "production_acceptance": false,
+  "activation": "staged",
+  "gates": [
+    "shared admission outside supplied context incomplete",
+    "ticket07 multi-configuration repair remains separate and open",
+    "unsupported browser origin and unmapped native/AI lanes",
+    "physical disk/WAL/log/control-metadata quotas",
+    "retention/deletion/backup/restore qualification",
+    "source access and retention rights",
+    "measured sustainable breadth/freshness/cost/maintenance ownership",
+    "live offer/history and notification evidence",
+    "buyer walkthrough and activation"
+  ],
+  "no_installs_or_live_operations": true,
+  "original_dirty_parent_and_07_repair_untouched": true,
+  "current_source_sha256": {
+    "frontend/src/components/discovery/CollectionCoverage.tsx": "4b131e30e7c29960ddcc49fb12de19076b3142676931401365701f2977d5a636",
+    "frontend/src/lib/collection.ts": "6e858c8e6b92e44a835478adf43ac9d9618ec02664d232986ed73d7cd78ca744",
+    "frontend/src/pages/Discovery.tsx": "29b68e3203770937349f3caa374eccaa78869aac75e9eeef21e35d0ffeebbd0d",
+    "src/pricerecon/api/discovery.py": "a564576059da0761db67ff7892315c657111e04585b8ea7aa18d748f00f42269",
+    "src/pricerecon/connectors/aliexpress.py": "2bdff6470955b81217388a0531d35aa42ee2cb706ae4a8245c226188d3cc6207",
+    "src/pricerecon/connectors/browser_client.py": "ac5674184c336edb277f641f19ff9e0adc25c05cf6eebe4ae1d8a40b51b5fe71",
+    "src/pricerecon/connectors/ebay.py": "896df7c69b5e96aba2334e4e3b6abab0a374af78217a8d72d3730ef2013748ce",
+    "src/pricerecon/connectors/external_browser.py": "c650c1041d7b2765338b23ced7a9d67b577361ea90a5a1dff2ab291cf8cbfe23",
+    "src/pricerecon/core/acquisition.py": "f00cef7e2529fef1721d54192917a64496f04e12c5451acf85f04d31a49c8e77",
+    "src/pricerecon/core/collection_policy.py": "c3a661f3a7c6e42a155534d49a17a6b5c425a6b0d4d16aed5f91584ff9d200ae",
+    "src/pricerecon/core/collection_transport.py": "9053d79f7e323d4ce2cbd83ee83bf0deadb733baaf52dfe9135dcdea11fd7db6",
+    "src/pricerecon/core/diff_engine.py": "2224dcd243c5a36c737a06a6f638a7522c56977f3056d4f85bee542c01bda6bb",
+    "src/pricerecon/core/discovery.py": "1fdb2755d5360665d48071fd41bd8082cf0935e20adf803c14428cf628b16ecc",
+    "src/pricerecon/core/exact_tracking.py": "b7fa0cca8e3b346e6894d07d0e67b034be83f1302e52ffe15fc4637744aec413",
+    "src/pricerecon/core/rate_limiter.py": "501e16da8b5653165c52b49ca32dd43bd4e90dde9777536e660a62ba699de184",
+    "src/pricerecon/core/watch_executor.py": "58ce6a2384349f66982fb3c45b73cd566320fa792d2692223dafe9af69411afc",
+    "src/pricerecon/db/collection.py": "35e073a02dfc9f6faf96248efb3f454768cc9dbf692644a72ff650c684e70fba",
+    "src/pricerecon/db/discovery.py": "65fe1b0b58c34ee448a45202539c6e37b7d776035e6a0563443dd510eec3acaa",
+    "src/pricerecon/db/schema.py": "ff58029e202e8d28f5fccd877aebc26f0477d28f371d7131c0aa6e11c62793ab",
+    "src/pricerecon/db/tracking.py": "244e66dae51b4a75e98f3477cc6d1ba301d4ba4f51cb27700d9a8a6ff3035543",
+    "src/pricerecon/models/collection.py": "9c4a06d367b77898e6829765697fe8e3439b0aa9ff68809640cdd50aeddb2850",
+    "tests/monitoring/collection_browser_check.py": "4197cf5e1d2b5b535ce94321b716dd2b0f0bec694a2ba661623c6df4e6a32b77",
+    "tests/monitoring/collection_ui_server.py": "221c0c31294ead0a99b3643c3d5b21acbcc0f31eafad48ca52cfa434631f0cdd",
+    "tests/monitoring/collection_workflows.py": "376dd75c658e55a93c0a16d975938eaf5409584d14bf79a9d6f0d04bd42db5f8",
+    "tests/monitoring/harness.py": "166379ca762c2420a4c2a4597a72f3a5b65feae3ead5688fc998ce8e0bd2b437",
+    "tests/test_collection_workflow.py": "12392c7654ecb2de45b03e6646fb51d0454a5269db0c348765c085e09c1ef17b"
+  },
+  "artifact_sha256": {
+    "merger-ruff.json": "5bd9c838fbeaee7341aed9f25ceef681795526bf4987c9becf64168082fb014f",
+    "merger-manifest-check.json": "20dab16a943ecdcc7ccdea6d8fa1719e2b5d56ceb1d6fdfa9e058beafc6ab892",
+    "merger-redirect.json": "f67bbb8262dbb3f4106525808ff7259d8b3fdc12b10e9296874eb8f3339fc266",
+    "merger-context-api.json": "74583800d5f480003ce4baef73826b4f7e0aab2b5c46be060ea732114d6e3ef9",
+    "merger-context_scheduler.json": "ac5864a8a655f815d968e406d8669c331098c0bf7f116f61ce5b9e71a59d646c",
+    "merger-legacy_no_grant.json": "43a35283053ac914a0aadbcd08b693b55599177ed5ede1201757fa502bcd207e",
+    "merger-process_resume.json": "6ac5557c1518dc084fe7ea5601f5f36b4f257270099fbf5b2ecd7aa7c54523e2",
+    "merger-process_seed.json": "a0bf0378c1a6fc6943c719efa676d9a1dd889eb1d6f762083ab9f0132214aec0",
+    "merger-context-scheduler.json": "53b43990c57af87f17bd2984641dd3957c96ed93d85f3c7719888d3734e1b4bc",
+    "merger-probe-results.json": "29d71a56c827747d9a20837d8b4809c7fcd0c5df5c8cbfe7bf66bd453954406f",
+    "merger-context_api.json": "908731be1c50efa71e82d38ab2584591693afa9aee8a52ae669a7a3d43ed0e7d",
+    "merger-correction-ui/desktop-history-withdrawn.png": "8b80e864b39e466492a52724125b085493f4f15c67a25430a9e09ca2a70b7089",
+    "merger-correction-ui/config.json": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+    "merger-correction-ui/narrow-correction.png": "73f38f5552e6868f317db366af3e5e4a7d857f869f3082c4e66b8a54cde5284f",
+    "merger-correction-ui/desktop-correction.png": "d89b4634bf312c20f97874034653b1925c239f289b72ea8a545d0a4e426f842c",
+    "merger-correction-ui/receipt.json": "ad2ff68618f9d6932b5dd88c56263a2587c8e951aad6ea51306a06b39509c309",
+    "merger-ui/narrow-collection.png": "ea2546ea647f99476f94c37cf23d20ca42966a2fce329d25fe7d2fce22fd8f0f",
+    "merger-ui/config.json": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+    "merger-ui/desktop-collection.png": "808dfa9175eca0c3d9ab01eb0d47e9432dd97e1a8d364cb1cf7fcf0f3e46d60e",
+    "merger-ui/receipt.json": "a04c2d04107936ccdd4fe99ced8da37be131362fd7d7b65f5fc4176be2642846"
+  }
+}

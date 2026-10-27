@@ -223,3 +223,184 @@ and receipt commits afterward do not change those source hashes.
 No budget, freshness window, cadence, owner or production activation was inferred
 from these results. Ticket10 remains for parent review/integration/acceptance;
 this worker has not closed it or merged its branch back into integration.
+
+## Merger disposition — 2026-10-27
+
+**10 remains open for shared-admission repair; 11 remains blocked and unclaimed.**
+The retained suite passes, but the additional acceptance probes demonstrate that
+an applicable finite grant does not govern callers outside its ContextVar. This
+is independent of 07's retained multi-configuration defect. No 07 repair or 11
+implementation was performed, and no collection failure was excused as a 07 gap.
+
+### Integration and conflict resolution
+
+Confirmed clean integration `f561d76d55bf037ddec705ad488ebbc403934306` and clean
+source `072a2f873b5c0ac071401d2eabc6a912d0e5aaa4`, on the named branches/checkouts.
+Both contain `75f8a3a`; source lacked integration's correction source `89ebd79`.
+Read the spec, issue10, accepted operating-envelope decision/research, source
+receipt/manifest, engineering standard and current 07 merger disposition.
+
+Refreshed the existing source checkout with a history-preserving merge of
+`f561d76` into source, producing `fd026255bf98dd7c66a58d06afc31c297bb47731`.
+Four actual conflicts were resolved:
+
+- Discovery page imports both CollectionCoverage and IdentityCorrection; both
+  components remain connected to their existing page flows.
+- Schema initialization calls both collection and correction migrations (1.9
+  and 2.0); neither table owner was replaced.
+- Discovery persistence runs 07 publication validation inside the transaction
+  **before** 10's retained-payload growth debit. Publication/invalidation writes
+  therefore participate in that debit before commit.
+- The guarded harness imports and patches both storage owners' clocks.
+
+Reviewed automatic merges in acquisition publication, exact tracking and tracking
+storage; both correction revision withdrawal and admission/readback wiring remain.
+Merged full refreshed source history into integration using `--no-ff`, producing
+`5cca8599c91a742829db695faab12915c842c3df`, with first parent `f561d76` and second
+parent `fd02625`. Source's tree equals this merged tree. No new checkout was made.
+Original dirty parent and 07 repair worktree were not edited.
+
+All **26 original source-manifest entries** match `072a2f8`. Nineteen still match
+the integrated tree; seven differ through 07 integration/conflict resolution.
+The exact paths are retained in
+[the manifest comparison](artifacts/watch-collection/merger-manifest-check.json).
+The page conflict requires fresh frontend and actual UI proof; source evidence
+was not substituted for those checks.
+
+### Combined verification
+
+Ran from integration, with the existing parent interpreter and this checkout's
+source, in the documented cleared environment:
+
+```sh
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python -m pytest -q \
+  tests/test_collection_workflow.py tests/test_monitoring_workflow.py \
+  tests/test_discovery_workflow.py tests/test_qualification_workflow.py \
+  tests/test_cost_workflow.py tests/test_history_workflow.py \
+  tests/test_coupon_workflow.py tests/test_tracking_workflow.py \
+  tests/test_correction_workflow.py
+```
+
+**106 passed in 104.02s**, with no skips/xfails. This includes source's 96 and
+07's ten correction cases. All retained assertions remain. No full-repository
+pytest or potentially live/configured-database fixture was used.
+
+- Requested limiter/external-browser contracts: **37 passed in 0.23s**, ten
+  existing Pydantic deprecation warnings. An earlier broader invocation also
+  included BrowserClient: **73 passed in 0.47s**. That broader run emitted an
+  additional unawaited `_FakeStream.readline` warning in its timeout fixture;
+  no warning suppression or unrelated repair was made.
+- Focused Ruff checks cover **24 Python files**: **17 clean**, 98 inherited
+  diagnostics across seven legacy files, **zero added** rule/message multiset
+  entries against `f561d76`. New probe passes Ruff. See
+  [per-file comparison](artifacts/watch-collection/merger-ruff.json).
+- Focused `mypy --follow-imports=silent` passes the 13 touched application files
+  listed in the merger verification JSON, with existing unused-override notes.
+- Repeated frontend: **25 tests passed**; TypeScript/Vite build passed,
+  **642 modules**, retained large-chunk warning. Existing ESLint10 missing-config
+  blockage remains documented; it was not suppressed or repaired.
+- Repeated guarded Chrome collection proof on own port 8896 and correction proof
+  on own port 8897: both pass at **1280x900** and **375x812**. Collection checks
+  cover keyboard expansion, five candidates, capped/blocked/failed/empty states,
+  aged evidence and no horizontal overflow. Correction checks cover target
+  intent, original evidence, cost/coupon/history withdrawal, reload, stale edit
+  rejection, dispute/resolution and no overflow. Actual desktop collection and
+  narrow correction screenshots were visually inspected.
+- Both drivers closed their own isolated browser sessions. Both servers stopped;
+  shutdown receipts record `blocked_edges=[]`, zero notifications and temporary
+  storage. Collection server exit130 is its intentional Ctrl-C; correction
+  server exit0. See [collection UI](artifacts/watch-collection/merger-ui/receipt.json)
+  and [correction UI](artifacts/watch-collection/merger-correction-ui/receipt.json).
+
+### Reproduced shared-admission failure and controls
+
+[The retained probe](../../tests/monitoring/collection_merger_probe.py) uses the
+unchanged marked temporary-SQLite harness, controlled clock, normal Watch API and
+registered scheduler job callback. A synthetic `http_v1` connector uses the actual
+shared HTTPX request hook and `MockTransport`; no live provider or credentials
+are involved. API data, captured transport sends and API-visible ledger establish
+the results; no direct ledger mutation or private limiter call supplies the proof.
+
+The finite policy covers global and provider requests, pages/details/retries/
+fallbacks/storage/time with a one-request cap, zero recovery spacing and explicit
+synthetic owner/permission/retention references. It is active at the controlled
+time. The initial in-context call sends once and persists usage1. A second call
+in that same context is capped before transport. Then:
+
+- An independent API request task created with an empty Context, while the parent
+  task still holds the supplied grant, sends again: **2 actual sends versus cap1**.
+  Global/provider usage and durable attempts remain unchanged.
+- The registered scheduler job callback in an independent context also sends
+  again: **2 actual sends versus cap1**, unchanged ledger and attempts.
+- A fresh process sharing the marked database reads the persisted exhausted grant
+  when supplied for inspection, then executes the Watch API **without** the
+  context: **1 additional send versus 0 remaining**, unchanged persisted usage1.
+  This process imports the app only after installing the existing isolation guard.
+
+Each outside-context read reports `state=blocked`, `operating_policy_required`,
+no policy scope/usage, even though its Watch request just performed the controlled
+transport. These three probes retain `result=failed` and exit1 at the acceptance
+assertion. Legacy query, raw source query, enabled state, sources, filters,
+schedule and notifications remain unchanged; notifications and escaped edges are
+zero. [Probe result summary](artifacts/watch-collection/merger-probe-results.json).
+
+Positive controls pass: a policy-less legacy run **with no persisted grant** sends
+once, preserving established monitoring intent; a mapped search -> detail redirect
+under the supplied one-request policy debits the search before send and rejects
+the redirect before its transport. Usage remains requests1/pages1/details0, with
+`resource_exhausted:requests`. Existing collection cases independently cover real
+eBay OAuth/search/401 retry, detail fallback, concurrent demand, storage rollback,
+last-good/readback withholding, reserved exact verification, crash/resume,
+unsupported browser/unsupplied AI gates and finite timeout.
+
+Run any standalone case with the following command (three acceptance cases exit1;
+`legacy_no_grant` and `redirect` exit0):
+
+```sh
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  -m tests.monitoring.collection_merger_probe CASE \
+  "$PWD/docs/testing/artifacts/watch-collection/merger-CASE.json"
+```
+
+Use `context_api` and `context_scheduler` for independent same-process contexts.
+For the fresh-process case, create a `pricerecon-offline-*` directory under `/tmp`,
+write `.offline-monitoring` containing `ticket01-test-storage\n` (an actual final
+newline), and run `process_seed` then `process_resume` as separate invocations
+with `--storage /tmp/pricerecon-offline-...`. Seed exits0; resume exits1. Each
+controlled acceptance failure is retained rather than xfailed or counted green.
+
+`collection_policy.current_policy()` only reads its ContextVar. `acquire_sources`
+constructs `budget=None` when it is absent; `account_request`, browser gates and
+storage gates consequently have no durable admission in that execution context.
+Persistence currently protects **participants supplied the policy**, not all
+applicable consumers of the provider. A ContextVar design alone did not establish
+failure: the concrete probes above do. This is incomplete shared admission, not
+accepted optional enforcement. Repair must resolve/apply the applicable durable
+grant or withhold an ambiguous/out-of-context caller before external work, while
+preserving legacy intent and the no-grant compatibility control. No particular
+new service or architecture is prescribed. The merger did not implement a repair.
+
+### Retained prerequisites
+
+Browser origin subrequests/resources and unmapped native/AI acquisition remain
+unsupported; under the supplied context they are blocked before work and are not
+counted as zero-cost supported lanes. Out-of-context enforcement is the open
+shared-admission defect above. Finite runtime/spacing and no automatic catch-up
+are demonstrated only for participating executions, not complete shared admission.
+
+SQLite btree payload growth is not physical disk allocation or a log/backup quota.
+Free pages, journals/WAL, control metadata, logs, retention/deletion, backups and
+restore qualification remain explicit measured finite prerequisites. No affordable
+breadth/cadence, source permission/retention authority, maintenance owner, live
+history/offers, delivery, buyer walkthrough or production operating acceptance is
+inferred from these offline results. Collection stays staged.
+
+No installs/downloads, merchant/external network/live collection, real credentials
+or accounts, production DB, activation, deployment, push, PR, delegation or unrelated
+cleanup occurred. Only the known source refresh/conflict merge and integration
+merge/probe/receipt/tracker changes were made. 07 stays open with its isolated
+repair owner; no 11 claim or implementation occurred.

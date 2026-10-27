@@ -4,7 +4,9 @@
 
 **Blocked by:** [03: Explain exact configuration and offer qualification](03-explain-offer-qualification.md), [10: Prioritise tracking under shared collection limits](10-prioritise-tracking.md)
 
-**Status:** ready-for-agent
+**Status:** blocked — ticket10 shared-admission repair required
+
+**Assignee:** unclaimed
 
 **Parent:** [Trustworthy UK watch discovery alongside existing monitoring](../../../docs/specs/watch-category-discovery.md)
 
@@ -17,3 +19,11 @@
 ## Verification and authority
 
 Use the buyer-approved API plus normal execution seam, controlled external edges and isolated storage; assert observable behavior. Include persistence/API/UI behavior for this slice and keep legacy Watch semantics compatible. Source implementation and offline verification only: no live collection, production DB operations, account connections, activation, deployment, purchase, commit or push is authorised by this ticket.
+
+
+## Dependency disposition — 2026-10-27
+
+Ticket10 is merged but remains open after concrete API/scheduler/fresh-process
+probes bypass its persisted finite grant outside the supplied context. See the
+[10 merger disposition](../../../docs/testing/watch-collection.md#merger-disposition--2026-10-27).
+This ticket remains blocked and unclaimed; no 11 implementation was performed.
