@@ -1,0 +1,2 @@
+pyproject.toml: note: unused section(s): module = ['pricerecon.connectors.argos', 'tests.*', 'tests.test_connectors', 'tests.test_currys_diagnosis', 'tests.test_ebuyer', 'tests.test_hardware_routes', 'tests.test_hotukdeals', 'tests.test_reddit_fallbacks_live', 'tests.test_shadow_filters', 'tests.test_source_queries_routing', 'tests.test_watch_executor']
+Success: no issues found in 17 source files

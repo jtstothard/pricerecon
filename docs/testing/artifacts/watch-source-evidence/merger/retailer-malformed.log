@@ -1,0 +1,32 @@
+discovery_connector_error
+Traceback (most recent call last):
+  File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/core/acquisition.py", line 266, in acquire_sources
+    report = await inspect(effective_query, connector_filters)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/connectors/shopify.py", line 70, in search_with_evidence
+    await self.search(query, filters)
+  File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/connectors/shopify.py", line 138, in search
+    return self._products_to_listings(payload.get("products", []))
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/connectors/shopify.py", line 166, in _products_to_listings
+    price=Decimal(str(variant.get("price") or "0")),
+          ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+decimal.InvalidOperation: [<class 'decimal.ConversionSyntax'>]
+Loaded 0 watches into scheduler
+Traceback (most recent call last):
+  File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/docs/testing/artifacts/watch-source-evidence/merger/retailer_isolation_probe.py", line 86, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/docs/testing/artifacts/watch-source-evidence/merger/retailer_isolation_probe.py", line 74, in main
+    assert set(candidates) == {'201', '202'}, (MODE, feed['captures'][0]['outcomes'], set(candidates))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('malformed', [{'source_evidence': {'route': 'shopify_products_v1', 'source_host': 'www.sanmartin.watch', 'capture_id': '0d90c811-d9f6-4238-be5d-adee7cc80b5a', 'retrieved_at': '2026-10-27T12:00:00Z', 'use': {'permission_reference': 'original-fixture', 'retention': 'synthetic'}, 'history_rights': 'unqualified', 'prerequisites': ['store-specific capture/display/reuse authority', 'separate archive grant', 'selected stock/fulfilment origin and UK checkout cost'], 'pages_captured': 0, 'page_limit': None, 'item_limit': None, 'detail_limit': None, 'discovered_count': None, 'inspected_count': None, 'next_page': None, 'content_truncated': None, 'completeness': 'unknown', 'issues': []}, 'source': 'shopify', 'route': 'connector_search_v1', 'state': 'failed', 'listing_count': 0, 'reason': 'connector_error', 'completeness': 'unknown', 'reused_capture_id': None}], set())

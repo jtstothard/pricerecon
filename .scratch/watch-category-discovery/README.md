@@ -18,7 +18,7 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 | [08: Comparisons](issues/08-compare-qualified-offers.md) | 07 | Closed |
 | [09: Public coupons](issues/09-evaluate-public-coupons.md) | 04 | Closed |
 | [10: Shared limits](issues/10-prioritise-tracking.md) | 05 | Closed |
-| [11: Source evidence](issues/11-carry-source-evidence.md) | 03, 10 | In progress |
+| [11: Source evidence](issues/11-carry-source-evidence.md) | 03, 10 | Open — merger blocker |
 | [12: Integrated verification](issues/12-verify-complete-watch-workflow.md) | 08, 09, 11 | Blocked |
 
 ## Authority and acceptance
@@ -30,8 +30,9 @@ Ticket 01 source was integrated on 2026-10-27 in merge `a0e5c1a612252c61a62eabc7
 Current frontier, 2026-10-27: tickets 01–10 are closed for their offline scope.
 Ticket08's integrated behavior passed the 171-case suite and three independent
 coupon probes; its contained type repair now passes uncached eight-file mypy and
-23 assessment/tracking workflows. 11 retains its existing isolated implementation
-claim. 12 remains blocked on 11.
+23 assessment/tracking workflows. 11 remains open after the sole merger reproduced the Shopify malformed-variant
+isolation/capture-receipt failure. Parent owns its contained repair. 12 remains
+blocked and unclaimed on 11; no 12 work was performed.
 Earlier dated entries describe their historical state.
 
 Actual buyer walkthrough feedback, current source rights, live offer/history/cost proof, finite operating limits and named maintenance ownership cannot be fabricated by passing fixture tests. Keep these gates explicit in the final receipt.
@@ -263,3 +264,14 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   workflows pass; 171-workflow/37-contract/frontend/build/browser merger proof is
   reused. All 77 original dirty-parent files remain unchanged. **08 closed offline;
   11 remains active; 12 blocked on 11.** See the [acceptance receipt](../../docs/testing/watch-assessments.md#parent-type-repair-and-offline-acceptance--2026-10-27).
+
+
+- 2026-10-27: Sole 11 merger preserved source `7fb56be` and clean integration
+  `446ee9e` in history-preserving merge `8eb1d7`. Source and retained browser
+  artifacts match their manifests. The independent guarded retailer probe passes
+  unchanged controls but fails when a single malformed variant aborts both valid
+  sibling leads before typed evidence parsing, also losing actual capture bounds.
+  **11 remains open for the parent's contained source repair; 12 remains blocked
+  and unclaimed.** See the [merger disposition](../../docs/testing/watch-source-evidence.md#sole-merger-disposition--2026-10-27)
+  for required-check results, exact commands and retained failures. No application
+  repair, 12 implementation, live acquisition or activation occurred.

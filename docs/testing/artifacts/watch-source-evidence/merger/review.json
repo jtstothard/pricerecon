@@ -1,0 +1,264 @@
+{
+  "date": "2026-10-27",
+  "integration_branch": "integration/watch-category-discovery",
+  "merge_SHA": "8eb1d777ed7614a69712ea8f074af67fa0dd7550",
+  "source_HEAD": "7fb56beb54f9b60a0555eee53df0c2b31e718e0c",
+  "source_clean": true,
+  "source_refreshed": false,
+  "source_and_merge_trees_equal_before_review": true,
+  "source_ancestors": [
+    "52104eb3de8e4b7c6ff615763d8ecc3572e4e34d",
+    "446ee9e649ad91406d66cb5b0c43990f3be590db"
+  ],
+  "checks": [
+    {
+      "name": "build before application imports",
+      "command": [
+        "env",
+        "-i",
+        "PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin",
+        "/Users/jay/.nvm/versions/node/v24.14.1/bin/npm",
+        "--prefix",
+        "frontend",
+        "run",
+        "build"
+      ],
+      "cwd": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration",
+      "exit_code": 0,
+      "result": "passed; inherited bundle warning",
+      "artifact": "build.log"
+    },
+    {
+      "name": "complete guarded workflows",
+      "command": [
+        "env",
+        "-i",
+        "PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin",
+        "PYTHONDONTWRITEBYTECODE=1",
+        "PYTHONPATH=/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src:/Users/jay/.t3/worktrees/pricerecon/watch-category-integration",
+        "/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_collection_workflow.py",
+        "tests/test_monitoring_workflow.py",
+        "tests/test_discovery_workflow.py",
+        "tests/test_qualification_workflow.py",
+        "tests/test_cost_workflow.py",
+        "tests/test_history_workflow.py",
+        "tests/test_coupon_workflow.py",
+        "tests/test_tracking_workflow.py",
+        "tests/test_correction_workflow.py",
+        "tests/test_correction_target_ownership.py",
+        "tests/test_shared_grant_workflow.py",
+        "tests/test_assessment_workflow.py",
+        "tests/test_source_evidence_workflow.py"
+      ],
+      "cwd": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration",
+      "exit_code": 0,
+      "result": "186 passed in 174.96s; no skips/xfails",
+      "artifact": "workflows.log"
+    },
+    {
+      "name": "limiter/browser contracts",
+      "command": [
+        "env",
+        "-i",
+        "PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin",
+        "PYTHONDONTWRITEBYTECODE=1",
+        "PYTHONPATH=/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src:/Users/jay/.t3/worktrees/pricerecon/watch-category-integration",
+        "/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_rate_limiter.py",
+        "tests/test_external_browser.py"
+      ],
+      "cwd": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration",
+      "exit_code": 0,
+      "result": "37 passed; ten inherited warnings",
+      "artifact": "contracts.log"
+    },
+    {
+      "name": "mypy",
+      "command": [
+        "/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python",
+        "-m",
+        "mypy",
+        "--no-incremental",
+        "src/pricerecon/categories/watch_sources.py",
+        "src/pricerecon/connectors/evidence.py",
+        "src/pricerecon/connectors/ebay_evidence.py",
+        "src/pricerecon/connectors/shopify_evidence.py",
+        "src/pricerecon/models/source_evidence.py",
+        "src/pricerecon/connectors/aliexpress.py",
+        "src/pricerecon/connectors/aliexpress_browser.py",
+        "src/pricerecon/connectors/ebay.py",
+        "src/pricerecon/connectors/shopify.py",
+        "src/pricerecon/core/acquisition.py",
+        "src/pricerecon/core/collection_transport.py",
+        "src/pricerecon/models/discovery.py",
+        "src/pricerecon/models/history.py",
+        "src/pricerecon/models/qualification.py",
+        "src/pricerecon/core/qualification.py",
+        "src/pricerecon/db/discovery.py",
+        "src/pricerecon/models/tracking.py"
+      ],
+      "environment": {
+        "PATH": "/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src:/Users/jay/.t3/worktrees/pricerecon/watch-category-integration"
+      },
+      "exit_code": 0,
+      "artifact": "mypy.log"
+    },
+    {
+      "name": "frontend-tests",
+      "command": [
+        "npm",
+        "--prefix",
+        "frontend",
+        "run",
+        "test",
+        "--",
+        "--run"
+      ],
+      "environment": {
+        "PATH": "/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src:/Users/jay/.t3/worktrees/pricerecon/watch-category-integration"
+      },
+      "exit_code": 0,
+      "artifact": "frontend-tests.log"
+    },
+    {
+      "name": "eslint",
+      "command": [
+        "npm",
+        "--prefix",
+        "frontend",
+        "run",
+        "lint"
+      ],
+      "environment": {
+        "PATH": "/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src:/Users/jay/.t3/worktrees/pricerecon/watch-category-integration"
+      },
+      "exit_code": 2,
+      "artifact": "eslint.log"
+    },
+    {
+      "name": "independent retailer control",
+      "command": [
+        "env",
+        "-i",
+        "PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin",
+        "PYTHONDONTWRITEBYTECODE=1",
+        "PYTHONPATH=/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src:/Users/jay/.t3/worktrees/pricerecon/watch-category-integration",
+        "/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python",
+        "docs/testing/artifacts/watch-source-evidence/merger/retailer_isolation_probe.py",
+        "control"
+      ],
+      "cwd": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration",
+      "exit_code": 0,
+      "artifact": "retailer-control.log"
+    },
+    {
+      "name": "independent retailer malformed",
+      "command": [
+        "env",
+        "-i",
+        "PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin",
+        "PYTHONDONTWRITEBYTECODE=1",
+        "PYTHONPATH=/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src:/Users/jay/.t3/worktrees/pricerecon/watch-category-integration",
+        "/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python",
+        "docs/testing/artifacts/watch-source-evidence/merger/retailer_isolation_probe.py",
+        "malformed"
+      ],
+      "cwd": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration",
+      "exit_code": 1,
+      "artifact": "retailer-malformed.log"
+    },
+    {
+      "name": "Ruff baseline comparison",
+      "command": [
+        "env",
+        "-i",
+        "PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin",
+        "PYTHONDONTWRITEBYTECODE=1",
+        "PYTHONPATH=/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src:/Users/jay/.t3/worktrees/pricerecon/watch-category-integration",
+        "/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python",
+        "docs/testing/artifacts/watch-source-evidence/merger/ruff_compare.py"
+      ],
+      "cwd": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration",
+      "exit_code": 0,
+      "result": "48 baseline / 46 current; no added findings",
+      "artifact": "ruff.log"
+    },
+    {
+      "name": "staged source/document whitespace",
+      "command": [
+        "git",
+        "diff",
+        "--cached",
+        "--check",
+        "--",
+        "*.py",
+        "*.md",
+        "*.json",
+        "*.ts",
+        "*.tsx",
+        "*.css"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "whole staged raw-log whitespace",
+      "command": [
+        "git",
+        "diff",
+        "--cached",
+        "--check"
+      ],
+      "exit_code": 2,
+      "artifact": "raw-log-whitespace.log",
+      "result": "raw Vite/Vitest log whitespace; source/document check passed"
+    }
+  ],
+  "disposition": {
+    "ticket11": "open: malformed Shopify variant discards valid siblings and capture bounds",
+    "ticket12": "blocked and unclaimed",
+    "control": "passed",
+    "independent_challenge": "failed; unchanged assertion retained",
+    "parent_77_hashes_and_sizes": "unchanged",
+    "collection": "staged",
+    "application_repairs": "none",
+    "buyer_live_rights_activation": "unproven"
+  },
+  "artifact_sha256": {
+    "build.log": "4a90d27e2bb587e51878327ecc27844a9b2238e83da2d6e23235e3ea64466c40",
+    "checks-run.log": "fd4ad6e9b7785dcaa445a84dd16859fea0fede3a86e6b075b80dc8f92fce6af5",
+    "checks.json": "af68854e8b30380fcd3659596d6ccac10af279678e386a8b254804ac6b5e1536",
+    "checks.py": "3b73394f9565be039780b5c7a094b0be371d6253d7242c6721900e97a78c4ac6",
+    "contracts.log": "15fe0c31b05b17946ad0e90bdbe0c885555d5784b7b3be26237752da7ed1c43d",
+    "eslint.log": "20afa08e2f58e3950ec32ea06f95373770af611f60c7bd360a874c4c3b3bf409",
+    "frontend-tests.log": "2c93083810b0088b89684f28a25e7292521a0074a8283f1159b34b9278d9a373",
+    "integrity.json": "64ee871b1a050eb2b785511b63d1c8cdfa6ba2c0a5f76ad5fe5673aab50d7b66",
+    "mypy.log": "716e401c8d856926ba73e4339d46621cd3440a96d8b7b1d1a61a3b6ea29b4687",
+    "raw-log-whitespace.log": "42d7f1fb8d6d00be79341310e1d84db9b180cc7c63744fa2e0278b97e446cf46",
+    "retailer-control.json": "900324cf5a91aac198710dd6eef55bcc87e0ab3f9dc42869103a820cd0a44972",
+    "retailer-control.log": "e7b878e252e76ad4c8e7118ee72fb89dd37e5d5fe9c7474ee6123922b7b20564",
+    "retailer-malformed.json": "d089ec02bf9a3c1391f4abce735726a568ec245d9239b4ee9487e9e71b0759fb",
+    "retailer-malformed.log": "ad2479f9c28ee39e71cb34141b29db9c0f0cb67e34d35d5311041ecadfb17a05",
+    "retailer_isolation_probe.py": "46c3c4d4b1bc0177383014242c940c8fd5fb82ace140838b4918ffa1a8c00a73",
+    "ruff-final-baseline.json": "dbb56522bd581356152a0210e358745ef1c4707d7cac435996528791bf43b13e",
+    "ruff-final-comparison.json": "93dafad1e126925c6c984c5560dee7345d8926c21332a00f48bc3bce258c2da6",
+    "ruff-final.json": "bf0e7c130f0c8e7118dd0f7fb38793898c647003b4e717994131c776c79d3bd1",
+    "ruff.log": "e2a3ebeb6c0e71f4fc34771375ebb7cfa2a9759909bb794e2ee7c29ca6aec148",
+    "ruff_compare.py": "3d17cc387c9bb13ee57e5664c7a997e9830bb64f876d6cc09897bed0bfe18aac",
+    "runner-invocation-failure.log": "79bd2667b4a10c096e0b6028f2564b347468b57a0f2dfe6ecb6f629ba8b366c0",
+    "source-whitespace.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "workflows.log": "bd8a62d8ad09a4f0ef23e5eced6847a8dd8af02c732ef66e4a233f856f43e214"
+  }
+}

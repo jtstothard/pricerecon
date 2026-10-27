@@ -4,7 +4,7 @@
 
 **Blocked by:** [08: Compare qualified offers and explain price claims](08-compare-qualified-offers.md), [09: Evaluate public coupons without assuming stacks](09-evaluate-public-coupons.md), [11: Carry source evidence and access limits through acquisition](11-carry-source-evidence.md)
 
-**Status:** blocked — 11 implementation acceptance remains open (2026-10-27)
+**Status:** blocked and unclaimed — 11 malformed-variant merger finding remains open (2026-10-27)
 
 **Parent:** [Trustworthy UK watch discovery alongside existing monitoring](../../../docs/specs/watch-category-discovery.md)
 
@@ -19,3 +19,12 @@
 ## Verification and authority
 
 Use the buyer-approved API plus normal execution seam, controlled external edges and isolated storage; assert observable behavior. Include persistence/API/UI behavior for this slice and keep legacy Watch semantics compatible. Source implementation and offline verification only: no live collection, production DB operations, account connections, activation, deployment, purchase, commit or push is authorised by this ticket.
+
+
+## Dependency recheck — 2026-10-27
+
+11's source history is merged, but its sole merger independently reproduced a
+Shopify malformed-variant isolation/capture-receipt failure. This ticket remains
+blocked and unclaimed; no implementation or integrated acceptance was performed.
+The parent owns dispatch only after 11 is accepted. See the
+[11 merger disposition](../../../docs/testing/watch-source-evidence.md#sole-merger-disposition--2026-10-27).

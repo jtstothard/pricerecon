@@ -1,0 +1,21 @@
+mypy 0
+frontend-tests 0
+eslint 2
+Traceback (most recent call last):
+  File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/docs/testing/artifacts/watch-source-evidence/merger/checks.py", line 25, in <module>
+    exec(compile(static, str(OUT.parent / "verify_static.py"), "exec"), {"__name__": "__main__", "__file__": str(OUT.parent / "verify_static.py")})
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/docs/testing/artifacts/watch-source-evidence/verify_static.py", line 45, in <module>
+    main()
+    ~~~~^^
+  File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/docs/testing/artifacts/watch-source-evidence/verify_static.py", line 23, in main
+    current = json.loads(command([*args, *files]).stdout)
+  File "/opt/homebrew/Cellar/python@3.15/3.15.2/Frameworks/Python.framework/Versions/3.15/lib/python3.15/json/__init__.py", line 371, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "/opt/homebrew/Cellar/python@3.15/3.15.2/Frameworks/Python.framework/Versions/3.15/lib/python3.15/json/decoder.py", line 358, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.15/3.15.2/Frameworks/Python.framework/Versions/3.15/lib/python3.15/json/decoder.py", line 376, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)

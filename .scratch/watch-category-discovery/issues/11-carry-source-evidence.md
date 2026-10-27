@@ -4,17 +4,17 @@
 
 **Blocked by:** [03: Explain exact configuration and offer qualification](03-explain-offer-qualification.md), [10: Prioritise tracking under shared collection limits](10-prioritise-tracking.md)
 
-**Status:** in-progress — claimed 2026-10-27
+**Status:** open — merger blocker reproduced 2026-10-27
 
-**Assignee:** Codex implementer (isolated worktree)
+**Assignee:** Parent continuation for the contained source finding
 
 **Parent:** [Trustworthy UK watch discovery alongside existing monitoring](../../../docs/specs/watch-category-discovery.md)
 
-- [x] Extend existing adapters only where needed to preserve selected variation, issuer/retrieval lineage, seller/condition/purchase mode, destination/availability, missing fields and acquisition outcomes through storage/API/UI.
+- [ ] Extend existing adapters only where needed to preserve selected variation, issuer/retrieval lineage, seller/condition/purchase mode, destination/availability, missing fields and acquisition outcomes through storage/API/UI.
 - [x] Use retained or synthetic permitted fixtures for AliExpress browser-first and eBay Browse reviewed lead lanes and a contrasting retailer case; retrieval success alone cannot qualify selected SKU, stock, UK total or history rights.
 - [x] Account visibly for mandatory AliExpress, eBay/second-hand, brand-direct, UK retail, UK-shipping international and search/aggregator/community families, retaining blocked/unqualified states and paging/capture limits.
 - [x] Keep access/retention prerequisites explicit, route all attempts/retries/fallbacks through shared admission, and leave staged acquisition lanes inactive unless separately authorised.
-- [x] Contract tests exercise real adapter result shapes and failure states at the application boundary without new network calls, credentials, account operations or archived merchant content beyond permitted evidence.
+- [ ] Contract tests exercise real adapter result shapes and failure states at the application boundary without new network calls, credentials, account operations or archived merchant content beyond permitted evidence.
 
 ## Verification and authority
 
@@ -66,3 +66,21 @@ commands, hashes, red/green results and remaining gates.
 
 **Status remains in-progress.** The parent merger owns independent acceptance and
 closure; ticket12, buyer/live/rights/operating and activation gates remain separate.
+
+
+### Sole merger review — 2026-10-27
+
+Full source history was merged with `--no-ff` as
+`8eb1d777ed7614a69712ea8f074af67fa0dd7550`, preserving source
+`7fb56beb54f9b60a0555eee53df0c2b31e718e0c` and integration
+`446ee9e649ad91406d66cb5b0c43990f3be590db` as its two parents.
+**11 remains open; 12 remains blocked and unclaimed.**
+
+The independent application/API probe adds one malformed-price Shopify variant
+beside the two passing original synthetic variants. The legacy listing parser
+raises before the new typed evidence parser, losing both valid siblings and
+persisting zero-page/unknown limits despite two accounted sends. The unchanged
+control passes. Reopened the adapter/failure-state checklist items for this
+concrete boundary failure; other checked items describe observed offline scope.
+The parent owns the small source repair; no repair or 12 work was performed here.
+See the [merger disposition and exact reproducer](../../../docs/testing/watch-source-evidence.md#sole-merger-disposition--2026-10-27).

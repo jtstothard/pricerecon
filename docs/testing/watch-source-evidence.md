@@ -277,3 +277,155 @@ remain dated research, not fresh live acquisition authority. Budget figures are
 synthetic test allowances. Finite measured breadth/cadence/cost, physical disk / WAL /
 journal / logs / backup quotas, retention/deletion/restore proof and named
 maintenance ownership remain operating prerequisites. Nothing activates collection.
+
+## Sole merger disposition — 2026-10-27
+
+**11 remains open for one concrete adapter-boundary finding. 12 remains blocked
+and unclaimed.** The source implementation is merged for review, not accepted as
+complete. The parent owns the contained repair; this review changed no application
+code or existing test assertions and performed no 12 work.
+
+Integration was clean on `integration/watch-category-discovery` at
+`446ee9e649ad91406d66cb5b0c43990f3be590db`; source was clean on
+`t3/carry-source-evidence` at `7fb56beb54f9b60a0555eee53df0c2b31e718e0c`.
+Both `52104eb` and `446ee9e` were source ancestors. Integration had not moved,
+so no source refresh was performed. Local `git merge --no-ff
+7fb56beb54f9b60a0555eee53df0c2b31e718e0c -m "Merge ticket 11 source evidence for
+offline acceptance review"` produced **`8eb1d777ed7614a69712ea8f074af67fa0dd7550`**,
+with first parent `446ee9e649ad91406d66cb5b0c43990f3be590db` and second parent
+`7fb56beb54f9b60a0555eee53df0c2b31e718e0c`. There were no merger conflicts;
+source and merge trees matched exactly. Both source refresh merges and all prior
+histories remain reachable. No squash, rebase, reset, cherry-pick, checkout creation,
+push, PR, install/download, credential/account operation, live acquisition,
+production DB access, activation, deployment, purchase or unrelated cleanup occurred.
+
+### Concrete blocker and minimal reproducer
+
+**P2 — Shopify discovery runs its legacy monetary parser before its typed evidence
+parser, so one malformed variant discards valid siblings and capture bounds.**
+`ShopifyConnector.search_with_evidence` calls `search`, which calls
+`_products_to_listings` before `shopify_evidence`. Add one variant with
+`price: "not-money"` to the existing original synthetic SN0144 product. The
+`Decimal(...)` conversion at `connectors/shopify.py:166` raises
+`decimal.InvalidOperation`. The new per-variant validation/isolation at
+`shopify_evidence.py:68–73` is never reached.
+
+The unmodified two-variant control retains IDs 201/202, GBP 110.00 versus 180.00,
+explicit movement/strap identity and absent second currency, without a qualified
+UK total. Adding only malformed ID 203 instead returns **zero candidates**, a
+persisted `failed/connector_error` outcome, and receipt `pages_captured=0` with
+unknown page/item limits despite two completed, durably accounted HTTP sends.
+Thus a bad variant contaminates the whole source result and actual captured
+scope is lost. This fails the engineering standard's smallest-unit isolation and
+11's adapter/failure-state contract. No false comparable price, escaped network
+edge or notification was observed in either case. This is a reproduced offline
+boundary failure, not a claim about current merchant content.
+
+The [independent probe](artifacts/watch-source-evidence/merger/retailer_isolation_probe.py)
+uses fresh-process `MonitoringHarness`, marked temporary SQLite, the original
+synthetic HTTP fixture, real Shopify connector/parser, shared HTTP admission,
+normal `execute_discovery`, public feed/collection APIs and captured notification
+transport. It replaces only the external HTTP transport; it makes no private DB
+assertions or ideal adapter replacement. Public feed/usage snapshots and exact
+tracebacks are retained in `retailer-control.json/.log` and
+`retailer-malformed.json/.log`. The failing assertion is retained unchanged.
+
+Run from `/Users/jay/.t3/worktrees/pricerecon/watch-category-integration`:
+
+```sh
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  docs/testing/artifacts/watch-source-evidence/merger/retailer_isolation_probe.py control
+# exit0; passing original control, two sends, two retained leads, no notification
+
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  docs/testing/artifacts/watch-source-evidence/merger/retailer_isolation_probe.py malformed
+# exit1; exact sibling-preservation assertion fails after API snapshots are retained
+```
+
+### Checklist review and preserved integration behavior
+
+| 11 checklist | Merger finding |
+| --- | --- |
+| Adapter fields, lineage, missingness and outcomes across storage/API/UI | Demonstrated for supplied shapes, but **incomplete** for malformed Shopify siblings/captured bounds above; reopened. |
+| Browser-first AliExpress, real Browse shapes and contrasting retailer | **Passed within synthetic scope.** Selected Space Gray versus mint title, unbound/displayed price, missing SKU/stock and truncation/caps remain explicit. No affiliate/DS substitution or selected-offer qualification observed. Browse seller/literal condition/normalized claims, bid versus fixed price, missing money/currency/stock, destination/shipping/tax unknowns, next-page presence and retry/auth caps survive the supplied workflows. No retained token/postcode/nextURL material was observed. Valid retailer variants retain independent prices/options, independent-retailer attribution and absent currency; single 250-product page scope remains partial. |
+| Six mandatory families and 16 routes | **Passed.** Read-only accepted-decision projection retains blocked/unqualified/unsupported routes, Militado/Merkur gaps and prerequisites without configuring activation or a second capability service. |
+| Rights prerequisites, shared admission and staged lanes | **Passed within offline controls.** Missing use declaration and Militado signer stop before transport; a use reference remains an input prerequisite, not proof of licence. HTTP sends/auth/retries use durable admission; unsupported browser/native/AI lanes remain gated. Failure does not refresh last-good or create qualified current/low claims. |
+| Actual adapter/failure workflows at application boundary | **Incomplete** for the independent malformed retailer probe; reopened. Existing 186 pass, including 15 source workflows, but do not cover this counterexample. |
+
+Actual modified adapters, acquisition, claim construction, JSON persistence,
+history projections and frontend parsers/rendering were read. Issuer and extractor,
+source and acquisition capture, retrieval time, derivation, permission reference
+and retention class remain separate. Literal unqualified summaries are attached to
+offers; qualification consumes field evidence, not those summaries. Source history
+rights remain unqualified. The new source roster grants no acquisition authority.
+
+The prior 08 conflict resolution retains `PriceAssessments` and coupon behavior in
+`Discovery.tsx`, styles and both fixture modes. The merged full suite passes all 08
+assessment/coupon cases, 07 exact binding-revision ownership/correction cases and 10
+durable-grant/denied-Watch timestamp cases. Their application owners were not
+repaired or rewritten here. The actual Browse retry fixture changes only its
+synthetic-use declaration; its original cap/send/retry/accounting assertions remain
+intact. Legacy saved Watch intent and enabled/disabled execution regressions pass.
+These results establish the tested behaviors, not universal runtime qualification.
+
+### Required merger checks and retained proof
+
+The frontend build completed **before any application/fixture import**. Only the
+existing dependencies and original parent interpreter were used. The complete
+13-module cleared-environment command in the source receipt above was repeated
+from integration with integration `src` and root in `PYTHONPATH`:
+**186 passed in 174.96s**, no skips/xfails/failures (`merger/workflows.log`). No full
+repository pytest, unsafe `tests/test_api.py` or live suite was run.
+
+| Check | Observed result / merger artifact |
+| --- | --- |
+| Frontend build | **Passed**, existing chunk-size warning retained; `build.log` |
+| `python -m pytest -q tests/test_rate_limiter.py tests/test_external_browser.py` with the same cleared prefix | **37 passed**, ten inherited warnings; `contracts.log` |
+| `npm --prefix frontend run test -- --run` in cleared environment | **25 passed**; `frontend-tests.log` |
+| `python -m mypy --no-incremental` all 16 changed app files plus `models/tracking.py` | **17 files passed**; exact command/environment in `checks.json`, output `mypy.log` |
+| Focused Ruff versus exact 446ee9e Git blobs | **Zero added findings**, 48 baseline / 46 current on 23 changed Python files; `ruff-final-comparison.json`, `ruff-final*.json`, `ruff.log` |
+| ESLint | **Blocked**, existing missing `eslint.config.*`, exit2; `eslint.log` |
+| Independent retailer control / challenge | **Control passed; challenge failed**, exact outputs/snapshots retained; no assertion weakened/dropped/skipped |
+| Source/document whitespace | **Passed**; raw tool-log whitespace remains separately recorded/inherited |
+| Source and original parent integrity | 27 source hashes and 69 artifact hashes match; all 77 original-parent hashes/lengths match, unchanged source clean at 7fb56be; `integrity.json` |
+
+Exact commands and cleared environments for build, full suite, contracts, types,
+frontend, Ruff and probes are retained in `merger/review.json` and `checks.json`.
+The Ruff command is the original cleared prefix plus
+`python docs/testing/artifacts/watch-source-evidence/merger/ruff_compare.py`.
+It reads the exact 446ee9e blobs without making another checkout. No suppressions
+were added, and no global lint/type green is asserted. Two review-runner invocation
+errors (an incorrectly sliced interpreter argument, then using system Python for
+Ruff) are preserved in `runner-invocation-failure.log` and `checks-run.log`.
+They were corrected in the review helper; successful type/frontend results were
+not repeated, and Ruff alone was rerun with the original interpreter.
+
+All seven retained final source/assessment desktop/narrow/withdrawal screenshots
+were actually opened and inspected, together with both browser receipts and server
+shutdown logs. All source/receipt hashes match. The frontend tree remains exactly
+`08aa2e1fe99d9702e09ae087f8fcc1925452b547`; the source-mode image visibly retains
+Space Gray/unbound price/missing SKU and stock, while assessment images retain
+GBP 45.10 scoped coupon payable and later invalidated current/dated-low claims.
+The recorded actual keyboard/reload/no-overflow/no-error checks remain dated source
+proof; no new browser session was needed because the merger made no UI change.
+Both retained server logs report zero escaped edges/notifications and stopped
+fixtures; this merger opened no browser or server.
+
+Machine-readable [review receipt and artifact hashes](artifacts/watch-source-evidence/merger/review.json)
+bind the new results. In particular, the exact original-parent manifest is
+SHA256 `93ada3e762355f117518d20a6dd2d0ad6f80e01cb2d49bea8ddff073e390c6b9`.
+The final review commit is discoverable from local history rather than embedded
+self-referentially in its own file.
+
+Collection remains staged. Source-specific rights/retention/derivation,
+Militado signer/manufacturer identity, Merkur exact evidence, live selected-offer,
+history/coupon/delivery proof, empirical freshness/calibration, finite operating
+and physical disk/WAL/log/backup/retention controls, named maintenance owner, buyer
+feedback and activation remain separate and unproven. Passing synthetic checks
+neither authorises new collection nor converts accepted research into current
+rights. The frontier is the parent's contained 11 repair and independent acceptance;
+12 dispatch remains with the parent after that gate passes.

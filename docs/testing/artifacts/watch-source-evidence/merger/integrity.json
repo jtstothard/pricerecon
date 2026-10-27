@@ -1,0 +1,41 @@
+{
+  "source_manifest": {
+    "count": 27,
+    "mismatches": []
+  },
+  "artifacts_sha256": {
+    "count": 69,
+    "mismatches": []
+  },
+  "frontend_tree": {
+    "declared": "08aa2e1fe99d9702e09ae087f8fcc1925452b547",
+    "actual": "08aa2e1fe99d9702e09ae087f8fcc1925452b547"
+  },
+  "original_parent": {
+    "manifest_sha256": "93ada3e762355f117518d20a6dd2d0ad6f80e01cb2d49bea8ddff073e390c6b9",
+    "count": 77,
+    "mismatches": []
+  },
+  "source_HEAD": "7fb56beb54f9b60a0555eee53df0c2b31e718e0c",
+  "source_status": "",
+  "merge_HEAD": "8eb1d777ed7614a69712ea8f074af67fa0dd7550",
+  "merge_parents": [
+    "446ee9e649ad91406d66cb5b0c43990f3be590db",
+    "7fb56beb54f9b60a0555eee53df0c2b31e718e0c"
+  ],
+  "source_tree_equals_merge": true,
+  "ancestry": {
+    "52104eb": true,
+    "446ee9e": true,
+    "7fb56beb54f9b60a0555eee53df0c2b31e718e0c": true
+  },
+  "inspected_images": [
+    "ui-merged/desktop-source-coverage.png",
+    "ui-merged/desktop-source-evidence.png",
+    "ui-merged/narrow-source-coverage.png",
+    "ui-merged/narrow-source-evidence.png",
+    "assessment-ui/desktop-assessments.png",
+    "assessment-ui/narrow-assessments.png",
+    "assessment-ui/narrow-withdrawn.png"
+  ]
+}
