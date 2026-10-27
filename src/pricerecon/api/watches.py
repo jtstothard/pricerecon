@@ -355,16 +355,6 @@ async def trigger_watch_check(watch_id: int) -> WatchCheckResponse:
             detail=result.get("error", "Unknown error"),
         )
 
-    # Update last_check timestamp
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute(
-        "UPDATE watches SET last_check_at = ? WHERE id = ?",
-        (datetime.now(timezone.utc).isoformat(), watch_id),
-    )
-    conn.commit()
-    conn.close()
-
     return WatchCheckResponse(
         watch_id=watch_id,
         status="completed",

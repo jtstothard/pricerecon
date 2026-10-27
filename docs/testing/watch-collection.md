@@ -771,3 +771,66 @@ No installs, downloads, network/live collection, credentials/accounts, productio
 DB, activation, deployment, push, PR, delegation or unrelated cleanup occurred.
 Local commits/merges alone were authorised. Ticket10 stays open for the reproduced
 gap; 11 stays blocked and unclaimed. No 11 implementation was performed.
+
+## Denied Watch completion repair and offline acceptance — 2026-10-27
+
+Parent repaired the contained merger finding directly on integration based on
+`66631227da92c759680df780adb77c197a8095f9`. No new implementer or duplicate
+integration merge was needed. All earlier histories and receipts remain intact.
+**10 is closed for offline scope; 11 is claimed for isolated implementation.**
+08 remains with its existing worktree owner; 12 remains blocked.
+
+`execute_watch` now returns the actual blocked/capped result before diffing or
+updating a successful-check timestamp when no source supplies usable results.
+Per-source outcomes retain their precise denial reasons. Successful empty and
+mixed-success checks still complete. The executor owns the timestamp write;
+the API's duplicate write and scheduler's premature write were removed. Scheduler
+output reports denied execution rather than claiming it is done. Existing
+last-good rows, events and notification behavior remain governed by the normal
+execution path; no successful-empty result is inferred from an admission denial.
+
+### Red/green and evidence
+
+- Promoted the retained exact API acceptance probe into the guarded suite.
+  Before the repair, request-cap/zero-elapsed/zero-provider cases failed and
+  expiry passed: **3 failed, 1 passed**. After the executor fix, all four pass.
+- Added the same four scheduler cases at normal callback plus API readback.
+  Before removing the premature timestamp/write and success message, **4 failed**.
+  Afterwards all four pass, with unchanged timestamps, zero extra sends, retained
+  rows and no escaped edge. Original API assertions remain intact.
+- Added four positive controls: API and scheduler each complete a successful
+  empty acquisition and a successful source alongside a capped sibling. They
+  advance the timestamp to 13:00 with exactly one acquisition. Existing legacy
+  partial failure, empty removal, startup, query/matching and intent tests pass.
+- Full cleared-environment invocation from the preceding merger section, using
+  the same eleven workflow modules, now passes **160 tests in 157.64s**, without
+  skips or xfails: all 148 retained cases plus 12 new denial/positive controls.
+- Independently retained fresh JSON/logs for all **eight** API/scheduler denial
+  probes. Request/zero-time/provider cases report capped; expiry reports blocked.
+  Their snapshots and successful timestamps remain unchanged. Each records zero
+  additional transports/notifications and zero escaped edges.
+- **37 limiter/external-browser contracts pass**, ten inherited deprecation
+  warnings. Focused mypy passes on all three changed application files. Ruff
+  reports **zero added findings**, 16 inherited findings and two removed by the
+  deleted duplicate timestamp writes. Executor and all changed test modules are
+  clean. New control module and changed executor lines pass Black; diff check passes.
+- Frontend tree remains `fdcd941bb28fda22b7a8e2d9e7d606a6f9a7f7ec`.
+  Existing 25-test/build/desktop/narrow evidence is reused; no frontend or response
+  schema change. The existing ESLint missing-config blocker remains recorded.
+- Original parent remains on `ef86af6`; all **77** initial changed/untracked
+  files match their original SHA-256 manifest. Other worktrees were untouched.
+
+[Raw results, red failures, probes and file hashes](artifacts/watch-collection/watch-denial-repair/verification.json)
+retain the exact checked identities. Run a scheduler reproducer with the earlier
+cleared environment and interpreter using:
+
+```sh
+python -m tests.monitoring.collection_timestamp_merger_probe request_cap \
+  /absolute/temporary/output.json --entrypoint scheduler
+```
+
+This closure accepts deterministic source behavior only. Collection stays staged;
+unsupported browser/AI lanes, physical disk/WAL/log/backup/retention controls,
+source rights, live evidence, measured operating choices, named owner and buyer
+acceptance remain separate prerequisites. No install, network/live collection,
+account/credential operation, production DB, activation, push or PR occurred.

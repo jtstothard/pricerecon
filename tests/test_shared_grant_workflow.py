@@ -33,6 +33,23 @@ def test_retained_shared_grant_probes(case, tmp_path):
     run("collection_merger_probe", case, tmp_path / f"{case}.json")
 
 
+@pytest.mark.parametrize("case", ["request_cap", "zero_elapsed", "zero_provider", "expired"])
+def test_denied_watch_retains_successful_check_timestamp(case, tmp_path):
+    run("collection_timestamp_merger_probe", case, tmp_path / f"{case}.json")
+
+
+@pytest.mark.parametrize("case", ["request_cap", "zero_elapsed", "zero_provider", "expired"])
+def test_scheduler_denial_retains_successful_check_timestamp(case, tmp_path):
+    run("collection_timestamp_merger_probe", case, tmp_path / f"{case}.json",
+        "--entrypoint", "scheduler")
+
+
+@pytest.mark.parametrize("case", ["empty", "partial"])
+@pytest.mark.parametrize("entrypoint", ["api", "scheduler"])
+def test_acquired_watch_sources_still_complete(case, entrypoint):
+    run("watch_completion_controls", case, entrypoint)
+
+
 def test_retained_fresh_process_exhausted_grant_probe(tmp_path):
     with TemporaryDirectory(prefix="pricerecon-offline-", dir="/tmp") as root:
         Path(root, ".offline-monitoring").write_text("ticket01-test-storage\n")

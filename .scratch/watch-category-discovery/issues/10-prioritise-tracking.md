@@ -4,15 +4,15 @@
 
 **Blocked by:** [05: Track exact products and send qualified target alerts](05-track-exact-products.md)
 
-**Status:** open — denied Watch status/timestamp repair required 2026-10-27
+**Status:** closed — offline acceptance 2026-10-27
 
 **Assignee:** Codex implementer (isolated worktree)
 
 **Parent:** [Trustworthy UK watch discovery alongside existing monitoring](../../../docs/specs/watch-category-discovery.md)
 
 - [x] Reuse native scheduler, execution, health and notification facilities with shared admission accounting for provider calls, detail/page requests, retries/fallbacks and applicable browser/AI/storage resources. Unsupported lanes remain explicitly gated; physical resource controls remain live prerequisites.
-- [ ] Under explicitly supplied test limits, prioritise existing tracking and potential-alert verification, reduce discovery breadth first, and expose capped/blocked/failed/empty outcomes separately through API and coverage UI.
-- [ ] Preserve aged last-good evidence without certifying semantic freshness from transport health; withhold alerts when required evidence cannot be refreshed.
+- [x] Under explicitly supplied test limits, prioritise existing tracking and potential-alert verification, reduce discovery breadth first, and expose capped/blocked/failed/empty outcomes separately through API and coverage UI.
+- [x] Preserve aged last-good evidence without certifying semantic freshness from transport health; withhold alerts when required evidence cannot be refreshed.
 - [x] Exercise concurrent demand, exhaustion, partial failure, restart and resumption; no retry/fallback bypass or unbounded catch-up burst is allowed.
 - [x] Missing required operating policy keeps collection/activation gated. Do not invent numerical budgets, freshness schedules or a maintenance owner; present unmet prerequisites visibly.
 
@@ -101,3 +101,17 @@ See the [repair merger receipt and exact reproducer](../../../docs/testing/watch
 The two unchecked checklist items retain this gap; live/browser/AI/physical
 storage/retention/source-rights/buyer gates remain separate. Ticket08 stays with
 its active owner; no 08 or 11 implementation occurred. Collection remains staged.
+
+## Final offline acceptance — 2026-10-27
+
+The parent repaired the denied Watch status/timestamp finding directly. API and
+scheduler now retain successful timestamps on all-source admission denial and
+report capped/blocked rather than completed. Successful empty/partial controls
+remain compatible. All **160 guarded workflows**, **37 contracts**, focused
+mypy and zero-added-finding Ruff checks pass. Eight fresh retained denial probes
+pass; original dirty parent remains unchanged. Existing frontend proof is reused.
+See the [dated repair and acceptance receipt](../../../docs/testing/watch-collection.md#denied-watch-completion-repair-and-offline-acceptance--2026-10-27).
+
+**Closed for offline scope.** 11 is ready and claimed for isolated implementation;
+08 remains with its existing owner. Collection stays staged; the documented live,
+source-rights, physical-resource, operating-owner and buyer gates remain unproven.

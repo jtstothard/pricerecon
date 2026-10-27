@@ -3,6 +3,8 @@
 import argparse
 import asyncio
 import json
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
@@ -13,7 +15,7 @@ from .harness import MonitoringHarness
 from .workflows import LEGACY, get, listing
 
 
-async def main(case, output):
+async def main(case, output, entrypoint="api"):
     with MonitoringHarness(operating_envelope=False) as harness:
         from pricerecon import connectors
         from pricerecon.core.collection_policy import operating_policy
@@ -71,28 +73,41 @@ async def main(case, output):
                 rows_before = await get(client, "/api/watches/7/listings")
                 sends_before = len(sends)
                 harness.clock.advance(hours=25 if case == "expired" else 1)
+                scheduler_log = StringIO()
                 with operating_policy(None):
-                    response = await client.post("/api/watches/7/check")
-                assert response.status_code == 200, response.text
-                body = response.json()
+                    if entrypoint == "scheduler":
+                        with redirect_stdout(scheduler_log):
+                            await harness.application.check_watch(7)
+                        body = None
+                    else:
+                        response = await client.post("/api/watches/7/check")
+                        assert response.status_code == 200, response.text
+                        body = response.json()
                 after = await get(client, "/api/watches/7")
                 rows_after = await get(client, "/api/watches/7/listings")
                 ledger = await get(client, "/api/discovery/collection")
                 assert len(sends) == sends_before
-                assert body["result"]["acquisition_outcomes"][0]["reason"] == expected_reason
+                if body is not None:
+                    assert body["result"]["acquisition_outcomes"][0]["reason"] == expected_reason
                 assert rows_before == rows_after
                 assert harness.deliveries == harness.blocked_edges == []
                 for key in ("enabled", "query", "source_queries", "sources", "filters", "notifications", "schedule"):
                     assert before[key] == after[key], key
                 failures = []
-                if body["status"] != expected_state:
+                if body is not None and body["status"] != expected_state:
                     failures.append(f"denied Watch status is {body['status']}, expected {expected_state}")
-                if body["result"]["success"]:
+                if body is not None and body["result"]["success"]:
                     failures.append("denied Watch reports success=true")
+                if entrypoint == "scheduler" and expected_state not in scheduler_log.getvalue():
+                    failures.append("scheduler did not report the denied state")
+                if entrypoint == "scheduler" and " done:" in scheduler_log.getvalue():
+                    failures.append("scheduler reported denied work as done")
                 if before["last_check_at"] != after["last_check_at"]:
                     failures.append("denied Watch advanced last_check_at")
                 output.write_text(json.dumps({
                     "case": case,
+                    "entrypoint": entrypoint,
+                    "scheduler_log": scheduler_log.getvalue(),
                     "result": "failed" if failures else "passed",
                     "failures": failures,
                     "before": before,
@@ -113,5 +128,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("case", choices=["request_cap", "zero_elapsed", "zero_provider", "expired"])
     parser.add_argument("output", type=Path)
+    parser.add_argument("--entrypoint", choices=["api", "scheduler"], default="api")
     args = parser.parse_args()
-    asyncio.run(main(args.case, args.output.resolve()))
+    asyncio.run(main(args.case, args.output.resolve(), args.entrypoint))

@@ -314,6 +314,24 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
     all_listings = acquisition.listings
     failed_sources = acquisition.failed_sources
 
+    # A denied source is not a successful empty search. If no source supplied
+    # usable results, preserve the snapshot and successful-check timestamp.
+    refreshed = {"success", "success_empty", "partial", "cache_reuse"}
+    denied = [outcome for outcome in acquisition.outcomes if outcome.state in {"blocked", "capped"}]
+    if denied and not any(outcome.state in refreshed for outcome in acquisition.outcomes):
+        denial = next((outcome for outcome in denied if outcome.state == "blocked"), denied[0])
+        return {
+            "success": False,
+            "watch_id": watch_id,
+            "error": denial.reason or "acquisition_denied",
+            "collection_state": denial.state,
+            "acquisition_outcomes": [
+                outcome.model_dump(mode="json") for outcome in acquisition.outcomes
+            ],
+            "notifications_sent": 0,
+            "events": [],
+        }
+
     filtered_listings = apply_post_normalization_filters(
         all_listings, watch.filters, watch.synonym_groups if watch.synonym_groups else None
     )

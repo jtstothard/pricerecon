@@ -4,9 +4,9 @@
 
 **Blocked by:** [03: Explain exact configuration and offer qualification](03-explain-offer-qualification.md), [10: Prioritise tracking under shared collection limits](10-prioritise-tracking.md)
 
-**Status:** blocked — ticket10 denied Watch status/timestamp repair required
+**Status:** in-progress — claimed 2026-10-27
 
-**Assignee:** unclaimed
+**Assignee:** Codex implementer (isolated worktree)
 
 **Parent:** [Trustworthy UK watch discovery alongside existing monitoring](../../../docs/specs/watch-category-discovery.md)
 
@@ -34,3 +34,11 @@ The shared-grant bypass repair is merged and its exact original probes pass.
 Ticket10 remains open for reproduced denied Watch status/timestamp failures;
 see the [repair merger review](../../../docs/testing/watch-collection.md#shared-grant-repair-merger-review--2026-10-27).
 This ticket stays blocked and unclaimed. No 11 implementation occurred.
+
+### Dependency accepted and claim — 2026-10-27
+
+10 is closed after its denied Watch completion repair: 160 guarded workflows,
+37 contracts and all eight retained API/scheduler denial probes pass. Both
+blocking tickets are now closed for offline scope. This ticket is claimed for
+one isolated implementer; no source11 implementation is asserted here. Shared
+admission and staged activation constraints remain authoritative.
