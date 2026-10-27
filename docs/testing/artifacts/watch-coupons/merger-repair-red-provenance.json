@@ -1,0 +1,226 @@
+{
+  "fixture": "ticket09-merger-receipt-provenance",
+  "expected": "Compatibility/eligibility alone cannot support reproduced payable",
+  "cases": {
+    "shipping-recalculated": {
+      "state": "reproduced_at_observation",
+      "issues": [],
+      "payable": {
+        "amount": "47.20",
+        "currency": "GBP"
+      },
+      "merchant_payable": {
+        "GBP": "47.20"
+      },
+      "application_evidence": [
+        {
+          "id": "synthetic:application",
+          "issuer": "Synthetic merchant",
+          "issuer_kind": "seller",
+          "extractor": "synthetic-cost-fixture-v1",
+          "extractor_kind": "structured_data",
+          "observed_at": "2026-10-27T12:00:00Z",
+          "retrieved_at": "2026-10-27T12:00:00Z",
+          "effective_at": null,
+          "expires_at": null,
+          "capture_id": "synthetic:shipping-recalculated",
+          "acquisition_capture_id": null,
+          "route": "offline_fixture",
+          "pointer": "https://synthetic.invalid/shipping-recalculated?variant=mint-vh31",
+          "locator": "$.checkout.receipt",
+          "derived_from": [
+            "synthetic-original:checkout"
+          ],
+          "input_claim_ids": [],
+          "permission_reference": "original-synthetic-test-data",
+          "retention": "synthetic",
+          "context": {
+            "configuration_key": "synthetic:shipping-recalculated",
+            "merchant_key": "synthetic.invalid",
+            "product_id": "shipping-recalculated",
+            "variation_id": "mint-vh31",
+            "seller": "Synthetic merchant",
+            "condition": "new",
+            "purchase_mode": "buy_now",
+            "quantity": 1,
+            "destination_country": "GB",
+            "destination_nation": "England",
+            "destination_region": "synthetic-region",
+            "shipping_service": "synthetic-standard",
+            "seller_establishment": "GB",
+            "goods_location": "GB",
+            "dispatch_country": "GB",
+            "customs_origin": "synthetic-origin",
+            "dispatch_route": "synthetic-domestic",
+            "purchase_scope": "standalone",
+            "basket_id": "synthetic-basket",
+            "basket_members": [
+              "shipping-recalculated:1"
+            ],
+            "consignment_id": "synthetic-consignment",
+            "consignment_members": [
+              "shipping-recalculated:1"
+            ],
+            "grouping_basis": "synthetic single seller quote",
+            "payment_method": "synthetic-gbp-debit",
+            "display_currency": "GBP",
+            "charge_currency": "GBP",
+            "funding_currency": "GBP"
+          }
+        }
+      ],
+      "public_no_coupon": "50.10",
+      "history_matches_feed": true,
+      "alert_eligible": false,
+      "savings": null
+    },
+    "eligibility-as-receipt": {
+      "state": "reproduced_at_observation",
+      "issues": [],
+      "payable": {
+        "amount": "45.10",
+        "currency": "GBP"
+      },
+      "merchant_payable": {
+        "GBP": "45.10"
+      },
+      "application_evidence": [
+        {
+          "id": "synthetic:eligibility",
+          "issuer": "Synthetic merchant",
+          "issuer_kind": "seller",
+          "extractor": "synthetic-cost-fixture-v1",
+          "extractor_kind": "structured_data",
+          "observed_at": "2026-10-27T12:00:00Z",
+          "retrieved_at": "2026-10-27T12:00:00Z",
+          "effective_at": null,
+          "expires_at": null,
+          "capture_id": "synthetic:eligibility-as-receipt",
+          "acquisition_capture_id": null,
+          "route": "offline_fixture",
+          "pointer": "https://synthetic.invalid/eligibility-as-receipt?variant=mint-vh31",
+          "locator": "$.eligibility",
+          "derived_from": [
+            "synthetic-original:eligibility"
+          ],
+          "input_claim_ids": [],
+          "permission_reference": "original-synthetic-test-data",
+          "retention": "synthetic",
+          "context": {
+            "configuration_key": "synthetic:eligibility-as-receipt",
+            "merchant_key": "synthetic.invalid",
+            "product_id": "eligibility-as-receipt",
+            "variation_id": "mint-vh31",
+            "seller": "Synthetic merchant",
+            "condition": "new",
+            "purchase_mode": "buy_now",
+            "quantity": 1,
+            "destination_country": "GB",
+            "destination_nation": "England",
+            "destination_region": "synthetic-region",
+            "shipping_service": "synthetic-standard",
+            "seller_establishment": "GB",
+            "goods_location": "GB",
+            "dispatch_country": "GB",
+            "customs_origin": "synthetic-origin",
+            "dispatch_route": "synthetic-domestic",
+            "purchase_scope": "standalone",
+            "basket_id": "synthetic-basket",
+            "basket_members": [
+              "eligibility-as-receipt:1"
+            ],
+            "consignment_id": "synthetic-consignment",
+            "consignment_members": [
+              "eligibility-as-receipt:1"
+            ],
+            "grouping_basis": "synthetic single seller quote",
+            "payment_method": "synthetic-gbp-debit",
+            "display_currency": "GBP",
+            "charge_currency": "GBP",
+            "funding_currency": "GBP"
+          }
+        }
+      ],
+      "public_no_coupon": "50.10",
+      "history_matches_feed": true,
+      "alert_eligible": false,
+      "savings": null
+    },
+    "compatibility-as-receipt": {
+      "state": "reproduced_at_observation",
+      "issues": [],
+      "payable": {
+        "amount": "45.10",
+        "currency": "GBP"
+      },
+      "merchant_payable": {
+        "GBP": "45.10"
+      },
+      "application_evidence": [
+        {
+          "id": "synthetic:stack",
+          "issuer": "Synthetic merchant",
+          "issuer_kind": "seller",
+          "extractor": "synthetic-cost-fixture-v1",
+          "extractor_kind": "structured_data",
+          "observed_at": "2026-10-27T12:00:00Z",
+          "retrieved_at": "2026-10-27T12:00:00Z",
+          "effective_at": null,
+          "expires_at": null,
+          "capture_id": "synthetic:compatibility-as-receipt",
+          "acquisition_capture_id": null,
+          "route": "offline_fixture",
+          "pointer": "https://synthetic.invalid/compatibility-as-receipt?variant=mint-vh31",
+          "locator": "$.terms.stack",
+          "derived_from": [
+            "synthetic-original:stack"
+          ],
+          "input_claim_ids": [],
+          "permission_reference": "original-synthetic-test-data",
+          "retention": "synthetic",
+          "context": {
+            "configuration_key": "synthetic:compatibility-as-receipt",
+            "merchant_key": "synthetic.invalid",
+            "product_id": "compatibility-as-receipt",
+            "variation_id": "mint-vh31",
+            "seller": "Synthetic merchant",
+            "condition": "new",
+            "purchase_mode": "buy_now",
+            "quantity": 1,
+            "destination_country": "GB",
+            "destination_nation": "England",
+            "destination_region": "synthetic-region",
+            "shipping_service": "synthetic-standard",
+            "seller_establishment": "GB",
+            "goods_location": "GB",
+            "dispatch_country": "GB",
+            "customs_origin": "synthetic-origin",
+            "dispatch_route": "synthetic-domestic",
+            "purchase_scope": "standalone",
+            "basket_id": "synthetic-basket",
+            "basket_members": [
+              "compatibility-as-receipt:1"
+            ],
+            "consignment_id": "synthetic-consignment",
+            "consignment_members": [
+              "compatibility-as-receipt:1"
+            ],
+            "grouping_basis": "synthetic single seller quote",
+            "payment_method": "synthetic-gbp-debit",
+            "display_currency": "GBP",
+            "charge_currency": "GBP",
+            "funding_currency": "GBP"
+          }
+        }
+      ],
+      "public_no_coupon": "50.10",
+      "history_matches_feed": true,
+      "alert_eligible": false,
+      "savings": null
+    }
+  },
+  "collection_state": "staged",
+  "temporary_storage": true,
+  "blocked_edges": [],
+  "notifications_sent": 0
+}

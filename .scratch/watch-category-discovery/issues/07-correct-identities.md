@@ -4,7 +4,9 @@
 
 **Blocked by:** [05: Track exact products and send qualified target alerts](05-track-exact-products.md), [06: Show retained observations and acquisition gaps](06-show-observation-history.md)
 
-**Status:** blocked
+**Status:** in-progress
+
+**Assignee:** Codex implementer (isolated worktree)
 
 **Parent:** [Trustworthy UK watch discovery alongside existing monitoring](../../../docs/specs/watch-category-discovery.md)
 
@@ -17,3 +19,11 @@
 ## Verification and authority
 
 Use the buyer-approved API plus normal execution seam, controlled external edges and isolated storage; assert observable behavior. Include persistence/API/UI behavior for this slice and keep legacy Watch semantics compatible. Source implementation and offline verification only: no live collection, production DB operations, account connections, activation, deployment, purchase, commit or push is authorised by this ticket.
+
+## Dependencies ready: 2026-10-27
+
+Ticket05 is closed for its offline scope and ticket06's lineage repair is now
+accepted in the [dated merger receipt](../../../docs/testing/watch-history.md#lineage-repair-merger-acceptance-2026-10-27).
+This ticket is **READY and unclaimed**, reserved for parent dispatch. No 07
+implementation, verification or claim occurred in that merger. Its checklist,
+browser correction workflow and separate live/buyer/activation gates remain open.

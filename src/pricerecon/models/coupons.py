@@ -79,7 +79,7 @@ class CouponLine(CostModel):
     evidence: list[CostEvidence] = Field(default_factory=list, max_length=50)
 
 
-class CouponApplication(CostModel):
+class CouponApplicationLineage(CostModel):
     terms_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     expected_coupon_revision: int = Field(gt=0)
     expected_offer_revision: int = Field(gt=0)
@@ -91,6 +91,36 @@ class CouponApplication(CostModel):
     expected_cost_policy: Token
     expected_coupon_policy: Token
     base_key: Token
+
+
+class CheckoutObservation(CouponApplicationLineage):
+    """Observed source values, separate from the proposed application/accounting.
+
+    A collector must retain a direct before/after quote, not manufacture this
+    record by relabelling terms, an eligibility claim, or a computed payable.
+    Synthetic collectors must keep retention='synthetic' on the enclosing proof.
+    """
+
+    applied_codes: list[Token] = Field(min_length=1, max_length=20)
+    other_promotions: list[Token] = Field(max_length=20)
+    result: Literal["applied", "rejected", "unknown"]
+    eligibility: CouponEligibility
+    selected_member: Token
+    selected_item_price: Money
+    before_total: Money
+    quoted_total: Money
+    currency: Code
+    before: CostScenarioInput
+    after: CostScenarioInput
+    lines: list[CouponLine] = Field(min_length=1, max_length=100)
+
+
+class CheckoutReceipt(CostEvidence):
+    role: Literal["checkout_application_receipt"]
+    observation: CheckoutObservation
+
+
+class CouponApplication(CouponApplicationLineage):
     before_total: Money
     applied_codes: list[Token] = Field(min_length=1, max_length=20)
     other_promotions: list[Token] = Field(max_length=20)
@@ -102,6 +132,9 @@ class CouponApplication(CostModel):
     payable: CostScenarioInput
     selected_member: Token
     lines: list[CouponLine] = Field(max_length=100)
+    # Old/general evidence remains readable and retained, but cannot confer the
+    # receipt role. A missing typed receipt withholds reproduction.
+    receipt: CheckoutReceipt | None = None
 
 
 class CouponInput(CostModel):

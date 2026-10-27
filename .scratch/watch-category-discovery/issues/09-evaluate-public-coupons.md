@@ -4,14 +4,14 @@
 
 **Blocked by:** [04: Show defensible UK delivered-cost scenarios](04-show-uk-delivered-cost.md)
 
-**Status:** open — receipt-provenance repair required
+**Status:** closed — offline implementation accepted 2026-10-27
 
 **Assignee:** unclaimed
 
 **Parent:** [Trustworthy UK watch discovery alongside existing monitoring](../../../docs/specs/watch-category-discovery.md)
 
 - [x] Persist exact selection/basket/destination terms and application evidence with eligibility, expiry, minimum spend, quantity and compatibility; expose status and explanations in API/feed.
-- [ ] Distinguish advertised opportunity, evidenced applicability and reproduced exact-basket application; advertised terms alone cannot reduce a verified total.
+- [x] Distinguish advertised opportunity, evidenced applicability and reproduced exact-basket application; advertised terms alone cannot reduce a verified total.
 - [x] Exercise incompatible stacks, app/new-customer or membership restrictions, time boundaries and basket changes; absence of a prohibition does not establish compatibility.
 - [x] Keep public, personal, payment and uncertain cashback scenarios separate. Do not build personal-benefit integrations or treat cashback as a guaranteed checkout reduction.
 - [x] Invalidate derived applications/totals when their identity or terms evidence changes; if correction UI has landed, exercise it end to end. Fixture coupon success is not live proof, and no-coupon success does not close the coupon-success gate.
@@ -55,3 +55,37 @@ and overlapping acquisition must still be integrated and exercised. Checked
 identity/terms invalidation here applies only to the acquisition/revision seam.
 No later ticket was claimed or implemented; collection remains staged, with
 live coupon proof, buyer acceptance and activation gates unproven.
+
+## Receipt-provenance repair merger acceptance — 2026-10-27
+
+**09 closed for offline implementation.** Clean repair source
+`d2ab666b9bc616c8172ebdd39b5194cf6aa2b623` already contained requested clean
+integration `61ab075703e64b9589deb34b12f8acbacd929972`. Conflict-free
+`--no-ff` merge `5a3124e9f059e87a3bf5cb4e7925f7a85fb43422` preserves both
+parents and the complete repair history. The merged tree exactly matches source.
+
+Before merging, the unchanged original probe independently reproduced both
+unsupported GBP45.10 results. Afterwards, both entire-provenance substitutions
+withhold payable with `application_receipt_missing`; genuine GBP45.10 and
+changed-shipping GBP47.20 controls pass, and the GBP50.10 no-coupon path remains.
+All **85 combined isolated workflows passed in 72.80s**, with focused Ruff/mypy,
+the original probe and 23 receipt controls passing. A guarded database seeded by
+the pre-repair normal workflow confirms old role-less successes are invalidated
+on restart and supersession, preserving original evidence and GBP45.10 only as
+historical. No assertion was removed or weakened; the shared cost engine remains
+the payable/FX owner. Unchanged frontend/build/browser evidence is reused.
+
+See the [dated repair merger receipt](../../../docs/testing/watch-coupons.md#receipt-provenance-repair-merger-acceptance--2026-10-27)
+for commands, retained results and review boundaries.
+
+**Retained integration gate:** 07 is active in its separate worktree and has not
+landed here. Its correction append/invalidation transaction, UI and overlapping
+correction/acquisition must still be connected and verified against coupon
+lineage when that slice lands. Current proof covers acquisition/revision/policy
+invalidation only. Ticket10 and the original dirty parent were untouched; no
+07/10 implementation or later ticket claim occurred. Ticket12 stays blocked by
+its other dependencies and its integrated proof requirements.
+
+Collection remains staged. Live coupon application, source mapping/direct-capture
+semantics, rights/retention, freshness, buyer acceptance, comparisons/savings,
+operating limits and activation/deployment remain separate unproven gates.

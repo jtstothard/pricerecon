@@ -49,7 +49,10 @@ def applicable_report(harness, listing_id="coupon"):
 
     payload = advertised_report(harness, listing_id).model_dump(mode="json")
     coupon = payload["coupons"][0]
-    evidence = coupon["opportunity_evidence"][0]
+    evidence = {
+        **coupon["opportunity_evidence"][0],
+        "acquisition_capture_id": coupon["opportunity_evidence"][0]["capture_id"],
+    }
     coupon["terms"] = {
         "literal": "Synthetic TEN: one selected watch, GBP 40 item minimum incl VAT, web, no account restriction; no other promotions; 12:00 inclusive to 13:00 exclusive UTC.",
         "codes": ["TEN"],
@@ -134,6 +137,7 @@ def reproduced_report(harness, listing_id="coupon", revision=1):
         "id": "synthetic:application",
         "locator": "$.checkout.receipt",
         "derived_from": ["synthetic-original:checkout"],
+        "acquisition_capture_id": coupon["opportunity_evidence"][0]["capture_id"],
     }
     after = payload["cost_scenarios"][0].copy()
     import copy
@@ -189,6 +193,31 @@ def reproduced_report(harness, listing_id="coupon", revision=1):
                 "evidence": [receipt],
             }
         ],
+    }
+    # A separate synthetic source quote, retained independently of the proposed
+    # application. Later mutations must not silently rewrite this observation.
+    coupon["application"]["receipt"] = {
+        **copy.deepcopy(receipt),
+        "role": "checkout_application_receipt",
+        "observation": {
+            **{
+                key: value
+                for key, value in coupon["application"].items()
+                if key.startswith("expected_") or key in {"terms_fingerprint", "base_key"}
+            },
+            "applied_codes": ["TEN"],
+            "other_promotions": [],
+            "result": "applied",
+            "eligibility": copy.deepcopy(coupon["eligibility"]),
+            "selected_member": f"{listing_id}:1",
+            "selected_item_price": "43.00",
+            "before_total": "50.10",
+            "quoted_total": "45.10",
+            "currency": "GBP",
+            "before": copy.deepcopy(payload["cost_scenarios"][0]),
+            "after": copy.deepcopy(after),
+            "lines": copy.deepcopy(coupon["application"]["lines"]),
+        },
     }
     return MerchantEvidenceReport.model_validate(payload)
 
@@ -371,9 +400,9 @@ async def proof_boundaries():
         case(
             "stale-base", "no_coupon_base_changed_or_unverified"
         ).application.expected_base_revision = 2
-        case(
-            "before-total", "no_coupon_base_changed_or_unverified"
-        ).application.before_total = Decimal("49.00")
+        case("before-total", "no_coupon_base_changed_or_unverified").application.before_total = (
+            Decimal("49.00")
+        )
         case("bare-discount", "basket_item_allocation_mismatch").application.payable.components = []
         case("wrong-total", "quoted_payable_does_not_reconcile").application.quoted_total = Decimal(
             "40.10"
@@ -543,6 +572,11 @@ async def stack_and_basket():
         coupon.application.terms_fingerprint = hashlib.sha256(
             coupon.terms.model_dump_json().encode()
         ).hexdigest()
+        observed = coupon.application.receipt.observation
+        observed.applied_codes = ["PRODUCT", "ORDER"]
+        observed.lines[0].applied_codes = ["PRODUCT", "ORDER"]
+        observed.eligibility.channel = "app"
+        observed.terms_fingerprint = coupon.application.terms_fingerprint
         async with harness.session() as (client, _):
             feed = await read_capture(harness, client, [report])
             assert (
@@ -579,9 +613,9 @@ async def stack_and_basket():
             base["components"].append(other)
             coupon = payload["coupons"][0]
             coupon["terms"]["max_quantity"] = 2
-            coupon["terms"]["literal"] = (
-                "Synthetic TEN: two selected watches, strap excluded; GBP 40 item minimum incl VAT; web; no account restrictions; no other promotions; 12:00 inclusive to 13:00 exclusive UTC."
-            )
+            coupon["terms"][
+                "literal"
+            ] = "Synthetic TEN: two selected watches, strap excluded; GBP 40 item minimum incl VAT; web; no account restrictions; no other promotions; 12:00 inclusive to 13:00 exclusive UTC."
             coupon["eligibility"].update(
                 eligible_base="96.00", eligible_members=["basket:2"], excluded_members=["strap:1"]
             )
@@ -613,6 +647,19 @@ async def stack_and_basket():
             report.coupons[0].application.terms_fingerprint = hashlib.sha256(
                 report.coupons[0].terms.model_dump_json().encode()
             ).hexdigest()
+            # This positive control supplies a new complete synthetic source
+            # quote for the whole basket, separately from the proposed result.
+            app = report.coupons[0].application
+            observed = app.receipt.observation
+            observed.expected_configuration_revision = 2
+            observed.terms_fingerprint = app.terms_fingerprint
+            observed.eligibility = report.coupons[0].eligibility.model_copy(deep=True)
+            observed.before_total = "108.10"
+            observed.quoted_total = "98.10"
+            observed.selected_member = "basket:2"
+            observed.before = report.cost_scenarios[0].model_copy(deep=True)
+            observed.after = app.payable.model_copy(deep=True)
+            observed.lines = [line.model_copy(deep=True) for line in app.lines]
             feed = await read_capture(harness, client, [report])
             candidate = next(c for c in feed["candidates"] if c["source_listing_id"] == "basket")
             coupon = candidate["offers"][0]["coupons"][0]
@@ -696,6 +743,228 @@ async def conflicts_and_staging():
             assert feed["collection_state"] == "staged"
             assert feed["captures"][0]["outcomes"][0]["state"] == "not_attempted"
             assert harness.deliveries == harness.blocked_edges == []
+
+
+async def receipt_provenance():
+    from pathlib import Path
+    from tempfile import TemporaryDirectory
+
+    from .coupon_merger_probe import probe
+
+    with TemporaryDirectory(prefix="pricerecon-coupon-provenance-") as root:
+        await probe(Path(root) / "receipt.json")
+
+
+async def receipt_boundary_controls():
+    import json
+    from decimal import Decimal
+    from pathlib import Path
+
+    with MonitoringHarness() as harness:
+        from pricerecon.models.coupons import CheckoutReceipt
+
+        reports, expected, originals = [], {}, {}
+
+        def case(name, issue):
+            report = reproduced_report(harness, name)
+            app = report.coupons[0].application
+            app.expected_configuration_revision = len(reports) + 1
+            app.receipt.observation.expected_configuration_revision = len(reports) + 1
+            reports.append(report)
+            expected[name] = issue
+            return report.coupons[0]
+
+        def replace_provenance(app, claim):
+            app.evidence = [claim.model_copy(deep=True)]
+            app.payable.context_evidence = [claim.model_copy(deep=True)]
+            for part in app.payable.components:
+                part.evidence = [claim.model_copy(deep=True)]
+            for line in app.lines:
+                line.evidence = [claim.model_copy(deep=True)]
+
+        for role in ("compatibility", "eligibility"):
+            coupon = case(f"relabeled-{role}", "non_application_evidence_is_not_receipt")
+            claim = (
+                coupon.terms.compatibility_evidence
+                if role == "compatibility"
+                else coupon.eligibility.evidence
+            )[0]
+            app = coupon.application
+            # Giving the same claim a typed role AND matching structured values
+            # must still fail: its retained provenance belongs to another role.
+            app.receipt = CheckoutReceipt.model_validate(
+                {
+                    **claim.model_dump(),
+                    "role": "checkout_application_receipt",
+                    "observation": app.receipt.observation.model_dump(),
+                }
+            )
+            replace_provenance(app, claim)
+
+        coupon = case("renamed-compatibility", "non_application_evidence_is_not_receipt")
+        coupon.application.receipt.id = "arbitrary-renamed-id"
+        coupon.application.receipt.locator = "arbitrary-opaque-locator"
+        coupon.application.receipt.derived_from = coupon.terms.compatibility_evidence[
+            0
+        ].derived_from
+        coupon = case("reidentified-compatibility", "non_application_evidence_is_not_receipt")
+        claim = coupon.terms.compatibility_evidence[0].model_copy(deep=True)
+        claim.id = "new-id-for-same-source-field"
+        claim.derived_from = ["new-root-for-same-source-field"]
+        app = coupon.application
+        app.receipt = CheckoutReceipt.model_validate(
+            {
+                **claim.model_dump(),
+                "role": "checkout_application_receipt",
+                "observation": app.receipt.observation.model_dump(),
+            }
+        )
+        replace_provenance(app, claim)
+        case(
+            "receipt-origin-missing", "application_receipt_not_direct"
+        ).application.receipt.acquisition_capture_id = None
+        case(
+            "receipt-origin-reused", "application_receipt_not_direct"
+        ).application.receipt.acquisition_capture_id = "older-acquisition"
+        case(
+            "claim-origin-reused", "application_claims_not_bound_to_direct_receipt"
+        ).application.payable.components[0].evidence[0].acquisition_capture_id = "older-acquisition"
+        coupon = case("copied-receipt", "receipt:derived_claim_not_independent_support")
+        coupon.application.receipt.input_claim_ids = [coupon.application.receipt.id]
+        coupon.application.receipt.capture_id = "re-extracted-capture"
+        coupon.application.receipt.derived_from = ["re-extracted-original"]
+        coupon = case("generic-claims", "application_claims_not_bound_to_direct_receipt")
+        replace_provenance(coupon.application, coupon.eligibility.evidence[0])
+        case(
+            "receipt-destination", "receipt:cost_context_mismatch"
+        ).application.receipt.context.destination_region = "other-region"
+        case(
+            "receipt-basket", "receipt:cost_context_mismatch"
+        ).application.receipt.context.basket_members = ["other:1"]
+        case(
+            "receipt-selection", "receipt:cost_context_mismatch"
+        ).application.receipt.context.variation_id = "other-sku"
+        case(
+            "receipt-before", "receipt_before_scenario_mismatch"
+        ).application.receipt.observation.before.components[0].amount = Decimal("49.00")
+        case(
+            "receipt-after", "receipt_after_scenario_mismatch"
+        ).application.receipt.observation.after.components[1].amount = Decimal("4.20")
+        case(
+            "receipt-allocation", "receipt_allocations_mismatch"
+        ).application.receipt.observation.lines[0].after_item_total = Decimal("42.00")
+        case(
+            "receipt-codes", "receipt_application_values_mismatch"
+        ).application.receipt.observation.applied_codes = ["OTHER", "TEN"]
+        case(
+            "receipt-eligibility", "receipt_eligibility_mismatch"
+        ).application.receipt.observation.eligibility.channel = "app"
+        case(
+            "receipt-lineage", "receipt_lineage_mismatch"
+        ).application.receipt.observation.expected_offer_revision = 99
+        case(
+            "receipt-terms", "receipt_lineage_mismatch"
+        ).application.receipt.observation.terms_fingerprint = ("0" * 64)
+        case(
+            "receipt-derived", "receipt:derived_claim_not_independent_support"
+        ).application.receipt.extractor_kind = "ai"
+        case("receipt-source", "application_receipt_not_direct").application.receipt.issuer_kind = (
+            "carrier"
+        )
+        # Opaque evidence coordinates, with no magic checkout substrings, still
+        # support a complete direct quote. Names cannot confer or remove role.
+        coupon = case("opaque-positive", None)
+        coupon.application.receipt.id = "opaque-17"
+        coupon.application.receipt.locator = "opaque-23"
+        for claim in coupon.application.evidence:
+            claim.id, claim.locator = "opaque-19", "opaque-29"
+
+        for report in reports:
+            originals[report.source_listing_id] = report.coupons[0].application.model_dump(
+                mode="json"
+            )
+        results = {}
+        async with harness.session() as (client, _):
+            feed = await read_capture(harness, client, reports)
+            for candidate in feed["candidates"]:
+                name = candidate["source_listing_id"]
+                offer = candidate["offers"][0]
+                coupon = offer["coupons"][0]
+                assert coupon["application"] == originals[name], name
+                assert coupon["applicability"] == "supported"
+                if expected[name]:
+                    assert coupon["resulting_cost"] is None, (name, coupon)
+                    assert coupon["state"] == "applicable_not_reproduced"
+                    assert expected[name] in coupon["issues"], (name, coupon["issues"])
+                else:
+                    assert coupon["state"] == "reproduced_at_observation", coupon["issues"]
+                    assert coupon["resulting_cost"]["total"] == {
+                        "amount": "45.10",
+                        "currency": "GBP",
+                    }
+                    assert coupon["application"]["receipt"]["retention"] == "synthetic"
+                history = await get(client, f"/api/discovery/offers/{offer['id']}/coupons")
+                assert history["assessments"] == [coupon]
+                assert candidate["public_delivered_total"]["amount"] == "50.10"
+                assert candidate["savings"] is None and candidate["alert_eligible"] is False
+                results[name] = {
+                    "state": coupon["state"],
+                    "issues": coupon["issues"],
+                    "expected_issue": expected[name],
+                    "payable": (
+                        coupon["resulting_cost"]["total"] if coupon["resulting_cost"] else None
+                    ),
+                    "original_application_retained": coupon["application"] == originals[name],
+                    "history_matches_feed": history["assessments"] == [coupon],
+                    "no_coupon": candidate["public_delivered_total"]["amount"],
+                }
+
+            # Replay the old exact receipt, even while rebinding the proposed
+            # application to the next acquisition's revisions. Its own lineage
+            # must remain independently checked, and the rejected quote retained.
+            replay = reproduced_report(harness, "opaque-positive", revision=2)
+            replay.coupons[0].application.receipt = (
+                reports[-1].coupons[0].application.receipt.model_copy(deep=True)
+            )
+            replay.coupons[0].application.expected_configuration_revision = len(reports) + 1
+            feed = await read_capture(harness, client, [replay])
+            candidate = next(
+                c for c in feed["candidates"] if c["source_listing_id"] == "opaque-positive"
+            )
+            coupon = candidate["offers"][0]["coupons"][0]
+            assert coupon["resulting_cost"] is None
+            assert "receipt_lineage_mismatch" in coupon["issues"]
+            assert coupon["application"]["receipt"] == originals["opaque-positive"]["receipt"]
+            history = await get(client, f"/api/discovery/offers/{coupon['offer_id']}/coupons")
+            assert (
+                history["assessments"][0]["historical_resulting_cost"]["total"]["amount"] == "45.10"
+            )
+            assert history["assessments"][0]["resulting_cost"] is None
+            assert history["assessments"][-1] == coupon
+            assert harness.deliveries == harness.blocked_edges == []
+            results["replay"] = {
+                "state": coupon["state"],
+                "issues": coupon["issues"],
+                "payable": coupon["resulting_cost"],
+                "original_receipt_retained": coupon["application"]["receipt"]
+                == originals["opaque-positive"]["receipt"],
+                "prior_payable_historical_only": True,
+            }
+            if len(sys.argv) > 2:
+                Path(sys.argv[2]).write_text(
+                    json.dumps(
+                        {
+                            "fixture": "original-synthetic-ticket09-receipt-controls",
+                            "cases": results,
+                            "collection_state": feed["collection_state"],
+                            "temporary_storage": True,
+                            "blocked_edges": harness.blocked_edges,
+                            "notifications_sent": len(harness.deliveries),
+                        },
+                        indent=2,
+                    )
+                    + "\n"
+                )
 
 
 if __name__ == "__main__":
