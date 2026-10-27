@@ -1,6 +1,6 @@
 {
   "date": "2026-10-27",
-  "session": "ticket10-collection-b9454845",
+  "session": "ticket10-collection-c1aac2db",
   "port": 8896,
   "fixture": {
     "automatic_checks": false,
@@ -14,58 +14,91 @@
     "attempts": [
       {
         "attempted_at": "2026-10-27T13:00:00Z",
-        "context_id": "b907feb8-64e5-4796-96ed-ddbad5cc74df",
+        "context_id": "7b9e6de1-d06c-4dfa-ab15-e4ad5b1c351b",
         "evidence_state": "unrefreshed",
-        "id": "c85cfb00-310b-40b5-953c-692f65ab34ca",
+        "id": "65d8aeab-665f-4ce4-9449-d9081f669e6d",
         "last_good_age_seconds": 3600,
         "last_good_at": "2026-10-27T12:00:00Z",
         "next_eligible_at": "2026-10-27T13:00:00Z",
         "purpose": "discovery",
+        "query": "watch",
         "reason": "tracking_capacity_reserved:requests",
         "source": "cex",
         "state": "capped"
       },
       {
         "attempted_at": "2026-10-27T12:00:00Z",
-        "context_id": "177ac974-a670-4ff0-88b1-48d7deaceb6f",
+        "context_id": "98080796-3333-4ef6-9fb1-60711e360026",
         "evidence_state": "unrefreshed",
-        "id": "40c2eed7-9f7b-4039-ae0b-8bc279092132",
+        "id": "4ccf56fd-db0a-493b-b858-61a83e0f5935",
         "last_good_age_seconds": 3600,
         "last_good_at": "2026-10-27T12:00:00Z",
         "next_eligible_at": "2026-10-27T12:00:00Z",
         "purpose": "discovery",
+        "query": "watch",
         "reason": "connector_error",
         "source": "scan",
         "state": "failed"
       },
       {
         "attempted_at": "2026-10-27T12:00:00Z",
-        "context_id": "693a9d97-3cdb-4f3b-9466-e7e66853bc86",
+        "context_id": "03f3c59f-3974-462f-a5d6-d9042157ce98",
         "evidence_state": "observed_at_attempt",
-        "id": "b67052c2-74ab-43b5-a9a6-7a42c3674557",
+        "id": "b09042eb-34f2-4dfd-942f-1057cdb56230",
         "last_good_age_seconds": 3600,
         "last_good_at": "2026-10-27T12:00:00Z",
         "next_eligible_at": "2026-10-27T12:00:00Z",
         "purpose": "discovery",
+        "query": "watch",
         "reason": null,
         "source": "scan",
         "state": "success_empty"
       },
       {
         "attempted_at": "2026-10-27T12:00:00Z",
-        "context_id": "3e11e90e-e430-45a9-a616-7a7db9dd1128",
+        "context_id": "f6f9494b-b39b-4332-b67f-dfdb43c86ffa",
         "evidence_state": "observed_at_attempt",
-        "id": "57651f42-a0dd-4771-a43b-0a6c0404232f",
+        "id": "ea283b67-2c38-43ea-b6c7-cc707bf3bac4",
         "last_good_age_seconds": 3600,
         "last_good_at": "2026-10-27T12:00:00Z",
         "next_eligible_at": "2026-10-27T12:00:00Z",
         "purpose": "discovery",
+        "query": "watch",
         "reason": null,
         "source": "cex",
         "state": "success"
       }
     ],
-    "gates": [],
+    "gates": [
+      "live_activation_not_authorized",
+      "production_operating_envelope_unproven"
+    ],
+    "provider_usage": [
+      {
+        "limit": 4,
+        "source": "cex",
+        "tracking_reserve": 1,
+        "used": 1
+      },
+      {
+        "limit": 4,
+        "source": "scan",
+        "tracking_reserve": 1,
+        "used": 2
+      },
+      {
+        "limit": 4,
+        "source": "ebay",
+        "tracking_reserve": 1,
+        "used": 0
+      },
+      {
+        "limit": 4,
+        "source": "amazon_uk",
+        "tracking_reserve": 1,
+        "used": 0
+      }
+    ],
     "scope_id": "synthetic-finite-study",
     "state": "supplied",
     "stops_at": "2026-10-28T12:00:00Z",

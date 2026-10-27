@@ -135,6 +135,8 @@ async def acquire_sources(
                     f"Connector '{connector_id}' not found in registry. "
                     f"Available: {sorted(all_connectors.keys())}"
                 )
+            if budget and getattr(connector_class, "collection_accounting", None) not in {"http_v1", "controlled_v1"}:
+                raise AdmissionDenied("attempt_accounting_unavailable", state="blocked")
             # Build connector kwargs: merge config-file defaults, env-level credentials,
             # and per-watch config. Per-watch config takes precedence.
             config_defaults = dict(connector_defaults.get(connector_id, {}) or {})
@@ -238,8 +240,6 @@ async def acquire_sources(
                     connector_id=connector_id,
                     detail={"error": str(exc), "error_type": exc.__class__.__name__},
                 ) from exc
-            if budget and getattr(connector, "collection_accounting", None) not in {"http_v1", "controlled_v1"}:
-                raise AdmissionDenied("attempt_accounting_unavailable", state="blocked")
             if budget:
                 async with asyncio.timeout_at(deadline):
                     await connector.initialize()

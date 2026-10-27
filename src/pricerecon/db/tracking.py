@@ -197,7 +197,12 @@ def project_tracking(connection: sqlite3.Connection, intent: ExactTracking) -> E
     if has_delivery_claim(connection, intent.id):
         reasons.append("delivery_in_flight_or_interrupted")
     if reasons:
-        intent.assessment = assessment.model_copy(update={"state": "withheld", "reasons": reasons})
+        intent.assessment = assessment.model_copy(update={
+            "state": "withheld",
+            "reasons": list(dict.fromkeys(
+                (assessment.reasons if assessment.state == "withheld" else []) + reasons
+            )),
+        })
     return intent
 
 

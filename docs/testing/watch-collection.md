@@ -136,7 +136,8 @@ The accepted operating-envelope research/resolution still applies.
 Run from this checkout with the existing interpreter:
 
 ```sh
-PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
   /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python -m pytest -q \
   tests/test_collection_workflow.py tests/test_monitoring_workflow.py \
   tests/test_discovery_workflow.py tests/test_qualification_workflow.py \
