@@ -1,5 +1,10 @@
 # Ticket03: exact configuration and merchant-offer qualification
 
+**Integration acceptance is partial.** The merger found two reproducible gaps;
+ticket03 remains open and ticket04 remains blocked. The
+[merger verification](#merger-verification-2026-10-27) below supersedes any broader
+implementation claims in this historical implementer receipt.
+
 2026-10-27. Implementation checkout:
 `/Users/jay/.t3/worktrees/pricerecon/t3-4e6f8e87`, branch
 `t3/explain-offer-qualification`. Started clean at `ef86af6`; merged
@@ -199,3 +204,104 @@ pre-task value `38ab9795757655e9119022af759fe392bfb901bce1ce8175038fc6c0b73e8914
 Integration checkout was read only. The final integration tip is merged into this
 branch before handoff and its ancestry confirmed; no merge into integration or
 ticket closure was performed.
+
+## Merger verification: 2026-10-27
+
+Merger checkout: `/Users/jay/.t3/worktrees/pricerecon/watch-category-integration`,
+branch `integration/watch-category-discovery`. Integration was clean at
+`21b3b5801fccdc6b9ab85b998a64d40deecda848`; the implementation checkout was clean
+on `t3/explain-offer-qualification` at
+`2b5a167f9ae305b4dd088cf31e1dbd581d1d14cf`. The former was an ancestor of the
+latter. The scoped 20-file diff was reviewed against ticket03, the spec and
+`CONTRIBUTING.md` / `docs/engineering-standard.md`, locally without delegation.
+No new dependency, real-adapter activation, qualification write route or live
+evidence was introduced. The two behavioral findings below prevent acceptance.
+
+`git merge --no-ff 2b5a167f9ae305b4dd088cf31e1dbd581d1d14cf` produced
+`b520fb8a978cbf94dfa611f9e35c621887a4ee1d`, with parents `21b3b58` and `2b5a167`,
+without conflicts. `git diff --exit-code 2b5a167 HEAD` confirmed identical trees
+before documentation updates. Integration preserves the implementation history;
+this merge does not certify the ticket's acceptance.
+
+### Repeated integration checks
+
+- **Passed:** the documented isolated pytest command, run after frontend build
+  completion: **29 passed in 39.68s** (9 qualification, 5 discovery, all 15 legacy).
+  Existing fresh-process guards, marked temporary SQLite, controlled connectors,
+  controlled clock and captured transports were retained.
+- **Passed:** `npm test -- --run`: **25 passed**. `npm run build`: TypeScript and
+  Vite, 633 modules, main JS 632.02 kB before gzip. The existing greater-than-500-kB
+  warning remains. Existing integration `node_modules` and the documented Python
+  environment were reused; no install or dependency/lockfile change was made.
+- **Passed:** focused Ruff on qualification model/core, discovery model/core/
+  acquisition/storage/category/API, Watch executor and qualification workflow/
+  browser/fixture/harness files. Focused mypy with `--follow-imports=silent`
+  passed **12 source files**: qualification model/core, discovery model/core,
+  acquisition/storage/API, categories `__init__`/watches, Watch executor, app/schema.
+  Existing unused-override notes remain. `git diff --check 21b3b58..HEAD` passed.
+- **Blocked:** `npm run lint`, exit 2, ESLint 10.12.0: missing `eslint.config.*`.
+  No config workaround, suppression, threshold reduction or cleanup was made.
+- **Inspected retained browser proof:** linked receipt and desktop (1280px) / narrow
+  (375px) screenshots, including readable header, expanded claim and footer areas.
+  They show synthetic provenance, separate states, used/auction separation,
+  rejected dial mapping, unknown totals, missing-condition detail and abstention.
+  Driver/fixture code retains the pre-write identity check, isolated loopback
+  session, keyboard preference save/reload and no-overflow assertions. This is
+  inspection of prior browser proof, not a new browser run. The findings below
+  concern untested backend inputs; no browser concern justified repeating it.
+
+### Acceptance gaps observed through the isolated application seam
+
+Both cases were executed in one fresh process against the exact implementation
+tree using `env -i`, the documented interpreter/PYTHONPATH and
+`MonitoringHarness`, before the history-preserving merge. They used only the
+existing `synthetic_report`, `listing`, `acquire` and `get` helpers. Acquisition
+ran through normal `execute_discovery` and assertions/readback through
+`GET /api/discovery/watches`; storage was temporary. Observed isolation receipt:
+`blocked_edges=[], notifications=0`. The merge tree was identical, so no duplicate
+execution was needed. These are additional review probes, not part of the 29
+passing committed tests.
+
+1. **High: currency/context inconsistency is falsely supported.** Create
+   `synthetic_report(harness, "currency-context")`; change only the claim with
+   `field == "currency"` to `value = "USD"`. Report currency and every selected
+   claim context, including the £48 price, remain `GBP`. Supply the report and a
+   matching controlled listing, acquire, then read the API. Observed:
+   `binding=supported, offer=supported, currency=USD,
+   evidenced_price_context_currency=GBP, qualification.issues=[]`.
+   `core/qualification.py:183-194` compares accepted values to context quantity
+   and destination but omits currency; `categories/watches.py` consequently also
+   reports the price binding as supported. This violates ticket03's selected-offer
+   binding requirement before ticket04 cost work. Require explicit consistent
+   currency/context binding and an API-level regression before acceptance.
+
+2. **High: distinct unresolved configuration subjects collapse.** Create two
+   reports for listing `partial`, variations `mint` and `blue`, with corresponding
+   dial values. Give the blue report a separate `configuration_key` and update its
+   claims' context keys/IDs accordingly. Remove generation claims from both, then
+   supply both reports with one matching listing and acquire. API readback retains
+   two offers and two bindings but only **one** configuration, with dial `mint`;
+   both bindings reference that configuration ID. The blue field claims remain
+   in offer evidence, but its separate configuration resolution is lost.
+   `categories/watches.py:115-116` assigns every unresolved configuration the same
+   candidate-based fallback ID; `core/discovery.py:119-121` drops the second by ID.
+   This contradicts the receipt's claim that every selection's subject is retained
+   and can feed the wrong retained dimensions into preference evaluation. Require
+   distinct stable unresolved subjects, accurate binding/revision relations and
+   a multi-configuration API persistence regression before acceptance.
+
+Public delivered totals remained unknown and no notifications were sent in these
+probes. That withholding does not make the incorrect merchant-offer support or
+lost configuration acceptable. No implementation fix was made under this
+merger-only task. Ticket03 remains **in progress with acceptance gaps**, its full
+checklist stays open, and ticket04 remains **blocked and unclaimed**. No ticket04
+code or cost computation was implemented.
+
+The original parent checkout remained dirty with its existing file status and no
+staged changes; its tracked-diff SHA-256 before and after verification was
+`38ab9795757655e9119022af759fe392bfb901bce1ce8175038fc6c0b73e8914`.
+The implementation checkout remained clean at `2b5a167`. Only tracker/receipt
+documentation was changed after the merge. No live collection, credentials,
+accounts, production DB access, installs, delegation, cleanup, push, PR,
+deployment or activation was performed. Buyer acceptance and real source,
+retention, cost, freshness and operating gates remain unproven.

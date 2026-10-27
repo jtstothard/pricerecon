@@ -10,7 +10,7 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 | --- | --- | --- |
 | [01: Existing monitoring](issues/01-verify-existing-monitoring.md) | None | Closed |
 | [02: Candidate discovery](issues/02-discover-candidates.md) | 01 | Closed |
-| [03: Qualification](issues/03-explain-offer-qualification.md) | 02 | In progress |
+| [03: Qualification](issues/03-explain-offer-qualification.md) | 02 | In progress; acceptance gaps |
 | [04: UK delivered cost](issues/04-show-uk-delivered-cost.md) | 03 | Blocked |
 | [05: Exact tracking](issues/05-track-exact-products.md) | 04 | Blocked |
 | [06: Observation history](issues/06-show-observation-history.md) | 04 | Blocked |
@@ -43,3 +43,11 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   findings remain recorded. 03 claimed for the parent continuation; no 03
   implementation occurred. Collection remains staged and buyer/live acceptance
   remains open.
+- 2026-10-27: 03 implementation `2b5a167` integrated without conflicts in
+  history-preserving merge `b520fb8`. The merger passed 29 isolated workflows
+  (including all 15 legacy), 25 frontend tests, build and focused Ruff/mypy, and
+  inspected retained browser screenshots/receipt. Additional isolated API checks
+  found false currency/context support and collapsed unresolved configuration
+  subjects. **03 remains open; 04 remains blocked and unclaimed.** See the
+  [merger findings and verification](../../docs/testing/watch-qualification.md#merger-verification-2026-10-27).
+  No ticket04 implementation or source repair occurred; live/buyer gates remain open.
