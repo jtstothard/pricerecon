@@ -5,7 +5,7 @@ branch t3/preserve-watch-edit-intent, against its built frontend. Integration me
 is separately checking the merged source. This is agent-observed regression proof,
 not buyer usability acceptance of the future discovery workflow.
 
-Guarded fixture: monitoring_ui_server.py; MonitoringHarness temporary SQLite,
+Guarded fixture: `/Users/jay/.scratch/watch-category-discovery-implementation/monitoring_ui_server.py`; MonitoringHarness temporary SQLite,
 cleared environment, controlled connector registry/results and captured notification
 sends, paused scheduler, explicit manual checks. Seed LEGACY and disabled copy.
 App served only at 127.0.0.1:8876. Browser isolated session with empty config and
@@ -25,8 +25,7 @@ Expected and observed:
 - After reload/check, API reconfirmed title, Europe/London timezone/timewindow,
   all three notification channels with price_drop only, structured parts exclusion,
   and disabled not-a-real-source. All checks returnedtrue.
-- Browser errors output empty. Screenshot monitoring-ui-green.png retained beside
-  this receipt and visually inspected.
+- Browser errors output empty. Screenshot `/Users/jay/.scratch/watch-category-discovery-implementation/monitoring-ui-green.png` retained outside the repo and visually inspected.
 
 Browser session closed; local server stopped after verification. Offline fixture
 proof does not accept live sources or the later buyer discovery walkthrough.
