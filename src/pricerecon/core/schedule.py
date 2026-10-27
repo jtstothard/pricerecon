@@ -57,10 +57,8 @@ class TimeWindow:
 
     def is_allowed_now(self, timezone_str: str) -> bool:
         """Check if current time falls within the time window."""
-        import datetime as dt
-
         tz = ZoneInfo(timezone_str)
-        now = dt.datetime.now(tz)
+        now = datetime.now(tz)
         return self.is_allowed_at(now, timezone_str)
 
     def is_allowed_at(self, now: datetime, timezone_str: str) -> bool:
