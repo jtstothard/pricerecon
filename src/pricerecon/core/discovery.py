@@ -10,6 +10,7 @@ from pricerecon.core.acquisition import acquire_sources
 from pricerecon.core.costs import evaluate_costs
 from pricerecon.core.qualification import identity_key, qualify_offer
 from pricerecon.db.discovery import save_capture
+from pricerecon.models.assessments import ComparisonPolicy
 from pricerecon.models.coupons import CouponAssessment
 from pricerecon.models.discovery import (
     AcquisitionOutcome,
@@ -29,6 +30,7 @@ async def execute_discovery(
     *,
     admission: DiscoveryAdmission | None = None,
     tracking_policy: TrackingPolicy | None = None,
+    comparison_policy: ComparisonPolicy | None = None,
 ) -> DiscoveryCapture:
     """Normal one-shot entry point, without scheduler or live activation paths.
 
@@ -269,6 +271,12 @@ async def execute_discovery(
     from pricerecon.core.exact_tracking import evaluate_tracking_capture
 
     try:
+        from pricerecon.db.assessments import evaluate_comparisons
+
+        evaluate_comparisons(
+            comparison_policy if admission.admitted and operating is not None else None,
+            datetime.now(UTC),
+        )
         await evaluate_tracking_capture(capture.capture_id,
             policy=tracking_policy if admission.admitted and operating is not None else None)
     except AdmissionDenied as exc:

@@ -7,6 +7,7 @@ import type { ExactTracking } from '../lib/tracking'
 import { CollectionCoverage } from '../components/discovery/CollectionCoverage'
 import { IdentityCorrection } from '../components/discovery/IdentityCorrection'
 import { ObservationHistory } from '../components/discovery/ObservationHistory'
+import { PriceAssessments } from '../components/discovery/PriceAssessments'
 
 const strengthLabel = { hard: 'Hard constraint', soft: 'Soft preference', unset: 'Unset' }
 
@@ -145,7 +146,7 @@ function Candidate({ candidate, tracking, onSaved }: { candidate: DiscoveryCandi
     <div className="discovery-price">
       <div className="discovery-total">{candidate.public_total.amount === null ? 'Total unknown' : `${candidate.public_total.currency} ${candidate.public_total.amount}`}</div>
       {candidate.public_total.amount !== null && <p className="discovery-cost-state">{costStateLabel[candidate.public_total.state]} · freshness unvalidated</p>}
-      <p>Public UK delivered price</p>
+      <p>Public UK delivered price (no coupon)</p>
       {candidate.advertised_item_price !== null && <p className="discovery-item-price">
         {candidate.corrections.some(c => c.requalification === 'required') ? 'Historical item lead (withdrawn)' : 'Item lead'}: {candidate.reported_currency ?? 'currency unknown'} {candidate.advertised_item_price}
       </p>}
@@ -156,6 +157,7 @@ function Candidate({ candidate, tracking, onSaved }: { candidate: DiscoveryCandi
       intent={tracking.find(intent => intent.configuration_id === configuration.id || (intent.candidate_id === candidate.id && candidate.corrections.some(c => c.configuration_id === intent.configuration_id)))} onSaved={onSaved} />)}</div>
     <details className="discovery-evidence">
       <summary>Price and evidence</summary>
+      <PriceAssessments assessments={candidate.price_assessments} />
       <IdentityCorrection candidate={candidate} onSaved={onSaved} />
       <ObservationHistory key={`${candidate.capture_id}:${candidate.corrections.map(c => c.revision).join('-')}`} candidateId={candidate.id} />
       <div className="discovery-qualification">

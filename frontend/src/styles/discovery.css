@@ -71,3 +71,6 @@
 .identity-correction button { padding: 0.65rem; border: 1px solid var(--border); border-radius: 0.3rem; }
 .identity-correction li, .identity-correction dd { overflow-wrap: anywhere; }
 .correction-state { border-left: 3px solid #b07526; padding-left: 1rem; margin-block: 1rem; }
+.price-assessments { min-width: 0; overflow-wrap: anywhere; }
+.price-assessments details { margin-block: .75rem; }
+.price-assessments dd { margin-inline: 0; }

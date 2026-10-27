@@ -1,0 +1,56 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____ test_staleness_correction_and_same_label_policy_changes_retire_claims _____
+
+    def test_staleness_correction_and_same_label_policy_changes_retire_claims():
+>       run_assessment("invalidation")
+
+tests/test_assessment_workflow.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'invalidation', storage = None
+
+    def run_assessment(name, storage=None):
+        import os
+        import subprocess
+        import sys
+        from pathlib import Path
+    
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-m", "tests.monitoring.assessment_workflows", name]
+            + ([str(storage)] if storage else []),
+            cwd=root,
+            env={"PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                 "PYTHONDONTWRITEBYTECODE": "1"},
+            capture_output=True, text=True, timeout=45, check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Loaded 0 watches into scheduler
+E         Traceback (most recent call last):
+E           File "<frozen runpy>", line 203, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-e29f7fa4/tests/monitoring/assessment_workflows.py", line 101, in <module>
+E             asyncio.run(globals()[sys.argv[1]]())
+E             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+E             return runner.run(main)
+E                    ~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+E             return self._loop.run_until_complete(task)
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+E             return future.result()
+E                    ~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-e29f7fa4/tests/monitoring/assessment_workflows.py", line 82, in invalidation
+E             assert stale["current_best"]["state"] == "historical", stale
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E         AssertionError: {'id': '3b3e355c25d124c8ea9cc7e9d8007e23d9e6d7baf06f6d006ec904a2d5aeebe7', 'revision': 1, 'candidate_ids': ['88966f2dd11c5c49a9f0371c94f3e94328e607e024cd8a16e68be77acb445d97'], 'assessed_at': '2026-10-27T12:00:00Z', 'historical': False, 'invalidation_reasons': [], 'cohort': {'configuration': '{"case_width_mm": "36", "date_display": "no_date", "dial": "mint", "generation": "synthetic-revision-1", "maker": "Addiesdive", "movement": "VH31", "product_kind": "complete_watch", "reference": "AD2066", "strap": "steel"}', 'condition': 'new', 'condition_description': '', 'quantity': '1', 'purchase_mode': 'buy_now', 'buyer_context': '{"charge_currency": "GBP", "condition": "new", "customs_origin": "synthetic-origin", "destination_country": "GB", "destination_nation": "England", "destination_region": "synthetic-region", "dispatch_country": "GB", "dispatch_route": "synthetic-domestic", "display_currency": "GBP", "funding_currency": "GBP", "goods_location": "GB", "grouping_basis": "synthetic single seller quote", "payment_method": "synthetic-gbp-debit", "purchase_mode": "buy_now", "purchase_scope": "standalone", "quantity": 1, "seller_establishment": "GB", "shipping_service": "synthetic-standard"}', 'eligibility': 'ordinary_public_purchase'}, 'policy': {'version': 'synthetic-comparison-v1', 'max_evidence_age_seconds': 7200, 'allowed_conditions': ['new'], 'quantity': 1, 'destination_nation': 'England', 'destination_region': 'synthetic-region', 'payment_method': 'synthetic-gbp-debit', 'window_start': '2026-10-26T12:00:00Z', 'window_end': '2026-10-27T13:00:00Z', 'sources': ['cex', 'scan'], 'evidence_policies': {'identity': 'watch-identity-v1', 'selection': 'watch-selection-v1', 'offer': 'offer-comparison-v1', 'cost': 'exact-scenario-cost-v1', 'coupon': 'exact-coupon-v1'}}, 'policy_fingerprint': '1fa3dca83d32c93b362e454596f372743619e47a791bc32748207d2e52d1b5b4', 'method': 'qualified-payable-minimum-v1', 'current_best': {'state': 'supported', 'amount': '70.10', 'currency': 'GBP', 'reason': 'Lowest verified total among the offers checked.', 'observation_count': 1, 'paths': [{'candidate_id': '88966f2dd11c5c49a9f0371c94f3e94328e607e024cd8a16e68be77acb445d97', 'capture_id': '8a50770e-97bb-4714-99ab-fd2d80156369', 'observation_id': '8a50770e-97bb-4714-99ab-fd2d80156369:f463d990ef4be70fe0f653112643efd2546c493ff1ac2f8bae45e7c7e9d0f8bd:1', 'observed_at': '2026-10-27T12:00:00Z', 'amount': '70.10', 'scenario_kind': 'public_no_coupon', 'offer_key': '6ddee9b22f9b56772e4f45f6535777f73802f7e95436a1130a23b329d41dd0e0', 'dependencies': [{'kind': 'offer', 'id': 'f463d990ef4be70fe0f653112643efd2546c493ff1ac2f8bae45e7c7e9d0f8bd', 'revision': 1}, {'kind': 'binding', 'id': '4c67ccb6877c67733b3d6ebe67bf1c7b2ccfe8af5808fbd12fb4a0aa1fed98cf', 'revision': 1}, {'kind': 'configuration', 'id': '59c72dc2203cb6fc29b450eddc15b7660654da5d87012c6e32cbccb1973f5ab7', 'revision': 1}, {'kind': 'cost', 'id': '5bed35492061b317ea35284b341b5a8b37f9b91870236cf180b0b1e6a8f31bc5', 'revision': 1}], 'policies': {'identity': 'watch-identity-v1', 'selection': 'watch-selection-v1', 'offer': 'offer-comparison-v1', 'cost': 'exact-scenario-cost-v1'}, 'valid_until': '2026-10-27T14:00:00Z', 'evidence_ids': ['assessment:configuration:case_width_mm', 'assessment:configuration:date_display', 'assessment:configuration:dial', 'assessment:configuration:generation', 'assessment:configuration:maker', 'assessment:configuration:movement', 'assessment:configuration:product_kind', 'assessment:configuration:reference', 'assessment:configuration:strap', 'assessment:offer:availability', 'assessment:offer:condition', 'assessment:offer:currency', 'assessment:offer:destination', 'assessment:offer:item_price', 'assessment:offer:purchase_mode', 'assessment:offer:quantity', 'assessment:offer:seller', 'assessment:selection:case_width_mm', 'assessment:selection:date_display', 'assessment:selection:dial', 'assessment:selection:generation', 'assessment:selection:maker', 'assessment:selection:movement', 'assessment:selection:product_kind', 'assessment:selection:reference', 'assessment:selection:strap', 'synthetic:assessment:carrier_fee', 'synthetic:assessment:context', 'synthetic:assessment:duty', 'synthetic:assessment:import_tax', 'synthetic:assessment:item', 'synthetic:assessment:merchant_fee', 'synthetic:assessment:merchant_tax', 'synthetic:assessment:payment_fee', 'synthetic:assessment:shipping'], 'synthetic': True}]}, 'observed_low': {'state': 'supported', 'amount': '70.10', 'currency': 'GBP', 'reason': 'Lowest of these retained observations within the disclosed dates.', 'observation_count': 1, 'paths': [{'candidate_id': '88966f2dd11c5c49a9f0371c94f3e94328e607e024cd8a16e68be77acb445d97', 'capture_id': '8a50770e-97bb-4714-99ab-fd2d80156369', 'observation_id': '8a50770e-97bb-4714-99ab-fd2d80156369:f463d990ef4be70fe0f653112643efd2546c493ff1ac2f8bae45e7c7e9d0f8bd:1', 'observed_at': '2026-10-27T12:00:00Z', 'amount': '70.10', 'scenario_kind': 'public_no_coupon', 'offer_key': '6ddee9b22f9b56772e4f45f6535777f73802f7e95436a1130a23b329d41dd0e0', 'dependencies': [{'kind': 'offer', 'id': 'f463d990ef4be70fe0f653112643efd2546c493ff1ac2f8bae45e7c7e9d0f8bd', 'revision': 1}, {'kind': 'binding', 'id': '4c67ccb6877c67733b3d6ebe67bf1c7b2ccfe8af5808fbd12fb4a0aa1fed98cf', 'revision': 1}, {'kind': 'configuration', 'id': '59c72dc2203cb6fc29b450eddc15b7660654da5d87012c6e32cbccb1973f5ab7', 'revision': 1}, {'kind': 'cost', 'id': '5bed35492061b317ea35284b341b5a8b37f9b91870236cf180b0b1e6a8f31bc5', 'revision': 1}], 'policies': {'identity': 'watch-identity-v1', 'selection': 'watch-selection-v1', 'offer': 'offer-comparison-v1', 'cost': 'exact-scenario-cost-v1'}, 'valid_until': '2026-10-27T14:00:00Z', 'evidence_ids': ['assessment:configuration:case_width_mm', 'assessment:configuration:date_display', 'assessment:configuration:dial', 'assessment:configuration:generation', 'assessment:configuration:maker', 'assessment:configuration:movement', 'assessment:configuration:product_kind', 'assessment:configuration:reference', 'assessment:configuration:strap', 'assessment:offer:availability', 'assessment:offer:condition', 'assessment:offer:currency', 'assessment:offer:destination', 'assessment:offer:item_price', 'assessment:offer:purchase_mode', 'assessment:offer:quantity', 'assessment:offer:seller', 'assessment:selection:case_width_mm', 'assessment:selection:date_display', 'assessment:selection:dial', 'assessment:selection:generation', 'assessment:selection:maker', 'assessment:selection:movement', 'assessment:selection:product_kind', 'assessment:selection:reference', 'assessment:selection:strap', 'synthetic:assessment:carrier_fee', 'synthetic:assessment:context', 'synthetic:assessment:duty', 'synthetic:assessment:import_tax', 'synthetic:assessment:item', 'synthetic:assessment:merchant_fee', 'synthetic:assessment:merchant_tax', 'synthetic:assessment:payment_fee', 'synthetic:assessment:shipping'], 'synthetic': True}]}, 'usual_price': {'state': 'unavailable', 'amount': None, 'currency': 'GBP', 'reason': 'Usual obtainable price unavailable: no accepted empirical calibration.', 'observation_count': 0, 'paths': []}, 'personal_price': {'state': 'unavailable', 'amount': None, 'currency': 'GBP', 'reason': 'Personal eligibility and comparable personal history unsupported.', 'observation_count': 0, 'paths': []}, 'savings': None, 'coverage': {'sources': ['cex', 'scan'], 'unchecked_sources': ['scan'], 'capture_ids': ['8a50770e-97bb-4714-99ab-fd2d80156369'], 'gaps': [], 'reason': 'Lowest among qualified offers checked in this scope only. Intervals are unobserved; no continuous availability, complete market or all-time claim.'}, 'exclusions': []}
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-e29f7fa4/.venv/bin/python', '-m', 'tests.monitoring.ass...y. Intervals are unobserved; no continuous availability, complete market or all-time claim.\'}, \'exclusions\': []}\n').returncode
+
+tests/test_assessment_workflow.py:18: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_assessment_workflow.py::test_staleness_correction_and_same_label_policy_changes_retire_claims
+1 failed, 1 deselected in 0.75s

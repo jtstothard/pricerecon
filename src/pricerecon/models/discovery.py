@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from pricerecon.models.assessments import PriceAssessment
 from pricerecon.models.corrections import CorrectionHistory
 from pricerecon.models.costs import PublicCostSummary
 from pricerecon.models.history import HistorySummary
@@ -155,6 +156,7 @@ class PreferenceFit(DiscoveryModel):
 
 
 class DiscoveryCandidate(DiscoveryModel):
+    price_assessments: list[PriceAssessment] = Field(default_factory=list)
     corrections: list[CorrectionHistory] = Field(default_factory=list)
     history: HistorySummary = Field(default_factory=HistorySummary)
     id: str

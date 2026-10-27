@@ -163,7 +163,13 @@ def format_message(
         return (
             f"📢 {listing.get('delivered_gbp')} GBP verified UK delivered · {escape(watch_name)}\n"
             f"Target £{listing.get('target_gbp')} · {listing.get('reason')}\n"
-            f"Evidence at {listing.get('observed_at')} · {escape(str(listing.get('url') or 'No public link'))}"
+            + (
+                f"Verified public coupon: {escape(str(listing.get('coupon_codes')))}; "
+                f"no-coupon base £{listing.get('base_delivered_gbp')}\n"
+                if listing.get("scenario_kind") == "public_coupon"
+                else ""
+            )
+            + f"Evidence at {listing.get('observed_at')} · {escape(str(listing.get('url') or 'No public link'))}"
         )
     emoji_by_event = {
         EventType.NEW_LISTING: "🆕",
@@ -332,8 +338,11 @@ async def dispatch_notifications(
         # Log the notification attempt
         if attempt_id is None:
             _log_notification(
-                event_id=event_id, channel=channel, status="sent" if success else "failed",
-                message=message, error_message=error_message,
+                event_id=event_id,
+                channel=channel,
+                status="sent" if success else "failed",
+                message=message,
+                error_message=error_message,
             )
         else:
             conn = get_db()
@@ -364,12 +373,14 @@ def _claim_notification(event_id: int, channel: str, key: str, message: str) -> 
             if not target_delivery_valid(conn, event_id):
                 conn.execute(
                     "INSERT OR IGNORE INTO notifications(event_id,channel,status,message,delivery_key) "
-                    "VALUES (?,?,'withheld',?,?)", (event_id, channel, message, key),
+                    "VALUES (?,?,'withheld',?,?)",
+                    (event_id, channel, message, key),
                 )
                 return None
             cursor = conn.execute(
                 "INSERT OR IGNORE INTO notifications(event_id,channel,status,message,delivery_key) "
-                "VALUES (?,?,'dispatching',?,?)", (event_id, channel, message, key),
+                "VALUES (?,?,'dispatching',?,?)",
+                (event_id, channel, message, key),
             )
             return cursor.lastrowid if cursor.rowcount else None
     finally:

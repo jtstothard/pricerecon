@@ -10,6 +10,7 @@ from pricerecon.db.discovery import (
     get_preferences,
     save_preferences,
 )
+from pricerecon.models.assessments import AssessmentList
 from pricerecon.models.collection import CollectionStatus
 from pricerecon.models.costs import CostHistory
 from pricerecon.models.coupons import CouponHistory
@@ -17,6 +18,13 @@ from pricerecon.models.discovery import DiscoveryFeed, PreferenceProfile, Prefer
 from pricerecon.models.history import ObservationHistory
 
 router = APIRouter()
+
+
+@router.get("/discovery/assessments", response_model=AssessmentList)
+async def price_assessments() -> AssessmentList:
+    from pricerecon.db.assessments import get_assessments
+
+    return get_assessments()
 
 
 @router.get("/discovery/watches", response_model=DiscoveryFeed)

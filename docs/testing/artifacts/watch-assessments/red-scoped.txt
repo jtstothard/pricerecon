@@ -1,0 +1,57 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__ test_scoped_best_and_dated_low_are_independent_of_unavailable_usual_price ___
+
+    def test_scoped_best_and_dated_low_are_independent_of_unavailable_usual_price():
+>       run_assessment("scoped")
+
+tests/test_assessment_workflow.py:25: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'scoped', storage = None
+
+    def run_assessment(name, storage=None):
+        import os
+        import subprocess
+        import sys
+        from pathlib import Path
+    
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-m", "tests.monitoring.assessment_workflows", name]
+            + ([str(storage)] if storage else []),
+            cwd=root,
+            env={"PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                 "PYTHONDONTWRITEBYTECODE": "1"},
+            capture_output=True, text=True, timeout=45, check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Loaded 0 watches into scheduler
+E         Traceback (most recent call last):
+E           File "<frozen runpy>", line 203, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-e29f7fa4/tests/monitoring/assessment_workflows.py", line 71, in <module>
+E             asyncio.run(globals()[sys.argv[1]]())
+E             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+E             return runner.run(main)
+E                    ~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+E             return self._loop.run_until_complete(task)
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+E             return future.result()
+E                    ~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-e29f7fa4/tests/monitoring/assessment_workflows.py", line 47, in scoped
+E             supplied = policy(harness)
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-e29f7fa4/tests/monitoring/assessment_workflows.py", line 13, in policy
+E             from pricerecon.models.assessments import ComparisonPolicy
+E         ModuleNotFoundError: No module named 'pricerecon.models.assessments'
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-e29f7fa4/.venv/bin/python', '-m', 'tests.monitoring.ass....models.assessments import ComparisonPolicy\nModuleNotFoundError: No module named \'pricerecon.models.assessments\'\n').returncode
+
+tests/test_assessment_workflow.py:21: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_assessment_workflow.py::test_scoped_best_and_dated_low_are_independent_of_unavailable_usual_price
+1 failed in 0.81s

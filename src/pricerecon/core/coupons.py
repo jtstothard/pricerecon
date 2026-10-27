@@ -1,10 +1,11 @@
 """Coupon evidence assessment. Never collect, redeem, or invent discount arithmetic."""
 
 import hashlib
+from collections.abc import Sequence
 
 from pricerecon.core.costs import basket_allocation_issues, evaluate_cost, evidence_issue
 from pricerecon.core.qualification import identity_key
-from pricerecon.models.costs import CostEvidence, CostScenarioInput
+from pricerecon.models.costs import CostEvidence, CostScenario, CostScenarioInput
 from pricerecon.models.coupons import CouponApplicationLineage, CouponAssessment
 from pricerecon.models.qualification import (
     MerchantEvidenceReport,
@@ -12,6 +13,38 @@ from pricerecon.models.qualification import (
     SelectionBinding,
     safe_pointer,
 )
+
+
+def public_cost_paths(
+    offer: MerchantOffer,
+    allowed: Sequence[str],
+) -> list[tuple[CostScenario, CouponAssessment | None]]:
+    """Use the coupon owner's reproduced payable; never subtract a benefit here."""
+    paths: list[tuple[CostScenario, CouponAssessment | None]] = [
+        (c, None)
+        for c in offer.cost_scenarios
+        if c.kind == "public_no_coupon" and c.kind in allowed
+    ]
+    if "public_coupon" in allowed:
+        for coupon in offer.coupons:
+            terms, eligibility = coupon.terms, coupon.eligibility
+            if (
+                coupon.category == "public"
+                and coupon.state == "reproduced_at_observation"
+                and not coupon.issues
+                and coupon.lineage == "observation_only"
+                and coupon.resulting_cost is not None
+                and coupon.application is not None
+                and coupon.application.receipt is not None
+                and terms is not None
+                and eligibility is not None
+                and terms.channel in {"any", "web"}
+                and eligibility.channel == "web"
+                and terms.membership == terms.new_customer == "not_required"
+                and terms.redemption == "public_no_activation"
+            ):
+                paths.append((coupon.resulting_cost, coupon))
+    return paths
 
 
 def check_evidence(coupon: CouponAssessment, evidence: list[CostEvidence], label: str) -> None:

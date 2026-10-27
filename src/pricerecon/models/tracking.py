@@ -59,6 +59,11 @@ class TrackingAssessment(TrackingModel):
     configuration_revision: int | None = None
     scenario_id: str | None = None
     scenario_revision: int | None = None
+    coupon_id: str | None = None
+    coupon_revision: int | None = None
+    coupon_fingerprint: str | None = None
+    base_scenario_id: str | None = None
+    base_scenario_revision: int | None = None
     delivered_gbp: Decimal | None = Field(default=None, ge=0, allow_inf_nan=False)
 
 
@@ -92,6 +97,9 @@ class TrackingPolicy(TrackingModel):
     destination_nation: Token
     destination_region: Token
     payment_method: Token
+    allowed_scenario_kinds: list[Literal["public_no_coupon", "public_coupon"]] = Field(
+        default_factory=lambda: ["public_no_coupon"], min_length=1
+    )
 
 
 class TrackingDelivery(TrackingModel):
