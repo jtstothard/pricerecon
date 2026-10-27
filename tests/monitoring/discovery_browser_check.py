@@ -25,7 +25,9 @@ def main():
     )
     parser.add_argument("--qualification", action="store_true")
     parser.add_argument("--costs", action="store_true")
-    parser.add_argument("--history", action="store_true")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--coupons", action="store_true")
+    mode.add_argument("--history", action="store_true")
     args = parser.parse_args()
     args.artifacts.mkdir(exist_ok=True)
     config = args.artifacts / "config.json"
@@ -60,11 +62,15 @@ def main():
         command("set", "viewport", "1280", "900")
         fixture = evaluate('fetch("/api/offline-verification").then(response => response.json())')
         assert fixture["fixture"] == (
-            "ticket06-history-ui"
+            "ticket09-coupon-ui"
+            if args.coupons
+            else "ticket06-history-ui"
             if args.history
             else "ticket04-cost-ui"
             if args.costs
-            else "ticket03-qualification-ui" if args.qualification else "ticket02-discovery-ui"
+            else "ticket03-qualification-ui"
+            if args.qualification
+            else "ticket02-discovery-ui"
         ), fixture
         assert fixture["temporary_storage"] is True, fixture
         assert fixture["automatic_checks"] is False, fixture
@@ -82,12 +88,13 @@ def main():
         assert evaluate('document.querySelectorAll(".discovery-picture svg").length') == 5
         assert evaluate('document.querySelectorAll(".discovery-row img").length') == 0
         assert evaluate('document.querySelectorAll(".discovery-total").length') == 5
-        if args.costs:
+        if args.costs or args.coupons:
             assert evaluate(
                 'Array.from(document.querySelectorAll(".discovery-total")).some(e => e.textContent.includes("GBP 50.10"))'
             )
             assert evaluate('document.body.textContent.includes("Verified at observation")')
-            assert evaluate('document.body.textContent.includes("Conditional")')
+            if args.costs:
+                assert evaluate('document.body.textContent.includes("Conditional")')
         else:
             assert evaluate(
                 'Array.from(document.querySelectorAll(".discovery-total")).every(e => e.textContent === "Total unknown")'
@@ -107,6 +114,52 @@ def main():
         assert evaluate('document.querySelector("#discovery-budget").value') == "120.25"
         assert evaluate('document.querySelector("#discovery-colours").value') == "mint, salmon"
         assert evaluate('document.querySelectorAll(".discovery-row").length') == 5
+        if args.coupons:
+            command(
+                "click",
+                ".discovery-row:has(h2:text-is('Addiesdive AD2066 mint')) > details > summary",
+            )
+            command(
+                "click",
+                ".discovery-row:has(h2:text-is('Addiesdive AD2066 mint')) .discovery-coupons > summary",
+            )
+            assert evaluate('document.body.innerText.includes("Reproduced at observation")')
+            assert evaluate('document.body.innerText.includes("GBP 45.10")')
+            assert evaluate('document.body.innerText.includes("TEN")')
+            assert evaluate('document.body.innerText.includes("Minimum spend")')
+            assert evaluate('document.body.innerText.includes("Synthetic checkout evidence")')
+            command(
+                "click",
+                ".discovery-row:has(h2:text-is('Addiesdive AD2066 mint')) .discovery-coupons .discovery-costs > summary",
+            )
+            assert evaluate('document.body.innerText.includes("Merchant payable: GBP 45.10")')
+            assert evaluate('document.body.innerText.includes("Known subtotal: GBP 45.10")')
+            command(
+                "click", ".discovery-row:has(h2:text-is('San Martin SN0144')) > details > summary"
+            )
+            command(
+                "click",
+                ".discovery-row:has(h2:text-is('San Martin SN0144')) .discovery-coupons > summary",
+            )
+            assert evaluate(
+                'document.body.innerText.includes("No verified applicable public coupon in supplied acquisition evidence")'
+            )
+            assert evaluate('document.body.innerText.includes("Unverified opportunity")')
+            assert evaluate('document.body.innerText.includes("terms_missing")')
+            command(
+                "click",
+                ".discovery-row:has(h2:text-is('Casio MTP-B145D-2A2VEF')) > details > summary",
+            )
+            command(
+                "click",
+                ".discovery-row:has(h2:text-is('Casio MTP-B145D-2A2VEF')) .discovery-coupons > summary",
+            )
+            assert evaluate(
+                'Array.from(document.querySelectorAll(".discovery-row")).find(e => e.querySelector("h2").innerText === "Casio MTP-B145D-2A2VEF").innerText.includes("No verified applicable public coupon in supplied acquisition evidence")'
+            )
+            assert evaluate(
+                'Array.from(document.querySelectorAll(".discovery-total")).filter(e => e.innerText.includes("GBP 50.10")).length === 3'
+            )
         if args.qualification:
             assert evaluate('document.querySelectorAll(".discovery-qualification").length') == 5
             command(
@@ -182,6 +235,11 @@ def main():
             )
             command("screenshot", str(args.artifacts / "desktop-costs.png"))
         command("screenshot", str(args.artifacts / "desktop.png"), "--full")
+        if args.coupons:
+            evaluate(
+                "Array.from(document.querySelectorAll('.discovery-row')).find(row => row.querySelector('h2').textContent === 'Addiesdive AD2066 mint').querySelector('.discovery-coupons').scrollIntoView({block: 'start'})"
+            )
+            command("screenshot", str(args.artifacts / "desktop-coupons.png"))
         command("set", "viewport", "375", "812")
         if args.costs:
             evaluate(
@@ -189,6 +247,11 @@ def main():
             )
             command("screenshot", str(args.artifacts / "narrow-costs.png"))
         command("screenshot", str(args.artifacts / "narrow.png"), "--full")
+        if args.coupons:
+            evaluate(
+                "Array.from(document.querySelectorAll('.discovery-row')).find(row => row.querySelector('h2').textContent === 'Addiesdive AD2066 mint').querySelector('.discovery-coupons').scrollIntoView({block: 'start'})"
+            )
+            command("screenshot", str(args.artifacts / "narrow-coupons.png"))
         assert evaluate("document.documentElement.scrollWidth <= window.innerWidth")
         command("click", "button[aria-label='Open menu']")
         command("click", ".mobile-nav-panel a[href='/']")
@@ -198,7 +261,9 @@ def main():
         receipt = {
             "result": "passed",
             "fixture": (
-                "synthetic verified / conditional / unknown costs; Militado/Merkur abstain"
+                "synthetic reproduced public coupon / advertised opportunity / complete no-coupon; Militado/Merkur abstain"
+                if args.coupons
+                else "synthetic verified / conditional / unknown costs; Militado/Merkur abstain"
                 if args.costs
                 else (
                     "five named synthetic cases; Militado/Merkur abstain"
@@ -226,6 +291,17 @@ def main():
                 ),
             ],
             "cost_workflow": args.costs,
+            "coupon_workflow": args.coupons,
+            "coupon_gates": [
+                "separate GBP 45.10 synthetic receipt",
+                "complete payable GBP 45.10",
+                "public no-coupon GBP 50.10 unchanged",
+                "terms and eligibility",
+                "unverified opportunity",
+                "empty checked coupon scope",
+            ]
+            if args.coupons
+            else [],
             "viewports": ["1280x900", "375x812"],
             "cost_gates": (
                 [

@@ -1,0 +1,30 @@
+{
+  "result": "passed",
+  "fixture": "synthetic reproduced public coupon / advertised opportunity / complete no-coupon; Militado/Merkur abstain",
+  "fixture_identity_checked_before_writes": true,
+  "gates": [
+    "image-led feed",
+    "keyboard save",
+    "preferences survive reload",
+    "expanded evidence",
+    "375px no overflow",
+    "legacy queue navigation"
+  ],
+  "cost_workflow": false,
+  "coupon_workflow": true,
+  "coupon_gates": [
+    "separate GBP 45.10 synthetic receipt",
+    "complete payable GBP 45.10",
+    "public no-coupon GBP 50.10 unchanged",
+    "terms and eligibility",
+    "unverified opportunity",
+    "empty checked coupon scope"
+  ],
+  "viewports": [
+    "1280x900",
+    "375x812"
+  ],
+  "cost_gates": [],
+  "buyer_acceptance": "unproven",
+  "live_acquisition": "not attempted"
+}
