@@ -185,3 +185,107 @@ invented. Local commits/merges alone are authorized for this implementation.
   source had landed in integration, so no conflicts or combined sibling changes
   required repair. `git diff --check` passed. Ticket status/closure is left to
   the parent merger.
+
+## Merger verification — 2026-10-27
+
+**Ticket06 remains open: derived re-extraction can count as a new supported
+observation.** No production repair was attempted in this merger-only pass.
+
+### Integration identity and scope
+
+Both the integration checkout and source checkout were clean before merging.
+Integration branch `integration/watch-category-discovery` was at
+`375a4a474a77e374f95d5c1318445f44860c0733`, also the source commit's direct
+parent. Source branch `t3/observation-history` was at the requested
+`e47d47a62b05313c29b9849ec0c3018514edc8a7`. The history-preserving `--no-ff`
+merge completed without conflicts as
+`bd5a3fb5479e30927018c5e84414e38a6b2df042`, with those integration/source
+commits as its two parents. No conflict resolution or sibling implementation
+was needed. The original dirty parent was not edited; tickets05/09 and their
+implementer checkouts were not changed.
+
+### Checks and retained proof
+
+- **Passed:** the exact cleared-environment five-file pytest command above:
+  **55 passed in 68.99s**, comprising all **48 baseline workflows** and all
+  seven history workflows. No test was removed, skipped or weakened.
+- **Passed:** focused Ruff on the receipt's 15 changed source/harness files,
+  plus the new merger probe; mypy `--follow-imports=silent` on the eight changed
+  source files excluding the schema bootstrap. Only existing unused-override
+  notes appeared. The source receipt's unchanged schema-bootstrap Ruff findings
+  and prior ESLint configuration gap remain recorded, not repaired.
+- **Passed:** `git diff --check`. Exact merged frontend and browser
+  driver/server/fixture comparison against source HEAD was empty. Its retained
+  **25 frontend tests and production build** were accepted without repeating
+  them: no conflict resolution, sibling changes or frontend concern affected
+  that proof.
+- **Inspected retained actual-browser proof:** the linked desktop/narrow PNGs,
+  JSON receipt and guarded driver. They show limited synthetic history,
+  unavailable usual price, no savings, dated initial/unchanged/rise/drop states,
+  age, context and policies, source/gap distinctions, reload and narrow layout.
+  This merger did not run another browser session or claim buyer acceptance.
+- **Reviewed and exercised:** historical offers/costs hydrate by exact retained
+  revisions; source attempts remain separate from observations and legacy
+  snapshots/events. The three-process migration/restart workflow preserves
+  legacy watches, paused state, listings, events and the seeded legacy history
+  row; old captures stay unqualified. Exact cost-revision withdrawal survives
+  restart with original offers, costs and dependencies intact. Cold start and
+  synthetic evidence continue to withhold usual price and savings.
+
+### Reproduced acceptance gap: derived capture identity
+
+The ownership index in `db/history.py` keys price/availability claims by their
+immediate `capture_id` and merchant/product/variation context. It retains
+`derived_from` in the exposed lineage but does not consult that lineage when
+deciding duplicate ownership.
+
+The additional [guarded API probe](../../tests/monitoring/history_merger_probe.py)
+first acquires a supported synthetic offer. An hour later it submits an exact
+copy with new extraction capture IDs, explicitly setting every claim's
+`derived_from` to the original acquisition capture. Values, observation times
+and purchase context stay unchanged; retrieval/extractor metadata identify the
+new extraction. The normal execution seam accepts both reports.
+
+**Expected:** retain the copied record and provenance, but identify the original
+observation as its owner and withhold independent qualification.
+
+**Observed:** the copy has `validity: supported_at_capture`, `change: unchanged`
+and `duplicate_of: null`, despite its lineage naming the retained original.
+The initial original remains unchanged. Last-good age remains 3600 seconds;
+usual price/savings remain unavailable/null. Thus the defect concerns capture
+independence, not an observed age refresh or current savings claim. All evidence
+is synthetic and remains ineligible as real market history. Zero outgoing edge
+attempts and zero sends were recorded.
+
+The inline diagnostic and retained module independently reproduced the same
+assertion failure. [Recorded failure](artifacts/watch-history/merger-derived-copy.json).
+Reproduce from integration using existing dependencies only (exit **1** is the
+current failure; no pytest suite is modified):
+
+```sh
+env -i PATH=/opt/homebrew/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  -m tests.monitoring.history_merger_probe \
+  /tmp/pricerecon-ticket06-derived-copy.json
+```
+
+A repair must account for original price/availability acquisition lineage while
+preserving genuinely fresh offer acquisitions that reuse retained configuration
+and selection definitions. The existing retained-definitions workflow is a
+necessary regression boundary; do not classify all shared definition evidence
+as duplicated price evidence.
+
+### Acceptance and next dependency state
+
+**06 stays open for repair.** Tickets05 and09 remain parallel in-progress work;
+this pass neither implements nor closes them. Ticket07 remains **blocked** by
+05 and06; closing06 alone later will not release07 while05 is open. No correction
+workflow or other dependent implementation is claimed.
+
+Collection remains staged. Source access/retention, real longitudinal evidence,
+freshness/cadence calibration, live proof, buyer acceptance and activation remain
+unproven separate gates. No installs, network/live acquisition, credentials,
+accounts, production database access, activation, deployment, push, PR,
+delegation or unrelated cleanup occurred. Only the local merge, retained probe,
+receipt and tracker updates were made.

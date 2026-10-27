@@ -13,7 +13,7 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 | [03: Qualification](issues/03-explain-offer-qualification.md) | 02 | Closed |
 | [04: UK delivered cost](issues/04-show-uk-delivered-cost.md) | 03 | Closed |
 | [05: Exact tracking](issues/05-track-exact-products.md) | 04 | In progress |
-| [06: Observation history](issues/06-show-observation-history.md) | 04 | In progress |
+| [06: Observation history](issues/06-show-observation-history.md) | 04 | Open — repair required |
 | [07: Corrections](issues/07-correct-identities.md) | 05, 06 | Blocked |
 | [08: Comparisons](issues/08-compare-qualified-offers.md) | 07 | Blocked |
 | [09: Public coupons](issues/09-evaluate-public-coupons.md) | 04 | In progress |
@@ -25,7 +25,7 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 
 Work is limited to source implementation and deterministic offline verification with isolated storage and controlled external edges. The buyer explicitly authorised local commits/merges for this continuation, overriding the older issue-level prohibition. No live collection, accounts, production database, activation, deployment, purchases, pushes or PRs are authorised.
 
-Ticket 01 source was integrated on 2026-10-27 in merge `a0e5c1a612252c61a62eabc7b56ebc3b3297ed85`, preserving implementer HEAD `9312871f269137d7b98ba7155d9523350e41e62e`. The subsequent rendered-form preservation repair was integrated in merge `3243c8f00e3f9dd9efde79327b6905eb3d4354b2`, preserving implementer HEAD `534cecaece62e30f50c680b40af5b4c7f561b6e4`. Integration checks passed **15 isolated workflow tests**, **25 frontend tests** and the frontend build. The parent subsequently passed the rendered edit/save/reload/manual-check regression. Tickets 01–04 are now closed for their offline scope. Tickets05/06/09 are READY and unclaimed for parent dispatch. See the dated resolution log below and the [repair integration receipt](issues/01-verify-existing-monitoring.md#preservation-repair-integration-receipt-2026-10-27).
+Ticket 01 source was integrated on 2026-10-27 in merge `a0e5c1a612252c61a62eabc7b56ebc3b3297ed85`, preserving implementer HEAD `9312871f269137d7b98ba7155d9523350e41e62e`. The subsequent rendered-form preservation repair was integrated in merge `3243c8f00e3f9dd9efde79327b6905eb3d4354b2`, preserving implementer HEAD `534cecaece62e30f50c680b40af5b4c7f561b6e4`. Integration checks passed **15 isolated workflow tests**, **25 frontend tests** and the frontend build. The parent subsequently passed the rendered edit/save/reload/manual-check regression. Tickets 01–04 are now closed for their offline scope. Tickets05/09 remain in progress; ticket06 remains open for the derived-capture repair documented below. Ticket07 remains blocked by05/06. See the dated resolution log below and the [repair integration receipt](issues/01-verify-existing-monitoring.md#preservation-repair-integration-receipt-2026-10-27).
 
 Actual buyer walkthrough feedback, current source rights, live offer/history/cost proof, finite operating limits and named maintenance ownership cannot be fabricated by passing fixture tests. Keep these gates explicit in the final receipt.
 
@@ -90,3 +90,17 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   Source/live/legal/retention/freshness/comparison/alert/buyer and activation
   gates remain separate; collection stays staged and original dirty parent is
   preserved.
+
+- 2026-10-27: 06 source `e47d47a` integrated without conflicts in
+  history-preserving merge `bd5a3fb`, with parents `375a4a4` and `e47d47a`.
+  All **55 isolated workflows** passed, including all **48 baseline**, with
+  focused Ruff and eight-source mypy. Unchanged merged frontend/browser code
+  matched the source receipt; its 25 frontend tests/build were retained and
+  actual desktop/narrow browser artifacts inspected. An extra guarded API probe
+  reproduced a derived re-extraction being counted as a new supported observation
+  despite naming the original capture in its lineage. **06 remains open for
+  repair; 07 remains blocked by05/06.** Corrected07's stale ready status; no07
+  work was claimed. **05/09 remain in progress and untouched.** See the
+  [merger receipt and reproducer](../../docs/testing/watch-history.md#merger-verification--2026-10-27).
+  No production repair or dependent implementation occurred. Collection stays
+  staged; source/live/history/buyer/activation gates remain separate and open.
