@@ -2,7 +2,7 @@
 
 import sqlite3
 
-from pricerecon.db.corrections import is_withdrawn, read_corrections
+from pricerecon.db.corrections import correction_binding_ids, is_withdrawn, read_corrections
 from pricerecon.models.corrections import CorrectionHistory
 from pricerecon.models.costs import CostEvidence, CostScenario
 from pricerecon.models.discovery import DiscoveryCandidate
@@ -32,11 +32,20 @@ def project_candidate(connection: sqlite3.Connection, candidate: DiscoveryCandid
             ResolutionIssue(field="identity", code="identity_correction_requires_requalification")
         ],
     )
+    disputed_bindings = {
+        identity
+        for correction in candidate.corrections
+        if correction.state == "disputed"
+        for identity in correction_binding_ids(connection, correction)
+    }
     for configuration in candidate.configurations:
         if is_withdrawn(connection, "configuration", configuration.id, configuration.revision):
             configuration.state = (
                 "conflicting"
-                if any(c.state == "disputed" for c in candidate.corrections)
+                if any(
+                    b.id in disputed_bindings and b.configuration_id == configuration.id
+                    for b in candidate.bindings
+                )
                 else "unresolved"
             )
             configuration.issues.extend(withdrawn.issues)
@@ -55,7 +64,7 @@ def project_candidate(connection: sqlite3.Connection, candidate: DiscoveryCandid
     ):
         candidate.identity_state = (
             "conflicting"
-            if any(c.state == "disputed" for c in candidate.corrections)
+            if any(c.state == "conflicting" for c in candidate.configurations)
             else "unresolved"
         )
 
@@ -63,7 +72,7 @@ def project_candidate(connection: sqlite3.Connection, candidate: DiscoveryCandid
 def compatible_fresh_candidate(
     candidate: DiscoveryCandidate, correction: "CorrectionHistory"
 ) -> bool:
-    """Human intent cannot supply a selected SKU, temporal capture or payable proof."""
+    """Check one scoped dependency path; intent never supplies merchant proof."""
     from pricerecon.categories.watches import configuration_matches_values
 
     if correction.state == "disputed" or not correction.lineage:

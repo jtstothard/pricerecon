@@ -322,6 +322,8 @@ def invalidate_configuration_tracking(
     connection: sqlite3.Connection,
     configuration_id: str,
     reason: str,
+    *,
+    candidate_id: str | None = None,
 ) -> None:
     """Ticket07 seam: caller holds BEGIN IMMEDIATE with its correction writes.
 
@@ -334,6 +336,8 @@ def invalidate_configuration_tracking(
         (configuration_id,),
     ):
         intent = ExactTracking.model_validate_json(row[0])
+        if candidate_id is not None and intent.candidate_id != candidate_id:
+            continue
         if has_delivery_claim(connection, intent.id):
             raise TrackingConflict()
         intent.invalidation_revision += 1

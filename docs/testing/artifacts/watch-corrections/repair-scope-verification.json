@@ -1,0 +1,123 @@
+{
+  "recorded_at_utc": "2026-10-27T19:12:03.574128+00:00",
+  "worktree": "/Users/jay/.t3/worktrees/pricerecon/t3-77103083",
+  "branch": "t3/repair-multiconfig-acceptance",
+  "source_commit": "37c29d31dd6a180bdeab9991dac42e53cc7c457a",
+  "tested_head": "45be8902e8f1bf7279ef542b89642f082a6286f0",
+  "initial_required_integration": "f561d76d55bf037ddec705ad488ebbc403934306",
+  "merged_integration_tip": "f8ff7e5024401991ca33b9bf08468476dc708227",
+  "final_merge": "Already up to date; required and latest integration ancestry checks exit 0",
+  "suite": {
+    "result": "passed",
+    "passed": 123,
+    "seconds": 119.11,
+    "skipped": 0,
+    "xfail": 0,
+    "original_workflows": 95,
+    "ticket10_workflows": 11,
+    "new_scope_workflows": 17,
+    "log": "repair-scope-green-suite.txt",
+    "files": [
+      "tests/test_collection_workflow.py",
+      "tests/test_monitoring_workflow.py",
+      "tests/test_discovery_workflow.py",
+      "tests/test_qualification_workflow.py",
+      "tests/test_cost_workflow.py",
+      "tests/test_history_workflow.py",
+      "tests/test_coupon_workflow.py",
+      "tests/test_tracking_workflow.py",
+      "tests/test_correction_workflow.py"
+    ],
+    "environment": {
+      "PATH": "/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONPATH": "<worktree>/src:<worktree>"
+    },
+    "python": "/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python"
+  },
+  "prior_suite_failure": {
+    "passed": 122,
+    "failed": 1,
+    "seconds": 121.55,
+    "reason": "Cleared PATH omitted installed Node; existing form-payload test FileNotFoundError node",
+    "log": "repair-scope-path-failure.txt",
+    "product_or_assertion_change_for_rerun": false
+  },
+  "exact_unmodified_merger_probes": {
+    "red-multi": {
+      "result": "failed",
+      "receipt": "repair-scope-red-multi.json",
+      "guard": {
+        "temporary_storage": true,
+        "blocked_edges": [],
+        "notifications_sent": 0,
+        "collection_state": "staged"
+      }
+    },
+    "green-multi": {
+      "result": "passed",
+      "receipt": "repair-scope-green-multi.json",
+      "guard": {
+        "temporary_storage": true,
+        "blocked_edges": [],
+        "notifications_sent": 0,
+        "collection_state": "staged"
+      }
+    },
+    "green-single": {
+      "result": "passed",
+      "receipt": "repair-scope-green-single.json",
+      "guard": {
+        "temporary_storage": true,
+        "blocked_edges": [],
+        "notifications_sent": 0,
+        "collection_state": "staged"
+      }
+    }
+  },
+  "focused_ruff": {
+    "result": "passed",
+    "files": [
+      "src/pricerecon/core/corrections.py",
+      "src/pricerecon/db/corrections.py",
+      "src/pricerecon/db/coupons.py",
+      "src/pricerecon/db/tracking.py",
+      "tests/test_correction_workflow.py",
+      "tests/monitoring/correction_scope_workflows.py"
+    ]
+  },
+  "focused_mypy": {
+    "result": "passed",
+    "files": [
+      "src/pricerecon/core/corrections.py",
+      "src/pricerecon/db/corrections.py",
+      "src/pricerecon/db/coupons.py",
+      "src/pricerecon/db/tracking.py"
+    ],
+    "options": [
+      "--follow-imports=silent"
+    ],
+    "notes": "Inherited unused-override notes only"
+  },
+  "diff_check": "passed",
+  "frontend": {
+    "repeated": false,
+    "tree": "fdcd941bb28fda22b7a8e2d9e7d606a6f9a7f7ec",
+    "identical_to_merged_integration": true,
+    "reuse": "f8ff7e5 merger 25 frontend tests/build and desktop/narrow browser receipts; no new UI proof"
+  },
+  "sha256": {
+    "src/pricerecon/core/corrections.py": "ecb9e17ce3e20d03590b4c7a6c012438caee420a598dd5952320b905c91f991d",
+    "src/pricerecon/db/corrections.py": "45f69f910f83b042a749cd170d257fe6e42d02a0569bd94c7d79ff9b4e6d2570",
+    "src/pricerecon/db/coupons.py": "2f32dfb323fe9a1f9a6b074a1527d68c32bab2ad25fd74597910c93c9a61d9ea",
+    "src/pricerecon/db/tracking.py": "24104e4458ff3cd7ec92b6a969c9343b88fce399f10b0984a5145138bb862160",
+    "tests/test_correction_workflow.py": "4a0e2d19339f2c875e05665f04701581b89d412fec1752b3be6a9c1209c67696",
+    "tests/monitoring/correction_scope_workflows.py": "2c54c6235d66bab7943627850322e7b3a24c9b233a5c3d0fc76c2357c2f2769e"
+  },
+  "limits": [
+    "Offline API and normal execution only with marked temporary SQLite and controlled external edges",
+    "Collection staged; no merger closure, buyer acceptance, live source qualification or activation",
+    "Ticket10 shared-admission merger failure remains a separate unaccepted gap",
+    "No installs, downloads, external network, credentials, accounts, production DB, push, PR or delegation"
+  ]
+}
