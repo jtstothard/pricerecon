@@ -1,6 +1,7 @@
 """Executable offline scenarios; no application imports before the guard."""
 
 import asyncio
+import json
 import sys
 from decimal import Decimal
 from pathlib import Path
@@ -172,6 +173,54 @@ async def legacy():
             assert len(harness.deliveries) == 3  # Only price drops were selected for delivery.
         assert harness.blocked_edges == []
     print("PASS legacy: saved intent, matching, queries, baseline, drop transports and restart")
+
+
+async def form_edit():
+    payloads = json.load(sys.stdin)
+    with MonitoringHarness() as harness:
+        harness.seed_legacy(
+            [(7, LEGACY), (8, {**LEGACY, "name": "Paused saved search", "enabled": False})]
+        )
+        harness.outcomes["cex"] = [
+            listing(harness, "cex", "match", "Militado ML05B blue"),
+            listing(harness, "cex", "parts", "Militado ML05B blue parts"),
+        ]
+        async with harness.session() as (client, scheduler):
+            for watch_id, payload in zip((7, 8), payloads, strict=True):
+                before = await get(client, f"/api/watches/{watch_id}")
+                response = await client.put(f"/api/watches/{watch_id}", json=payload)
+                assert response.status_code == 200, response.text
+                after = response.json()
+                for key in before.keys() - {"updated_at", "display_title"}:
+                    assert after[key] == before[key], f"Watch {watch_id} lost {key}"
+                assert after["display_title"] == "Edited label"
+            assert [job["watch_id"] for job in scheduler.list_watches()] == [7]
+            assert (await check(client, 7))["notifications_sent"] == 0
+            rows = (await get(client, "/api/watches/7/listings"))["items"]
+            assert [row["source_listing_id"] for row in rows] == ["match"]
+            assert [entry[:2] for entry in harness.searches] == [
+                ("cex", ' (ML05 OR "ML05B") -parts  '),
+                ("scan", "fallback merchant query"),
+            ]
+            retained = [await get(client, f"/api/watches/{watch_id}") for watch_id in (7, 8)]
+        async with harness.session() as (client, scheduler):
+            assert [
+                await get(client, f"/api/watches/{watch_id}") for watch_id in (7, 8)
+            ] == retained
+            assert [job["watch_id"] for job in scheduler.list_watches()] == [7]
+            assert (await check(client, 7))["events"] == []
+            harness.clock.advance()
+            harness.outcomes["cex"] = [
+                listing(harness, "cex", "match", "Militado ML05B blue", "80.00")
+            ]
+            assert (await check(client, 7))["notifications_sent"] == 1
+            assert [delivery[0] for delivery in harness.deliveries] == [
+                "webhook",
+                "telegram",
+                "discord",
+            ]
+        assert harness.blocked_edges == []
+    print("PASS form_edit: UI payload retains enabled/disabled saved intent, matching and delivery")
 
 
 async def partial_failure(mode="timeout"):
@@ -579,6 +628,7 @@ if __name__ == "__main__":
         {
             "isolation": isolation,
             "legacy": legacy,
+            "form_edit": form_edit,
             "partial_failure": partial_failure,
             "unexpected_failure": lambda: partial_failure("unknown_error"),
             "auth_failure": lambda: partial_failure("auth_failed"),

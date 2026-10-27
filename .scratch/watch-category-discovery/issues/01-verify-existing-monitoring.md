@@ -62,3 +62,16 @@ was left untouched; only its existing Python interpreter was used.
 
 **Rendered UI gate: PENDING.** The parent is checking the browser. This merge
 does not claim UI acceptance or close ticket 01. Tickets 02–12 remain blocked.
+
+## Rendered-form preservation repair (2026-10-27)
+
+The parent's actual browser check found that a title-only save reset hidden saved
+intent and displayed the wrong interval preset. Branch
+`t3/preserve-watch-edit-intent` repairs edit payload preservation and the custom
+interval option, with **25 frontend tests**, a successful frontend build and
+**15 isolated API workflows**. Exact red/green evidence and scope are appended to
+the [isolated-monitoring receipt](../../../docs/testing/isolated-monitoring.md).
+
+**Post-fix rendered UI gate: PENDING** for the parent's repeat browser walkthrough
+after the separate merger integrates this repair. Static rendered markup and
+payload/API tests do not close that gate. No live or deployment acceptance is claimed.
