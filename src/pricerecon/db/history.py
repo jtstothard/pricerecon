@@ -6,7 +6,9 @@ from contextlib import closing
 from datetime import UTC, datetime
 from itertools import pairwise
 
+from pricerecon.db.history_lineage import CaptureLineage
 from pricerecon.db.schema import DB_PATH
+from pricerecon.models.costs import CostScenario
 from pricerecon.models.discovery import DiscoveryCandidate, DiscoveryCapture
 from pricerecon.models.history import (
     HistoryAttempt,
@@ -83,23 +85,22 @@ def get_history(
     ]
     by_capture = {c.capture_id: c for c in captures}
     observations: list[HistoryObservation] = []
-    # Cross-route copies of the same selected merchant capture retain one
-    # owner even when they arrive as different discovery candidates.
-    lineage_owners: dict[tuple[str, str | None, str | None, str | None], str] = {}
+    costs_by_offer: dict[tuple[str, int], list[CostScenario]] = {}
+    for row in connection.execute(
+        "SELECT payload_json FROM discovery_cost_scenarios ORDER BY rowid"
+    ):
+        cost = CostScenario.model_validate_json(row[0])
+        costs_by_offer.setdefault((cost.offer_id, cost.offer_revision), []).append(cost)
+    retained = []
     for row in connection.execute(
         "SELECT capture_id, payload_json FROM discovery_offers ORDER BY rowid"
     ):
-        retained = MerchantOffer.model_validate_json(row[1])
-        for claim in retained.evidence:
-            if claim.subject != "offer" or claim.field not in {"item_price", "availability"}:
-                continue
-            key = (
-                claim.capture_id,
-                claim.context.merchant_key,
-                claim.context.product_id,
-                claim.context.variation_id,
-            )
-            lineage_owners.setdefault(key, f"{row[0]}:{retained.id}:{retained.revision}")
+        retained_offer = MerchantOffer.model_validate_json(row[1])
+        retained_offer.cost_scenarios = costs_by_offer.get(
+            (retained_offer.id, retained_offer.revision), []
+        )
+        retained.append((by_capture[row[0]], retained_offer))
+    capture_lineage = CaptureLineage(retained)
     previous: dict[str, HistoryObservation] = {}
     for candidate in candidates:
         hydrate_candidate(connection, candidate)
@@ -154,28 +155,19 @@ def get_history(
                 for c in offer.cost_scenarios
                 for e in c.context_evidence + [e for part in c.components for e in part.evidence]
             ]
+            origin = capture_lineage.resolve(offer)
             lineage = sorted(
-                {value for c in claims + cost_claims for value in [c.capture_id, *c.derived_from]}
+                origin.captures
+                | {value for c in claims + cost_claims for value in [c.capture_id, *c.derived_from]}
             )
             observation_id = f"{capture.capture_id}:{offer.id}:{offer.revision}"
-            owners = [
-                lineage_owners[
-                    (
-                        c.capture_id,
-                        c.context.merchant_key,
-                        c.context.product_id,
-                        c.context.variation_id,
-                    )
-                ]
-                for c in claims
-                if c.subject == "offer" and c.field in {"item_price", "availability"}
-            ]
-            duplicate = next((owner for owner in owners if owner != observation_id), None)
+            duplicate = next((owner for owner in origin.owners if owner != observation_id), None)
             times = [
                 c.observed_at
                 for c in [c for c in claims if c.subject == "offer"] + cost_claims
                 if c.observed_at is not None
             ]
+            times.extend(origin.observed_times)
             observed_at = min(times) if times else None
             public = [c for c in offer.cost_scenarios if c.kind == "public_no_coupon"]
             reasons = []
@@ -195,6 +187,8 @@ def get_history(
                 reasons.append("acquisition_not_a_new_observation")
             if duplicate:
                 reasons.append("duplicate_acquisition_lineage")
+            if origin.unknown:
+                reasons.append("capture_lineage_unknown")
             if observed_at is None or observed_at > capture.captured_at:
                 reasons.append("observation_time_unavailable")
             if invalidations:
