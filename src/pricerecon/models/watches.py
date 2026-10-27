@@ -19,6 +19,7 @@ class EventType(str, Enum):
     STOCK_CHANGE = "stock_change"
     LISTING_GONE = "listing_gone"
     NO_CHANGE = "no_change"
+    EXACT_TARGET_CROSSING = "exact_target_crossing"
 
 
 class Severity(str, Enum):
@@ -235,7 +236,7 @@ class Event(BaseModel):
     """Event emitted by the diff engine."""
 
     id: int
-    watch_id: int
+    watch_id: int | None
     event_type: EventType
     severity: Severity
     listing_id: Optional[str] = None

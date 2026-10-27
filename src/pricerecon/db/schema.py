@@ -309,6 +309,9 @@ def init_db(path: Path | None = None) -> None:
     from pricerecon.db.discovery import init_discovery_tables
 
     init_discovery_tables(conn)
+    from pricerecon.db.tracking import init_tracking_tables
+
+    init_tracking_tables(conn)
     from pricerecon.db.history import init_history_tables
 
     init_history_tables(conn)

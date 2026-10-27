@@ -2,6 +2,8 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { loadDiscovery, savePreferences, type DiscoveryCandidate, type DiscoveryFeed, type PreferenceProfile } from '../lib/discovery'
 import '../styles/discovery.css'
+import ExactTrackingControl, { TrackingStatus } from '../components/ExactTracking'
+import type { ExactTracking } from '../lib/tracking'
 import { ObservationHistory } from '../components/discovery/ObservationHistory'
 
 const strengthLabel = { hard: 'Hard constraint', soft: 'Soft preference', unset: 'Unset' }
@@ -113,8 +115,8 @@ function Costs({ costs }: { costs: Cost[] }) {
   </details>
 }
 
-function Candidate({ candidate }: { candidate: DiscoveryCandidate }) {
-  return <article className="discovery-row">
+function Candidate({ candidate, tracking, onSaved }: { candidate: DiscoveryCandidate; tracking: ExactTracking[]; onSaved: () => Promise<void> }) {
+  return <article className="discovery-row" data-candidate={candidate.id}>
     <figure className="discovery-picture">
       <svg viewBox="0 0 100 180" role="img" aria-label="Generic watch placeholder, not a product photograph">
         <rect x="32" y="0" width="36" height="180" rx="8" fill="#536b7d" />
@@ -145,8 +147,10 @@ function Candidate({ candidate }: { candidate: DiscoveryCandidate }) {
         Item lead: {candidate.reported_currency ?? 'currency unknown'} {candidate.advertised_item_price}
       </p>}
       <p className="discovery-quiet">Usual price unavailable</p>
-      <p className="discovery-quiet">No bargain alerts</p>
+      {!tracking.some(intent => candidate.configurations.some(config => config.id === intent.configuration_id)) && <p className="discovery-quiet">No bargain alerts until exact tracking and qualification.</p>}
     </div>
+    <div className="discovery-tracking">{candidate.configurations.map(configuration => <ExactTrackingControl key={configuration.id} candidate={candidate} configuration={configuration}
+      intent={tracking.find(intent => intent.configuration_id === configuration.id)} onSaved={onSaved} />)}</div>
     <details className="discovery-evidence">
       <summary>Price and evidence</summary>
       <ObservationHistory candidateId={candidate.id} />
@@ -233,8 +237,11 @@ export default function Discovery() {
       <Preferences profile={feed.preferences} onSaved={reload} />
       <div className="discovery-feed" aria-label="Watch candidates">
         {feed.candidates.length === 0 && <p className="discovery-empty">No category candidates collected yet. You can save preferences now; collection remains staged.</p>}
-        {feed.candidates.map(candidate => <Candidate key={candidate.id} candidate={candidate} />)}
+        {feed.candidates.map(candidate => <Candidate key={candidate.id} candidate={candidate} tracking={feed.tracking} onSaved={reload} />)}
       </div>
+      {feed.tracking.filter(intent => !feed.candidates.some(candidate => candidate.configurations.some(config => config.id === intent.configuration_id))).map(intent => <section key={intent.id}>
+        <h2>Retained exact tracking</h2><p>Configuration {intent.configuration_id}; original intent retained while source identity needs review.</p><TrackingStatus intent={intent} />
+      </section>)}
       <details className="discovery-coverage"><summary>Checked coverage and collection attempts</summary>
         <p>Attempts are retained separately from candidates and preferences. A failed check does not refresh an earlier capture or establish that a watch disappeared.</p>
         {feed.captures.length === 0 && <p>No collection attempts recorded.</p>}

@@ -320,7 +320,24 @@ def get_feed() -> DiscoveryFeed:
                 )
             ]
         candidates.append(candidate)
-    return DiscoveryFeed(candidates=candidates, captures=captures, preferences=preferences)
+    from pricerecon.db.tracking import list_tracking
+
+    return DiscoveryFeed(candidates=candidates, captures=captures, preferences=preferences,
+                         tracking=list_tracking().items)
+
+
+def load_capture_candidates(
+    connection: sqlite3.Connection, capture_id: str,
+) -> list[DiscoveryCandidate]:
+    """Hydrate retained capture inputs in the caller's SQLite snapshot."""
+    candidates = []
+    for row in connection.execute(
+        "SELECT payload_json FROM discovery_leads WHERE capture_id=? ORDER BY rowid", (capture_id,),
+    ):
+        candidate = DiscoveryCandidate.model_validate_json(row[0])
+        hydrate_candidate(connection, candidate)
+        candidates.append(candidate)
+    return candidates
 
 
 class PreferenceConflict(Exception):

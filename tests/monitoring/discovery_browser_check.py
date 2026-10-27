@@ -26,6 +26,7 @@ def main():
     parser.add_argument("--qualification", action="store_true")
     parser.add_argument("--costs", action="store_true")
     mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--tracking", action="store_true")
     mode.add_argument("--coupons", action="store_true")
     mode.add_argument("--history", action="store_true")
     args = parser.parse_args()
@@ -62,11 +63,9 @@ def main():
         command("set", "viewport", "1280", "900")
         fixture = evaluate('fetch("/api/offline-verification").then(response => response.json())')
         assert fixture["fixture"] == (
-            "ticket09-coupon-ui"
-            if args.coupons
-            else "ticket06-history-ui"
-            if args.history
-            else "ticket04-cost-ui"
+            "ticket05-tracking-ui" if args.tracking else
+            "ticket09-coupon-ui" if args.coupons else
+            "ticket06-history-ui" if args.history else "ticket04-cost-ui"
             if args.costs
             else "ticket03-qualification-ui"
             if args.qualification
@@ -76,6 +75,11 @@ def main():
         assert fixture["automatic_checks"] is False, fixture
         assert fixture["blocked_edges"] == [], fixture
         assert fixture["notifications_sent"] == 0, fixture
+        if args.tracking:
+            from .tracking_browser_check import run_tracking_browser
+
+            run_tracking_browser(command, evaluate, args.artifacts, fixture)
+            return
         if args.history:
             from .history_browser_checks import verify_history
 
@@ -224,9 +228,9 @@ def main():
             )
             assert evaluate('document.body.textContent.includes("Known subtotal: GBP 48.00")')
             assert evaluate('document.body.textContent.includes("shipping:unknown")')
-        if not evaluate('document.querySelector(".discovery-row:first-of-type details").open'):
+        if not evaluate('document.querySelector(".discovery-row:first-of-type > details.discovery-evidence").open'):
             command("click", ".discovery-row:first-of-type > details > summary")
-        assert evaluate('document.querySelector(".discovery-row:first-of-type details").open')
+        assert evaluate('document.querySelector(".discovery-row:first-of-type > details.discovery-evidence").open')
         assert evaluate('document.body.textContent.includes("Usual price unavailable")')
         assert evaluate('document.body.textContent.includes("No bargain alerts")')
         if args.costs:
