@@ -305,6 +305,11 @@ async def evaluate_tracking_capture(capture_id: str, *, policy: TrackingPolicy |
     now = datetime.now(UTC)
     with closing(sqlite3.connect(DB_PATH)) as connection, connection:
         connection.execute("BEGIN IMMEDIATE")
+        from pricerecon.core.collection_policy import current_policy
+        from pricerecon.db.collection import storage_size
+
+        operating = current_policy()
+        before_bytes = storage_size(connection) if operating else 0
         candidates = load_capture_candidates(connection, capture_id)
         capture = DiscoveryCapture.model_validate_json(
             connection.execute(
@@ -374,6 +379,13 @@ async def evaluate_tracking_capture(capture_id: str, *, policy: TrackingPolicy |
                 )
             )
             store(connection, intent)
+        if operating:
+            from pricerecon.core.rate_limiter import DurableAdmission
+
+            DurableAdmission(operating, "sqlite", "verification", capture_id).debit(
+                {"storage_bytes": max(0, storage_size(connection) - before_bytes)},
+                connection=connection,
+            )
     await deliver_pending_targets(policy=policy)
 
 
@@ -383,7 +395,11 @@ async def deliver_pending_targets(*, policy: TrackingPolicy | None) -> None:
     Claimed channels are never automatically retried, including failed sends:
     false/exception may mean the external recipient accepted but its ACK was lost.
     """
-    if policy is None:
+    from pricerecon.core.collection_policy import current_policy
+
+    operating = current_policy()
+    if (policy is None or operating is None
+        or not operating.starts_at <= datetime.now(UTC) < operating.stops_at):
         return
     with closing(sqlite3.connect(DB_PATH)) as connection:
         events = [
@@ -421,6 +437,10 @@ async def deliver_pending_targets(*, policy: TrackingPolicy | None) -> None:
                 (event.assessment.offer_id,),
             ).fetchone()[0]
             valid = valid and revision == event.assessment.offer_revision
+            from pricerecon.db.collection import refresh_unavailable
+
+            valid = valid and not refresh_unavailable(connection, intent.candidate_id,
+                                                     event.assessment.assessed_at)
             valid = valid and target_delivery_valid(connection, event.event_id)
             if not valid:
                 event.status = "withheld"

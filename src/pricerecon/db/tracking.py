@@ -172,6 +172,10 @@ def project_tracking(connection: sqlite3.Connection, intent: ExactTracking) -> E
     """Read-time invalidation never manufactures a new price decision or send."""
     assessment = intent.assessment
     reasons = []
+    from pricerecon.db.collection import refresh_unavailable
+
+    if refresh_unavailable(connection, intent.candidate_id, assessment.assessed_at):
+        reasons.append("source_refresh_unavailable")
     if intent.invalidation_reason:
         reasons.append("evidence_invalidated")
     if evidence_revision_withdrawn(connection, intent, assessment):

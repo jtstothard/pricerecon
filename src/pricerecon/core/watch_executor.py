@@ -301,12 +301,15 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
     if not watch:
         return {"success": False, "error": f"Watch {watch_id} not found"}
 
+    from uuid import uuid4
+
     from pricerecon.core.acquisition import acquire_sources
 
+    acquisition_context = f"watch:{watch_id}:{uuid4()}"
     acquisition = await acquire_sources(
         watch.sources, query=watch.query, source_queries=watch.source_queries,
         filters={"price_max": watch.filters.price_max} if watch.filters.price_max else {},
-        context_id=watch_id,
+        context_id=acquisition_context,
     )
     all_listings = acquisition.listings
     failed_sources = acquisition.failed_sources
@@ -329,9 +332,22 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
     shadow_entries = evaluate_shadow_filters(all_listings, watch.filters, watch_id)
     filtered_listings = apply_component_pattern_filter(filtered_listings, watch.filters)
     filtered_listings = apply_price_floor_filter(filtered_listings, watch.filters)
-    first_run, diff_result, event_ids = run_check(
-        watch_id, filtered_listings, failed_sources=failed_sources
-    )
+    from pricerecon.core.rate_limiter import AdmissionDenied
+
+    try:
+        first_run, diff_result, event_ids = run_check(
+            watch_id, filtered_listings, failed_sources=failed_sources
+        )
+    except AdmissionDenied as exc:
+        from pricerecon.db.collection import reject_capture
+
+        reject_capture(acquisition_context, exc.reason, exc.state)
+        for outcome in acquisition.outcomes:
+            if outcome.state in {"success", "success_empty", "partial", "cache_reuse"}:
+                outcome.state, outcome.reason = exc.state, exc.reason
+        return {"success": False, "watch_id": watch_id, "error": exc.reason,
+                "acquisition_outcomes": [o.model_dump(mode="json") for o in acquisition.outcomes],
+                "notifications_sent": 0, "events": []}
 
     conn = get_db()
     cursor = conn.cursor()
@@ -404,6 +420,7 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
 
     result: dict[str, Any] = {
         "success": True,
+        "acquisition_outcomes": [outcome.model_dump(mode="json") for outcome in acquisition.outcomes],
         "watch_id": watch_id,
         "first_run": first_run,
         "listings_found": len(filtered_listings),

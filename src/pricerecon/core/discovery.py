@@ -38,7 +38,9 @@ async def execute_discovery(
     through the existing notification owner; HTTP intent writes cannot supply it.
     """
     admission = admission or DiscoveryAdmission()
-    if admission.admitted and tracking_policy is not None:
+    from pricerecon.core.collection_policy import current_policy
+
+    if admission.admitted and current_policy() is not None and tracking_policy is not None:
         from pricerecon.core.exact_tracking import deliver_pending_targets
 
         await deliver_pending_targets(policy=tracking_policy)
@@ -46,7 +48,9 @@ async def execute_discovery(
     captured_at = datetime.now(UTC)
     candidates: list[DiscoveryCandidate] = []
     by_id: dict[str, DiscoveryCandidate] = {}
-    if admission.admitted:
+    if admission.admitted and current_policy() is not None:
+        from pricerecon.db.collection import verification_sources
+
         result = await acquire_sources(
             request.sources,
             query=request.query,
@@ -54,6 +58,7 @@ async def execute_discovery(
             filters={},
             context_id=capture_id,
             purpose="discovery",
+            verification_sources=verification_sources(request),
         )
         outcomes = result.outcomes
         for lead in result.leads:
@@ -205,8 +210,9 @@ async def execute_discovery(
         outcomes = [
             AcquisitionOutcome(
                 source=source.connector,
-                state="not_attempted",
-                reason="source_disabled" if not source.enabled else "collection_staged",
+                state="blocked" if admission.admitted and source.enabled else "not_attempted",
+                reason=("source_disabled" if not source.enabled else
+                        "operating_policy_required" if admission.admitted else "collection_staged"),
             )
             for source in request.sources
         ]
@@ -234,9 +240,31 @@ async def execute_discovery(
         admission=admission,
         outcomes=outcomes,
     )
-    save_capture(capture, candidates)
+    from pricerecon.core.rate_limiter import AdmissionDenied
+
+    try:
+        save_capture(capture, candidates)
+    except AdmissionDenied as exc:
+        from pricerecon.db.collection import reject_capture
+
+        for outcome in capture.outcomes:
+            if outcome.state in {"success", "success_empty", "partial", "cache_reuse"}:
+                outcome.state = exc.state
+                outcome.reason = exc.reason
+        reject_capture(capture.capture_id, exc.reason, exc.state)
+        # No unaccounted fallback write. The existing attempt receipt supplies
+        # capped coverage; the rolled-back evidence never reaches the feed.
+        return capture
     from pricerecon.core.exact_tracking import evaluate_tracking_capture
 
-    await evaluate_tracking_capture(capture.capture_id,
-                                    policy=tracking_policy if admission.admitted else None)
+    try:
+        await evaluate_tracking_capture(capture.capture_id,
+            policy=tracking_policy if admission.admitted and current_policy() is not None else None)
+    except AdmissionDenied as exc:
+        from pricerecon.db.collection import reject_capture
+
+        reject_capture(capture.capture_id, exc.reason, exc.state)
+        for outcome in capture.outcomes:
+            if outcome.state in {"success", "success_empty"}:
+                outcome.state, outcome.reason = exc.state, exc.reason
     return capture

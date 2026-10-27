@@ -10,6 +10,7 @@ from pricerecon.db.discovery import (
     get_preferences,
     save_preferences,
 )
+from pricerecon.models.collection import CollectionStatus
 from pricerecon.models.costs import CostHistory
 from pricerecon.models.coupons import CouponHistory
 from pricerecon.models.discovery import DiscoveryFeed, PreferenceProfile, PreferenceUpdate
@@ -56,3 +57,11 @@ async def discovery_observation_history(candidate_id: str) -> ObservationHistory
     if history is None:
         raise HTTPException(status_code=404, detail="Candidate history not found")
     return history
+
+
+@router.get("/discovery/collection", response_model=CollectionStatus)
+async def discovery_collection() -> CollectionStatus:
+    from pricerecon.core.collection_policy import current_policy
+    from pricerecon.db.collection import collection_status
+
+    return collection_status(current_policy())

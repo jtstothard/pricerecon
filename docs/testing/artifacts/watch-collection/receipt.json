@@ -1,0 +1,167 @@
+{
+  "date": "2026-10-27",
+  "session": "ticket10-collection-b9454845",
+  "port": 8896,
+  "fixture": {
+    "automatic_checks": false,
+    "blocked_edges": [],
+    "fixture": "ticket10-collection-ui",
+    "notifications_sent": 0,
+    "temporary_storage": true
+  },
+  "collection": {
+    "activation": "staged",
+    "attempts": [
+      {
+        "attempted_at": "2026-10-27T13:00:00Z",
+        "context_id": "b907feb8-64e5-4796-96ed-ddbad5cc74df",
+        "evidence_state": "unrefreshed",
+        "id": "c85cfb00-310b-40b5-953c-692f65ab34ca",
+        "last_good_age_seconds": 3600,
+        "last_good_at": "2026-10-27T12:00:00Z",
+        "next_eligible_at": "2026-10-27T13:00:00Z",
+        "purpose": "discovery",
+        "reason": "tracking_capacity_reserved:requests",
+        "source": "cex",
+        "state": "capped"
+      },
+      {
+        "attempted_at": "2026-10-27T12:00:00Z",
+        "context_id": "177ac974-a670-4ff0-88b1-48d7deaceb6f",
+        "evidence_state": "unrefreshed",
+        "id": "40c2eed7-9f7b-4039-ae0b-8bc279092132",
+        "last_good_age_seconds": 3600,
+        "last_good_at": "2026-10-27T12:00:00Z",
+        "next_eligible_at": "2026-10-27T12:00:00Z",
+        "purpose": "discovery",
+        "reason": "connector_error",
+        "source": "scan",
+        "state": "failed"
+      },
+      {
+        "attempted_at": "2026-10-27T12:00:00Z",
+        "context_id": "693a9d97-3cdb-4f3b-9466-e7e66853bc86",
+        "evidence_state": "observed_at_attempt",
+        "id": "b67052c2-74ab-43b5-a9a6-7a42c3674557",
+        "last_good_age_seconds": 3600,
+        "last_good_at": "2026-10-27T12:00:00Z",
+        "next_eligible_at": "2026-10-27T12:00:00Z",
+        "purpose": "discovery",
+        "reason": null,
+        "source": "scan",
+        "state": "success_empty"
+      },
+      {
+        "attempted_at": "2026-10-27T12:00:00Z",
+        "context_id": "3e11e90e-e430-45a9-a616-7a7db9dd1128",
+        "evidence_state": "observed_at_attempt",
+        "id": "57651f42-a0dd-4771-a43b-0a6c0404232f",
+        "last_good_age_seconds": 3600,
+        "last_good_at": "2026-10-27T12:00:00Z",
+        "next_eligible_at": "2026-10-27T12:00:00Z",
+        "purpose": "discovery",
+        "reason": null,
+        "source": "cex",
+        "state": "success"
+      }
+    ],
+    "gates": [],
+    "scope_id": "synthetic-finite-study",
+    "state": "supplied",
+    "stops_at": "2026-10-28T12:00:00Z",
+    "usage": [
+      {
+        "limit": 4,
+        "resource": "requests",
+        "tracking_reserve": 1,
+        "used": 3
+      },
+      {
+        "limit": 20,
+        "resource": "pages",
+        "tracking_reserve": 1,
+        "used": 3
+      },
+      {
+        "limit": 20,
+        "resource": "details",
+        "tracking_reserve": 1,
+        "used": 0
+      },
+      {
+        "limit": 20,
+        "resource": "retries",
+        "tracking_reserve": 1,
+        "used": 0
+      },
+      {
+        "limit": 20,
+        "resource": "fallbacks",
+        "tracking_reserve": 1,
+        "used": 0
+      },
+      {
+        "limit": 10000000,
+        "resource": "storage_bytes",
+        "tracking_reserve": 100000,
+        "used": 48478
+      },
+      {
+        "limit": 1000,
+        "resource": "elapsed_seconds",
+        "tracking_reserve": 100,
+        "used": 40
+      }
+    ],
+    "version": "fixture-v1"
+  },
+  "snapshot": {
+    "origin": "http://127.0.0.1:8896/discover",
+    "refs": {
+      "e1": {
+        "name": "Skip to main content",
+        "role": "link"
+      },
+      "e2": {
+        "name": "Discover watches",
+        "role": "link"
+      },
+      "e3": {
+        "name": "Watch queue 1",
+        "role": "link"
+      },
+      "e4": {
+        "name": "Event stream 0",
+        "role": "link"
+      },
+      "e5": {
+        "name": "Connectors 1",
+        "role": "link"
+      },
+      "e6": {
+        "name": "Notifications",
+        "role": "link"
+      },
+      "e7": {
+        "name": "Runs & history",
+        "role": "link"
+      },
+      "e8": {
+        "name": "Exports",
+        "role": "link"
+      },
+      "e9": {
+        "name": "Settings",
+        "role": "link"
+      }
+    },
+    "snapshot": "- link \"Skip to main content\" [ref=e1]\n- link \"Discover watches\" [ref=e2]\n- link \"Watch queue 1\" [ref=e3]\n- link \"Event stream 0\" [ref=e4]\n- link \"Connectors 1\" [ref=e5]\n- link \"Notifications\" [ref=e6]\n- link \"Runs & history\" [ref=e7]\n- link \"Exports\" [ref=e8]\n- link \"Settings\" [ref=e9]"
+  },
+  "keyboard": "Enter opens coverage",
+  "viewports": [
+    "1280x900",
+    "375x812"
+  ],
+  "horizontal_overflow": false,
+  "scope": "original synthetic fixture only; no live acceptance"
+}

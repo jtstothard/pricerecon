@@ -100,6 +100,11 @@ def save_capture(capture: DiscoveryCapture, candidates: list[DiscoveryCandidate]
     with closing(sqlite3.connect(DB_PATH)) as connection, connection:
         connection.execute("PRAGMA foreign_keys = ON")
         connection.execute("BEGIN IMMEDIATE")
+        from pricerecon.core.collection_policy import current_policy
+        from pricerecon.db.collection import storage_size
+
+        policy = current_policy()
+        before_bytes = storage_size(connection) if policy else 0
         connection.execute(
             "INSERT INTO discovery_captures VALUES (?, ?, ?, ?)",
             (
@@ -209,6 +214,14 @@ def save_capture(capture: DiscoveryCapture, candidates: list[DiscoveryCandidate]
                         exclude={"configuration", "configurations", "bindings", "offers"}
                     ),
                 ),
+            )
+
+        if policy:
+            from pricerecon.core.rate_limiter import DurableAdmission
+
+            DurableAdmission(policy, "sqlite", "discovery", capture.capture_id).debit(
+                {"storage_bytes": max(0, storage_size(connection) - before_bytes)},
+                connection=connection,
             )
 
 
