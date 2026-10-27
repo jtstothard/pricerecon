@@ -197,6 +197,7 @@ async def execute_discovery(
             else "unresolved"
         )
     capture = DiscoveryCapture(
+        history_contract_version="observation-history-v1",
         capture_id=capture_id,
         captured_at=captured_at,
         request=DiscoveryOrigin(

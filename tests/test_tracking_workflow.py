@@ -77,3 +77,11 @@ def test_conflicting_duplicate_routes_cannot_alert_and_no_channel_choice_cannot_
 
 def test_schema_upgrade_preserves_existing_events_and_their_monotonic_identity():
     run_tracking("migration")
+
+
+def test_merged_partial_and_cache_acquisition_contract_cannot_trigger_targets():
+    run_tracking("combined_acquisition")
+
+
+def test_merged_exact_revision_withdrawal_blocks_pending_target_delivery():
+    run_tracking("combined_withdrawal")

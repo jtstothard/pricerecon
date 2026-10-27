@@ -56,3 +56,10 @@
 .discovery-tracking { grid-column: 2 / 4; min-width: 0; }
 .exact-tracking input[type="checkbox"] { width: 18px; height: 18px; min-height: 18px; }
 @media (max-width: 750px) { .discovery-tracking { grid-column: 1 / 3; } }
+
+.discovery-history { margin-block: 1rem; overflow-wrap: anywhere; }
+.discovery-history li { margin-block: .75rem; }
+.discovery-history h3, .discovery-history h4 { margin-block: .65rem .3rem; }
+.discovery-history dl > div { display: flex; flex-wrap: wrap; gap: .5rem; }
+.discovery-history dt { font-weight: 600; }
+.discovery-history dd { margin: 0; }

@@ -203,6 +203,7 @@ class MonitoringHarness:
             watch_executor,
         )
         from pricerecon.db import discovery as discovery_storage
+        from pricerecon.db import history as history_storage
         from pricerecon.db import tracking as tracking_storage
 
         clock = self.clock
@@ -215,6 +216,7 @@ class MonitoringHarness:
         for module in (
             self.application,
             discovery_storage,
+            history_storage,
             discovery,
             exact_tracking,
             tracking_storage,

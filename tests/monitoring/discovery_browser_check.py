@@ -26,6 +26,7 @@ def main():
     parser.add_argument("--qualification", action="store_true")
     parser.add_argument("--costs", action="store_true")
     parser.add_argument("--tracking", action="store_true")
+    parser.add_argument("--history", action="store_true")
     args = parser.parse_args()
     args.artifacts.mkdir(exist_ok=True)
     config = args.artifacts / "config.json"
@@ -61,7 +62,7 @@ def main():
         fixture = evaluate('fetch("/api/offline-verification").then(response => response.json())')
         assert fixture["fixture"] == (
             "ticket05-tracking-ui" if args.tracking else
-            "ticket04-cost-ui"
+            "ticket06-history-ui" if args.history else "ticket04-cost-ui"
             if args.costs
             else "ticket03-qualification-ui" if args.qualification else "ticket02-discovery-ui"
         ), fixture
@@ -73,6 +74,11 @@ def main():
             from .tracking_browser_check import run_tracking_browser
 
             run_tracking_browser(command, evaluate, args.artifacts, fixture)
+            return
+        if args.history:
+            from .history_browser_checks import verify_history
+
+            verify_history(command, evaluate, args.artifacts)
             return
         command("wait", "#page-title")
         assert evaluate('document.querySelector("h1")?.textContent') == "Find your next watch"

@@ -26,6 +26,8 @@ const reasons: Record<string, string> = {
   delivery_resolved_requires_observation: 'Delivery reconciled; waiting for a new observation.',
   offer_revision_changed_requires_observation: 'Offer evidence changed; waiting for a new decision.',
   conflicting_route_totals: 'Acquisition routes disagree about the same offer total; alert withheld.',
+  acquisition_partial_or_reused: 'Acquisition is partial or reuses a cached capture; a fresh complete check is required.',
+  evidence_revision_withdrawn: 'A required evidence revision was withdrawn; alert withheld.',
 }
 
 export function TrackingStatus({ intent }: { intent: ExactTracking }) {

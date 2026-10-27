@@ -15,9 +15,9 @@ from pricerecon.core import notifications
 from pricerecon.core.qualification import identity_key
 from pricerecon.db.discovery import get_preferences, load_capture_candidates
 from pricerecon.db.schema import DB_PATH
-from pricerecon.db.tracking import store
+from pricerecon.db.tracking import evidence_revision_withdrawn, store, target_delivery_valid
 from pricerecon.models import EventType
-from pricerecon.models.discovery import DiscoveryCandidate, PreferenceProfile
+from pricerecon.models.discovery import DiscoveryCandidate, DiscoveryCapture, PreferenceProfile
 from pricerecon.models.qualification import MerchantOffer, SelectionBinding
 from pricerecon.models.tracking import (
     ExactTracking,
@@ -306,6 +306,12 @@ async def evaluate_tracking_capture(capture_id: str, *, policy: TrackingPolicy |
     with closing(sqlite3.connect(DB_PATH)) as connection, connection:
         connection.execute("BEGIN IMMEDIATE")
         candidates = load_capture_candidates(connection, capture_id)
+        capture = DiscoveryCapture.model_validate_json(
+            connection.execute(
+                "SELECT payload_json FROM discovery_captures WHERE capture_id=?",
+                (capture_id,),
+            ).fetchone()[0]
+        )
         preferences = get_preferences()
         intents = [
             ExactTracking.model_validate_json(r[0])
@@ -325,6 +331,18 @@ async def evaluate_tracking_capture(capture_id: str, *, policy: TrackingPolicy |
                     assessment = assess_offer(
                         intent, candidate, offer, binding, preferences, policy, now
                     )
+                    outcomes = [o for o in capture.outcomes if o.source == candidate.source]
+                    if not outcomes or not all(
+                        o.state == "success"
+                        and o.completeness != "partial"
+                        and o.reused_capture_id is None
+                        for o in outcomes
+                    ):
+                        assessment.state = "withheld"
+                        assessment.reasons = ["acquisition_partial_or_reused"]
+                    if evidence_revision_withdrawn(connection, intent, assessment):
+                        assessment.state = "withheld"
+                        assessment.reasons = ["evidence_revision_withdrawn"]
                     evaluated.append((candidate, offer, binding, assessment))
                     assessments.append(assessment)
             totals: dict[str, set[Decimal | None]] = {}
@@ -403,6 +421,7 @@ async def deliver_pending_targets(*, policy: TrackingPolicy | None) -> None:
                 (event.assessment.offer_id,),
             ).fetchone()[0]
             valid = valid and revision == event.assessment.offer_revision
+            valid = valid and target_delivery_valid(connection, event.event_id)
             if not valid:
                 event.status = "withheld"
                 connection.execute(

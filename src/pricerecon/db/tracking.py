@@ -174,6 +174,8 @@ def project_tracking(connection: sqlite3.Connection, intent: ExactTracking) -> E
     reasons = []
     if intent.invalidation_reason:
         reasons.append("evidence_invalidated")
+    if evidence_revision_withdrawn(connection, intent, assessment):
+        reasons.append("evidence_revision_withdrawn")
     if assessment.valid_until is not None and assessment.valid_until <= datetime.now(UTC):
         reasons.append("evidence_stale_or_expired")
     if assessment.preference_revision is not None:
@@ -359,9 +361,37 @@ def target_delivery_valid(connection: sqlite3.Connection, event_id: int) -> bool
         event.intent_revision == intent.revision
         and event.invalidation_revision == intent.invalidation_revision
         and intent.invalidation_reason is None
+        and not evidence_revision_withdrawn(connection, intent, event.assessment)
         and event.assessment.preference_revision == (preference[0] if preference else 0)
         and event.assessment.valid_until is not None
         and event.assessment.valid_until > datetime.now(UTC)
         and event.assessment.offer_revision == latest_offer
         and event.assessment.scenario_revision == latest_cost
+    )
+
+
+def evidence_revision_withdrawn(
+    connection: sqlite3.Connection,
+    intent: ExactTracking,
+    assessment: TrackingAssessment,
+) -> bool:
+    """Consume06's committed exact-revision withdrawal contract, without projecting history."""
+    row = connection.execute(
+        "SELECT binding_id FROM discovery_offers WHERE id=? AND revision=?",
+        (assessment.offer_id, assessment.offer_revision),
+    ).fetchone()
+    references = [
+        ("configuration", intent.configuration_id, assessment.configuration_revision),
+        ("binding", row[0] if row else None, assessment.binding_revision),
+        ("offer", assessment.offer_id, assessment.offer_revision),
+        ("cost", assessment.scenario_id, assessment.scenario_revision),
+    ]
+    return any(
+        connection.execute(
+            "SELECT 1 FROM discovery_history_invalidations "
+            "WHERE target_kind=? AND target_id=? AND target_revision=? LIMIT 1",
+            reference,
+        ).fetchone()
+        is not None
+        for reference in references
     )

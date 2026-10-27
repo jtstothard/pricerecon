@@ -4,6 +4,7 @@ import { loadDiscovery, savePreferences, type DiscoveryCandidate, type Discovery
 import '../styles/discovery.css'
 import ExactTrackingControl, { TrackingStatus } from '../components/ExactTracking'
 import type { ExactTracking } from '../lib/tracking'
+import { ObservationHistory } from '../components/discovery/ObservationHistory'
 
 const strengthLabel = { hard: 'Hard constraint', soft: 'Soft preference', unset: 'Unset' }
 
@@ -152,6 +153,7 @@ function Candidate({ candidate, tracking, onSaved }: { candidate: DiscoveryCandi
       intent={tracking.find(intent => intent.configuration_id === configuration.id)} onSaved={onSaved} />)}</div>
     <details className="discovery-evidence">
       <summary>Price and evidence</summary>
+      <ObservationHistory candidateId={candidate.id} />
       <div className="discovery-qualification">
         {candidate.configurations.length === 0 && <p>Configuration unresolved: no typed evidence supplied.</p>}
         {candidate.configurations.map(config => <section key={config.id}>

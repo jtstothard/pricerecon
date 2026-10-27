@@ -18,7 +18,7 @@ from .harness import MonitoringHarness
 from .workflows import LEGACY, listing
 
 
-async def main(port, qualification=False, costs=False, tracking=False):
+async def main(port, qualification=False, costs=False, tracking=False, history=False):
     with MonitoringHarness() as harness:
         from pricerecon.core.discovery import execute_discovery
         from pricerecon.models.discovery import DiscoveryAdmission, DiscoveryRequest
@@ -111,7 +111,7 @@ async def main(port, qualification=False, costs=False, tracking=False):
                 return {
                     "fixture": (
                         "ticket05-tracking-ui" if tracking else
-                        "ticket04-cost-ui"
+                        "ticket06-history-ui" if history else "ticket04-cost-ui"
                         if costs
                         else (
                             "ticket03-qualification-ui"
@@ -140,6 +140,10 @@ async def main(port, qualification=False, costs=False, tracking=False):
                     activation_reference="offline-ui-harness",
                 ),
             )
+            if history:
+                from .history_ui_fixture import populate_history
+
+                await populate_history(harness)
             harness.outcomes["scan"] = RuntimeError("offline simulated acquisition failure")
             harness.clock.advance()
             await execute_discovery(
@@ -190,8 +194,11 @@ if __name__ == "__main__":
     parser.add_argument("--qualification", action="store_true")
     parser.add_argument("--costs", action="store_true")
     parser.add_argument("--tracking", action="store_true")
+    parser.add_argument("--history", action="store_true")
     args = parser.parse_args()
     try:
-        asyncio.run(main(args.port, args.qualification, args.costs or args.tracking, args.tracking))
+        asyncio.run(main(args.port, qualification=args.qualification,
+            costs=args.costs or args.tracking or args.history, tracking=args.tracking,
+            history=args.history))
     except KeyboardInterrupt:
         print("OFFLINE_UI_STOPPED", flush=True)

@@ -11,6 +11,7 @@ from pricerecon.db.discovery import (
 )
 from pricerecon.models.costs import CostHistory
 from pricerecon.models.discovery import DiscoveryFeed, PreferenceProfile, PreferenceUpdate
+from pricerecon.models.history import ObservationHistory
 
 router = APIRouter()
 
@@ -38,3 +39,13 @@ async def update_discovery_preferences(update: PreferenceUpdate) -> PreferencePr
 @router.get("/discovery/offers/{offer_id}/costs", response_model=CostHistory)
 async def discovery_cost_history(offer_id: str) -> CostHistory:
     return get_cost_history(offer_id)
+
+
+@router.get("/discovery/candidates/{candidate_id}/history", response_model=ObservationHistory)
+async def discovery_observation_history(candidate_id: str) -> ObservationHistory:
+    from pricerecon.db.history import get_history
+
+    history = get_history(candidate_id)
+    if history is None:
+        raise HTTPException(status_code=404, detail="Candidate history not found")
+    return history

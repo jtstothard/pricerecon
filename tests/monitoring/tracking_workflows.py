@@ -699,5 +699,100 @@ async def migration():
             assert harness.blocked_edges == []
 
 
+async def combined_acquisition():
+    from unittest.mock import patch
+
+    with MonitoringHarness() as harness:
+        from pricerecon.core import notifications
+        from pricerecon.models.qualification import EvidenceSearchReport
+
+        from .workflows import listing
+
+        async with harness.session() as (client, _):
+            candidate = (await read_capture(harness, client, [priced_report(harness)]))[
+                "candidates"
+            ][0]
+            saved = await track(client, candidate, notifications={"channels": ["webhook"]})
+            original, _ = await capture(harness, client, priced_report(harness))
+            with patch.object(
+                notifications,
+                "get_global_notification_config",
+                lambda: {"webhook_url": "https://synthetic.invalid/capture"},
+            ):
+                for state in ("cache_reuse", "partial"):
+                    harness.clock.advance(hours=0.1)
+                    harness.report_overrides["cex"] = EvidenceSearchReport(
+                        acquisition_state=state,
+                        acquisition_reason="synthetic incomplete check",
+                        reused_capture_id=original.capture_id if state == "cache_reuse" else None,
+                        listings=[listing(harness, "cex", "cost", "Synthetic partial", "1")],
+                        evidence=[priced_report(harness, "56")],
+                    )
+                    await capture(harness, client, priced_report(harness, "56"))
+                    assert harness.deliveries == [], (state, harness.deliveries)
+                    result = await get(client, f"/api/discovery/tracking/{saved['id']}")
+                    assert "acquisition_partial_or_reused" in result["assessment"]["reasons"]
+            assert harness.blocked_edges == []
+
+
+async def combined_withdrawal():
+    import sqlite3
+    from contextlib import closing
+    from unittest.mock import patch
+
+    with MonitoringHarness() as harness:
+        from pricerecon.core import notifications
+        from pricerecon.core.exact_tracking import deliver_pending_targets
+        from pricerecon.db.history import append_history_invalidation
+        from pricerecon.models.history import HistoryInvalidation
+
+        async with harness.session() as (client, _):
+            candidate = (await read_capture(harness, client, [priced_report(harness)]))[
+                "candidates"
+            ][0]
+            saved = await track(client, candidate, notifications={"channels": ["webhook"]})
+            await capture(harness, client, priced_report(harness))
+            harness.clock.advance(hours=0.1)
+
+            def crash():
+                raise Interrupted()
+
+            with patch.object(notifications, "get_global_notification_config", crash):
+                try:
+                    await capture(harness, client, priced_report(harness, "56"))
+                except Interrupted:
+                    pass
+            intent = await get(client, f"/api/discovery/tracking/{saved['id']}")
+            assessment = intent["assessment"]
+            # Use06's committed revision-withdrawal contract as input, without
+            # implementing its history projection or07's correction UI.
+            with closing(sqlite3.connect(harness.database)) as connection, connection:
+                connection.execute("BEGIN IMMEDIATE")
+                append_history_invalidation(
+                    connection,
+                    HistoryInvalidation(
+                        id="synthetic-withdrawal",
+                        target={
+                            "kind": "cost",
+                            "id": assessment["scenario_id"],
+                            "revision": assessment["scenario_revision"],
+                        },
+                        recorded_at=harness.clock.now,
+                        reason="Synthetic cost withdrawn",
+                        correction_reference="synthetic-only",
+                    ),
+                )
+            with patch.object(
+                notifications,
+                "get_global_notification_config",
+                lambda: {"webhook_url": "https://synthetic.invalid/capture"},
+            ):
+                await deliver_pending_targets(policy=policy())
+            assert harness.deliveries == []
+            result = await get(client, f"/api/discovery/tracking/{saved['id']}")
+            assert "evidence_revision_withdrawn" in result["assessment"]["reasons"]
+            assert harness.blocked_edges == []
+
+
 if __name__ == "__main__":
     asyncio.run(globals()[sys.argv[1]]())
