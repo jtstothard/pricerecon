@@ -4,7 +4,9 @@
 
 **Blocked by:** [03: Explain exact configuration and offer qualification](03-explain-offer-qualification.md)
 
-**Status:** ready-for-agent
+**Status:** in-progress
+
+**Assignee:** Codex (parent continuation)
 
 **Parent:** [Trustworthy UK watch discovery alongside existing monitoring](../../../docs/specs/watch-category-discovery.md)
 
@@ -17,3 +19,12 @@
 ## Verification and authority
 
 Use the buyer-approved API plus normal execution seam, controlled external edges and isolated storage; assert observable behavior. Include persistence/API/UI behavior for this slice and keep legacy Watch semantics compatible. Source implementation and offline verification only: no live collection, production DB operations, account connections, activation, deployment, purchase, commit or push is authorised by this ticket.
+
+## Claim: 2026-10-27
+
+Claimed after ticket03's offline repair acceptance and history-preserving merge
+`bf0d3f90164bad7ac3efe657a309d141a9dff6fd`. See the
+[repair merger receipt](../../../docs/testing/watch-qualification.md#repair-merger-verification-2026-10-27).
+No ticket04 implementation or cost verification was performed by the merger.
+All checklist items remain open. Collection stays staged and totals remain
+unknown; live/source/buyer and activation gates remain separate.

@@ -10,8 +10,8 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 | --- | --- | --- |
 | [01: Existing monitoring](issues/01-verify-existing-monitoring.md) | None | Closed |
 | [02: Candidate discovery](issues/02-discover-candidates.md) | 01 | Closed |
-| [03: Qualification](issues/03-explain-offer-qualification.md) | 02 | In progress; acceptance gaps |
-| [04: UK delivered cost](issues/04-show-uk-delivered-cost.md) | 03 | Blocked |
+| [03: Qualification](issues/03-explain-offer-qualification.md) | 02 | Closed |
+| [04: UK delivered cost](issues/04-show-uk-delivered-cost.md) | 03 | In progress; claimed |
 | [05: Exact tracking](issues/05-track-exact-products.md) | 04 | Blocked |
 | [06: Observation history](issues/06-show-observation-history.md) | 04 | Blocked |
 | [07: Corrections](issues/07-correct-identities.md) | 05, 06 | Blocked |
@@ -25,7 +25,7 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 
 Work is limited to source implementation and deterministic offline verification with isolated storage and controlled external edges. The buyer explicitly authorised local commits/merges for this continuation, overriding the older issue-level prohibition. No live collection, accounts, production database, activation, deployment, purchases, pushes or PRs are authorised.
 
-Ticket 01 source was integrated on 2026-10-27 in merge `a0e5c1a612252c61a62eabc7b56ebc3b3297ed85`, preserving implementer HEAD `9312871f269137d7b98ba7155d9523350e41e62e`. The subsequent rendered-form preservation repair was integrated in merge `3243c8f00e3f9dd9efde79327b6905eb3d4354b2`, preserving implementer HEAD `534cecaece62e30f50c680b40af5b4c7f561b6e4`. Integration checks passed **15 isolated workflow tests**, **25 frontend tests** and the frontend build. The parent subsequently passed the rendered edit/save/reload/manual-check regression. Tickets 01 and 02 are now closed for their offline scope, and ticket 03 is claimed for the parent continuation. See the dated resolution log below and the [repair integration receipt](issues/01-verify-existing-monitoring.md#preservation-repair-integration-receipt-2026-10-27).
+Ticket 01 source was integrated on 2026-10-27 in merge `a0e5c1a612252c61a62eabc7b56ebc3b3297ed85`, preserving implementer HEAD `9312871f269137d7b98ba7155d9523350e41e62e`. The subsequent rendered-form preservation repair was integrated in merge `3243c8f00e3f9dd9efde79327b6905eb3d4354b2`, preserving implementer HEAD `534cecaece62e30f50c680b40af5b4c7f561b6e4`. Integration checks passed **15 isolated workflow tests**, **25 frontend tests** and the frontend build. The parent subsequently passed the rendered edit/save/reload/manual-check regression. Tickets 01, 02 and 03 are now closed for their offline scope, and ticket 04 is claimed for the parent continuation. See the dated resolution log below and the [repair integration receipt](issues/01-verify-existing-monitoring.md#preservation-repair-integration-receipt-2026-10-27).
 
 Actual buyer walkthrough feedback, current source rights, live offer/history/cost proof, finite operating limits and named maintenance ownership cannot be fabricated by passing fixture tests. Keep these gates explicit in the final receipt.
 
@@ -51,3 +51,17 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   subjects. **03 remains open; 04 remains blocked and unclaimed.** See the
   [merger findings and verification](../../docs/testing/watch-qualification.md#merger-verification-2026-10-27).
   No ticket04 implementation or source repair occurred; live/buyer gates remain open.
+
+- 2026-10-27: 03 repair `dad3273` integrated without conflicts in history-preserving
+  merge `bf0d3f9`, with parents `95f675e` and `dad3273`. Both original failures were
+  independently reproduced before merging. The merged tree passed 34 isolated
+  workflows (all 29 prior), focused Ruff, mypy on 12 files and diff checks.
+  Fresh-process and reordered recapture retain separate definition/keyless
+  subjects, multiple offers, stable IDs and evidence/revision lineage; an extra
+  isolated check confirms historical rows unchanged and no foreign-key errors.
+  Frontend 25-test/build results were retained from the source receipt and earlier
+  browser proof inspected; no new frontend/browser run was needed. **03 closed
+  for offline implementation; 04 claimed in progress for the parent continuation.**
+  See the [repair merger receipt](../../docs/testing/watch-qualification.md#repair-merger-verification-2026-10-27).
+  No 04 implementation occurred. Collection remains staged, totals unknown and
+  source/live/buyer/retention/freshness/operating gates open.

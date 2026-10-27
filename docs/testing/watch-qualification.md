@@ -1,9 +1,10 @@
 # Ticket03: exact configuration and merchant-offer qualification
 
-**Integration acceptance is partial.** The merger found two reproducible gaps;
-ticket03 remains open and ticket04 remains blocked. The
-[merger verification](#merger-verification-2026-10-27) below supersedes any broader
-implementation claims in this historical implementer receipt.
+**Ticket03 is closed for its offline implementation scope.** The
+[repair merger receipt](#repair-merger-verification-2026-10-27) records reproduction
+and resolution of both earlier gaps, integration checks and acceptance limits.
+Ticket04 is claimed for the next continuation; no ticket04 implementation occurred.
+The earlier implementer, merger and repair sections below remain historical receipts.
 
 2026-10-27. Implementation checkout:
 `/Users/jay/.t3/worktrees/pricerecon/t3-4e6f8e87`, branch
@@ -418,3 +419,128 @@ production DB, activation, delegation, push or PR was used. Local commits only.
 Ticket03 acceptance/closure and integration remain the merger's responsibility;
 ticket04 stays blocked and unclaimed. Real source identity/offer evidence,
 retention, buyer acceptance, UK costs, freshness and operating gates remain open.
+
+## Repair merger verification: 2026-10-27
+
+Merger checkout: `/Users/jay/.t3/worktrees/pricerecon/watch-category-integration`,
+branch `integration/watch-category-discovery`, clean at
+`95f675e7450d7c2c18e5f76537ee969ead2f3b83`. Repair checkout:
+`/Users/jay/.t3/worktrees/pricerecon/t3-c29cc91b`, branch
+`t3/ticket03-evidence-repair`, clean at
+`dad3273a3100b0aa920e24d2ea8abc990fab7d44`. Integration was confirmed as an ancestor
+of repair before merging. Review covered the six-file repair diff, ticket03,
+the spec, both earlier merger/repair receipts and repo engineering standards.
+No additional implementation changes were needed.
+
+### Independent reproduction and integration
+
+Before merging, both new regression workflows were executed against integration's
+unrepaired source at `95f675e`, in separate fresh processes using the documented
+interpreter, `env -i`, the integration PYTHONPATH and isolation harness. The repair
+workflow file was compiled with `__package__ = "tests.monitoring"`, so its relative
+imports used integration's harness/helpers while the application remained the
+unrepaired integration version. No checkout reset or source mutation was used.
+
+- `currency_binding` failed its expected-conflicting assertion: the binding was
+  `supported`, with no issues, for a USD claim against unchanged GBP context.
+- `partial_definitions` failed its expected-two-configurations assertion: two
+  distinct mint/blue subjects retained only the unresolved mint configuration.
+
+`git merge --no-ff dad3273a3100b0aa920e24d2ea8abc990fab7d44` then produced
+`bf0d3f90164bad7ac3efe657a309d141a9dff6fd`, without conflicts, with parents
+`95f675e7450d7c2c18e5f76537ee969ead2f3b83` and
+`dad3273a3100b0aa920e24d2ea8abc990fab7d44`. `git diff --exit-code dad3273 HEAD`
+confirmed identical trees before these tracker/receipt edits. The merge preserves
+the complete implementation and repair history.
+
+### Repeated checks on the merged tree
+
+The command below passed **34 tests in 36.60s**: 14 qualification, 5 discovery
+and all 15 legacy monitoring workflows. It includes all 29 previous workflows.
+No frontend build ran concurrently with application imports.
+
+```sh
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python -m pytest -q \
+  tests/test_qualification_workflow.py tests/test_discovery_workflow.py \
+  tests/test_monitoring_workflow.py
+```
+
+- **Passed:** both original reproduction workflows now pass. Currency claim and
+  context disagreement produces `conflicting` binding and merchant qualification,
+  with `purchase_context_mismatch` naming the claim. USD and GBP literals remain
+  independently inspectable. Consistent explicit USD/GBP contexts work; missing
+  context, price-context mismatches, quantity/destination conflicts and new/used/
+  auction variations cannot bypass the gates.
+- **Passed:** distinct unresolved mint/blue subjects, an identical-dimension third
+  subject and two keyless selections retain five configurations and five offers.
+  Fresh-process readback is exact. Reordered recapture, a duplicate report and a
+  changed partial width retain subject/binding IDs and revision links at revision
+  2. Keyless subjects retain empty identity values and their own claim lineage;
+  absent keys do not pool manufacturer claims. An explicit shared-definition
+  movement conflict survives duplicate reports and repeated extraction.
+- **Passed:** the earlier multiple-variation workflow still retains the £1
+  accessory and £48 intended watch separately, without first-SKU price transfer.
+  The existing price-change restart workflow retains offer identity and revises
+  the same offer/binding to revision 2.
+- **Passed:** an additional isolated API/execution probe combined the currency
+  conflict and five partial subjects, then reversed/duplicated the second capture.
+  It additionally checked stable offer IDs, offer/binding/configuration revision
+  links and original per-variation evidence. Direct read-only SQLite comparison
+  confirmed the first capture's rows unchanged: 1 capture, 2 leads, 6
+  configurations, 6 bindings, 6 offers and 6 comparison assessments.
+  `PRAGMA foreign_key_check` returned no errors. Isolation receipt:
+  `blocked_edges=[], notifications=0, collection_state=staged`.
+- **Passed:** focused Ruff across qualification/discovery models, core, storage,
+  acquisition, categories, API, Watch executor and qualification workflow/harness/
+  browser-fixture files. Focused mypy with `--follow-imports=silent` passed the
+  same 12 source files as the earlier merger. Existing unused-override notes
+  remain. `git diff --check 95f675e..HEAD` passed.
+
+Frontend source, dependencies and retained browser artifacts are unchanged by the
+repair. The source repair receipt's **25 passing frontend tests and successful
+TypeScript/Vite build** are retained, without repeating them. The earlier
+desktop/375px screenshots, receipt and fixture/driver were inspected, including
+readable header, separate states, used auction, expanded claims and footer areas.
+This was inspection of existing browser proof, not a fresh run. No changed UI
+contract or browser concern justified another run. ESLint remains the documented
+missing-`eslint.config.*` blocker; no workaround or new lint result is claimed.
+
+### Ticket03 acceptance and frontier
+
+All five ticket03 checklist items are accepted for deterministic offline scope:
+
+- Separate persisted configuration, selected binding, merchant and comparison
+  states retain evidence, issuer/extractor provenance and derivation lineage.
+  Both former currency and unresolved-subject objections are resolved.
+- Category-owned reference/revision/movement/size/dial/strap/date rules and
+  near-reference, accessory, first-SKU and generic-stock traps are exercised;
+  title, confidence and repeated extraction cannot supply identity proof.
+- Seller, condition, quantity, availability and purchase mode are exposed;
+  new/used and auction/buy-now remain distinct. Authenticity and internal health
+  remain unknown.
+- API/UI details expose missing, rejected and conflicting claims and their
+  lineage. The named five-case synthetic cohort remains intact; missing real
+  Militado/Merkur evidence continues to abstain.
+- Persistence, migration, fresh-process restart, revision lineage and legacy
+  monitoring compatibility pass through the approved seams. The extra historical
+  row check confirms recapture appends rather than rewriting prior records.
+
+No unresolved ticket03 merger objection remains. Ticket03 is closed, the graph is
+updated and ticket04 is claimed in progress for the parent continuation. No
+ticket04 implementation or cost calculation occurred. Public delivered totals
+remain unknown, usual price unavailable, savings null, alerts disabled and
+collection staged. This repair does not reconstruct configurations already lost
+in historical collapsed records or relabel old evidence as new proof.
+
+Real source authority, retention, buyer walkthrough, UK delivered costs, semantic
+freshness and operating/activation gates remain unproven. Passing synthetic
+workflows closes this implementation slice only. The source repair checkout stays
+clean at `dad3273`. The dirty original parent remains untouched with no staged
+changes and tracked-diff SHA-256
+`38ab9795757655e9119022af759fe392bfb901bce1ce8175038fc6c0b73e8914`.
+Only local history-preserving merge and tracker/receipt commits were performed;
+no installs, network/live acquisition, credentials, accounts, production DB,
+delegation, cleanup, push, PR, deployment or activation was used. The final tracker
+commit and clean integration state are recorded in the handoff.
