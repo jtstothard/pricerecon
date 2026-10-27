@@ -14,7 +14,7 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 | [04: UK delivered cost](issues/04-show-uk-delivered-cost.md) | 03 | Closed |
 | [05: Exact tracking](issues/05-track-exact-products.md) | 04 | Closed |
 | [06: Observation history](issues/06-show-observation-history.md) | 04 | Closed |
-| [07: Corrections](issues/07-correct-identities.md) | 05, 06 | Open — merger repair required |
+| [07: Corrections](issues/07-correct-identities.md) | 05, 06 | Open — independent-target intent repair |
 | [08: Comparisons](issues/08-compare-qualified-offers.md) | 07 | Blocked |
 | [09: Public coupons](issues/09-evaluate-public-coupons.md) | 04 | Closed |
 | [10: Shared limits](issues/10-prioritise-tracking.md) | 05 | Open — shared-admission repair |
@@ -28,10 +28,11 @@ Work is limited to source implementation and deterministic offline verification 
 Ticket 01 source was integrated on 2026-10-27 in merge `a0e5c1a612252c61a62eabc7b56ebc3b3297ed85`, preserving implementer HEAD `9312871f269137d7b98ba7155d9523350e41e62e`. The subsequent rendered-form preservation repair was integrated in merge `3243c8f00e3f9dd9efde79327b6905eb3d4354b2`, preserving implementer HEAD `534cecaece62e30f50c680b40af5b4c7f561b6e4`. Integration checks passed **15 isolated workflow tests**, **25 frontend tests** and the frontend build. The parent subsequently passed the rendered edit/save/reload/manual-check regression. See the dated resolution log below and the [repair integration receipt](issues/01-verify-existing-monitoring.md#preservation-repair-integration-receipt-2026-10-27).
 
 Current frontier, 2026-10-27: tickets 01–06 and 09 are closed for their offline
-scope. Ticket07 is merged but remains open for its reproduced multi-configuration
-withdrawal/requalification defect. Its correction transaction/UI, acquisition and
-dispatch races are connected to the accepted history/coupon repairs and pass the
-95-workflow suite, but the additional merger probe fails. Ticket08 stays blocked
+scope. Ticket07's multi-configuration withdrawal/requalification repair is merged:
+the original multi/single probes and all 123 guarded workflows pass. A further
+probe reproduces independent blue→red target intent being rewritten to gold by
+recorrection of a different mint→blue journal, persisting across restart. Ticket07
+therefore remains open for independent-target intent repair. Ticket08 stays blocked
 and unclaimed. Ticket10 is merged but open for the reproduced out-of-context shared-admission
 bypass. Ticket11 remains blocked and unclaimed; 12 remains blocked. Earlier dated readiness/ownership entries below describe
 their state at that time.
@@ -206,3 +207,18 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   The 07 multi-configuration repair remains separate and untouched; no 11 work
   or production acceptance occurred. Browser/AI and physical disk/log/backup/
   retention prerequisites remain explicit; collection stays staged.
+
+- 2026-10-27: 07 scope repair `430f4f0` merged without conflicts with `--no-ff`
+  as `7fcc3ea`, first parent `f8ff7e5`; source/merged trees matched exactly.
+  All **123 guarded workflows passed in 117.72s**; original multi/single probes,
+  focused Ruff/mypy and an additional valid-sibling captured-crossing control
+  pass. Unchanged frontend/build/browser proof is reused. A new guarded probe
+  fails: after mint→blue and blue→red journals both requalify, recorrecting the
+  first to gold rewrites both targets' intended dials to gold, surviving restart
+  while the second journal remains red. **07 stays open; 08 stays blocked and
+  unclaimed.** See the [scope repair merger review](../../docs/testing/watch-corrections.md#scope-repair-merger-review--2026-10-27).
+  No application repair or 08 work occurred. Ticket10's context-bypass probes
+  remain open for its owner, were not rerun and are not included as passed in
+  the 123 suite. Source repair, active10 and original dirty parent were untouched.
+  Collection stays staged; buyer/live/source/freshness/operating/activation gates
+  remain separate and open.

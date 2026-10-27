@@ -4,7 +4,7 @@
 
 **Blocked by:** [05: Track exact products and send qualified target alerts](05-track-exact-products.md), [06: Show retained observations and acquisition gaps](06-show-observation-history.md)
 
-**Status:** open — merger repair required 2026-10-27
+**Status:** open — independent-target intent repair required 2026-10-27
 
 **Assignee:** Codex implementer (isolated worktree)
 
@@ -12,7 +12,7 @@
 
 - [x] Provide a persistent field/value correction interaction through the feed/API, with original evidence, attribution, correction lineage and current disputed/resolved state.
 - [ ] Invalidate affected bindings, cohorts, cost scenarios, history qualification and pending alert eligibility; never transfer a wrong configuration’s historical prices to the corrected product.
-- [x] Retain tracking intent and explain what needs requalification; historical assessments remain clearly historical instead of displaying their old bargain claims as current.
+- [ ] Retain tracking intent and explain what needs requalification; historical assessments remain clearly historical instead of displaying their old bargain claims as current.
 - [x] Exercise overlap between acquisition, correction and alert dispatch, plus restart; stale assessment/evidence versions cannot publish as current or trigger a qualifying alert.
 - [x] Establish observable invalidation behavior that subsequent comparison and coupon slices must extend to their derived assessments; verify the correction workflow in the browser.
 
@@ -66,3 +66,37 @@ and retain the passing race/lineage/coupon protections. No application repair,
 08 implementation or acceptance, or 10 work was performed by the merger.
 Collection remains staged; live/buyer/source-rights/freshness/activation gates
 remain open. Checked items record bounded offline evidence, not full07 acceptance.
+
+## Scope repair merger disposition — 2026-10-27
+
+**07 remains open for independent-target intent repair; 08 remains blocked and
+unclaimed.** Clean source `430f4f07f6e591b90f9dfb233a33d9fdf86ac775` was merged
+without conflicts using `--no-ff` as `7fcc3ea27e815ccd0922c3c4c1fe08c3d3724bc9`,
+with requested integration `f8ff7e5024401991ca33b9bf08468476dc708227` as first
+parent. All **123 documented guarded workflows passed in 117.72s**, including
+95 original, 11 collection and 17 scope workflows. The unchanged original
+multi-configuration probe and single control now pass. A further control proves
+a valid blue sibling can send one captured qualifying crossing while the
+corrected stale offer remains withdrawn and its target withheld across restart.
+Focused Ruff/mypy and diff checks pass; unchanged frontend/browser proof is reused.
+
+An additional API/execution probe finds a remaining failure. Create separate £60
+targets for mint and blue, correct mint→blue and blue→red in independent journals,
+then acquire fresh blue/red evidence so both journals requalify. Recorrect only
+the first journal's actual blue descendant to gold. **Both targets' intended
+dials become gold**, although the second journal still says red; the mismatch
+persists after restart. Original subject IDs and £60 amounts remain, and this
+probe sends nothing. The tracking-intent item is unchecked because independent
+intent was overwritten. Passing the existing suite does not close this gap or
+prove the resulting altered target safe for later sends.
+
+The write scopes target invalidation/reassignment by the journal's historical
+configuration IDs, which include blue after convergence; that also selects the
+independent blue→red target. Target ownership must remain tied to its actual
+correction intent, rather than every target whose original definition appears
+among another journal's descendants. Merger made no application repair.
+
+See [the dated scope repair review and exact reproducer](../../../docs/testing/watch-corrections.md#scope-repair-merger-review--2026-10-27).
+Ticket10's existing shared-admission failures remain open for its owner and were
+neither rerun nor reclassified. No 08 implementation or claim occurred. Collection
+stays staged; live, buyer, source-rights, freshness and activation gates stay open.

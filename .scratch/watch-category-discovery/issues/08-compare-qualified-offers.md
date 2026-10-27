@@ -4,7 +4,7 @@
 
 **Blocked by:** [07: Correct identities without transferring misleading prices](07-correct-identities.md)
 
-**Status:** blocked — ticket07 merger repair required
+**Status:** blocked — ticket07 independent-target intent repair required
 
 **Assignee:** unclaimed
 

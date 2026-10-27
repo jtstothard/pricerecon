@@ -461,3 +461,158 @@ activation. No external network/live collection, credentials/accounts, productio
 DB, activation/deploy, push, PR or delegation occurred. Existing09 receipt gates,
 claimed-send rollback, pending-send withdrawal, immutable original facts and
 history, and no stale-alert protections remain required by the combined suite.
+
+## Scope repair merger review — 2026-10-27
+
+**Ticket07 remains open for independent-target intent repair. Ticket08 remains
+blocked and unclaimed.** The original multi-configuration defect is repaired,
+but recorrection can overwrite a different journal's retained target intent.
+The merger made no application repair and performed no 08 implementation.
+
+### Identity, ancestry and review
+
+Integration `/Users/jay/.t3/worktrees/pricerecon/watch-category-integration`,
+branch `integration/watch-category-discovery`, was clean at requested
+`f8ff7e5024401991ca33b9bf08468476dc708227`. Repair source
+`/Users/jay/.t3/worktrees/pricerecon/t3-77103083`, branch
+`t3/repair-multiconfig-acceptance`, was clean at requested
+`430f4f07f6e591b90f9dfb233a33d9fdf86ac775`. Integration was already an ancestor
+of source. Explicit `git merge --no-ff --no-edit 430f4f07f6e591b90f9dfb233a33d9fdf86ac775`
+produced `7fcc3ea27e815ccd0922c3c4c1fe08c3d3724bc9`, with those exact
+integration/source commits as first/second parents. No conflicts occurred;
+the merge tree exactly matched source before these diagnostic/tracker additions.
+
+Read the full 07 issue/spec, original merger finding, complete repair section,
+committed 05 transaction/dispatch extension, 06 exact-revision/capture lineage and 09
+independent checkout receipt/provenance contracts. Reviewed all four changed
+application files and both changed test files against the integration tip.
+
+- Frozen selection membership comes from the first correction's observed capture.
+  Stable binding IDs connect actual descendants across configuration definitions;
+  unrelated definitions that happen to match intended values cannot certify the
+  journal or enter it as observed descendants. Earlier different identities and
+  selections that had already left the subject definition remain separate.
+- Publication checks exact configuration revision, binding revision, offer and
+  its own payable evidence, correction-input revision, fresh corrected-field
+  claims, acquisition completeness and retained 06 temporal/cost roots. Readback
+  uses the same path checks plus dependency withdrawals. This is not an
+  `all()`→`any()` substitution over the full listing. Failed offers withdraw
+  independently; a shared definition survives when another dependent offer
+  survives. Coupon boundaries follow retained selection membership; old receipts
+  remain historical, not reusable current checkout proof.
+- Pending-send exact revisions and claimed-send rollback still use 05's owners.
+  The 123 suite retains the original overlap/replay, dispatch, coupon/history,
+  multiple-correction and same-definition multiple-offer assertions. No existing
+  assertion was removed, weakened, skipped or marked xfail.
+
+### Passing current verification
+
+The exact cleared-environment nine-file command in the repair section above ran
+on the merged integration tree using existing dependencies: **123 passed in
+117.72s**, no skips/xfails. This includes all 95 original workflows, 11 collection
+workflows and 17 scope workflows. [Full log](artifacts/watch-corrections/repair-merger-suite.txt).
+
+Both unmodified original merger commands now exit0, retaining
+[multi-configuration](artifacts/watch-corrections/repair-merger-multi.json) and
+[single-control](artifacts/watch-corrections/repair-merger-single.json) receipts.
+Fresh supported salmon and unrelated blue remain supported across restart, and
+the correction is `supported_by_fresh_evidence`. Their guards report temporary
+storage, no blocked edges, no sends and staged collection.
+
+A further [guarded sibling control](artifacts/watch-corrections/repair-merger-sibling-control.json)
+starts separate mint/blue targets above £60, corrects mint to salmon, then
+captures stale corrected cost lineage alongside a genuinely fresh blue price
+crossing. The capture has aggregate `publication_state=withdrawn`; only the
+corrected offer/cost withdraws. Blue sends exactly one captured webhook for its
+own tracking/configuration ID at **£58.10**. Corrected intent stays withheld and
+its journal stays `required` across restart; no corrected-offer send occurs.
+This establishes that the aggregate marker does not suppress this valid sibling.
+
+Focused Ruff passes the four changed application files, the two changed test
+files and both merger probe modules (eight files). Focused mypy
+`--follow-imports=silent` passes the four application files, with inherited
+unused-override notes only. The new probe is formatted; `git diff --check` passes.
+
+The repair changes no frontend, browser driver/server or browser artifacts.
+Exact Git comparisons against `f8ff7e5` confirm equality for the frontend tree,
+retained correction workflow/probe and browser inputs. Frontend tree remains
+`fdcd941bb28fda22b7a8e2d9e7d606a6f9a7f7ec`. Reuse the existing 25 frontend
+tests, production build and actual collection/correction desktop/narrow browser
+proof retained in the [10 merger manifest](artifacts/watch-collection/merger-verification.json)
+and [earlier 07 manifest](artifacts/watch-corrections/merger-verification.json).
+No frontend/build/browser run or preview tool was used here. Existing ESLint10
+missing-config blockage and large-chunk build warning remain documented.
+This API-level repair review supplies no new buyer walkthrough acceptance.
+
+### Remaining failure: recorrection overwrites independent target intent
+
+[The retained probe](../../tests/monitoring/correction_repair_merger_probe.py)
+uses only the existing guarded application API and normal acquisition seam.
+It does not inspect the database or assert private correction functions.
+
+1. Acquire independently supported mint (`a`) and blue (`b`) variants and create
+   a separate £60 exact target for each.
+2. Correct mint→blue in journal A and blue→red in journal B.
+3. Acquire fresh supported blue/red evidence. Both journals requalify; API target
+   intended values are `[blue, red]`.
+4. Recorrect only journal A's actual blue descendant to gold, using A's original
+   mint root, its current observed blue configuration/revision and expected
+   correction revision 1. POST returns 201.
+5. Read both targets, then restart the application and read them again.
+
+**Expected:** target A follows gold; independent target B retains red, matching
+its unchanged blue→red journal. **Observed:** intended dials become `[gold, gold]`
+immediately and after restart, while journal B still says red. Both original
+configuration IDs and £60 target amounts survive, but B's identity intent is
+silently rewritten. [Full API receipt](artifacts/watch-corrections/repair-merger-independent-recorrection.json)
+and [failing log](artifacts/watch-corrections/repair-merger-independent-recorrection.txt).
+
+`db/corrections.py` lines 200–209 collect all historical descendant configuration
+IDs, invalidate matching targets and replace every matching target's intended
+values. Journal A's descendant IDs include blue, so the write also selects B's
+original blue target. The publication-side intended-values check does not undo
+this write. Target intent needs its own correct journal/selection association;
+definition overlap alone cannot authorise reassignment. The probe exits1 with:
+
+`Recorrecting mint->blue to gold rewrites independent blue->red target intent`
+
+Its guards report temporary storage, `blocked_edges=[]`, `notifications_sent=0`
+and staged collection. This directly demonstrates intent corruption. It does
+not demonstrate an incorrect send or establish that later sends from the altered
+target are safe. The passing 123 suite and sibling control do not close this gap.
+The tracking-intent checklist item is therefore unchecked again; 07 stays open.
+
+Exact additional commands, using the same cleared environment/Python as the
+full suite (first exits1, control exits0):
+
+```sh
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  -m tests.monitoring.correction_repair_merger_probe \
+  "$PWD/docs/testing/artifacts/watch-corrections/repair-merger-independent-recorrection.json"
+
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  -m tests.monitoring.correction_repair_merger_probe \
+  "$PWD/docs/testing/artifacts/watch-corrections/repair-merger-sibling-control.json" --sibling-control
+```
+
+### Scope and outstanding gates
+
+[The merger manifest](artifacts/watch-corrections/repair-merger-verification.json)
+binds the tested merge, exact outcomes and retained source hashes. Only
+integration received the local history-preserving merge, diagnostic probe,
+receipts and tracker disposition. Source repair, active10 and the original
+dirty parent were not edited. No installs, downloads, external network/live
+collection, credentials/accounts, production DB, activation/deploy, push, PR,
+delegation or unrelated cleanup occurred.
+
+Ticket10's existing independent-context/process shared-admission bypass probes
+remain open for its owner. They were not run, repaired or reported passed; the 11
+retained collection workflows in the 123 suite are not those additional probes.
+Ticket08 remains blocked/unclaimed and was not implemented. Collection remains
+staged. Buyer interpretation/walkthrough, live source/offer/history/cost/receipt
+proof, source rights/retention, freshness/calibration, operating limits,
+comparison/complete-workflow acceptance and activation remain separate gates.
