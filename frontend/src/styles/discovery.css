@@ -63,3 +63,11 @@
 .discovery-history dl > div { display: flex; flex-wrap: wrap; gap: .5rem; }
 .discovery-history dt { font-weight: 600; }
 .discovery-history dd { margin: 0; }
+
+.identity-correction { margin: 1rem 0; border: 1px solid var(--border); padding: 1rem; border-radius: 0.6rem; }
+.identity-correction form { display: grid; gap: 0.8rem; max-width: 34rem; }
+.identity-correction label { display: grid; gap: 0.3rem; }
+.identity-correction input, .identity-correction select, .identity-correction textarea { width: 100%; min-width: 0; padding: 0.55rem; border: 1px solid var(--border); border-radius: 0.3rem; color: inherit; background: var(--background); }
+.identity-correction button { padding: 0.65rem; border: 1px solid var(--border); border-radius: 0.3rem; }
+.identity-correction li, .identity-correction dd { overflow-wrap: anywhere; }
+.correction-state { border-left: 3px solid #b07526; padding-left: 1rem; margin-block: 1rem; }

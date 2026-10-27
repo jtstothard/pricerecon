@@ -89,3 +89,15 @@ its other dependencies and its integrated proof requirements.
 Collection remains staged. Live coupon application, source mapping/direct-capture
 semantics, rights/retention, freshness, buyer acceptance, comparisons/savings,
 operating limits and activation/deployment remain separate unproven gates.
+
+## Ticket07 integration observation — 2026-10-27
+
+07's correction transaction/UI is now connected to the committed09 provenance
+repair in merge `233b3cc`. The full95 guarded suite passes correction-driven
+coupon withdrawal, restart, stale pre-correction receipt rejection after fresh
+base requalification, and an independently fresh receipt positive control.
+Retained actual browser proof includes correction-to-coupon/history withdrawal.
+This meets the connection check for those exercised paths, but **07 remains open**
+for the separate reproduced multi-configuration scope defect; 08 stays blocked.
+See the [07 merger disposition](../../../docs/testing/watch-corrections.md#merger-disposition--2026-10-27).
+09's offline closure and all live/buyer/activation limits remain unchanged.

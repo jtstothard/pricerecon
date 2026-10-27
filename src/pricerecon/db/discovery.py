@@ -216,6 +216,10 @@ def save_capture(capture: DiscoveryCapture, candidates: list[DiscoveryCandidate]
                 ),
             )
 
+        from pricerecon.db.corrections import validate_publication
+
+        validate_publication(connection, capture, candidates)
+
         if policy:
             from pricerecon.core.rate_limiter import DurableAdmission
 
@@ -301,6 +305,9 @@ def get_feed() -> DiscoveryFeed:
                         last_good=history.last_good,
                         validity=history.history_state,
                     )
+                from pricerecon.core.corrections import project_candidate
+
+                project_candidate(connection, candidate)
                 latest[candidate.id] = candidate
     for candidate in latest.values():
         candidate.public_delivered_total = public_summary(candidate.offers)
@@ -397,4 +404,7 @@ def get_cost_history(offer_id: str) -> CostHistory:
                 (offer_id,),
             )
         ]
+        from pricerecon.core.corrections import project_cost
+
+        scenarios = [project_cost(connection, scenario) for scenario in scenarios]
     return CostHistory(offer_id=offer_id, scenarios=scenarios)

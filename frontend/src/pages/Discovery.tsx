@@ -5,6 +5,7 @@ import '../styles/discovery.css'
 import ExactTrackingControl, { TrackingStatus } from '../components/ExactTracking'
 import type { ExactTracking } from '../lib/tracking'
 import { CollectionCoverage } from '../components/discovery/CollectionCoverage'
+import { IdentityCorrection } from '../components/discovery/IdentityCorrection'
 import { ObservationHistory } from '../components/discovery/ObservationHistory'
 
 const strengthLabel = { hard: 'Hard constraint', soft: 'Soft preference', unset: 'Unset' }
@@ -97,6 +98,7 @@ function Costs({ costs }: { costs: Cost[] }) {
     {costs.length === 0 && <p>No exact-scenario cost evidence supplied. Legacy normalized totals cannot certify delivered costs.</p>}
     {costs.map(cost => <section key={`${cost.id}-${cost.revision}`}>
       <h4>{cost.kind === 'public_no_coupon' ? 'Public no-coupon' : cost.kind} · {costStateLabel[cost.state]}{cost.total && ` · ${cost.total.currency} ${cost.total.amount}`}</h4>
+      {cost.withdrawn && <p className="discovery-caution">Historical cost withdrawn after identity correction. Retained original total: {cost.historical_total?.currency} {cost.historical_total?.amount}. These components do not establish a current payable price.</p>}
       <p>Observed capture {cost.captured_at}. Scenario revision {cost.revision}; offer revision {cost.offer_revision}; selection revision {cost.binding_revision}; configuration revision {cost.configuration_revision}; policy {cost.policy_version}. Freshness unvalidated.</p>
       <p>Merchant payable: {subtotals(cost.merchant_payable)}. Additional import/carrier/payment liabilities: {subtotals(cost.additional_liabilities)}.</p>
       <p>Known subtotal: {subtotals(cost.known_subtotal)}{cost.state === 'unknown' ? '; incomplete, not a delivered total.' : '.'}</p>
@@ -145,16 +147,17 @@ function Candidate({ candidate, tracking, onSaved }: { candidate: DiscoveryCandi
       {candidate.public_total.amount !== null && <p className="discovery-cost-state">{costStateLabel[candidate.public_total.state]} · freshness unvalidated</p>}
       <p>Public UK delivered price</p>
       {candidate.advertised_item_price !== null && <p className="discovery-item-price">
-        Item lead: {candidate.reported_currency ?? 'currency unknown'} {candidate.advertised_item_price}
+        {candidate.corrections.some(c => c.requalification === 'required') ? 'Historical item lead (withdrawn)' : 'Item lead'}: {candidate.reported_currency ?? 'currency unknown'} {candidate.advertised_item_price}
       </p>}
       <p className="discovery-quiet">Usual price unavailable</p>
       {!tracking.some(intent => candidate.configurations.some(config => config.id === intent.configuration_id)) && <p className="discovery-quiet">No bargain alerts until exact tracking and qualification.</p>}
     </div>
     <div className="discovery-tracking">{candidate.configurations.map(configuration => <ExactTrackingControl key={configuration.id} candidate={candidate} configuration={configuration}
-      intent={tracking.find(intent => intent.configuration_id === configuration.id)} onSaved={onSaved} />)}</div>
+      intent={tracking.find(intent => intent.configuration_id === configuration.id || (intent.candidate_id === candidate.id && candidate.corrections.some(c => c.configuration_id === intent.configuration_id)))} onSaved={onSaved} />)}</div>
     <details className="discovery-evidence">
       <summary>Price and evidence</summary>
-      <ObservationHistory candidateId={candidate.id} />
+      <IdentityCorrection candidate={candidate} onSaved={onSaved} />
+      <ObservationHistory key={`${candidate.capture_id}:${candidate.corrections.map(c => c.revision).join('-')}`} candidateId={candidate.id} />
       <div className="discovery-qualification">
         {candidate.configurations.length === 0 && <p>Configuration unresolved: no typed evidence supplied.</p>}
         {candidate.configurations.map(config => <section key={config.id}>

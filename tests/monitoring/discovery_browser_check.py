@@ -29,6 +29,7 @@ def main():
     mode.add_argument("--tracking", action="store_true")
     mode.add_argument("--coupons", action="store_true")
     mode.add_argument("--history", action="store_true")
+    mode.add_argument("--corrections", action="store_true")
     args = parser.parse_args()
     args.artifacts.mkdir(exist_ok=True)
     config = args.artifacts / "config.json"
@@ -63,6 +64,7 @@ def main():
         command("set", "viewport", "1280", "900")
         fixture = evaluate('fetch("/api/offline-verification").then(response => response.json())')
         assert fixture["fixture"] == (
+            "ticket07-correction-ui" if args.corrections else
             "ticket05-tracking-ui" if args.tracking else
             "ticket09-coupon-ui" if args.coupons else
             "ticket06-history-ui" if args.history else "ticket04-cost-ui"
@@ -75,6 +77,11 @@ def main():
         assert fixture["automatic_checks"] is False, fixture
         assert fixture["blocked_edges"] == [], fixture
         assert fixture["notifications_sent"] == 0, fixture
+        if args.corrections:
+            from .correction_browser_check import verify_corrections
+
+            verify_corrections(command, evaluate, args.artifacts)
+            return
         if args.tracking:
             from .tracking_browser_check import run_tracking_browser
 

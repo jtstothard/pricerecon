@@ -10,7 +10,7 @@ from contextlib import closing
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
-from pricerecon.categories.watches import configuration_preference_fit
+from pricerecon.categories.watches import configuration_matches_values, configuration_preference_fit
 from pricerecon.core import notifications
 from pricerecon.core.qualification import identity_key
 from pricerecon.db.discovery import get_preferences, load_capture_candidates
@@ -45,6 +45,7 @@ def assess_offer(
         offer_id=offer.id,
         offer_revision=offer.revision,
         binding_revision=binding.revision,
+        configuration_id=binding.configuration_id,
         configuration_revision=binding.configuration_revision,
         policy_version=policy.version if policy else None,
         policy_fingerprint=identity_key(policy.model_dump_json()) if policy else None,
@@ -60,7 +61,11 @@ def assess_offer(
     if (
         configuration is None
         or configuration.state != "supported"
-        or binding.configuration_id != intent.configuration_id
+        or (
+            not configuration_matches_values(configuration.values, intent.intended_values)
+            if intent.intended_values is not None
+            else binding.configuration_id != intent.configuration_id
+        )
     ):
         reasons.append("exact_configuration_unresolved_or_changed")
     if binding.resolution.state != "supported" or offer.qualification.state != "supported":
@@ -260,7 +265,7 @@ def decide(
         listing: dict[str, str | int | None] = {
             "tracking_id": intent.id,
             "title_raw": candidate.title,
-            "configuration_id": intent.configuration_id,
+            "configuration_id": binding.configuration_id,
             "offer_id": offer.id,
             "offer_key": key,
             "delivered_gbp": str(price),

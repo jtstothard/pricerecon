@@ -13,6 +13,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from pricerecon.api.auth import require_api_key
+from pricerecon.api.corrections import router as corrections_router
 from pricerecon.api.discovery import router as discovery_router
 from pricerecon.api.events import router as events_router
 from pricerecon.api.export import router as export_router
@@ -124,6 +125,7 @@ app.add_middleware(
 api_deps = [Depends(require_api_key)] if settings.api_key else []
 app.include_router(health_router, prefix="/api", tags=["Health"], dependencies=api_deps)
 app.include_router(discovery_router, prefix="/api", tags=["Discovery"], dependencies=api_deps)
+app.include_router(corrections_router, prefix="/api", tags=["Corrections"], dependencies=api_deps)
 app.include_router(tracking_router, prefix="/api", tags=["Tracking"], dependencies=api_deps)
 app.include_router(watches_router, prefix="/api", tags=["Watches"], dependencies=api_deps)
 app.include_router(listings_router, prefix="/api", tags=["Listings"], dependencies=api_deps)

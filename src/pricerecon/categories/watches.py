@@ -229,3 +229,17 @@ def configuration_preference_fit(
             fit.state = "fits" if dial in preferences.colourful_dials else "outside"
             fit.reason = f"Manufacturer-declared dial {dial}: {fit.state} colourful preference."
     return fits
+
+
+def configuration_matches_values(observed: dict[str, str], intended: dict[str, str]) -> bool:
+    """Compare human intent using the category's exact identity equivalences."""
+    from pricerecon.core.qualification import canonical_decimal
+
+    return all(
+        field in observed and (
+            canonical_decimal(observed[field]) == canonical_decimal(value)
+            if field == "case_width_mm"
+            else observed[field].strip().casefold() == value.strip().casefold()
+        )
+        for field, value in intended.items()
+    )

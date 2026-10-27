@@ -18,7 +18,7 @@ from .harness import MonitoringHarness
 from .workflows import LEGACY, listing
 
 
-async def main(port, qualification=False, costs=False, tracking=False, history=False, coupons=False):
+async def main(port, qualification=False, costs=False, tracking=False, history=False, coupons=False, corrections=False):
     with MonitoringHarness() as harness:
         from pricerecon.core.discovery import execute_discovery
         from pricerecon.models.discovery import DiscoveryAdmission, DiscoveryRequest
@@ -97,7 +97,7 @@ async def main(port, qualification=False, costs=False, tracking=False, history=F
                 from .tracking_workflows import priced_report
 
                 harness.reports["cex"][0] = priced_report(harness, listing_id="fixture-1")
-        if coupons:
+        if coupons or corrections:
             from .coupon_workflows import advertised_report, reproduced_report
 
             harness.reports["cex"] = [
@@ -118,6 +118,7 @@ async def main(port, qualification=False, costs=False, tracking=False, history=F
             async def fixture_identity():
                 return {
                     "fixture": (
+                        "ticket07-correction-ui" if corrections else
                         "ticket05-tracking-ui" if tracking else
                         "ticket09-coupon-ui" if coupons else
                         "ticket06-history-ui" if history else "ticket04-cost-ui"
@@ -206,10 +207,11 @@ if __name__ == "__main__":
     mode.add_argument("--tracking", action="store_true")
     mode.add_argument("--coupons", action="store_true")
     mode.add_argument("--history", action="store_true")
+    mode.add_argument("--corrections", action="store_true")
     args = parser.parse_args()
     try:
         asyncio.run(main(args.port, qualification=args.qualification,
-            costs=args.costs or args.tracking or args.history or args.coupons,
-            tracking=args.tracking, history=args.history, coupons=args.coupons))
+            costs=args.costs or args.tracking or args.history or args.coupons or args.corrections,
+            tracking=args.tracking, history=args.history, coupons=args.coupons, corrections=args.corrections))
     except KeyboardInterrupt:
         print("OFFLINE_UI_STOPPED", flush=True)

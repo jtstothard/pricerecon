@@ -55,6 +55,7 @@ class TrackingAssessment(TrackingModel):
     offer_id: str | None = None
     offer_revision: int | None = None
     binding_revision: int | None = None
+    configuration_id: str | None = None
     configuration_revision: int | None = None
     scenario_id: str | None = None
     scenario_revision: int | None = None
@@ -62,6 +63,7 @@ class TrackingAssessment(TrackingModel):
 
 
 class ExactTracking(TrackingCreate):
+    intended_values: dict[str, str] | None = None
     id: int
     revision: int = 1
     created_at: datetime
