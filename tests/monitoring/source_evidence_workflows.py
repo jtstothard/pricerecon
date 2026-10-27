@@ -56,7 +56,10 @@ def browser_fixture(harness, *, truncated=False, discovery_truncated=False):
                 selected_backend="original-fixture",
                 attempts=(),
                 rendered=RenderedContent(
-                    html=html, final_url=url, html_truncated=(truncated and "/item/" in url) or (discovery_truncated and "/w/" in url)
+                    html=html,
+                    final_url=url,
+                    html_truncated=(truncated and "/item/" in url)
+                    or (discovery_truncated and "/w/" in url),
                 ),
             )
 
@@ -832,24 +835,71 @@ async def militado_gate():
 
 async def discovery_truncated():
     with MonitoringHarness() as harness, browser_fixture(harness, discovery_truncated=True):
+        from pricerecon.core.collection_policy import operating_policy
         from pricerecon.core.discovery import execute_discovery
         from pricerecon.models.discovery import DiscoveryRequest
-        from pricerecon.core.collection_policy import operating_policy
 
-        policy = type(harness.test_policy).model_validate({**harness.test_policy.model_dump(),
-            "provider_request_caps": {"aliexpress": {"limit": 20, "tracking_reserve": 0}}})
+        policy = type(harness.test_policy).model_validate(
+            {
+                **harness.test_policy.model_dump(),
+                "provider_request_caps": {"aliexpress": {"limit": 20, "tracking_reserve": 0}},
+            }
+        )
         with operating_policy(policy):
-          async with harness.session() as (client, _):
-            await execute_discovery(DiscoveryRequest(query="AD2066", sources=[{"connector": "aliexpress", "config": {
-                "browser_max_products": 1, "evidence_use": {"permission_reference": "original-fixture", "retention": "synthetic"}}}]), admission=admission())
+            async with harness.session() as (client, _):
+                await execute_discovery(
+                    DiscoveryRequest(
+                        query="AD2066",
+                        sources=[
+                            {
+                                "connector": "aliexpress",
+                                "config": {
+                                    "browser_max_products": 1,
+                                    "evidence_use": {
+                                        "permission_reference": "original-fixture",
+                                        "retention": "synthetic",
+                                    },
+                                },
+                            }
+                        ],
+                    ),
+                    admission=admission(),
+                )
+                feed = await get(client, "/api/discovery/watches")
+                outcome = feed["captures"][0]["outcomes"][0]
+                assert outcome["state"] == "failed", outcome
+                assert feed["candidates"] == []
+                assert outcome["source_evidence"]["content_truncated"] is True
+                assert outcome["source_evidence"]["pages_captured"] == 1
+                assert outcome["source_evidence"]["detail_limit"] == 1
+                assert "truncated_discovery_content" in outcome["source_evidence"]["issues"]
+                assert harness.deliveries == harness.blocked_edges == []
+
+
+async def assessment_interaction():
+    with MonitoringHarness() as harness:
+        from .assessment_workflows import policy
+        from .source_evidence_ui_fixture import populate
+
+        async with harness.session() as (client, _):
+            supplied = policy(harness).model_copy(
+                update={"sources": ["aliexpress", "ebay", "shopify"]}
+            )
+            await populate(harness, supplied)
             feed = await get(client, "/api/discovery/watches")
-            outcome = feed["captures"][0]["outcomes"][0]
-            assert outcome["state"] == "failed", outcome
-            assert feed["candidates"] == []
-            assert outcome["source_evidence"]["content_truncated"] is True
-            assert outcome["source_evidence"]["pages_captured"] == 1
-            assert outcome["source_evidence"]["detail_limit"] == 1
-            assert "truncated_discovery_content" in outcome["source_evidence"]["issues"]
+            assert len(feed["candidates"]) == 5
+            assert all(c["public_delivered_total"]["amount"] is None for c in feed["candidates"])
+            assessments = await get(client, "/api/discovery/assessments")
+            for assessment in assessments["items"]:
+                assert assessment["current_best"]["amount"] is None
+                assert assessment["observed_low"]["amount"] is None
+                assert assessment["usual_price"]["amount"] is None
+                assert assessment["savings"] is None
+            assert all(c["offers"][0]["source_evidence"] is not None for c in feed["candidates"])
+            assert (
+                len([row for row in feed["source_coverage"] if row["last_outcome"] is not None])
+                == 3
+            )
             assert harness.deliveries == harness.blocked_edges == []
 
 

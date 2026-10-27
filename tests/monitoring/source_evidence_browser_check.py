@@ -92,7 +92,10 @@ def main():
             assert expected in detail, (expected, detail)
         command("screenshot", str(args.artifacts / "desktop-source-evidence.png"))
         command("set", "viewport", "375", "812")
-        command("scrollintoview", '.discovery-row:has(h2:has-text("Addiesdive")) .source-offer-evidence h4')
+        command(
+            "scrollintoview",
+            '.discovery-row:has(h2:has-text("Addiesdive")) .source-offer-evidence h4',
+        )
         command("screenshot", str(args.artifacts / "narrow-source-evidence.png"))
         assert evaluate("document.documentElement.scrollWidth <= innerWidth")
         command("scrollintoview", ".source-coverage > summary")

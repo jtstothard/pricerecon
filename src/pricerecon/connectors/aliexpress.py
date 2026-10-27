@@ -373,7 +373,8 @@ class AliExpressConnector(BaseConnector):
             if isinstance(capture, SourceReceipt):
                 capture.pages_captured = 1
                 capture.content_truncated = result.rendered.html_truncated or (
-                    not result.rendered.html and result.rendered.snapshot_truncated is not False)
+                    not result.rendered.html and result.rendered.snapshot_truncated is not False
+                )
                 if capture.content_truncated:
                     capture.issues.append("truncated_discovery_content")
                     capture.completeness = "partial"

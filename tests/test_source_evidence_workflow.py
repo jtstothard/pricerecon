@@ -77,3 +77,7 @@ def test_militado_signer_gate_cannot_be_replaced_by_a_fixture_permission_label()
 
 def test_truncated_discovery_is_a_failed_capture_with_explicit_limits_not_an_empty_search():
     run_source("discovery_truncated")
+
+
+def test_merged_assessments_cannot_promote_reviewed_adapter_leads_to_price_claims():
+    run_source("assessment_interaction")

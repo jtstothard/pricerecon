@@ -3,7 +3,7 @@
 from .source_evidence_workflows import admission, browse_fixture, browser_fixture, retailer_fixture
 
 
-async def populate(harness):
+async def populate(harness, comparison_policy=None):
     from pricerecon.core.collection_policy import operating_policy
     from pricerecon.core.discovery import execute_discovery
     from pricerecon.models.discovery import DiscoveryRequest
@@ -45,4 +45,5 @@ async def populate(harness):
                         query=query, sources=[{"connector": source, "config": config}]
                     ),
                     admission=admission(),
+                    comparison_policy=comparison_policy,
                 )

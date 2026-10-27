@@ -33,9 +33,9 @@ async def main(
         from pricerecon.core.discovery import execute_discovery
         from pricerecon.models.discovery import DiscoveryAdmission, DiscoveryRequest
 
-        assert harness.application.frontend_dist.joinpath("index.html").is_file(), (
-            "Build frontend first"
-        )
+        assert harness.application.frontend_dist.joinpath(
+            "index.html"
+        ).is_file(), "Build frontend first"
         harness.seed_legacy(
             [(7, LEGACY), (8, {**LEGACY, "name": "Paused saved search", "enabled": False})]
         )
@@ -128,27 +128,31 @@ async def main(
             async def fixture_identity():
                 return {
                     "fixture": (
-                        "ticket11-source-evidence-ui" if source_evidence else
-                        "ticket08-assessment-ui" if assessments
+                        "ticket11-source-evidence-ui"
+                        if source_evidence
                         else (
-                            "ticket07-correction-ui"
-                            if corrections
+                            "ticket08-assessment-ui"
+                            if assessments
                             else (
-                                "ticket05-tracking-ui"
-                                if tracking
+                                "ticket07-correction-ui"
+                                if corrections
                                 else (
-                                    "ticket09-coupon-ui"
-                                    if coupons
+                                    "ticket05-tracking-ui"
+                                    if tracking
                                     else (
-                                        "ticket06-history-ui"
-                                        if history
+                                        "ticket09-coupon-ui"
+                                        if coupons
                                         else (
-                                            "ticket04-cost-ui"
-                                            if costs
+                                            "ticket06-history-ui"
+                                            if history
                                             else (
-                                                "ticket03-qualification-ui"
-                                                if qualification
-                                                else "ticket02-discovery-ui"
+                                                "ticket04-cost-ui"
+                                                if costs
+                                                else (
+                                                    "ticket03-qualification-ui"
+                                                    if qualification
+                                                    else "ticket02-discovery-ui"
+                                                )
                                             )
                                         )
                                     )
@@ -201,14 +205,22 @@ async def main(
                 from .assessment_workflows import capture as assessment_capture
                 from .assessment_workflows import coupon_report, policy, priced_report
 
-                supplied = policy(harness, allowed_scenario_kinds=["public_no_coupon", "public_coupon"])
-                feed = await assessment_capture(harness, client, [priced_report(harness, "68", "fixture-1")], supplied)
+                supplied = policy(
+                    harness, allowed_scenario_kinds=["public_no_coupon", "public_coupon"]
+                )
+                feed = await assessment_capture(
+                    harness, client, [priced_report(harness, "68", "fixture-1")], supplied
+                )
                 harness.clock.advance(hours=0.01)
                 report = coupon_report(harness, 3, "fixture-1")
-                candidate = next(c for c in feed["candidates"] if c["source_listing_id"] == "fixture-1")
+                candidate = next(
+                    c for c in feed["candidates"] if c["source_listing_id"] == "fixture-1"
+                )
                 revision = candidate["configurations"][0]["revision"] + 1
                 report.coupons[0].application.expected_configuration_revision = revision
-                report.coupons[0].application.receipt.observation.expected_configuration_revision = revision
+                report.coupons[
+                    0
+                ].application.receipt.observation.expected_configuration_revision = revision
                 await assessment_capture(harness, client, [report], supplied)
             print(
                 f"OFFLINE_UI_READY http://127.0.0.1:{port}/discover; fictional connector leads; temporary SQLite; paused scheduler",
