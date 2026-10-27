@@ -1,0 +1,33 @@
+{
+  "tested_source_head": "b14500b25a9429cc48417722651ea7c256acd202",
+  "integration_ancestor": "75f8a3a778e901e79f5ce1a1b76a26692d42a343",
+  "source_files": {
+    "frontend/src/components/discovery/CollectionCoverage.tsx": "4b131e30e7c29960ddcc49fb12de19076b3142676931401365701f2977d5a636",
+    "frontend/src/lib/collection.ts": "6e858c8e6b92e44a835478adf43ac9d9618ec02664d232986ed73d7cd78ca744",
+    "frontend/src/pages/Discovery.tsx": "328df1d77f40d925d9bfe9615f5efbc6d1e48f3d62673b18b3c68cecdecc0df2",
+    "src/pricerecon/api/discovery.py": "a564576059da0761db67ff7892315c657111e04585b8ea7aa18d748f00f42269",
+    "src/pricerecon/connectors/aliexpress.py": "2bdff6470955b81217388a0531d35aa42ee2cb706ae4a8245c226188d3cc6207",
+    "src/pricerecon/connectors/browser_client.py": "ac5674184c336edb277f641f19ff9e0adc25c05cf6eebe4ae1d8a40b51b5fe71",
+    "src/pricerecon/connectors/ebay.py": "896df7c69b5e96aba2334e4e3b6abab0a374af78217a8d72d3730ef2013748ce",
+    "src/pricerecon/connectors/external_browser.py": "c650c1041d7b2765338b23ced7a9d67b577361ea90a5a1dff2ab291cf8cbfe23",
+    "src/pricerecon/core/acquisition.py": "f00cef7e2529fef1721d54192917a64496f04e12c5451acf85f04d31a49c8e77",
+    "src/pricerecon/core/collection_policy.py": "c3a661f3a7c6e42a155534d49a17a6b5c425a6b0d4d16aed5f91584ff9d200ae",
+    "src/pricerecon/core/collection_transport.py": "9053d79f7e323d4ce2cbd83ee83bf0deadb733baaf52dfe9135dcdea11fd7db6",
+    "src/pricerecon/core/diff_engine.py": "2224dcd243c5a36c737a06a6f638a7522c56977f3056d4f85bee542c01bda6bb",
+    "src/pricerecon/core/discovery.py": "5aed75909d0dbd7f9652c461189b30e004a81f5a060a4007fa94d21e4ffd2150",
+    "src/pricerecon/core/exact_tracking.py": "38e5d42f71a0ca02c19090e8d1b9f5f4bf410e5358e010dc6c3a374fe06825c9",
+    "src/pricerecon/core/rate_limiter.py": "501e16da8b5653165c52b49ca32dd43bd4e90dde9777536e660a62ba699de184",
+    "src/pricerecon/core/watch_executor.py": "58ce6a2384349f66982fb3c45b73cd566320fa792d2692223dafe9af69411afc",
+    "src/pricerecon/db/collection.py": "35e073a02dfc9f6faf96248efb3f454768cc9dbf692644a72ff650c684e70fba",
+    "src/pricerecon/db/discovery.py": "199b49754babfac180444a12baedd7bf60fcafa9ee06ed02d4088c5cb98dfdab",
+    "src/pricerecon/db/schema.py": "19d197172a9461ea61add67834afa866d4f8a9823ee2f26d58a5b7b5b0149527",
+    "src/pricerecon/db/tracking.py": "c15d4eab00667e36496f807dab94dc21f702f99e0a8fa042af1c387441a94feb",
+    "src/pricerecon/models/collection.py": "9c4a06d367b77898e6829765697fe8e3439b0aa9ff68809640cdd50aeddb2850",
+    "tests/monitoring/collection_browser_check.py": "4197cf5e1d2b5b535ce94321b716dd2b0f0bec694a2ba661623c6df4e6a32b77",
+    "tests/monitoring/collection_ui_server.py": "221c0c31294ead0a99b3643c3d5b21acbcc0f31eafad48ca52cfa434631f0cdd",
+    "tests/monitoring/collection_workflows.py": "376dd75c658e55a93c0a16d975938eaf5409584d14bf79a9d6f0d04bd42db5f8",
+    "tests/monitoring/harness.py": "aa9f99adcc0d43fc2638b6687bf7adc309842dbd50dc484c9936a0cb10f5bebc",
+    "tests/test_collection_workflow.py": "12392c7654ecb2de45b03e6646fb51d0454a5269db0c348765c085e09c1ef17b"
+  },
+  "scope": "controlled temp-SQLite workflows; production activation unproven"
+}

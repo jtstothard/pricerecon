@@ -4,6 +4,7 @@ import { loadDiscovery, savePreferences, type DiscoveryCandidate, type Discovery
 import '../styles/discovery.css'
 import ExactTrackingControl, { TrackingStatus } from '../components/ExactTracking'
 import type { ExactTracking } from '../lib/tracking'
+import { CollectionCoverage } from '../components/discovery/CollectionCoverage'
 import { IdentityCorrection } from '../components/discovery/IdentityCorrection'
 import { ObservationHistory } from '../components/discovery/ObservationHistory'
 
@@ -235,6 +236,7 @@ export default function Discovery() {
     {!feed && !error && <p role="status">Loading watch discovery…</p>}
     {feed && <>
       <p className="discovery-collection">{feed.collection_reason}</p>
+      <CollectionCoverage />
       {feed.captures.some(capture => capture.mode === 'offline_verification') && <p className="discovery-caution">Offline verification data. These are test leads, not live merchant evidence.</p>}
       {feed.captures.length > 0 && <p className="discovery-quiet">Latest attempt: {feed.captures[0].outcomes.map(outcome => `${outcome.source} ${outcome.state.replace(/_/g, ' ')}`).join('; ')}. Source completeness unknown. Earlier candidates retain their capture dates.</p>}
       <Preferences profile={feed.preferences} onSaved={reload} />

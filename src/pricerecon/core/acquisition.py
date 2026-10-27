@@ -1,7 +1,9 @@
 """Shared connector lifecycle from the Watch executor. No scheduling or notifications."""
 
+import asyncio
 import logging
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any, Literal
 
 import httpx
@@ -47,6 +49,7 @@ async def acquire_sources(
     filters: dict[str, Any],
     context_id: int | str,
     purpose: Literal["watch", "discovery"] = "watch",
+    verification_sources: set[str] | None = None,
 ) -> AcquisitionResult:
     """Use the existing registry, config, health, lifecycle and search boundary."""
     runtime_config = load_config()
@@ -98,8 +101,26 @@ async def acquire_sources(
                 extra={f"{purpose}_id": context_id, "connector": connector_id},
             )
 
+        from pricerecon.core.collection_policy import current_policy
+        from pricerecon.core.collection_transport import active_admission
+        from pricerecon.core.rate_limiter import AdmissionDenied, DurableAdmission
+
+        policy = current_policy()
+        budget = DurableAdmission(policy, connector_id,
+            "verification" if connector_id in (verification_sources or set())
+            else "discovery" if purpose == "discovery" else "tracking", context_id,
+            query=source_queries.get(connector_id, query)) if policy else None
+        token = active_admission.set(budget)
+        deadline = (asyncio.get_running_loop().time() + min(
+            budget.policy.run_timeout_seconds,
+            (budget.policy.stops_at - datetime.now(UTC)).total_seconds(),
+        )) if budget else None
+        listing_start, lead_start = len(all_listings), len(leads)
         connector = None
+        source_outcome = AcquisitionOutcome(source=connector_id, state="failed", reason="interrupted")
         try:
+            if budget:
+                budget.begin()
             logger.info(
                 f"{purpose}_connector_start",
                 extra={f"{purpose}_id": context_id, "connector": connector_id},
@@ -114,6 +135,8 @@ async def acquire_sources(
                     f"Connector '{connector_id}' not found in registry. "
                     f"Available: {sorted(all_connectors.keys())}"
                 )
+            if budget and getattr(connector_class, "collection_accounting", None) not in {"http_v1", "controlled_v1"}:
+                raise AdmissionDenied("attempt_accounting_unavailable", state="blocked")
             # Build connector kwargs: merge config-file defaults, env-level credentials,
             # and per-watch config. Per-watch config takes precedence.
             config_defaults = dict(connector_defaults.get(connector_id, {}) or {})
@@ -217,7 +240,11 @@ async def acquire_sources(
                     connector_id=connector_id,
                     detail={"error": str(exc), "error_type": exc.__class__.__name__},
                 ) from exc
-            await connector.initialize()
+            if budget:
+                async with asyncio.timeout_at(deadline):
+                    await connector.initialize()
+            else:
+                await connector.initialize()
             connector_filters = {}
             connector_filters.update(filters)
             # Use per-connector query if available, otherwise fall back to watch.query
@@ -227,7 +254,11 @@ async def acquire_sources(
             inspect = getattr(connector, "search_with_evidence", None)
             if purpose == "discovery" and callable(inspect):
                 try:
-                    report = await inspect(effective_query, connector_filters)
+                    if budget:
+                        async with asyncio.timeout_at(deadline):
+                            report = await inspect(effective_query, connector_filters)
+                    else:
+                        report = await inspect(effective_query, connector_filters)
                 except ValidationError:
                     raise ConnectorDegradedError(
                         status=ConnectorStatus.parse_error,
@@ -260,7 +291,11 @@ async def acquire_sources(
                     reused_capture_id=report.reused_capture_id,
                 )
             else:
-                listings = await connector.search(effective_query, connector_filters)
+                if budget:
+                    async with asyncio.timeout_at(deadline):
+                        listings = await connector.search(effective_query, connector_filters)
+                else:
+                    listings = await connector.search(effective_query, connector_filters)
             all_listings.extend(listings)
             for listing in listings:
                 matching: dict[
@@ -327,6 +362,15 @@ async def acquire_sources(
                 "ok",
                 details={"listing_count": len(listings), "inference_source": purpose},
             )
+        except AdmissionDenied as exc:
+            source_outcome = AcquisitionOutcome(source=connector_id,
+                state="blocked" if exc.state == "blocked" else "capped", reason=exc.reason)
+            outcomes.append(source_outcome)
+        except (TimeoutError, asyncio.CancelledError) as exc:
+            source_outcome = AcquisitionOutcome(source=connector_id, state="failed", reason="run_timeout")
+            outcomes.append(source_outcome)
+            if isinstance(exc, asyncio.CancelledError):
+                raise
         except ConnectorDegradedError as exc:
             outcomes.append(
                 AcquisitionOutcome(
@@ -400,10 +444,30 @@ async def acquire_sources(
                 extra={f"{purpose}_id": context_id, "connector": connector_id},
             )
         finally:
-            if connector is not None:
-                try:
-                    await connector.cleanup()
-                except Exception:
-                    logger.exception("connector_cleanup_failed", extra={"connector": connector_id})
+            try:
+                if connector is not None:
+                    async with asyncio.timeout_at(deadline):
+                        await connector.cleanup()
+            except AdmissionDenied as exc:
+                source_outcome = AcquisitionOutcome(source=connector_id,
+                    state=exc.state, reason=exc.reason)
+                outcomes = [o for o in outcomes if o.source != connector_id] + [source_outcome]
+                failed_sources.add(connector_id)
+            except Exception:
+                logger.exception("connector_cleanup_failed", extra={"connector": connector_id})
+                if budget:
+                    source_outcome = AcquisitionOutcome(source=connector_id,
+                        state="failed", reason="cleanup_failed")
+                    outcomes = [o for o in outcomes if o.source != connector_id] + [source_outcome]
+                    failed_sources.add(connector_id)
+            finally:
+                if budget:
+                    outcome = next((o for o in reversed(outcomes) if o.source == connector_id), source_outcome)
+                    budget.finish(outcome.state, outcome.reason)
+                    if outcome.state in {"blocked", "capped", "failed"}:
+                        del all_listings[listing_start:]
+                        del leads[lead_start:]
+                        failed_sources.add(connector_id)
+                active_admission.reset(token)
 
     return AcquisitionResult(all_listings, failed_sources, outcomes, leads)

@@ -1,0 +1,170 @@
+{
+  "baseline": "a69c4eedec3630769416bfac2a3af552705d993b",
+  "files": [
+    {
+      "path": "src/pricerecon/api/discovery.py",
+      "before": {},
+      "after": {},
+      "added": {}
+    },
+    {
+      "path": "src/pricerecon/connectors/aliexpress.py",
+      "before": {
+        "SIM103": 1,
+        "UP017": 4,
+        "BLE001": 12,
+        "PERF402": 1,
+        "FURB157": 1,
+        "S110": 1
+      },
+      "after": {
+        "SIM103": 1,
+        "UP017": 4,
+        "BLE001": 12,
+        "PERF402": 1,
+        "FURB157": 1,
+        "S110": 1
+      },
+      "added": {}
+    },
+    {
+      "path": "src/pricerecon/connectors/browser_client.py",
+      "before": {
+        "UP035": 1,
+        "BLE001": 10,
+        "UP041": 1,
+        "TRY004": 3,
+        "SIM103": 1,
+        "UP037": 3,
+        "RUF023": 1,
+        "RUF012": 1,
+        "B018": 1,
+        "S110": 3
+      },
+      "after": {
+        "UP035": 1,
+        "BLE001": 10,
+        "UP041": 1,
+        "TRY004": 3,
+        "SIM103": 1,
+        "UP037": 3,
+        "RUF023": 1,
+        "RUF012": 1,
+        "B018": 1,
+        "S110": 3
+      },
+      "added": {}
+    },
+    {
+      "path": "src/pricerecon/connectors/ebay.py",
+      "before": {
+        "I001": 2,
+        "UP045": 8,
+        "UP017": 7,
+        "BLE001": 5,
+        "RUF012": 1,
+        "PYI034": 1,
+        "S112": 1
+      },
+      "after": {
+        "I001": 2,
+        "UP045": 8,
+        "UP017": 7,
+        "BLE001": 5,
+        "RUF012": 1,
+        "PYI034": 1,
+        "S112": 1
+      },
+      "added": {}
+    },
+    {
+      "path": "src/pricerecon/connectors/external_browser.py",
+      "before": {
+        "FURB167": 2,
+        "UP037": 1,
+        "BLE001": 4,
+        "TRY004": 10,
+        "S110": 2
+      },
+      "after": {
+        "FURB167": 2,
+        "UP037": 1,
+        "BLE001": 4,
+        "TRY004": 10,
+        "S110": 2
+      },
+      "added": {}
+    },
+    {
+      "path": "src/pricerecon/core/acquisition.py",
+      "before": {},
+      "after": {},
+      "added": {}
+    },
+    {
+      "path": "src/pricerecon/core/diff_engine.py",
+      "before": {
+        "SIM102": 1,
+        "UP017": 1
+      },
+      "after": {
+        "SIM102": 1,
+        "UP017": 1
+      },
+      "added": {}
+    },
+    {
+      "path": "src/pricerecon/core/discovery.py",
+      "before": {},
+      "after": {},
+      "added": {}
+    },
+    {
+      "path": "src/pricerecon/core/exact_tracking.py",
+      "before": {},
+      "after": {},
+      "added": {}
+    },
+    {
+      "path": "src/pricerecon/core/rate_limiter.py",
+      "before": {
+        "I001": 1,
+        "UP017": 2,
+        "UP045": 3
+      },
+      "after": {
+        "UP017": 2,
+        "UP045": 3
+      },
+      "added": {}
+    },
+    {
+      "path": "src/pricerecon/core/watch_executor.py",
+      "before": {},
+      "after": {},
+      "added": {}
+    },
+    {
+      "path": "src/pricerecon/db/discovery.py",
+      "before": {},
+      "after": {},
+      "added": {}
+    },
+    {
+      "path": "src/pricerecon/db/schema.py",
+      "before": {
+        "BLE001": 2
+      },
+      "after": {
+        "BLE001": 2
+      },
+      "added": {}
+    },
+    {
+      "path": "src/pricerecon/db/tracking.py",
+      "before": {},
+      "after": {},
+      "added": {}
+    }
+  ]
+}

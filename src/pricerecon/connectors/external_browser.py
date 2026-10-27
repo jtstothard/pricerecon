@@ -402,6 +402,9 @@ class ExternalBrowserAdapter:
         timeout_ms: int = 60_000,
         response_body_limit: int = 32_768,
     ) -> ExternalBrowserResult:
+        from pricerecon.core.collection_transport import require_bounded_browser
+
+        require_bounded_browser()
         if not self._backends:
             return ExternalBrowserResult(
                 selected_backend=None,

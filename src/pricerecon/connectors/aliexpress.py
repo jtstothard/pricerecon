@@ -21,6 +21,7 @@ from pricerecon.connectors.aliexpress_browser import BrowserSearchReport, discov
 from pricerecon.connectors.base import BaseConnector
 from pricerecon.connectors.browser_client import BrowserClient
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
+from pricerecon.core.collection_transport import collection_http_client
 from pricerecon.models import NormalizedListing, SourceType, VariantMatchConfidence
 
 logger = logging.getLogger(__name__)
@@ -35,6 +36,8 @@ _PRICE_RE = re.compile(r"(?P<currency>GBP|£|\$|USD|EUR|€)?\s*(?P<amount>\d+(?
 
 
 class AliExpressConnector(BaseConnector):
+    collection_accounting = "http_v1"
+
     """AliExpress connector with layered acquisition and enrichment."""
 
     CONNECTOR_ID = "aliexpress"
@@ -47,7 +50,7 @@ class AliExpressConnector(BaseConnector):
         http_client: httpx.AsyncClient | None = None,
     ) -> None:
         self.config = config or {}
-        self._client = http_client or httpx.AsyncClient(timeout=30.0)
+        self._client = http_client or collection_http_client(timeout=30.0)
         self._owns_client = http_client is None
         self._browser_client = browser_client
         self._ds_access_token: str | None = self.config.get("ds_access_token")
