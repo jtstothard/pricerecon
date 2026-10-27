@@ -25,6 +25,7 @@ def main():
     )
     parser.add_argument("--qualification", action="store_true")
     parser.add_argument("--costs", action="store_true")
+    parser.add_argument("--tracking", action="store_true")
     args = parser.parse_args()
     args.artifacts.mkdir(exist_ok=True)
     config = args.artifacts / "config.json"
@@ -59,6 +60,7 @@ def main():
         command("set", "viewport", "1280", "900")
         fixture = evaluate('fetch("/api/offline-verification").then(response => response.json())')
         assert fixture["fixture"] == (
+            "ticket05-tracking-ui" if args.tracking else
             "ticket04-cost-ui"
             if args.costs
             else "ticket03-qualification-ui" if args.qualification else "ticket02-discovery-ui"
@@ -67,6 +69,11 @@ def main():
         assert fixture["automatic_checks"] is False, fixture
         assert fixture["blocked_edges"] == [], fixture
         assert fixture["notifications_sent"] == 0, fixture
+        if args.tracking:
+            from .tracking_browser_check import run_tracking_browser
+
+            run_tracking_browser(command, evaluate, args.artifacts, fixture)
+            return
         command("wait", "#page-title")
         assert evaluate('document.querySelector("h1")?.textContent') == "Find your next watch"
         command("wait", ".discovery-row")

@@ -196,12 +196,14 @@ class MonitoringHarness:
             connector_health,
             diff_engine,
             discovery,
+            exact_tracking,
             notifications,
             schedule,
             scheduler,
             watch_executor,
         )
         from pricerecon.db import discovery as discovery_storage
+        from pricerecon.db import tracking as tracking_storage
 
         clock = self.clock
 
@@ -214,6 +216,8 @@ class MonitoringHarness:
             self.application,
             discovery_storage,
             discovery,
+            exact_tracking,
+            tracking_storage,
             watches,
             notifications,
             watch_executor,

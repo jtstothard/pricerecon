@@ -45,3 +45,14 @@
 .discovery-qualification dt { font-weight: 600; }
 .discovery-qualification dd { margin: 0; }
 .discovery-qualification p, .discovery-qualification li, .discovery-qualification dd { overflow-wrap: anywhere; }
+.exact-tracking { text-align: left; margin-top: 1rem; overflow-wrap: anywhere; }
+.exact-tracking details { margin-block: .75rem; }
+.exact-tracking form { display: grid; gap: .5rem; }
+.exact-tracking fieldset { display: flex; flex-wrap: wrap; gap: .75rem; padding: .5rem; }
+.exact-tracking fieldset label { display: flex; align-items: center; gap: .25rem; }
+.exact-tracking input[type="number"] { width: 100%; min-width: 0; }
+.exact-tracking-state { border-left: 3px solid var(--border, #536b7d); padding-left: .75rem; }
+.exact-tracking-state ul { padding-left: 1.25rem; }
+.discovery-tracking { grid-column: 2 / 4; min-width: 0; }
+.exact-tracking input[type="checkbox"] { width: 18px; height: 18px; min-height: 18px; }
+@media (max-width: 750px) { .discovery-tracking { grid-column: 1 / 3; } }

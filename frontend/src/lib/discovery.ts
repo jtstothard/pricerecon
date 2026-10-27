@@ -1,3 +1,5 @@
+import { parseTrackingList } from './tracking'
+
 // Validate capture-bound qualification states before they reach the buyer feed.
 function record(value: unknown): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new Error('Invalid discovery record')
@@ -238,6 +240,7 @@ export function parseDiscoveryFeed(value: unknown) {
   return {
     collection_reason: text(feed.collection_reason), preferences: parsePreferences(feed.preferences),
     candidates: list(feed.candidates, parseCandidate),
+    tracking: parseTrackingList(feed.tracking),
     captures: list(feed.captures, item => {
       const capture = record(item), request = record(capture.request), admission = record(capture.admission)
       return { capture_id: text(capture.capture_id), captured_at: date(capture.captured_at),

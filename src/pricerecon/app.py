@@ -21,6 +21,7 @@ from pricerecon.api.history import router as history_router
 from pricerecon.api.listings import router as listings_router
 from pricerecon.api.signals import router as signals_router
 from pricerecon.api.sources import router as sources_router
+from pricerecon.api.tracking import router as tracking_router
 from pricerecon.api.watches import router as watches_router
 from pricerecon.config import get_settings
 from pricerecon.core.scheduler import scheduler_lifespan
@@ -123,6 +124,7 @@ app.add_middleware(
 api_deps = [Depends(require_api_key)] if settings.api_key else []
 app.include_router(health_router, prefix="/api", tags=["Health"], dependencies=api_deps)
 app.include_router(discovery_router, prefix="/api", tags=["Discovery"], dependencies=api_deps)
+app.include_router(tracking_router, prefix="/api", tags=["Tracking"], dependencies=api_deps)
 app.include_router(watches_router, prefix="/api", tags=["Watches"], dependencies=api_deps)
 app.include_router(listings_router, prefix="/api", tags=["Listings"], dependencies=api_deps)
 app.include_router(history_router, prefix="/api", tags=["History"], dependencies=api_deps)

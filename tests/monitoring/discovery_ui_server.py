@@ -18,7 +18,7 @@ from .harness import MonitoringHarness
 from .workflows import LEGACY, listing
 
 
-async def main(port, qualification=False, costs=False):
+async def main(port, qualification=False, costs=False, tracking=False):
     with MonitoringHarness() as harness:
         from pricerecon.core.discovery import execute_discovery
         from pricerecon.models.discovery import DiscoveryAdmission, DiscoveryRequest
@@ -93,13 +93,24 @@ async def main(port, qualification=False, costs=False):
             unknown.cost_scenarios[0].components[1].amount = None
             unknown.cost_scenarios[0].components[1].currency = None
             harness.reports["cex"] = [verified, conditional, unknown]
-        async with harness.session() as (_, scheduler):
+            if tracking:
+                from .tracking_workflows import priced_report
+
+                harness.reports["cex"][0] = priced_report(harness, listing_id="fixture-1")
+        async with harness.session() as (client, scheduler):
             fixture_router = APIRouter()
+            fixture_id = None
+            if tracking:
+                from .tracking_ui_fixture import configure_tracking_fixture
+
+                harness.ui_client = client
+                fixture_id = configure_tracking_fixture(harness, fixture_router)
 
             @fixture_router.get("/api/offline-verification")
             async def fixture_identity():
                 return {
                     "fixture": (
+                        "ticket05-tracking-ui" if tracking else
                         "ticket04-cost-ui"
                         if costs
                         else (
@@ -112,6 +123,7 @@ async def main(port, qualification=False, costs=False):
                     "automatic_checks": False,
                     "blocked_edges": harness.blocked_edges,
                     "notifications_sent": len(harness.deliveries),
+                    "fixture_id": fixture_id,
                 }
 
             # Test-server-only marker precedes the SPA fallback. The driver
@@ -156,7 +168,8 @@ async def main(port, qualification=False, costs=False):
                 ).serve()
             finally:
                 assert harness.blocked_edges == []
-                assert harness.deliveries == []
+                if not tracking:
+                    assert harness.deliveries == []
                 assert len(scheduler.list_watches()) == 1
                 print(
                     json.dumps(
@@ -176,8 +189,9 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=8877)
     parser.add_argument("--qualification", action="store_true")
     parser.add_argument("--costs", action="store_true")
+    parser.add_argument("--tracking", action="store_true")
     args = parser.parse_args()
     try:
-        asyncio.run(main(args.port, args.qualification, args.costs))
+        asyncio.run(main(args.port, args.qualification, args.costs or args.tracking, args.tracking))
     except KeyboardInterrupt:
         print("OFFLINE_UI_STOPPED", flush=True)

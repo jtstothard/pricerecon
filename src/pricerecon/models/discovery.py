@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from pricerecon.models.costs import PublicCostSummary
 from pricerecon.models.qualification import Configuration, MerchantOffer, SelectionBinding
+from pricerecon.models.tracking import ExactTracking
 from pricerecon.models.watches import SourceConfig
 
 
@@ -199,3 +200,4 @@ class DiscoveryFeed(DiscoveryModel):
     candidates: list[DiscoveryCandidate]
     captures: list[DiscoveryCapture]
     preferences: PreferenceProfile = Field(default_factory=PreferenceProfile)
+    tracking: list[ExactTracking] = Field(default_factory=list)
