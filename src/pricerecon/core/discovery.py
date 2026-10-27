@@ -39,8 +39,15 @@ async def execute_discovery(
     """
     admission = admission or DiscoveryAdmission()
     from pricerecon.core.collection_policy import current_policy
+    from pricerecon.core.rate_limiter import AdmissionDenied
 
-    if admission.admitted and current_policy() is not None and tracking_policy is not None:
+    policy_gate = None
+    try:
+        operating = current_policy()
+    except AdmissionDenied as exc:
+        operating, policy_gate = None, exc.reason
+
+    if admission.admitted and operating is not None and tracking_policy is not None:
         from pricerecon.core.exact_tracking import deliver_pending_targets
 
         await deliver_pending_targets(policy=tracking_policy)
@@ -51,7 +58,7 @@ async def execute_discovery(
     captured_at = datetime.now(UTC)
     candidates: list[DiscoveryCandidate] = []
     by_id: dict[str, DiscoveryCandidate] = {}
-    if admission.admitted and current_policy() is not None:
+    if admission.admitted and operating is not None:
         from pricerecon.db.collection import verification_sources
 
         result = await acquire_sources(
@@ -215,7 +222,7 @@ async def execute_discovery(
                 source=source.connector,
                 state="blocked" if admission.admitted and source.enabled else "not_attempted",
                 reason=("source_disabled" if not source.enabled else
-                        "operating_policy_required" if admission.admitted else "collection_staged"),
+                        (policy_gate or "operating_policy_required") if admission.admitted else "collection_staged"),
             )
             for source in request.sources
         ]
@@ -263,7 +270,7 @@ async def execute_discovery(
 
     try:
         await evaluate_tracking_capture(capture.capture_id,
-            policy=tracking_policy if admission.admitted and current_policy() is not None else None)
+            policy=tracking_policy if admission.admitted and operating is not None else None)
     except AdmissionDenied as exc:
         from pricerecon.db.collection import reject_capture
 

@@ -1,0 +1,107 @@
+{
+  "baseline": "f8ff7e5024401991ca33b9bf08468476dc708227",
+  "files": [
+    {
+      "path": "src/pricerecon/api/discovery.py",
+      "baseline_diagnostics": 0,
+      "current_diagnostics": 0,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/api/watches.py",
+      "baseline_diagnostics": 13,
+      "current_diagnostics": 13,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/core/acquisition.py",
+      "baseline_diagnostics": 0,
+      "current_diagnostics": 0,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/core/collection_policy.py",
+      "baseline_diagnostics": 0,
+      "current_diagnostics": 0,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/core/collection_transport.py",
+      "baseline_diagnostics": 0,
+      "current_diagnostics": 0,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/core/discovery.py",
+      "baseline_diagnostics": 0,
+      "current_diagnostics": 0,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/core/exact_tracking.py",
+      "baseline_diagnostics": 0,
+      "current_diagnostics": 0,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/core/rate_limiter.py",
+      "baseline_diagnostics": 5,
+      "current_diagnostics": 5,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/core/watch_executor.py",
+      "baseline_diagnostics": 0,
+      "current_diagnostics": 0,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/db/collection.py",
+      "baseline_diagnostics": 0,
+      "current_diagnostics": 0,
+      "added": []
+    },
+    {
+      "path": "src/pricerecon/db/discovery.py",
+      "baseline_diagnostics": 0,
+      "current_diagnostics": 0,
+      "added": []
+    },
+    {
+      "path": "tests/monitoring/collection_merger_probe.py",
+      "baseline_diagnostics": 0,
+      "current_diagnostics": 0,
+      "added": []
+    },
+    {
+      "path": "tests/monitoring/collection_workflows.py",
+      "baseline_diagnostics": 0,
+      "current_diagnostics": 0,
+      "added": []
+    },
+    {
+      "path": "tests/monitoring/shared_grant_workflows.py",
+      "baseline_diagnostics": 0,
+      "current_diagnostics": 0,
+      "added": []
+    },
+    {
+      "path": "tests/monitoring/workflows.py",
+      "baseline_diagnostics": 0,
+      "current_diagnostics": 0,
+      "added": []
+    },
+    {
+      "path": "tests/test_external_browser.py",
+      "baseline_diagnostics": 0,
+      "current_diagnostics": 0,
+      "added": []
+    },
+    {
+      "path": "tests/test_shared_grant_workflow.py",
+      "baseline_diagnostics": 0,
+      "current_diagnostics": 0,
+      "added": []
+    }
+  ]
+}

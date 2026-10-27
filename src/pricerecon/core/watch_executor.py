@@ -346,6 +346,7 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
             if outcome.state in {"success", "success_empty", "partial", "cache_reuse"}:
                 outcome.state, outcome.reason = exc.state, exc.reason
         return {"success": False, "watch_id": watch_id, "error": exc.reason,
+                "collection_state": exc.state,
                 "acquisition_outcomes": [o.model_dump(mode="json") for o in acquisition.outcomes],
                 "notifications_sent": 0, "events": []}
 
