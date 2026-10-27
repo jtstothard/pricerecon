@@ -25,6 +25,7 @@ def main():
     )
     parser.add_argument("--qualification", action="store_true")
     parser.add_argument("--costs", action="store_true")
+    parser.add_argument("--history", action="store_true")
     args = parser.parse_args()
     args.artifacts.mkdir(exist_ok=True)
     config = args.artifacts / "config.json"
@@ -59,7 +60,9 @@ def main():
         command("set", "viewport", "1280", "900")
         fixture = evaluate('fetch("/api/offline-verification").then(response => response.json())')
         assert fixture["fixture"] == (
-            "ticket04-cost-ui"
+            "ticket06-history-ui"
+            if args.history
+            else "ticket04-cost-ui"
             if args.costs
             else "ticket03-qualification-ui" if args.qualification else "ticket02-discovery-ui"
         ), fixture
@@ -67,6 +70,11 @@ def main():
         assert fixture["automatic_checks"] is False, fixture
         assert fixture["blocked_edges"] == [], fixture
         assert fixture["notifications_sent"] == 0, fixture
+        if args.history:
+            from .history_browser_checks import verify_history
+
+            verify_history(command, evaluate, args.artifacts)
+            return
         command("wait", "#page-title")
         assert evaluate('document.querySelector("h1")?.textContent') == "Find your next watch"
         command("wait", ".discovery-row")
