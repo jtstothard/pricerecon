@@ -42,6 +42,9 @@ async def execute_discovery(
         from pricerecon.core.exact_tracking import deliver_pending_targets
 
         await deliver_pending_targets(policy=tracking_policy)
+    from pricerecon.db.corrections import input_revision
+
+    correction_input_revision = input_revision()
     capture_id = str(uuid4())
     captured_at = datetime.now(UTC)
     candidates: list[DiscoveryCandidate] = []
@@ -222,6 +225,7 @@ async def execute_discovery(
             else "unresolved"
         )
     capture = DiscoveryCapture(
+        correction_input_revision=correction_input_revision,
         history_contract_version="observation-history-v1",
         capture_id=capture_id,
         captured_at=captured_at,

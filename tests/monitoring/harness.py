@@ -202,6 +202,7 @@ class MonitoringHarness:
             scheduler,
             watch_executor,
         )
+        from pricerecon.db import corrections as correction_storage
         from pricerecon.db import discovery as discovery_storage
         from pricerecon.db import history as history_storage
         from pricerecon.db import tracking as tracking_storage
@@ -217,6 +218,7 @@ class MonitoringHarness:
             self.application,
             discovery_storage,
             history_storage,
+            correction_storage,
             discovery,
             exact_tracking,
             tracking_storage,

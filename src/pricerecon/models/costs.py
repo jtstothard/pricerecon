@@ -192,6 +192,8 @@ class CostAmount(CostModel):
 
 
 class CostScenario(CostScenarioInput):
+    withdrawn: bool = False
+    historical_total: CostAmount | None = None
     # Output is the union of separately bounded source records. Do not discard
     # contradictions or apply a per-record input cap to aggregated evidence.
     components: list[CostComponent] = Field(default_factory=list)
