@@ -6,12 +6,12 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from pricerecon.models.assessments import PriceAssessment
 from pricerecon.models.corrections import CorrectionHistory
 from pricerecon.models.costs import PublicCostSummary
 from pricerecon.models.history import HistorySummary
 from pricerecon.models.qualification import Configuration, MerchantOffer, SelectionBinding
 from pricerecon.models.tracking import ExactTracking
-from pricerecon.models.assessments import PriceAssessment
 from pricerecon.models.watches import SourceConfig
 
 

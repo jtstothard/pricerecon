@@ -11,7 +11,8 @@
     "independent unavailable gates",
     "unchecked source",
     "evidence",
-    "reload"
+    "reload",
+    "correction withdraws current and low in buyer details"
   ],
   "buyer_acceptance": "unproven",
   "live_evidence": "not attempted"

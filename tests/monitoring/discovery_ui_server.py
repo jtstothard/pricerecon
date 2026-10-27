@@ -167,7 +167,8 @@ async def main(port, qualification=False, costs=False, tracking=False, history=F
                 ),
             )
             if assessments:
-                from .assessment_workflows import capture as assessment_capture, coupon_report, policy, priced_report
+                from .assessment_workflows import capture as assessment_capture
+                from .assessment_workflows import coupon_report, policy, priced_report
 
                 supplied = policy(harness, allowed_scenario_kinds=["public_no_coupon", "public_coupon"])
                 feed = await assessment_capture(harness, client, [priced_report(harness, "68", "fixture-1")], supplied)

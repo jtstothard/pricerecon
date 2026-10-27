@@ -34,6 +34,27 @@ def verify_assessments(command, evaluate, artifacts):
     command("wait", ".discovery-row")
     command("click", row + " > details > summary")
     assert evaluate('document.querySelector(".price-assessments").innerText.includes("GBP 45.10")')
+    command("click", row + " .identity-correction > summary")
+    command("select", row + ' select[name="correction_field"]', "dial")
+    command("fill", row + ' input[name="correction_value"]', "salmon")
+    command("fill", row + ' input[name="correction_actor"]', "Synthetic buyer")
+    command(
+        "fill", row + ' textarea[name="correction_rationale"]', "Synthetic assessment withdrawal"
+    )
+    command("click", row + " button:has-text('Save identity correction')")
+    command("wait", row + " .correction-state")
+    assert evaluate(
+        'document.querySelector(".price-assessments").innerText.includes("Historical assessment")'
+    )
+    assert not evaluate(
+        'document.querySelector(".price-assessments").innerText.includes("Scoped price assessment")'
+    )
+    command("click", row + " .price-assessments > details:first-of-type > summary")
+    assert evaluate(
+        'document.querySelector(".price-assessments").innerText.includes("invalidated")'
+    )
+    assert evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+    command("screenshot", str(artifacts / "narrow-withdrawn.png"))
     assert command("errors")["errors"] == []
     (artifacts / "receipt.json").write_text(
         json.dumps(
@@ -51,6 +72,7 @@ def verify_assessments(command, evaluate, artifacts):
                     "unchecked source",
                     "evidence",
                     "reload",
+                    "correction withdraws current and low in buyer details",
                 ],
                 "buyer_acceptance": "unproven",
                 "live_evidence": "not attempted",

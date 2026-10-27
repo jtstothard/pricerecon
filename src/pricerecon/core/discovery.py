@@ -274,7 +274,7 @@ async def execute_discovery(
         from pricerecon.db.assessments import evaluate_comparisons
 
         evaluate_comparisons(
-            comparison_policy if admission.admitted and current_policy() is not None else None,
+            comparison_policy if admission.admitted and operating is not None else None,
             datetime.now(UTC),
         )
         await evaluate_tracking_capture(capture.capture_id,

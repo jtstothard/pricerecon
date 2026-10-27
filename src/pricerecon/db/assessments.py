@@ -41,7 +41,7 @@ def evaluate_comparisons(policy: ComparisonPolicy | None, now: datetime) -> None
 
     with closing(sqlite3.connect(DB_PATH)) as connection, connection:
         connection.execute("BEGIN IMMEDIATE")
-        operating = current_policy()
+        operating = current_policy(connection)
         before = storage_size(connection) if operating else 0
         connection.execute(
             "INSERT INTO discovery_comparison_policy VALUES (1,?) "

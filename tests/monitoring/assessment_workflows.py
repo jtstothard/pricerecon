@@ -249,12 +249,22 @@ async def coupon_guards():
                 target_policy,
             )
 
-            async def interrupted(**kwargs):
-                return None
-
-            with patch.object(exact_tracking, "deliver_pending_targets", interrupted):
+            # Interrupt external configuration access after the real evaluator
+            # reserves the event, before the real dispatcher claims a channel.
+            with patch.object(
+                notifications,
+                "get_global_notification_config",
+                side_effect=RuntimeError("Synthetic configuration I/O interruption"),
+            ):
                 harness.clock.advance(hours=0.01)
-                await capture(harness, client, [coupon_report(harness, 3)], supplied, target_policy)
+                try:
+                    await capture(
+                        harness, client, [coupon_report(harness, 3)], supplied, target_policy
+                    )
+                except RuntimeError as exc:
+                    assert str(exc) == "Synthetic configuration I/O interruption"
+                else:
+                    raise AssertionError("Configuration interruption did not reach execution")
             pending = await get(client, f"/api/discovery/tracking/{saved['id']}/deliveries")
             assert pending["items"][0]["status"] == "pending", pending
             with patch.object(
@@ -403,17 +413,28 @@ async def coupon_replaced():
                 target_policy,
             )
 
-            async def interrupted(**kwargs):
-                return None
-
-            with patch.object(exact_tracking, "deliver_pending_targets", interrupted):
+            # Interrupt external configuration access after the real evaluator
+            # reserves the event, before the real dispatcher claims a channel.
+            with patch.object(
+                notifications,
+                "get_global_notification_config",
+                side_effect=RuntimeError("Synthetic configuration I/O interruption"),
+            ):
                 harness.clock.advance(hours=0.01)
-                await capture(harness, client, [coupon_report(harness, 3)], supplied, target_policy)
-                # New terms without matching direct receipt are retained, never a new public payable.
-                report = coupon_report(harness, 4)
-                report.coupons[0].terms.literal = "Changed terms after reservation"
-                harness.clock.advance(hours=0.01)
-                await capture(harness, client, [report], supplied, target_policy)
+                try:
+                    await capture(
+                        harness, client, [coupon_report(harness, 3)], supplied, target_policy
+                    )
+                except RuntimeError as exc:
+                    assert str(exc) == "Synthetic configuration I/O interruption"
+                else:
+                    raise AssertionError("Configuration interruption did not reach execution")
+            # Normal evidence-only recapture with no target policy must not
+            # dispatch the pending event, nor relabel changed terms as a receipt.
+            report = coupon_report(harness, 4)
+            report.coupons[0].terms.literal = "Changed terms after reservation"
+            harness.clock.advance(hours=0.01)
+            await capture(harness, client, [report], supplied)
             with patch.object(
                 notifications,
                 "get_global_notification_config",

@@ -92,7 +92,7 @@ env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
   tests/test_tracking_workflow.py tests/test_history_workflow.py \
   tests/test_coupon_workflow.py tests/test_collection_workflow.py \
   tests/test_correction_workflow.py tests/test_correction_target_ownership.py \
-  tests/test_assessment_workflow.py
+  tests/test_shared_grant_workflow.py tests/test_assessment_workflow.py
 ```
 
 The same interpreter ran focused Ruff, Black and mypy checks. Full repository
@@ -137,3 +137,53 @@ Only local commits/merges are authorized; the integration merger owns closure.
 
 Final integration refresh, checks and source manifest are recorded below and in
 [artifacts/watch-assessments](artifacts/watch-assessments).
+
+
+## Final integration refresh and verification
+
+Merged the latest integration **52104eb3de8e4b7c6ff615763d8ecc3572e4e34d** in local
+merge **feeb3496db72ea27b2c40b3692e5440b6cb1de5c**. Both the requested initial
+`c84f1f1` and this latest tip are ancestors. This includes the committed shared
+grant resolver, schema **2.1**, denied-Watch timestamp repair and their positive
+controls. No incoming policy gate or ticket07 ownership code was weakened.
+
+The merge exposed a transaction interaction: the durable policy resolver now
+opens a write transaction when no connection is passed. Calling it from inside
+assessment persistence's existing transaction caused `database is locked`. The
+first combined run was stopped after **6 failed, 15 passed**; its red log is
+retained. Assessment persistence now passes its transaction to `current_policy`,
+and discovery uses its already resolved admission outcome. The affected discovery
+plus assessment suite passed **16 in 14.22s**. The full final cleared-environment
+suite then passed **171 in 157.33s**: latest integration's **160** (including all
+original126) plus **11** assessment workflows, no skips or xfails.
+
+After that full run, the two interrupted-send workflows were tightened to fail
+at the external notification-configuration I/O boundary before channel claim.
+The real evaluator and dispatcher are no longer replaced in those tests. The
+terms-change case uses normal evidence-only recapture without target policy,
+then normal pending recovery. All **11** final assessment workflows passed again
+in **10.72s**. No product behavior or assertion was relaxed by this test refinement.
+
+Other results:
+
+- **25 frontend tests pass** and production build passes (**644 modules**).
+  The existing large-chunk warning remains; no threshold was raised.
+- **37 limiter/external-browser contracts pass**, ten inherited deprecation
+  warnings. **Eight focused application files pass mypy**, with existing
+  unused-override notes.
+- **13 clean Python files pass Ruff**; the complete changed-file comparison
+  against `52104eb` has **10 inherited diagnostics, zero added**. Ten focused
+  files pass Black; diff whitespace check passes. No suppression was added.
+  Inherited full-repo lint/type debt and ESLint10's retained missing-config
+  blocker were not repaired or presented as green.
+- Final actual browser proof also submits a synthetic identity correction.
+  Current-best and observed-low both become explicitly invalidated historical
+  results in narrow buyer details, with no overflow. Updated desktop/narrow and
+  withdrawn-state PNGs plus browser receipt are retained. Session closes and
+  fixture shutdown records **zero escaped edges, zero notifications**.
+
+Raw red/green logs, final safe-suite/focused/contract/build/frontend outputs,
+Ruff baseline comparison and screenshots are in `artifacts/watch-assessments`.
+The source manifest binds the checked files and receipts; the handoff reply gives
+the final local commit. Final merge/readback remains local and merger-owned
+integration/closure remains separate.
