@@ -273,7 +273,12 @@ async def acquire_sources(
                 for retained in matching.values():
                     known = {claim.model_dump_json() for claim in retained.claims}
                     for related in matching.values():
-                        if retained.configuration_key != related.configuration_key:
+                        # Missing subject keys do not establish a shared
+                        # manufacturer definition across selected variations.
+                        if (
+                            not retained.configuration_key
+                            or retained.configuration_key != related.configuration_key
+                        ):
                             continue
                         retained.claims.extend(
                             claim
