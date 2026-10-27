@@ -1,0 +1,30 @@
+diff-all 2
+diff-source 0
+{
+  "source_and_receipt_hashes": 45,
+  "original_hashes": 77,
+  "baseline": "52104eb3de8e4b7c6ff615763d8ecc3572e4e34d",
+  "files": [
+    "src/pricerecon/api/discovery.py",
+    "src/pricerecon/core/comparisons.py",
+    "src/pricerecon/core/coupons.py",
+    "src/pricerecon/core/discovery.py",
+    "src/pricerecon/core/exact_tracking.py",
+    "src/pricerecon/core/notifications.py",
+    "src/pricerecon/db/assessments.py",
+    "src/pricerecon/db/discovery.py",
+    "src/pricerecon/db/schema.py",
+    "src/pricerecon/db/tracking.py",
+    "src/pricerecon/models/assessments.py",
+    "src/pricerecon/models/discovery.py",
+    "src/pricerecon/models/tracking.py",
+    "tests/monitoring/assessment_browser_check.py",
+    "tests/monitoring/assessment_workflows.py",
+    "tests/monitoring/discovery_browser_check.py",
+    "tests/monitoring/discovery_ui_server.py",
+    "tests/test_assessment_workflow.py"
+  ],
+  "baseline_findings": 10,
+  "current_findings": 10,
+  "added_findings": []
+}

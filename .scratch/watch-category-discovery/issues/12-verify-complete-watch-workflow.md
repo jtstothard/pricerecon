@@ -4,7 +4,7 @@
 
 **Blocked by:** [08: Compare qualified offers and explain price claims](08-compare-qualified-offers.md), [09: Evaluate public coupons without assuming stacks](09-evaluate-public-coupons.md), [11: Carry source evidence and access limits through acquisition](11-carry-source-evidence.md)
 
-**Status:** ready-for-agent
+**Status:** blocked — 08 acceptance and 11 implementation remain open (2026-10-27)
 
 **Parent:** [Trustworthy UK watch discovery alongside existing monitoring](../../../docs/specs/watch-category-discovery.md)
 
