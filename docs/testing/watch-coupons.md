@@ -231,3 +231,8 @@ and retained diagnostic. Its documented **derived-capture independence gap**
 remains open for the ticket06 owner; the 65 passing workflows do not close that
 additional failing acceptance probe or certify history independence. This worker
 reviewed the record and did not implement ticket06's repair or repeat the probe.
+
+Final refresh merged `b97f37a44241bf29d5a252a191e93e8bc240cb0f` without conflicts;
+only the parent's documentation/tracker/diagnostic artifacts were added, with no
+application-source changes after combined verification. Both latest integration
+and closed04 ancestry checks passed. The worktree was clean after local merges.
