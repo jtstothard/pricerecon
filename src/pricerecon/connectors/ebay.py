@@ -1,21 +1,22 @@
 """eBay Browse API connector with OAuth token management - Enhanced with startup burst protection."""
 
-import logging
 import asyncio
+import logging
 import re
-from decimal import Decimal
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from typing import Any, Optional
 from urllib.parse import quote_plus
 
 import httpx
-
-from pricerecon.core.collection_transport import collection_http_client
 from pydantic import BaseModel, Field, field_validator
 
 from pricerecon.connectors.base import BaseConnector
 from pricerecon.connectors.external_browser import as_connector_degraded_error
+from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
+from pricerecon.core.collection_transport import collection_http_client
 from pricerecon.models import NormalizedListing, SourceType
+from pricerecon.models.qualification import EvidenceSearchReport
 
 logger = logging.getLogger(__name__)
 
@@ -89,8 +90,8 @@ class eBayTokenStore:
 
     def save_token(self, token: eBayOAuthToken) -> None:
         """Save token to database, preserving existing config keys."""
-        import sqlite3
         import json
+        import sqlite3
         from pathlib import Path
 
         db = Path(self.db_path)
@@ -323,12 +324,55 @@ class eBayConnector(BaseConnector):
 
     CONNECTOR_ID = "ebay"
 
-    def __init__(self, app_id: str, cert_id: Optional[str] = None, db_path: str = "pricerecon.db"):
+    def __init__(
+        self,
+        app_id: str,
+        cert_id: Optional[str] = None,
+        db_path: str = "pricerecon.db",
+        *,
+        evidence_use: dict[str, object] | None = None,
+    ):
         self.app_id = app_id
         self.cert_id = cert_id
         self.db_path = db_path
         self.token_store = eBayTokenStore(db_path)
         self._client: Optional[httpx.AsyncClient] = None
+        from pricerecon.models.source_evidence import EvidenceUse
+
+        self.evidence_use = (
+            EvidenceUse.model_validate(evidence_use) if evidence_use is not None else None
+        )
+        self._last_browse_payload: object = None
+
+    def validate_evidence_access(self) -> None:
+        from pricerecon.connectors.evidence import receipt, require_evidence_use
+
+        self.evidence_receipt = receipt(
+            "ebay_browse_search_v1",
+            self.evidence_use,
+            [
+                "provider-authorised capture/display use",
+                "separate retention/derivation grant",
+                "display freshness review; six hours is not archive duration",
+            ],
+        )
+        require_evidence_use(self.evidence_use, self.connector_id)
+
+    async def search_with_evidence(
+        self, query: str, filters: dict[str, Any] | None = None
+    ) -> EvidenceSearchReport:
+        from pricerecon.connectors.ebay_evidence import browse_evidence
+
+        self.validate_evidence_access()
+        if self.has_external_browser():
+            raise ConnectorDegradedError(
+                ConnectorStatus.disabled,
+                "Reviewed discovery requires Browse, not a browser fallback",
+                self.connector_id,
+            )
+        self._last_browse_payload = None
+        await self.search(query, filters)
+        return browse_evidence(self._last_browse_payload, self.evidence_receipt)
 
     @property
     def source_role(self) -> SourceType:
@@ -507,6 +551,7 @@ class eBayConnector(BaseConnector):
                 raise
 
         data = response.json()
+        self._last_browse_payload = data
         return self._parse_listings(data.get("itemSummaries", []))
 
     def _parse_browser_listings(self, html: str) -> list[NormalizedListing]:

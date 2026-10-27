@@ -209,6 +209,7 @@ def qualify_offer(
         result.issues.append(ResolutionIssue(field="availability", code="unavailable"))
         result.state = "rejected"
     offer = MerchantOffer(
+        source_evidence=report.source_evidence,
         id=identity_key(
             source,
             report.merchant_key or "",
@@ -226,10 +227,10 @@ def qualify_offer(
         availability=values.get("availability"),
         purchase_mode=values.get("purchase_mode"),
         item_price=(
-            Decimal(values["item_price"]) if Decimal(values["item_price"]) != 0 else Decimal(0)
-        )
-        if "item_price" in values
-        else None,
+            (Decimal(values["item_price"]) if Decimal(values["item_price"]) != 0 else Decimal(0))
+            if "item_price" in values
+            else None
+        ),
         currency=values.get("currency"),
         destination=values.get("destination"),
         evidence=[c.model_copy(update={"pointer": safe_pointer(c.pointer)}) for c in report.claims],

@@ -79,6 +79,7 @@ class BrowserOfferEvidence:
     vat_included_claim: bool = False
     issues: tuple[str, ...] = ()
     quantity: int | None = None
+    destination_literal: str | None = None
 
     @property
     def total_landed_cost(self) -> None:
@@ -117,6 +118,7 @@ class BrowserOfferEvidence:
             "selected_sku": self.selected_sku,
             "price_bound_to_sku": self.price_bound_to_sku,
             "destination": self.destination,
+            "destination_literal": self.destination_literal,
             "quantity": self.quantity,
             "shipping_claim": str(self.shipping_claim) if self.shipping_claim is not None else None,
             "vat_included_claim": self.vat_included_claim,
@@ -273,4 +275,9 @@ def parse_offer(pid: str, result: ExternalBrowserResult) -> BrowserOfferEvidence
         bool(re.search(r"price includes VAT", text, re.IGNORECASE)),
         tuple(issues),
         quantity,
+        (
+            match[1].strip()
+            if (match := re.search(r"(?:Ship|Deliver) to:\s*([^.;\n]{1,100})", text, re.IGNORECASE))
+            else None
+        ),
     )

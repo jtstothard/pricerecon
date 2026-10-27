@@ -18,7 +18,16 @@ from .harness import MonitoringHarness
 from .workflows import LEGACY, listing
 
 
-async def main(port, qualification=False, costs=False, tracking=False, history=False, coupons=False, corrections=False):
+async def main(
+    port,
+    qualification=False,
+    costs=False,
+    tracking=False,
+    history=False,
+    coupons=False,
+    corrections=False,
+    source_evidence=False,
+):
     with MonitoringHarness() as harness:
         from pricerecon.core.discovery import execute_discovery
         from pricerecon.models.discovery import DiscoveryAdmission, DiscoveryRequest
@@ -118,15 +127,32 @@ async def main(port, qualification=False, costs=False, tracking=False, history=F
             async def fixture_identity():
                 return {
                     "fixture": (
-                        "ticket07-correction-ui" if corrections else
-                        "ticket05-tracking-ui" if tracking else
-                        "ticket09-coupon-ui" if coupons else
-                        "ticket06-history-ui" if history else "ticket04-cost-ui"
-                        if costs
+                        "ticket11-source-evidence-ui"
+                        if source_evidence
                         else (
-                            "ticket03-qualification-ui"
-                            if qualification
-                            else "ticket02-discovery-ui"
+                            "ticket07-correction-ui"
+                            if corrections
+                            else (
+                                "ticket05-tracking-ui"
+                                if tracking
+                                else (
+                                    "ticket09-coupon-ui"
+                                    if coupons
+                                    else (
+                                        "ticket06-history-ui"
+                                        if history
+                                        else (
+                                            "ticket04-cost-ui"
+                                            if costs
+                                            else (
+                                                "ticket03-qualification-ui"
+                                                if qualification
+                                                else "ticket02-discovery-ui"
+                                            )
+                                        )
+                                    )
+                                )
+                            )
                         )
                     ),
                     "temporary_storage": True,
@@ -139,6 +165,11 @@ async def main(port, qualification=False, costs=False, tracking=False, history=F
             # Test-server-only marker precedes the SPA fallback. The driver
             # verifies it before any edits, so a reused port fails closed.
             harness.application.app.router.routes[0:0] = fixture_router.routes
+            if source_evidence:
+                from .source_evidence_ui_fixture import populate
+
+                await populate(harness)
+                harness.outcomes["cex"] = []
             await execute_discovery(
                 DiscoveryRequest(
                     query="wristwatch", sources=[{"connector": "cex"}, {"connector": "scan"}]
@@ -208,10 +239,24 @@ if __name__ == "__main__":
     mode.add_argument("--coupons", action="store_true")
     mode.add_argument("--history", action="store_true")
     mode.add_argument("--corrections", action="store_true")
+    mode.add_argument("--source-evidence", action="store_true")
     args = parser.parse_args()
     try:
-        asyncio.run(main(args.port, qualification=args.qualification,
-            costs=args.costs or args.tracking or args.history or args.coupons or args.corrections,
-            tracking=args.tracking, history=args.history, coupons=args.coupons, corrections=args.corrections))
+        asyncio.run(
+            main(
+                args.port,
+                qualification=args.qualification,
+                costs=args.costs
+                or args.tracking
+                or args.history
+                or args.coupons
+                or args.corrections,
+                tracking=args.tracking,
+                history=args.history,
+                coupons=args.coupons,
+                corrections=args.corrections,
+                source_evidence=args.source_evidence,
+            )
+        )
     except KeyboardInterrupt:
         print("OFFLINE_UI_STOPPED", flush=True)

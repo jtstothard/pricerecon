@@ -150,6 +150,7 @@ class MonitoringHarness:
         self.stack.enter_context(patch.object(BrowserClient, "start", block_browser))
 
         from pricerecon import connectors
+        from pricerecon.connectors import evidence as connector_evidence
         from pricerecon.models import SourceType
 
         harness = self
@@ -223,6 +224,7 @@ class MonitoringHarness:
                 return clock.now.astimezone(tz) if tz else clock.now.replace(tzinfo=None)
 
         for module in (
+            connector_evidence,
             rate_limiter,
             acquisition,
             collection_storage,

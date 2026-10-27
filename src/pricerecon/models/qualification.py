@@ -14,6 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pricerecon.models import NormalizedListing
 from pricerecon.models.costs import CostScenario, CostScenarioInput
 from pricerecon.models.coupons import CouponAssessment, CouponInput
+from pricerecon.models.source_evidence import SourceOfferEvidence, SourceReceipt
 
 IdentityField = Literal[
     "maker",
@@ -182,6 +183,7 @@ class FieldEvidence(Contract):
 
 
 class MerchantEvidenceReport(Contract):
+    source_evidence: SourceOfferEvidence | None = None
     source_listing_id: str = Field(min_length=1, max_length=500)
     merchant_key: str | None = Field(default=None, min_length=1, max_length=250)
     product_id: str | None = Field(default=None, min_length=1, max_length=500)
@@ -196,6 +198,7 @@ class MerchantEvidenceReport(Contract):
 
 
 class EvidenceSearchReport(Contract):
+    source_evidence: SourceReceipt | None = None
     acquisition_state: Literal["success", "partial", "cache_reuse"] = "success"
     acquisition_reason: str | None = Field(default=None, min_length=1, max_length=500)
     completeness: Literal["unknown", "partial", "declared_scope"] = "unknown"
@@ -247,6 +250,7 @@ class SelectionBinding(Contract):
 
 
 class MerchantOffer(Contract):
+    source_evidence: SourceOfferEvidence | None = None
     id: str
     revision: int = 1
     binding_id: str

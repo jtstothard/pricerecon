@@ -178,7 +178,17 @@ async def real_attempts():
                             sources=[
                                 {
                                     "connector": "ebay",
-                                    "config": {"app_id": "fictional", "cert_id": "fictional"},
+                                    "config": {
+                                        "app_id": "fictional",
+                                        "cert_id": "fictional",
+                                        # The real discovery adapter now checks use
+                                        # authority before auth/transport. This
+                                        # existing retry control uses original data.
+                                        "evidence_use": {
+                                            "permission_reference": "original-collection-retry-fixture",
+                                            "retention": "synthetic",
+                                        },
+                                    },
                                 }
                             ],
                         ),

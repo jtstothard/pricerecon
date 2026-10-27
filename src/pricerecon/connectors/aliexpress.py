@@ -23,6 +23,7 @@ from pricerecon.connectors.browser_client import BrowserClient
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 from pricerecon.core.collection_transport import collection_http_client
 from pricerecon.models import NormalizedListing, SourceType, VariantMatchConfidence
+from pricerecon.models.qualification import EvidenceSearchReport, IdentityField
 
 logger = logging.getLogger(__name__)
 
@@ -164,6 +165,168 @@ class AliExpressConnector(BaseConnector):
 
         return listings
 
+    def validate_evidence_access(self) -> None:
+        from pricerecon.connectors.evidence import receipt, require_evidence_use
+        from pricerecon.models.source_evidence import EvidenceUse
+
+        use = self.config.get("evidence_use")
+        evidence_use = EvidenceUse.model_validate(use) if use is not None else None
+        self.evidence_receipt = receipt(
+            "aliexpress_browser_first_v1",
+            evidence_use,
+            [
+                "source capture/display/reuse authority",
+                "separate longitudinal retention grant",
+                "bounded browser-origin accounting before activation",
+            ],
+        )
+        require_evidence_use(evidence_use, self.connector_id)
+
+    async def search_with_evidence(
+        self,
+        query: str,
+        filters: dict[str, Any] | None = None,
+    ) -> EvidenceSearchReport:
+        """Reviewed browser leads; legacy search retains its stricter behavior.
+
+        Never substitute affiliate/DS/search snippets for the browser-first lane.
+        The external browser still enforces shared origin-accounting admission.
+        """
+        from pricerecon.connectors.evidence import claim
+        from pricerecon.models.qualification import EvidenceContext, MerchantEvidenceReport
+        from pricerecon.models.source_evidence import SourceOfferEvidence
+
+        self.validate_evidence_access()
+        if not self.has_external_browser():
+            raise ConnectorDegradedError(
+                ConnectorStatus.disabled,
+                "Discovery requires the reviewed browser-first lane",
+                self.connector_id,
+            )
+        capture = self.evidence_receipt
+        report = await self.inspect_browser_search(query, filters)
+        capture.pages_captured = 1 if report.discovery_url else 0
+        capture.page_limit = 1
+        capture.discovered_count = report.discovered_count
+        capture.inspected_count = report.inspected_count
+        capture.completeness = "partial"
+        capture.issues = ["pagination_not_exhausted"]
+        capture.content_truncated = any(
+            "truncated_product_content" in offer.issues
+            or "partial_product_snapshot" in offer.issues
+            for offer in report.offers
+        )
+        capture.issues.extend(
+            dict.fromkeys(issue for offer in report.offers for issue in offer.issues)
+        )
+        if report.capped:
+            capture.issues.append("product_inspection_capped")
+        listings, evidence = [], []
+        for offer in report.offers:
+            pointer = f"https://www.aliexpress.com/item/{offer.pid}.html"
+            context = EvidenceContext(
+                scope="generic_listing",
+                merchant_key="aliexpress",
+                product_id=offer.pid,
+                variation_id=offer.selected_sku,
+                destination=offer.destination,
+                currency=offer.currency,
+                quantity=offer.quantity,
+            )
+            selection_fields: tuple[IdentityField, ...] = ("movement", "dial", "strap")
+            claims = [
+                claim(
+                    capture,
+                    subject="selection",
+                    field=name,
+                    value=offer.selected_options[name],
+                    issuer="AliExpress displayed control",
+                    issuer_kind="visible_observation",
+                    pointer=pointer,
+                    locator=f"{offer.pid}:selected:{name}",
+                    context=context,
+                )
+                for name in selection_fields
+                if name in offer.selected_options
+            ]
+            if offer.displayed_price is not None:
+                claims.append(
+                    claim(
+                        capture,
+                        subject="offer",
+                        field="item_price",
+                        value=str(offer.displayed_price),
+                        issuer="AliExpress displayed price",
+                        issuer_kind="visible_observation",
+                        pointer=pointer,
+                        locator=f"{offer.pid}:displayed_price",
+                        context=context,
+                    )
+                )
+            # Display observations cannot certify seller-issued selected price,
+            # stock or exact manufacturer dimensions, even if a SKU is present.
+            listings.append(
+                NormalizedListing.model_validate(
+                    {
+                        "source": self.connector_id,
+                        "source_type": SourceType.MARKETPLACE,
+                        "source_listing_id": offer.pid,
+                        "title_raw": offer.title or query,
+                        "price": offer.displayed_price,
+                        "currency": offer.currency or "",
+                        "url": pointer,
+                        "timestamp_seen": capture.retrieved_at,
+                    }
+                )
+            )
+            evidence.append(
+                MerchantEvidenceReport(
+                    source_listing_id=offer.pid,
+                    merchant_key="aliexpress",
+                    product_id=offer.pid,
+                    variation_id=offer.selected_sku,
+                    destination=offer.destination,
+                    currency=offer.currency,
+                    quantity=offer.quantity,
+                    claims=claims,
+                    source_evidence=SourceOfferEvidence(
+                        merchant_role="marketplace",
+                        selected_options=offer.selected_options,
+                        selected_sku=offer.selected_sku,
+                        destination=offer.destination,
+                        destination_literal=offer.destination_literal,
+                        quantity=offer.quantity,
+                        price_scope=(
+                            "selected_variation" if offer.price_bound_to_sku else "display_unbound"
+                        ),
+                        shipping_claim=(
+                            str(offer.shipping_claim) if offer.shipping_claim is not None else None
+                        ),
+                        vat_included_claim=True if offer.vat_included_claim else None,
+                        missing_fields=list(
+                            dict.fromkeys(
+                                [
+                                    *offer.issues,
+                                    "manufacturer_definition",
+                                    "selected_sku_stock",
+                                    "UK_delivered_cost",
+                                    "history_rights",
+                                ]
+                                + ([] if offer.selected_sku else ["selected_sku"])
+                            )
+                        ),
+                    ),
+                )
+            )
+        return EvidenceSearchReport(
+            listings=listings,
+            evidence=evidence,
+            acquisition_state="partial",
+            acquisition_reason="reviewed_browser_leads_only",
+            completeness="partial",
+            source_evidence=capture,
+        )
+
     async def inspect_browser_search(
         self, query: str, filters: dict[str, Any] | None = None
     ) -> BrowserSearchReport:
@@ -176,6 +339,12 @@ class AliExpressConnector(BaseConnector):
         limit = filters.get("browser_max_products", self.config.get("browser_max_products", 2))
         if type(limit) is not int or not 1 <= limit <= 10:
             raise ValueError("browser_max_products must be an integer from 1 to 10")
+        from pricerecon.models.source_evidence import SourceReceipt
+
+        capture = getattr(self, "evidence_receipt", None)
+        if isinstance(capture, SourceReceipt):
+            capture.page_limit = 1
+            capture.detail_limit = limit
         manual = query if query.isdigit() else self._extract_pid_from_url(query)
         pid = self._normalize_pid(manual) if manual else None
         discovery_url = None
@@ -201,6 +370,13 @@ class AliExpressConnector(BaseConnector):
                     self.connector_id,
                     {"reason": "unverified_discovery_origin"},
                 )
+            if isinstance(capture, SourceReceipt):
+                capture.pages_captured = 1
+                capture.content_truncated = result.rendered.html_truncated or (
+                    not result.rendered.html and result.rendered.snapshot_truncated is not False)
+                if capture.content_truncated:
+                    capture.issues.append("truncated_discovery_content")
+                    capture.completeness = "partial"
             try:
                 pids = discovery_ids(result)
             except ValueError as exc:

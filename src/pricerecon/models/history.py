@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from pricerecon.models.costs import CostScenario
 from pricerecon.models.qualification import Configuration, MerchantOffer, SelectionBinding
+from pricerecon.models.source_evidence import SourceReceipt
 
 HistoryChange = Literal["initial", "unchanged", "increased", "decreased", "not_comparable"]
 HistoryValidity = Literal[
@@ -74,6 +75,7 @@ class HistoryGap(HistoryModel):
 
 
 class HistoryAttempt(HistoryModel):
+    source_evidence: SourceReceipt | None = None
     capture_id: str
     captured_at: datetime
     source: str

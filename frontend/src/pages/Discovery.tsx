@@ -7,6 +7,7 @@ import type { ExactTracking } from '../lib/tracking'
 import { CollectionCoverage } from '../components/discovery/CollectionCoverage'
 import { IdentityCorrection } from '../components/discovery/IdentityCorrection'
 import { ObservationHistory } from '../components/discovery/ObservationHistory'
+import { SourceCoverage, SourceOfferEvidence, SourceReceipt } from '../components/discovery/SourceCoverage'
 
 const strengthLabel = { hard: 'Hard constraint', soft: 'Soft preference', unset: 'Unset' }
 
@@ -173,6 +174,7 @@ function Candidate({ candidate, tracking, onSaved }: { candidate: DiscoveryCandi
         </section>)}
         {candidate.offers.map(offer => <section key={offer.id}>
           <h3>Merchant offer {offer.qualification.state}</h3>
+          {offer.source_evidence && <SourceOfferEvidence evidence={offer.source_evidence} />}
           <p>{offer.seller ?? 'Seller unknown'} · {offer.condition ?? 'condition unknown'} · {offer.purchase_mode ?? 'purchase mode unknown'}</p>
           <p>Quantity {offer.quantity ?? 'unknown'}; availability {offer.availability ?? 'unknown'}; destination {offer.destination ?? 'unknown'}. Selected item price: {offer.currency ?? 'currency unknown'} {offer.item_price ?? 'unknown'}.</p>
           {offer.condition_description && <p>Seller condition description: {offer.condition_description}</p>}
@@ -187,7 +189,7 @@ function Candidate({ candidate, tracking, onSaved }: { candidate: DiscoveryCandi
               <strong>{claim.subject} · {claim.field}:</strong> {claim.value} ({claim.assertion_state})
               <p>{claim.retention === 'synthetic' ? 'Synthetic test evidence. ' : ''}{claim.issuer_kind}: {claim.issuer}; extractor {claim.extractor} ({claim.extractor_kind}); route {claim.route}; locator {claim.locator}.</p>
               <p>Extractor version {claim.extractor_version ?? 'unknown'}; model {claim.extractor_model ?? 'unknown'}; run {claim.extraction_run_id ?? 'unknown'}; uncertainty {claim.uncertainty ?? 'not stated'}. Effective time {claim.effective_at ?? 'unknown'}.</p>
-              <p>Claim {claim.id}; capture {claim.capture_id}. Observed {claim.observed_at ?? 'unknown'}; retrieved {claim.retrieved_at}.</p>
+              <p>Claim {claim.id}; capture {claim.capture_id}; acquisition {claim.acquisition_capture_id ?? 'unknown'}. Observed {claim.observed_at ?? 'unknown'}; retrieved {claim.retrieved_at}.</p>
               <p>Context: {claim.context.scope}; {claim.context.merchant_key ?? 'merchant unknown'} / {claim.context.product_id ?? 'product unknown'} / {claim.context.variation_id ?? 'variation unknown'}; {claim.context.destination ?? 'destination unknown'}; {claim.context.currency ?? 'currency unknown'}; quantity {claim.context.quantity ?? 'unknown'}.</p>
               <p>Lineage: {claim.derived_from.join(', ')}; input claims: {claim.input_claim_ids.join(', ') || 'none'}. Retention: {claim.retention}; permission: {claim.permission_reference}.</p>
               {claim.pointer && <a href={claim.pointer} target="_blank" rel="noreferrer">Evidence source</a>}
@@ -237,6 +239,7 @@ export default function Discovery() {
     {feed && <>
       <p className="discovery-collection">{feed.collection_reason}</p>
       <CollectionCoverage />
+      <SourceCoverage feed={feed} />
       {feed.captures.some(capture => capture.mode === 'offline_verification') && <p className="discovery-caution">Offline verification data. These are test leads, not live merchant evidence.</p>}
       {feed.captures.length > 0 && <p className="discovery-quiet">Latest attempt: {feed.captures[0].outcomes.map(outcome => `${outcome.source} ${outcome.state.replace(/_/g, ' ')}`).join('; ')}. Source completeness unknown. Earlier candidates retain their capture dates.</p>}
       <Preferences profile={feed.preferences} onSaved={reload} />
@@ -253,7 +256,9 @@ export default function Discovery() {
         {feed.captures.map(capture => <section key={capture.capture_id}>
           <h2>{new Date(capture.captured_at).toLocaleString()}</h2><p>Query: {capture.query}</p>
           <ul>{capture.outcomes.map((outcome, index) => <li key={`${outcome.source}-${index}`}>
-            {outcome.source}: {outcome.state.replace(/_/g, ' ')}{outcome.reason ? ` (${outcome.reason.replace(/_/g, ' ')})` : ''}; {outcome.listing_count} leads returned. Source completeness unknown.
+            {outcome.source}: {outcome.state.replace(/_/g, ' ')}{outcome.reason ? ` (${outcome.reason.replace(/_/g, ' ')})` : ''}; {outcome.listing_count} leads returned. Source completeness {outcome.completeness}.
+            {outcome.reused_capture_id && <p>Reused capture {outcome.reused_capture_id}; no new source observation.</p>}
+            {outcome.source_evidence && <SourceReceipt receipt={outcome.source_evidence} />}
           </li>)}</ul>
         </section>)}
       </details>

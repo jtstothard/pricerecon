@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 from decimal import Decimal
-import json
 from typing import Any
 from urllib.parse import quote_plus
 
@@ -13,14 +13,62 @@ import httpx
 from pricerecon.connectors.base import BaseConnector
 from pricerecon.connectors.specs import extract_specs
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
+from pricerecon.core.collection_transport import collection_http_client
 from pricerecon.models import NormalizedListing, SourceType
-
+from pricerecon.models.qualification import EvidenceSearchReport
 
 class ShopifyConnector(BaseConnector):
+    collection_accounting = "http_v1"
 
-    def __init__(self, base_url: str | None = None, store_url: str | None = None) -> None:
+    def __init__(
+        self,
+        base_url: str | None = None,
+        store_url: str | None = None,
+        *,
+        evidence_use: dict[str, object] | None = None,
+    ) -> None:
         self.base_url = (base_url or store_url or "").rstrip("/")
-        self._client = httpx.AsyncClient(timeout=30.0)
+        self._client = collection_http_client(timeout=30.0)
+        from pricerecon.models.source_evidence import EvidenceUse
+
+        self.evidence_use = (
+            EvidenceUse.model_validate(evidence_use) if evidence_use is not None else None
+        )
+        self._last_products_payload: object = None
+
+    def validate_evidence_access(self) -> None:
+        from pricerecon.connectors.evidence import receipt, require_evidence_use
+
+        self.evidence_receipt = receipt(
+            "shopify_products_v1",
+            self.evidence_use,
+            [
+                "store-specific capture/display/reuse authority",
+                "separate archive grant",
+                "selected stock/fulfilment origin and UK checkout cost",
+            ],
+        )
+        from urllib.parse import urlsplit
+
+        self.evidence_receipt.source_host = urlsplit(self.base_url).hostname
+        if self.evidence_receipt.source_host in {"militadowatch.com", "www.militadowatch.com"}:
+            self.evidence_receipt.prerequisites.append("recognized Web Bot Auth signer")
+            raise ConnectorDegradedError(
+                ConnectorStatus.disabled,
+                "Militado signing identity is unqualified; generic storefront access cannot replace it",
+                self.connector_id,
+            )
+        require_evidence_use(self.evidence_use, self.connector_id)
+
+    async def search_with_evidence(
+        self, query: str, filters: dict[str, Any] | None = None
+    ) -> EvidenceSearchReport:
+        from pricerecon.connectors.shopify_evidence import shopify_evidence
+
+        self.validate_evidence_access()
+        self._last_products_payload = None
+        await self.search(query, filters)
+        return shopify_evidence(self._last_products_payload, self.base_url, self.evidence_receipt)
 
     @property
     def source_role(self) -> SourceType:
@@ -66,6 +114,7 @@ class ShopifyConnector(BaseConnector):
                         payload = json.loads(net_response.body)
                     except json.JSONDecodeError:
                         break
+                    self._last_products_payload = payload
                     return self.annotate_browser_result(
                         self._products_to_listings(payload.get("products", [])), browser_result
                     )
@@ -85,6 +134,7 @@ class ShopifyConnector(BaseConnector):
         )
         response.raise_for_status()
         payload = response.json()
+        self._last_products_payload = payload
         return self._products_to_listings(payload.get("products", []))
 
     async def fetch_variant_prices(self, handle: str) -> list[dict[str, Any]]:

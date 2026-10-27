@@ -340,10 +340,16 @@ def get_feed() -> DiscoveryFeed:
                 )
             ]
         candidates.append(candidate)
+    from pricerecon.categories.watch_sources import source_coverage
     from pricerecon.db.tracking import list_tracking
 
-    return DiscoveryFeed(candidates=candidates, captures=captures, preferences=preferences,
-                         tracking=list_tracking().items)
+    return DiscoveryFeed(
+        candidates=candidates,
+        captures=captures,
+        preferences=preferences,
+        tracking=list_tracking().items,
+        source_coverage=source_coverage(captures),
+    )
 
 
 def load_capture_candidates(

@@ -10,6 +10,7 @@ from pricerecon.models.corrections import CorrectionHistory
 from pricerecon.models.costs import PublicCostSummary
 from pricerecon.models.history import HistorySummary
 from pricerecon.models.qualification import Configuration, MerchantOffer, SelectionBinding
+from pricerecon.models.source_evidence import SourceReceipt
 from pricerecon.models.tracking import ExactTracking
 from pricerecon.models.watches import SourceConfig
 
@@ -19,6 +20,7 @@ class DiscoveryModel(BaseModel):
 
 
 class AcquisitionOutcome(DiscoveryModel):
+    source_evidence: SourceReceipt | None = None
     source: str
     route: Literal["connector_search_v1"] = "connector_search_v1"
     state: Literal[
@@ -35,6 +37,25 @@ class DiscoveryRequest(DiscoveryModel):
     query: str = Field(min_length=1, max_length=500)
     sources: list[SourceConfig] = Field(min_length=1)
     source_queries: dict[str, str] = Field(default_factory=dict)
+
+
+class SourceCoverage(DiscoveryModel):
+    family: Literal[
+        "aliexpress",
+        "ebay_secondhand",
+        "brand_direct",
+        "uk_retail",
+        "uk_shipping_international",
+        "search_aggregator_community",
+    ]
+    source: str
+    route: str
+    accepted_status: Literal["reviewed_lead", "blocked", "unqualified", "unsupported"]
+    activation: Literal["staged"] = "staged"
+    reason: str
+    prerequisites: list[str]
+    decision_reference: str = "docs/product/category-discovery/source-qualification-decision.md"
+    last_outcome: AcquisitionOutcome | None = None
 
 
 class DiscoveryAdmission(DiscoveryModel):
@@ -202,6 +223,13 @@ class DiscoveryCandidate(DiscoveryModel):
 
 
 class DiscoveryFeed(DiscoveryModel):
+    source_coverage: list[SourceCoverage] = Field(default_factory=list)
+    cohort_gaps: list[str] = Field(
+        default_factory=lambda: [
+            "Militado ML05/ML05B: real manufacturer/store identity, selection and UK offer evidence unresolved.",
+            "Merkur Lightning salmon: no reconciled exact reference/offer; missing evidence remains an abstention.",
+        ]
+    )
     category: Literal["watches"] = "watches"
     collection_state: Literal["staged"] = "staged"
     collection_reason: str = (
