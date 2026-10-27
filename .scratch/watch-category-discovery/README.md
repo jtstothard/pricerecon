@@ -14,7 +14,7 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 | [04: UK delivered cost](issues/04-show-uk-delivered-cost.md) | 03 | Closed |
 | [05: Exact tracking](issues/05-track-exact-products.md) | 04 | Closed |
 | [06: Observation history](issues/06-show-observation-history.md) | 04 | Closed |
-| [07: Corrections](issues/07-correct-identities.md) | 05, 06 | In progress |
+| [07: Corrections](issues/07-correct-identities.md) | 05, 06 | Open — merger repair required |
 | [08: Comparisons](issues/08-compare-qualified-offers.md) | 07 | Blocked |
 | [09: Public coupons](issues/09-evaluate-public-coupons.md) | 04 | Closed |
 | [10: Shared limits](issues/10-prioritise-tracking.md) | 05 | In progress |
@@ -28,11 +28,13 @@ Work is limited to source implementation and deterministic offline verification 
 Ticket 01 source was integrated on 2026-10-27 in merge `a0e5c1a612252c61a62eabc7b56ebc3b3297ed85`, preserving implementer HEAD `9312871f269137d7b98ba7155d9523350e41e62e`. The subsequent rendered-form preservation repair was integrated in merge `3243c8f00e3f9dd9efde79327b6905eb3d4354b2`, preserving implementer HEAD `534cecaece62e30f50c680b40af5b4c7f561b6e4`. Integration checks passed **15 isolated workflow tests**, **25 frontend tests** and the frontend build. The parent subsequently passed the rendered edit/save/reload/manual-check regression. See the dated resolution log below and the [repair integration receipt](issues/01-verify-existing-monitoring.md#preservation-repair-integration-receipt-2026-10-27).
 
 Current frontier, 2026-10-27: tickets 01–06 and 09 are closed for their offline
-scope. Tickets 07 and 10 are active in separate worktrees; neither slice has
-landed here. The 07 correction transaction/UI and overlapping acquisition must
-still be integrated against coupon lineage. Tickets 08/11/12 remain blocked by
-their other dependencies and acceptance gates. Earlier dated readiness/ownership
-entries below describe their state at that time.
+scope. Ticket07 is merged but remains open for its reproduced multi-configuration
+withdrawal/requalification defect. Its correction transaction/UI, acquisition and
+dispatch races are connected to the accepted history/coupon repairs and pass the
+95-workflow suite, but the additional merger probe fails. Ticket08 stays blocked
+and unclaimed. Ticket10 remains active separately and has not landed here;
+11/12 remain blocked. Earlier dated readiness/ownership entries below describe
+their state at that time.
 
 Actual buyer walkthrough feedback, current source rights, live offer/history/cost proof, finite operating limits and named maintenance ownership cannot be fabricated by passing fixture tests. Keep these gates explicit in the final receipt.
 
@@ -174,3 +176,17 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   ticket was claimed or implemented; 12 remains blocked by its other gates.
   Collection stays staged; live coupon/source/rights/retention/freshness/buyer/
   operating/comparison/savings/activation acceptance remains unproven.
+
+- 2026-10-27: 07 source `89ebd79` integrated without conflicts in history-preserving
+  merge `233b3cc`, with parents `75f8a3a` and `89ebd79`. All **95 documented safe
+  application workflows passed in 83.56s**, with focused Ruff/mypy and unchanged
+  app/schema lint diagnostics. Inspected and reused the source's unchanged
+  25 frontend tests/build and actual desktop/narrow correction proof. An extra
+  guarded API/execution probe fails: correcting mint to salmon in a listing also
+  containing blue prevents fresh salmon requalification and withdraws unrelated
+  blue, persisting across restart. The single-configuration positive control
+  passes. **07 remains open for repair; 08 remains blocked and unclaimed.**
+  See the [merger disposition](../../docs/testing/watch-corrections.md#merger-disposition--2026-10-27).
+  No application repair, later implementation or acceptance occurred. Source07,
+  active10 and the dirty original parent were not edited. Collection stays staged;
+  live/buyer/source-rights/freshness/operating/activation gates remain separate.

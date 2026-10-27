@@ -4,7 +4,9 @@
 
 **Blocked by:** [07: Correct identities without transferring misleading prices](07-correct-identities.md)
 
-**Status:** ready-for-agent
+**Status:** blocked — ticket07 merger repair required
+
+**Assignee:** unclaimed
 
 **Parent:** [Trustworthy UK watch discovery alongside existing monitoring](../../../docs/specs/watch-category-discovery.md)
 

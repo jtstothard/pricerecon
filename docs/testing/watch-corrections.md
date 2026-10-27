@@ -182,3 +182,133 @@ second comparison service nor a scheduler/queue/evidence platform. Migration 2.0
 was exercised on temporary fresh/seeded legacy storage only. No production
 migration, full-source coverage, empirical history, savings or live delivery
 qualification is claimed.
+
+## Merger disposition — 2026-10-27
+
+**Ticket07 remains open for repair. Ticket08 remains blocked and unclaimed.**
+The documented95 suite passes, but the additional application-seam probe below
+demonstrates overbroad withdrawal and blocked requalification for a listing with
+multiple exact configurations. No application repair was made by the merger.
+
+### Identity, ancestry and review
+
+Integration `/Users/jay/.t3/worktrees/pricerecon/watch-category-integration`,
+branch `integration/watch-category-discovery`, was clean at requested
+`75f8a3a778e901e79f5ce1a1b76a26692d42a343`. Source
+`/Users/jay/.t3/worktrees/pricerecon/ticket07-corrections`, branch
+`t3/ticket07-corrections`, was clean at requested
+`89ebd79374a76c28c5cb5849a2f11a04c3085c91`, which already contained integration.
+Explicit `git merge --no-ff --no-edit 89ebd79374a76c28c5cb5849a2f11a04c3085c91`
+produced `233b3cc6d3f9c19eab8cd04c89309e0982a6a9b3`. Its first/second parents
+are those exact integration/source commits. There were no conflicts; the merged
+tree exactly matched source before merger evidence/tracker additions.
+
+Read the spec/issue07, accepted identity/history/experience decisions, 05's
+transaction/dispatch extension, 06's exact-revision/retained-capture repair,
+and 09's accepted independent receipt/provenance repair. Reviewed source changes
+through model, API, transaction, acquisition, projections, tracking, UI and guarded
+workflows. The correction journal accepts only the nine category identity fields,
+retains self-attributed actor/rationale and predecessor/revision history, and
+compares expected correction/capture/configuration inputs under `BEGIN IMMEDIATE`.
+Human intent does not edit acquired configuration, merchant, availability or cost
+evidence. Historical rows retain their original identity/value associations.
+
+The correction transaction uses the committed05 tracking invalidation and06 exact
+history withdrawal owners. 09 coupon feed/history consumes those withdrawals and
+rejects receipts predating a correction after base requalification. Correction UI
+refreshes the history component using capture/correction revisions. Existing
+comparison qualification/cohorts withdraw; this is not acceptance of future08
+ranking/assessment capabilities or coupon-funded target alerts.
+
+### Current verification and retained proof
+
+Ran the exact cleared-environment eight-file pytest command in the implementation
+verification section, from integration, using the existing parent Python and
+installed dependencies: **95 passed in 83.56s**, with no skips/xfails. This includes
+all85 current cases plus ten correction workflows. In particular, the in-flight
+send returns409 with correction/history/target rollback; correction-first pending
+send is withheld across restart; an overlapping stale acquisition retains its
+outcome but withdraws current prices and cannot replay into eligibility. Fresh
+independent evidence, descendant recorrection, numeric equivalence, coupon receipt
+replay/fresh receipt and historical sent-record cases pass. Existing assertions
+were not weakened or removed.
+
+Focused Ruff passed the19 changed Python source/test files excluding app/schema;
+mypy `--follow-imports=silent` passed13 source files with inherited unused-override
+notes. Compared app/schema Ruff rule/message multisets against `75f8a3a`: exactly
+the inherited five/two diagnostics, with no additions or suppressions. The new
+merger probe also passes Ruff. `git diff --check` passes.
+
+The source's **25 frontend tests**, TypeScript/Vite build and actual Chrome proof
+are reused. Exact Git tree equality against `89ebd79` was confirmed for frontend,
+correction browser driver, shared driver/server and retained browser artifacts.
+Inspected all three actual desktop/narrow PNGs and their receipt; retained hashes
+and focused/full results are in [the merger verification receipt](artifacts/watch-corrections/merger-verification.json).
+No frontend tests, build or browser session were repeated. Existing ESLint10
+missing-config blockage and large-chunk build warning remain as documented.
+Agent-operated UI evidence is not buyer walkthrough acceptance.
+
+### Reproduced gap: multi-configuration scope
+
+Source review showed `compatible_fresh_candidate` requiring **every** configuration
+in a candidate to match one correction's intended values, and `validate_publication`
+withdrawing **every** configuration/binding/offer/cost in that candidate when it
+fails. A legitimate listing can contain independently supported exact variants.
+That was a concrete uncovered risk warranting this bounded probe.
+
+[The retained probe](../../tests/monitoring/correction_merger_probe.py) uses the
+existing marked temporary SQLite harness, normal acquisition and application API;
+no private correction methods or database inspection establish its outcomes.
+Both variants initially have supported configuration/binding/offer evidence and
+verified GBP50.10 cost. It corrects only mint to salmon, then acquires fresh
+supported salmon and blue reports. The blue variant is unrelated to that correction.
+
+- Immediately after correction, blue correctly remains supported.
+- After the fresh multi-variant capture, **salmon and blue both become unresolved**,
+  both costs expose `withdrawn=true`, `total=null`, original GBP50.10 historical
+  totals, and the correction remains `requalification=required`.
+- These states persist after application restart. The failing assertion is
+  `Fresh supported salmon configuration cannot requalify alongside unrelated blue`.
+  [Failure receipt](artifacts/watch-corrections/merger-multi-configuration.json).
+- The same fixture and evidence construction restricted to the corrected variant
+  passes: fresh salmon is supported, requalification is
+  `supported_by_fresh_evidence`, and the GBP50.10 public total is usable at
+  observation. [Positive control](artifacts/watch-corrections/merger-single-control.json).
+
+Exact commands, from integration (first exits1; control exits0):
+
+```sh
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  -m tests.monitoring.correction_merger_probe \
+  "$PWD/docs/testing/artifacts/watch-corrections/merger-multi-configuration.json"
+
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  -m tests.monitoring.correction_merger_probe \
+  "$PWD/docs/testing/artifacts/watch-corrections/merger-single-control.json" --single
+```
+
+Both receipts report temporary storage, `blocked_edges=[]`, `notifications_sent=0`
+and staged collection. This gap is excessive withdrawal and inability to requalify;
+it does not demonstrate a false current payable, transferred historical price or
+stale alert. Repair must scope qualification/publication to the actual corrected
+configuration descendants, preserve unrelated exact variations, and keep all
+passing acquisition/dispatch/coupon/history protections. The invalidation checklist
+item remains open; checked items retain bounded offline proof only.
+
+### Scope and remaining gates
+
+Only integration received the local history-preserving merge, diagnostic probe,
+receipts and tracker disposition. Source07, separate active10 and the original
+dirty parent were not edited. No08 implementation or claim occurred. No installs,
+downloads, external network/live collection, credentials/accounts, production DB,
+activation/deploy, push, PR, delegation or unrelated cleanup occurred.
+
+Collection remains staged. Buyer task interpretation, live/source mapping and
+independent capture/receipt proof, access/rights/retention, freshness/calibration,
+comparison and complete-workflow acceptance, operating limits and activation
+remain separate gates. The passing deterministic suite does not close07 while
+the retained additional acceptance probe fails.

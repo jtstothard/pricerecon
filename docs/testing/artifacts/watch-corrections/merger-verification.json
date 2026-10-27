@@ -1,0 +1,62 @@
+{
+  "base": "75f8a3a778e901e79f5ce1a1b76a26692d42a343",
+  "source": "89ebd79374a76c28c5cb5849a2f11a04c3085c91",
+  "merge": "233b3cc6d3f9c19eab8cd04c89309e0982a6a9b3",
+  "full_safe_suite": {
+    "passed": 95,
+    "seconds": 83.56,
+    "skipped": 0,
+    "xfailed": 0
+  },
+  "focused_ruff_files": 19,
+  "focused_mypy_source_files": 13,
+  "frontend_tests_reused": 25,
+  "frontend_build_reused": true,
+  "browser_reused": true,
+  "baseline_ruff": {
+    "src/pricerecon/app.py": {
+      "unchanged_count": 5,
+      "diagnostics": [
+        [
+          "BLE001",
+          "Do not catch blind exception: `Exception`"
+        ],
+        [
+          "BLE001",
+          "Do not catch blind exception: `Exception`"
+        ],
+        [
+          "UP017",
+          "Use `datetime.UTC` alias"
+        ],
+        [
+          "UP017",
+          "Use `datetime.UTC` alias"
+        ],
+        [
+          "UP035",
+          "Import from `collections.abc` instead: `AsyncGenerator`"
+        ]
+      ]
+    },
+    "src/pricerecon/db/schema.py": {
+      "unchanged_count": 2,
+      "diagnostics": [
+        [
+          "BLE001",
+          "Do not catch blind exception: `Exception`"
+        ],
+        [
+          "BLE001",
+          "Do not catch blind exception: `Exception`"
+        ]
+      ]
+    }
+  },
+  "artifact_sha256": {
+    "docs/testing/artifacts/watch-corrections/desktop-history-withdrawn.png": "5ae7bd42a47328514bacdf8803a949a1846e09d4a1a07cba2d4ce0780e1c7fd7",
+    "docs/testing/artifacts/watch-corrections/narrow-correction.png": "ed5723f597c91bb15124739896e02eaaaeb5baf60cb69488f53b47fcf932e1cb",
+    "docs/testing/artifacts/watch-corrections/desktop-correction.png": "03ff98a4189ad108427df3af94176b4a87c43f49ca0578d93a6f0e80f22be5c5"
+  },
+  "source_frontend_browser_tree_equal": true
+}
