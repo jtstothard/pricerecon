@@ -11,12 +11,12 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 | [01: Existing monitoring](issues/01-verify-existing-monitoring.md) | None | Closed |
 | [02: Candidate discovery](issues/02-discover-candidates.md) | 01 | Closed |
 | [03: Qualification](issues/03-explain-offer-qualification.md) | 02 | Closed |
-| [04: UK delivered cost](issues/04-show-uk-delivered-cost.md) | 03 | Open; merger found FX rounding repair required |
-| [05: Exact tracking](issues/05-track-exact-products.md) | 04 | Blocked |
-| [06: Observation history](issues/06-show-observation-history.md) | 04 | Blocked |
+| [04: UK delivered cost](issues/04-show-uk-delivered-cost.md) | 03 | Closed |
+| [05: Exact tracking](issues/05-track-exact-products.md) | 04 | READY; unclaimed |
+| [06: Observation history](issues/06-show-observation-history.md) | 04 | READY; unclaimed |
 | [07: Corrections](issues/07-correct-identities.md) | 05, 06 | Blocked |
 | [08: Comparisons](issues/08-compare-qualified-offers.md) | 07 | Blocked |
-| [09: Public coupons](issues/09-evaluate-public-coupons.md) | 04 | Blocked |
+| [09: Public coupons](issues/09-evaluate-public-coupons.md) | 04 | READY; unclaimed |
 | [10: Shared limits](issues/10-prioritise-tracking.md) | 05 | Blocked |
 | [11: Source evidence](issues/11-carry-source-evidence.md) | 03, 10 | Blocked |
 | [12: Integrated verification](issues/12-verify-complete-watch-workflow.md) | 08, 09, 11 | Blocked |
@@ -25,7 +25,7 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 
 Work is limited to source implementation and deterministic offline verification with isolated storage and controlled external edges. The buyer explicitly authorised local commits/merges for this continuation, overriding the older issue-level prohibition. No live collection, accounts, production database, activation, deployment, purchases, pushes or PRs are authorised.
 
-Ticket 01 source was integrated on 2026-10-27 in merge `a0e5c1a612252c61a62eabc7b56ebc3b3297ed85`, preserving implementer HEAD `9312871f269137d7b98ba7155d9523350e41e62e`. The subsequent rendered-form preservation repair was integrated in merge `3243c8f00e3f9dd9efde79327b6905eb3d4354b2`, preserving implementer HEAD `534cecaece62e30f50c680b40af5b4c7f561b6e4`. Integration checks passed **15 isolated workflow tests**, **25 frontend tests** and the frontend build. The parent subsequently passed the rendered edit/save/reload/manual-check regression. Tickets 01, 02 and 03 are now closed for their offline scope, and ticket 04 is claimed for the parent continuation. See the dated resolution log below and the [repair integration receipt](issues/01-verify-existing-monitoring.md#preservation-repair-integration-receipt-2026-10-27).
+Ticket 01 source was integrated on 2026-10-27 in merge `a0e5c1a612252c61a62eabc7b56ebc3b3297ed85`, preserving implementer HEAD `9312871f269137d7b98ba7155d9523350e41e62e`. The subsequent rendered-form preservation repair was integrated in merge `3243c8f00e3f9dd9efde79327b6905eb3d4354b2`, preserving implementer HEAD `534cecaece62e30f50c680b40af5b4c7f561b6e4`. Integration checks passed **15 isolated workflow tests**, **25 frontend tests** and the frontend build. The parent subsequently passed the rendered edit/save/reload/manual-check regression. Tickets 01–04 are now closed for their offline scope. Tickets05/06/09 are READY and unclaimed for parent dispatch. See the dated resolution log below and the [repair integration receipt](issues/01-verify-existing-monitoring.md#preservation-repair-integration-receipt-2026-10-27).
 
 Actual buyer walkthrough feedback, current source rights, live offer/history/cost proof, finite operating limits and named maintenance ownership cannot be fabricated by passing fixture tests. Keep these gates explicit in the final receipt.
 
@@ -76,3 +76,17 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   See the [merger receipt and exact reproducer](../../docs/testing/watch-costs.md#merger-verification-2026-10-27).
   No later ticket implementation or source repair occurred. Fixture success
   establishes no legal/live/freshness/comparison/alert or activation acceptance.
+
+- 2026-10-27: 04 FX repair `aa18c74` integrated without conflicts in
+  history-preserving merge `8b6481d`, with parents `24a6943` and `aa18c74`.
+  The original probe independently failed before merge and passed afterwards;
+  equal numeric quanta now preserve persisted/public totals and budget fit.
+  All **48 isolated workflows** (all 46 baseline plus two new regressions),
+  focused Ruff, 14-source mypy and diff checks passed. Unchanged frontend's prior
+  25 tests/build and retained browser proof were accepted; existing ESLint
+  missing-config blocker remains recorded. **04 closed for offline scope;
+  05/06/09 READY and unclaimed for parent dispatch.** No later ticket work was
+  performed. See the [repair merger receipt](../../docs/testing/watch-costs.md#fx-repair-merger-acceptance-2026-10-27).
+  Source/live/legal/retention/freshness/comparison/alert/buyer and activation
+  gates remain separate; collection stays staged and original dirty parent is
+  preserved.

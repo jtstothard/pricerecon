@@ -1,7 +1,7 @@
 # Exact-offer delivered-cost implementation receipt — 2026-10-27
 
 Ticket: [04: Show defensible UK delivered-cost scenarios](../../.scratch/watch-category-discovery/issues/04-show-uk-delivered-cost.md).
-Scope: source-only, offline implementation; merger acceptance remains pending.
+Scope: source-only, offline implementation; accepted in the FX repair merger section below.
 
 ## Workspace and authority
 
@@ -465,3 +465,101 @@ collection/network, credentials/accounts, production database, activation,
 deployment, push, PR or delegation. Only local commits are authorized. Existing
 legal/source/freshness/comparison/buyer and activation gates remain separate;
 passing this repair does not close ticket04.
+
+## FX repair merger acceptance: 2026-10-27
+
+**Ticket04 is closed for source implementation and deterministic offline
+verification.** The precise-money blocker is resolved. Tickets05/06/09 are
+**READY and unclaimed**, reserved for parent dispatch; no later ticket was
+implemented or claimed in this pass.
+
+### Reviewed identity and history-preserving merge
+
+Integration `/Users/jay/.t3/worktrees/pricerecon/watch-category-integration`,
+branch `integration/watch-category-discovery`, was clean at
+`24a69438a316d338d7567c6179d1217b7b12d4f3`. Repair
+`/Users/jay/.t3/worktrees/pricerecon/t3-d53ed76f`, branch
+`t3/fix-fx-quantum-equivalence`, was clean at
+`aa18c74c16c08cc8a8d3fe0423da93c9df6e5b73`. The integration tip was the merge
+base and an ancestor of the repair. Conflict-free `git merge --no-ff` produced
+`8b6481d5dfbd40e8dde2153ea5b82198e5b4f456`, with those two exact tips as parents.
+The source checkout remains clean at its supplied HEAD.
+
+Reviewed the full ticket04/spec, accepted UK-cost resolution/contract, both prior
+merger and repair receipts, the entire repair diff, input bounds/quantum
+validation, evaluator and append-only cost storage/API behavior. Exact
+coefficient validation still rejects near-powers without ambient normalization.
+For an accepted positive power of ten, `adjusted()` supplies its numeric exponent;
+the evaluator constructs a coefficient-one Decimal solely for rounding. Decimal
+numeric equality in the quote signature admits equivalent increments without
+rewriting supplied representations. Quote state, rate, converter, rounding and
+other context remain in the signature; supporting evidence remains retained and
+checked. The 512-digit local arithmetic precision is unchanged and covers the
+bounded inputs, quantity, FX multiplication and aggregation. No model, storage,
+API, frontend, policy-version or operational-default change was introduced.
+
+### Independently reproduced failure and repair
+
+Ran the **unchanged original application probe**, with the documented cleared
+environment and existing interpreter, first at integration `24a6943` and again
+on the merged tree. Before merge it exited **1**, reproducing all three numerical
+equivalence failures and the ten-unit budget disagreement. After merge it exited
+**0**: `0.01`/`0.010` both return **49.56 GBP**, budget outside;
+`1E+1`/`10`/`10.0` all return **48.00 GBP**, budget fits. Persisted history and
+public feed agree, all five revisions remain intact, comparison is unresolved,
+alerts are disabled, and notifications/blocked edges are empty.
+
+The independently generated red and green JSON files were byte-identical to the
+retained [original failure](artifacts/watch-costs/merger-fx-quantum.json) and
+[repair result](artifacts/watch-costs/repair-fx-quantum.json), respectively. No
+replacement of the historical failure artifact was needed. Reproduce with the
+commands in the two preceding sections; output files for this pass were
+`/tmp/pricerecon-ticket04-merger-red-20261027.json` and
+`/tmp/pricerecon-ticket04-merger-green-20261027.json`.
+
+### Merged-tree checks and acceptance
+
+- **Passed:** documented safe suite, **48 workflows in 61.24s**, using the exact
+  cleared-environment command in the repair receipt, including the installed
+  Node PATH. All 46 baseline workflows and both new regressions ran; none were
+  removed or skipped. The 48-capture regression checks three increment sizes,
+  four representations each, all four rounding modes and half ties at caller
+  Decimal precision 2, public budget outcomes, supplied quote/components/context
+  preservation and unchanged prior history. Equivalent claims remain retained;
+  genuinely different increments and expired evidence withhold totals.
+  Malformed/near-power/bounds, extreme money precision, changed buyer context,
+  restart, inclusion, conditional benefits and legacy monitoring are covered by
+  the retained application workflows with controlled external edges and storage.
+- **Passed:** focused Ruff on the documented 12 source/workflow files plus the
+  merger probe and cost test launcher (**14 files**). Focused mypy
+  `--follow-imports=silent` passed the documented **14 source files**; existing
+  unused-override notes remain. `git diff --check` passed.
+- **Accepted retained proof:** prior merger's **25 frontend tests/build** and
+  desktop/narrow browser evidence. The frontend and browser driver/server are
+  byte-unchanged by this repair. Re-read the browser receipt: verified,
+  conditional and unknown display, included VAT once, separate cashback, known
+  subtotal, provenance, keyboard/reload and 375px overflow checks passed; buyer
+  acceptance is explicitly unproven. No new frontend/browser run was needed.
+- **Blocked, unchanged:** recorded frontend lint failure, ESLint 10.12.0 missing
+  `eslint.config.*`; no installation or configuration workaround was attempted.
+
+All five ticket04 checklist items are accepted for this offline slice, combining
+these repaired arithmetic checks with the original implementation/merger
+persistence, API, evidence/context and UI proof. This closes the reported FX
+objection without claiming later tracking, history-product or coupon acceptance.
+Verified means **at the synthetic observation only**. No current legal rules,
+source/retention rights, real checkout, live offer, semantic freshness, comparison
+qualification, usual-price baseline, alert or buyer walkthrough acceptance is
+established. Collection remains staged and activation gates remain open.
+
+The original dirty parent `/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e` was
+read only. Before/after HEAD was `ef86af6d41fbb3cac8982f43997068e906477025`;
+status SHA-256 was
+`6dd6d0c6377dc3a26220278755da49a2b085c08094d7eb180cdcc017d718ac06` and
+tracked/nonignored-untracked content fingerprint was
+`d6f0cf20a897aeef3206031028e17679af2ff57399a378c8922b10583e1c3169`, both
+unchanged. The content fingerprint sorts git-listed paths and hashes path,
+file mode and bytes (or symlink target), including missing-path markers.
+Only local merge/receipt commits occurred. No installs, network/live work,
+credentials/accounts, production DB, activation, deployment, push, PR,
+delegation or unrelated cleanup.

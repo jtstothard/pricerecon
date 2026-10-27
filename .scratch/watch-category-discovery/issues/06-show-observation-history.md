@@ -6,6 +6,8 @@
 
 **Status:** ready-for-agent
 
+**Assignee:** unclaimed
+
 **Parent:** [Trustworthy UK watch discovery alongside existing monitoring](../../../docs/specs/watch-category-discovery.md)
 
 - [ ] Persist acquisition outcomes separately from filters/alerts and retain initial, unchanged, rising and falling observations with capture identity, availability, condition, quantity, destination, monetary/eligibility basis and policy versions.
@@ -17,3 +19,11 @@
 ## Verification and authority
 
 Use the buyer-approved API plus normal execution seam, controlled external edges and isolated storage; assert observable behavior. Include persistence/API/UI behavior for this slice and keep legacy Watch semantics compatible. Source implementation and offline verification only: no live collection, production DB operations, account connections, activation, deployment, purchase, commit or push is authorised by this ticket.
+
+## Dependency ready: 2026-10-27
+
+Ticket04 is closed for its offline scope after the
+[FX repair merger acceptance](../../../docs/testing/watch-costs.md#fx-repair-merger-acceptance-2026-10-27).
+This ticket is **READY and unclaimed**, reserved for parent dispatch. No
+implementation, verification or claim for this ticket occurred in that merger;
+its own checklist and separate live/buyer/activation gates remain open.
