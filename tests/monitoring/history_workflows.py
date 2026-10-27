@@ -9,8 +9,8 @@ from .harness import MonitoringHarness
 from .workflows import get
 
 
-def priced_report(harness, price="48.00", listing_id="history"):
-    report = cost_report(harness, listing_id)
+def priced_report(harness, price="48.00", listing_id="history", *, quantity=1):
+    report = cost_report(harness, listing_id, quantity=quantity)
     for claim in report.claims:
         if claim.field == "item_price":
             claim.value = price
@@ -19,11 +19,14 @@ def priced_report(harness, price="48.00", listing_id="history"):
     # report verbatim later is intentionally the same underlying acquisition.
     for claim in report.claims:
         claim.capture_id += ":" + harness.clock.now.isoformat()
+        if claim.subject == "offer":
+            claim.acquisition_capture_id = claim.capture_id
     for scenario in report.cost_scenarios:
         for claim in scenario.context_evidence + [
             e for c in scenario.components for e in c.evidence
         ]:
             claim.capture_id += ":" + harness.clock.now.isoformat()
+            claim.acquisition_capture_id = claim.capture_id
     return report
 
 
@@ -184,6 +187,284 @@ async def copied_lineage():
             assert data["observations"][1]["duplicate_of"] == data["observations"][0]["id"]
             assert data["observations"][1]["validity"] == "unqualified"
             assert data["last_good"]["age_seconds"] == 3600
+
+
+async def derived_reextraction():
+    from pathlib import Path
+    from tempfile import TemporaryDirectory
+
+    from .history_merger_probe import probe
+
+    with TemporaryDirectory(prefix="pricerecon-ticket06-probe-") as root:
+        await probe(Path(root) / "derived-copy.json")
+
+
+async def unknown_lineage():
+    with MonitoringHarness() as harness:
+        from pricerecon.models.qualification import MerchantEvidenceReport
+
+        async with harness.session() as (client, _):
+            candidate = (await read_capture(harness, client, [priced_report(harness)]))[
+                "candidates"
+            ][0]
+            before = await history(client, candidate)
+            harness.clock.advance()
+            payload = priced_report(harness, "38.00").model_dump(mode="json")
+            for claim in payload["claims"]:
+                if claim["subject"] == "offer" and claim["field"] in {"item_price", "availability"}:
+                    claim.pop("acquisition_capture_id", None)
+                    claim["derived_from"] = ["unidentified-upstream-input"]
+                    claim["extractor"] = "a-new-extractor-is-not-an-acquisition"
+            await read_capture(harness, client, [MerchantEvidenceReport.model_validate(payload)])
+            data = await history(client, candidate)
+            first, unidentified = data["observations"]
+            assert unidentified["validity"] == "unqualified"
+            assert "capture_lineage_unknown" in unidentified["reasons"]
+            assert unidentified["duplicate_of"] is None
+            assert unidentified["change"] == "not_comparable"
+            assert data["last_good"]["observation_id"] == first["id"]
+            assert data["last_good"]["age_seconds"] == 3600
+            assert first == before["observations"][0]
+            assert data["usual_price"]["amount"] is data["savings"] is None
+            assert harness.deliveries == harness.blocked_edges == []
+
+
+def reextract(report, harness, name):
+    copied = report.model_copy(deep=True)
+    for claim in copied.claims:
+        claim.derived_from = [claim.capture_id]
+        claim.capture_id = name + ":" + claim.capture_id
+        claim.acquisition_capture_id = None
+        claim.extractor = name
+        claim.retrieved_at = claim.observed_at = harness.clock.now
+    return copied
+
+
+async def transitive_lineage():
+    with MonitoringHarness() as harness:
+        async with harness.session() as (client, _):
+            original = priced_report(harness)
+            candidate = (await read_capture(harness, client, [original]))["candidates"][0]
+            before = await history(client, candidate)
+            harness.clock.advance()
+            copied = reextract(original, harness, "first-extraction")
+            await read_capture(harness, client, [copied])
+            harness.clock.advance()
+            await read_capture(harness, client, [reextract(copied, harness, "second-extraction")])
+            data = await history(client, candidate)
+            first, *copies = data["observations"]
+            assert [c["duplicate_of"] for c in copies] == [first["id"], first["id"]]
+            assert all(c["validity"] == "unqualified" for c in copies)
+            assert all(c["change"] == "not_comparable" for c in copies)
+            assert all(c["observed_at"] == first["observed_at"] for c in copies)
+            assert original.claims[-1].capture_id in copies[-1]["lineage"]
+            assert data["last_good"]["observation_id"] == first["id"]
+            assert data["last_good"]["age_seconds"] == 7200
+            assert first == before["observations"][0]
+            assert harness.deliveries == harness.blocked_edges == []
+
+
+async def cache_lineage_seed():
+    import json
+    from pathlib import Path
+
+    with MonitoringHarness(storage_root=Path(sys.argv[2])) as harness:
+        from pricerecon.models.qualification import EvidenceSearchReport
+
+        async with harness.session() as (client, _):
+            original = priced_report(harness)
+            candidate = (await read_capture(harness, client, [original]))["candidates"][0]
+            before = await history(client, candidate)
+            harness.clock.advance()
+            cached = reextract(original, harness, "cache-extraction")
+            for claim in cached.claims:
+                claim.acquisition_capture_id = claim.capture_id
+                claim.derived_from = ["cache-output-without-original-field-provenance"]
+            # The acquisition envelope identifies the retained original, even
+            # when an adapter's field metadata incorrectly calls extraction new.
+            harness.report_overrides["cex"] = EvidenceSearchReport(
+                listings=harness.outcomes["cex"],
+                evidence=[cached],
+                acquisition_state="cache_reuse",
+                acquisition_reason="synthetic cached response",
+                reused_capture_id=candidate["capture_id"],
+            )
+            await read_capture(harness, client, [cached])
+            after = await history(client, candidate)
+            first, second = after["observations"]
+            assert second["duplicate_of"] == first["id"]
+            assert second["validity"] == "unqualified"
+            assert second["observed_at"] == first["observed_at"]
+            assert after["last_good"]["age_seconds"] == 3600
+            assert first == before["observations"][0]
+            harness.root.joinpath("cache-lineage-seed.json").write_text(
+                json.dumps(
+                    {
+                        "candidate": candidate,
+                        "original": original.model_dump(mode="json"),
+                        "cached": cached.model_dump(mode="json"),
+                        "history": after,
+                    }
+                )
+            )
+            assert harness.deliveries == harness.blocked_edges == []
+
+
+async def cache_lineage_restart():
+    import json
+    from pathlib import Path
+
+    with MonitoringHarness(storage_root=Path(sys.argv[2])) as harness:
+        from pricerecon.core.discovery import execute_discovery
+        from pricerecon.models.discovery import DiscoveryAdmission, DiscoveryRequest
+        from pricerecon.models.qualification import EvidenceSearchReport, MerchantEvidenceReport
+
+        from .workflows import listing
+
+        seed = json.loads(harness.root.joinpath("cache-lineage-seed.json").read_text())
+        harness.clock.advance(hours=24)
+        async with harness.session() as (client, _):
+            candidate = seed["candidate"]
+            retained = await history(client, candidate)
+            assert retained["observations"] == seed["history"]["observations"]
+            assert retained["last_good"]["age_seconds"] == 86400
+            cached = MerchantEvidenceReport.model_validate(seed["cached"])
+            await read_capture(harness, client, [cached])  # replay labelled success
+            after = await history(client, candidate)
+            first = after["observations"][0]
+            assert after["observations"][-1]["duplicate_of"] == first["id"]
+            assert after["observations"][-1]["validity"] == "unqualified"
+            assert after["last_good"]["observation_id"] == first["id"]
+            assert after["last_good"]["age_seconds"] == 86400
+            harness.clock.advance()
+            harness.outcomes["scan"] = [listing(harness, "scan", "history", "Copied", "48.00")]
+            harness.reports["scan"] = [reextract(cached, harness, "another-route")]
+            await execute_discovery(
+                DiscoveryRequest(query="wristwatch", sources=[{"connector": "scan"}]),
+                admission=DiscoveryAdmission(
+                    mode="offline_verification",
+                    policy_reference="synthetic",
+                    permission_reference="synthetic",
+                    activation_reference="offline-only",
+                ),
+            )
+            copied = next(
+                c
+                for c in (await get(client, "/api/discovery/watches"))["candidates"]
+                if c["source"] == "scan"
+            )
+            cross_route = await history(client, copied)
+            assert cross_route["observations"][0]["duplicate_of"] == first["id"]
+            assert cross_route["observations"][0]["validity"] == "unqualified"
+            assert cross_route["last_good"] is None
+            harness.clock.advance()
+            original = MerchantEvidenceReport.model_validate(seed["original"])
+            mixed = priced_report(harness, "48.00")
+            # A partial result refreshes stock but copies the original price.
+            mixed.claims = [c for c in mixed.claims if c.field != "item_price"] + [
+                c for c in original.claims if c.subject == "offer" and c.field == "item_price"
+            ]
+            harness.report_overrides["cex"] = EvidenceSearchReport(
+                listings=harness.outcomes["cex"],
+                evidence=[mixed],
+                acquisition_state="partial",
+                acquisition_reason="synthetic partial cache",
+                completeness="partial",
+            )
+            await read_capture(harness, client, [mixed])
+            after = await history(client, candidate)
+            assert after["observations"][-1]["duplicate_of"] == first["id"]
+            assert after["observations"][-1]["validity"] == "unqualified"
+            assert after["last_good"]["age_seconds"] == 93600
+            harness.clock.advance()
+            fresh = priced_report(harness, "58.00")
+            fresh.claims = [c for c in original.claims if c.subject != "offer"] + [
+                c for c in fresh.claims if c.subject == "offer"
+            ]
+            harness.report_overrides["cex"].evidence = [fresh]
+            await read_capture(harness, client, [fresh])
+            final = await history(client, candidate)
+            assert final["observations"][-1]["validity"] == "supported_at_capture"
+            assert final["observations"][-1]["change"] == "increased"
+            assert final["observations"][-1]["duplicate_of"] is None
+            assert final["last_good"]["age_seconds"] == 0
+            assert final["observations"][:2] == seed["history"]["observations"]
+            assert harness.deliveries == harness.blocked_edges == []
+
+
+async def retained_cost_age():
+    with MonitoringHarness() as harness:
+        async with harness.session() as (client, _):
+            original = priced_report(harness)
+            candidate = (await read_capture(harness, client, [original]))["candidates"][0]
+            before = await history(client, candidate)
+            harness.clock.advance()
+            fresh = priced_report(harness, "58.00")
+            old_shipping = original.cost_scenarios[0].components[1].evidence[0]
+            shipping = old_shipping.model_copy(deep=True)
+            shipping.derived_from = [shipping.capture_id]
+            shipping.capture_id = "new-cost-extraction:" + shipping.capture_id
+            shipping.observed_at = shipping.retrieved_at = harness.clock.now
+            fresh.cost_scenarios[0].components[1].evidence = [shipping]
+            await read_capture(harness, client, [fresh])
+            data = await history(client, candidate)
+            first, second = data["observations"]
+            assert second["validity"] == "supported_at_capture"
+            assert second["change"] == "increased"
+            assert second["duplicate_of"] is None
+            assert second["observed_at"] == first["observed_at"]
+            assert data["last_good"]["age_seconds"] == 3600
+            assert first == before["observations"][0]
+            assert (
+                second["costs"][0]["components"][1]["evidence"][0]["observed_at"]
+                == "2026-10-27T13:00:00Z"
+            )
+            assert harness.deliveries == harness.blocked_edges == []
+
+
+async def unresolved_origins():
+    with MonitoringHarness() as harness:
+        async with harness.session() as (client, _):
+            original = priced_report(harness)
+            candidate = (await read_capture(harness, client, [original]))["candidates"][0]
+            before = await history(client, candidate)
+            harness.clock.advance()
+            first = priced_report(harness, "38.00")
+            first_id = first.claims[-1].capture_id
+            harness.clock.advance()
+            second = priced_report(harness, "38.00")
+            second_id = second.claims[-1].capture_id
+            for report, other in ((first, second_id), (second, first_id)):
+                for claim in report.claims:
+                    if claim.subject == "offer" and claim.field in {"item_price", "availability"}:
+                        claim.acquisition_capture_id = None
+                        claim.derived_from = [other]
+                await read_capture(harness, client, [report])
+            data = await history(client, candidate)
+            assert all(o["validity"] == "unqualified" for o in data["observations"][1:])
+            assert all("capture_lineage_unknown" in o["reasons"] for o in data["observations"][1:])
+            assert all(o["duplicate_of"] is None for o in data["observations"][1:])
+            assert all(o["change"] == "not_comparable" for o in data["observations"][1:])
+            assert data["observations"][0] == before["observations"][0]
+            assert data["last_good"]["age_seconds"] == 7200
+            harness.clock.advance()
+            foreign = priced_report(harness, listing_id="other-product")
+            for claim in foreign.claims:
+                if claim.subject == "offer" and claim.field in {"item_price", "availability"}:
+                    claim.acquisition_capture_id = original.claims[-1].capture_id
+                    claim.derived_from = [original.claims[-1].capture_id]
+            other = next(
+                c
+                for c in (await read_capture(harness, client, [foreign]))["candidates"]
+                if c["source_listing_id"] == "other-product"
+            )
+            withheld = await history(client, other)
+            assert withheld["history_state"] == "unavailable"
+            assert withheld["last_good"] is None
+            assert withheld["observations"][0]["duplicate_of"] is None
+            assert "capture_lineage_unknown" in withheld["observations"][0]["reasons"]
+            assert (await history(client, candidate))["observations"] == data["observations"]
+            assert harness.deliveries == harness.blocked_edges == []
 
 
 async def migration_before():
@@ -347,7 +628,7 @@ async def basis_changes():
                 "candidates"
             ][0]
             harness.clock.advance()
-            different_quantity = cost_report(harness, "history", quantity=2)
+            different_quantity = priced_report(harness, quantity=2)
             await read_capture(harness, client, [different_quantity])
             data = await history(client, candidate)
             assert [o["change"] for o in data["observations"]] == ["initial", "initial"]

@@ -116,6 +116,9 @@ class FieldEvidence(Contract):
     observed_at: datetime | None = None
     retrieved_at: datetime
     capture_id: str = Field(min_length=1, max_length=250)
+    # Underlying direct acquisition, not an extraction run or retrieval time.
+    # Absent on older/unknown reports; history must not infer independence.
+    acquisition_capture_id: str | None = Field(default=None, min_length=1, max_length=250)
     route: str = Field(min_length=1, max_length=250)
     pointer: str | None = None
     locator: str = Field(min_length=1, max_length=500)

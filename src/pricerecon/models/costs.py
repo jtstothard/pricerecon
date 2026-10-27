@@ -106,6 +106,7 @@ class CostEvidence(CostModel):
     effective_at: datetime | None = None
     expires_at: datetime | None = None
     capture_id: Token
+    acquisition_capture_id: Token | None = None
     route: Token
     pointer: str | None = Field(default=None, max_length=2000)
     locator: Token
