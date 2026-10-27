@@ -1,5 +1,6 @@
 import { parseTrackingList } from './tracking'
 import { parseCorrection } from './corrections'
+import { parsePriceAssessment } from './assessments'
 
 // Validate capture-bound qualification states before they reach the buyer feed.
 export function record(value: unknown): Record<string, unknown> {
@@ -266,6 +267,7 @@ function parseCandidate(value: unknown) {
   choice(image.permission, ['original_artwork'])
   return {
     identity_state, configuration: configuration(candidate.configuration),
+    price_assessments: candidate.price_assessments === undefined ? [] : list(candidate.price_assessments, parsePriceAssessment),
     configurations: list(candidate.configurations, configuration),
     bindings: list(candidate.bindings, binding), offers: list(candidate.offers, offer),
     id: text(candidate.id), title: text(candidate.title), source: text(candidate.source),

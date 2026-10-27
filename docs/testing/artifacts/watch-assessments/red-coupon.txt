@@ -1,0 +1,66 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_public_receipt_enters_same_comparison_and_target_crossing_with_legacy_opt_out _
+
+    def test_public_receipt_enters_same_comparison_and_target_crossing_with_legacy_opt_out():
+>       run_assessment("coupon_crossing")
+
+tests/test_assessment_workflow.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'coupon_crossing', storage = None
+
+    def run_assessment(name, storage=None):
+        import os
+        import subprocess
+        import sys
+        from pathlib import Path
+    
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-m", "tests.monitoring.assessment_workflows", name]
+            + ([str(storage)] if storage else []),
+            cwd=root,
+            env={"PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                 "PYTHONDONTWRITEBYTECODE": "1"},
+            capture_output=True, text=True, timeout=45, check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Loaded 0 watches into scheduler
+E         Traceback (most recent call last):
+E           File "<frozen runpy>", line 203, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-e29f7fa4/tests/monitoring/assessment_workflows.py", line 157, in <module>
+E             asyncio.run(globals()[sys.argv[1]]())
+E             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+E             return runner.run(main)
+E                    ~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+E             return self._loop.run_until_complete(task)
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+E             return future.result()
+E                    ~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-e29f7fa4/tests/monitoring/assessment_workflows.py", line 121, in coupon_crossing
+E             supplied = policy(harness, allowed_scenario_kinds=["public_no_coupon", "public_coupon"])
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-e29f7fa4/tests/monitoring/assessment_workflows.py", line 20, in policy
+E             return ComparisonPolicy(
+E                 **{**tracking_policy().model_dump(), "version": "synthetic-comparison-v1", **changes},
+E             ...<5 lines>...
+E                                    "coupon": "exact-coupon-v1"},
+E             )
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-e29f7fa4/.venv/lib/python3.14/site-packages/pydantic/main.py", line 280, in __init__
+E             validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+E         pydantic_core._pydantic_core.ValidationError: 1 validation error for ComparisonPolicy
+E         allowed_scenario_kinds
+E           Extra inputs are not permitted [type=extra_forbidden, input_value=['public_no_coupon', 'public_coupon'], input_type=list]
+E             For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-e29f7fa4/.venv/bin/python', '-m', 'tests.monitoring.ass...c_coupon\'], input_type=list]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden\n').returncode
+
+tests/test_assessment_workflow.py:18: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_assessment_workflow.py::test_public_receipt_enters_same_comparison_and_target_crossing_with_legacy_opt_out
+1 failed, 2 deselected in 0.89s

@@ -11,6 +11,7 @@ from pricerecon.models.costs import PublicCostSummary
 from pricerecon.models.history import HistorySummary
 from pricerecon.models.qualification import Configuration, MerchantOffer, SelectionBinding
 from pricerecon.models.tracking import ExactTracking
+from pricerecon.models.assessments import PriceAssessment
 from pricerecon.models.watches import SourceConfig
 
 
@@ -155,6 +156,7 @@ class PreferenceFit(DiscoveryModel):
 
 
 class DiscoveryCandidate(DiscoveryModel):
+    price_assessments: list[PriceAssessment] = Field(default_factory=list)
     corrections: list[CorrectionHistory] = Field(default_factory=list)
     history: HistorySummary = Field(default_factory=HistorySummary)
     id: str

@@ -12,11 +12,14 @@ from decimal import Decimal
 
 from pricerecon.categories.watches import configuration_matches_values, configuration_preference_fit
 from pricerecon.core import notifications
+from pricerecon.core.coupons import public_cost_paths
 from pricerecon.core.qualification import identity_key
 from pricerecon.db.discovery import get_preferences, load_capture_candidates
 from pricerecon.db.schema import DB_PATH
 from pricerecon.db.tracking import evidence_revision_withdrawn, store, target_delivery_valid
 from pricerecon.models import EventType
+from pricerecon.models.costs import CostScenario
+from pricerecon.models.coupons import CouponAssessment
 from pricerecon.models.discovery import DiscoveryCandidate, DiscoveryCapture, PreferenceProfile
 from pricerecon.models.qualification import MerchantOffer, SelectionBinding
 from pricerecon.models.tracking import (
@@ -28,19 +31,21 @@ from pricerecon.models.tracking import (
 )
 
 
-def assess_offer(
-    intent: ExactTracking,
+def assess_scenario(
+    intent: ExactTracking | None,
     candidate: DiscoveryCandidate,
     offer: MerchantOffer,
     binding: SelectionBinding,
     preferences: PreferenceProfile,
     policy: TrackingPolicy | None,
     now: datetime,
+    cost: CostScenario | None = None,
+    coupon: CouponAssessment | None = None,
 ) -> TrackingAssessment:
     result = TrackingAssessment(
         assessed_at=now,
         capture_id=candidate.capture_id,
-        intent_revision=intent.revision,
+        intent_revision=intent.revision if intent else None,
         preference_revision=preferences.revision,
         offer_id=offer.id,
         offer_revision=offer.revision,
@@ -56,15 +61,18 @@ def assess_offer(
     )
     if policy is None:
         reasons.append("policy_required")
-    if intent.invalidation_reason:
+    if intent is not None and intent.invalidation_reason:
         reasons.append("evidence_invalidated")
     if (
         configuration is None
         or configuration.state != "supported"
         or (
-            not configuration_matches_values(configuration.values, intent.intended_values)
-            if intent.intended_values is not None
-            else binding.configuration_id != intent.configuration_id
+            intent is not None
+            and (
+                not configuration_matches_values(configuration.values, intent.intended_values)
+                if intent.intended_values is not None
+                else binding.configuration_id != intent.configuration_id
+            )
         )
     ):
         reasons.append("exact_configuration_unresolved_or_changed")
@@ -72,17 +80,40 @@ def assess_offer(
         reasons.append("selected_offer_unqualified")
     if offer.purchase_mode != "buy_now" or offer.availability != "in_stock":
         reasons.append("offer_unavailable_or_not_buy_now")
-    costs = [
-        c
-        for c in offer.cost_scenarios
-        if c.kind == "public_no_coupon" and c.context.purchase_scope == "standalone"
-    ]
+    costs = (
+        [cost]
+        if cost is not None
+        else [
+            c
+            for c in offer.cost_scenarios
+            if c.kind == "public_no_coupon" and c.context.purchase_scope == "standalone"
+        ]
+    )
     if len(costs) != 1:
         reasons.append("public_delivered_scenario_unresolved")
         result.reasons = reasons
         return result
     cost = costs[0]
+    if policy is not None and cost.kind not in policy.allowed_scenario_kinds:
+        reasons.append("scenario_kind_not_allowed")
     result.scenario_id, result.scenario_revision = cost.id, cost.revision
+    if coupon is not None:
+        result.coupon_id, result.coupon_revision = coupon.id, coupon.revision
+        result.coupon_fingerprint = identity_key(coupon.model_dump_json())
+        base = next(
+            (
+                c
+                for c in offer.cost_scenarios
+                if coupon.application is not None
+                and c.key == coupon.application.base_key
+                and c.context == coupon.context
+            ),
+            None,
+        )
+        if base is None:
+            reasons.append("no_coupon_base_missing")
+        else:
+            result.base_scenario_id, result.base_scenario_revision = base.id, base.revision
     if (
         cost.state != "verified_at_observation"
         or cost.total is None
@@ -124,6 +155,21 @@ def assess_offer(
         # cannot renew semantic freshness. Rejected claims cannot repair it.
         cost_evidence = cost.context_evidence + [e for c in cost.components for e in c.evidence]
         cost_evidence += [e for fx in cost.fx_quotes for e in fx.evidence]
+        if coupon is not None:
+            cost_evidence += coupon.opportunity_evidence
+            if coupon.terms:
+                cost_evidence += coupon.terms.evidence + coupon.terms.compatibility_evidence
+                if coupon.terms.starts_at is None or coupon.terms.ends_at is None:
+                    reasons.append("coupon_validity_unknown")
+                elif not coupon.terms.starts_at <= now < coupon.terms.ends_at:
+                    reasons.append("coupon_expired_or_not_started")
+            if coupon.eligibility:
+                cost_evidence += coupon.eligibility.evidence
+            if coupon.application:
+                cost_evidence += coupon.application.evidence
+                cost_evidence += [e for line in coupon.application.lines for e in line.evidence]
+                if coupon.application.receipt:
+                    cost_evidence.append(coupon.application.receipt)
         required_ids = set(
             (configuration.evidence_ids if configuration else [])
             + binding.resolution.evidence_ids
@@ -134,6 +180,8 @@ def assess_offer(
         if not evidence or not required_ids.issubset({e.id for e in field_evidence}):
             reasons.append("supporting_evidence_missing")
         expiry = [candidate.captured_at + timedelta(seconds=policy.max_evidence_age_seconds)]
+        if coupon is not None and coupon.terms is not None and coupon.terms.ends_at is not None:
+            expiry.append(coupon.terms.ends_at)
         for claim in evidence:
             stamp = claim.observed_at
             if stamp is None or stamp > now or claim.retrieved_at > now:
@@ -165,9 +213,46 @@ def assess_offer(
     if cost.total is None:
         return result
     result.delivered_gbp = cost.total.amount
-    result.state = "eligible" if cost.total.amount <= intent.target_gbp else "above_target"
+    result.state = (
+        "eligible" if intent is None or cost.total.amount <= intent.target_gbp else "above_target"
+    )
     result.reasons = ["qualifying_observation" if result.state == "eligible" else "above_target"]
     return result
+
+
+def assess_offer(
+    intent: ExactTracking | None,
+    candidate: DiscoveryCandidate,
+    offer: MerchantOffer,
+    binding: SelectionBinding,
+    preferences: PreferenceProfile,
+    policy: TrackingPolicy | None,
+    now: datetime,
+) -> TrackingAssessment:
+    bases = [
+        c
+        for c in offer.cost_scenarios
+        if c.kind == "public_no_coupon" and c.context.purchase_scope == "standalone"
+    ]
+    if len(bases) != 1:
+        return assess_scenario(intent, candidate, offer, binding, preferences, policy, now)
+    paths = public_cost_paths(
+        offer, policy.allowed_scenario_kinds if policy else ["public_no_coupon"]
+    )
+    assessments = [
+        assess_scenario(intent, candidate, offer, binding, preferences, policy, now, cost, coupon)
+        for cost, coupon in paths
+        if cost.context.purchase_scope == "standalone"
+    ]
+    if not assessments:
+        return assess_scenario(intent, candidate, offer, binding, preferences, policy, now)
+    return min(
+        assessments,
+        key=lambda a: (
+            a.state == "withheld",
+            a.delivered_gbp if a.delivered_gbp is not None else Decimal("Infinity"),
+        ),
+    )
 
 
 def offer_key(binding: SelectionBinding, offer: MerchantOffer) -> str:
@@ -268,6 +353,20 @@ def decide(
             "configuration_id": binding.configuration_id,
             "offer_id": offer.id,
             "offer_key": key,
+            "scenario_kind": "public_coupon" if assessment.coupon_id else "public_no_coupon",
+            "coupon_codes": ", ".join(
+                code
+                for coupon in offer.coupons
+                if coupon.id == assessment.coupon_id and coupon.terms
+                for code in coupon.terms.codes
+            ),
+            "base_delivered_gbp": str(
+                next(
+                    c.total.amount
+                    for c in offer.cost_scenarios
+                    if c.kind == "public_no_coupon" and c.total is not None
+                )
+            ),
             "delivered_gbp": str(price),
             "target_gbp": str(intent.target_gbp),
             "reason": trigger,
@@ -403,8 +502,11 @@ async def deliver_pending_targets(*, policy: TrackingPolicy | None) -> None:
     from pricerecon.core.collection_policy import current_policy
 
     operating = current_policy()
-    if (policy is None or operating is None
-        or not operating.starts_at <= datetime.now(UTC) < operating.stops_at):
+    if (
+        policy is None
+        or operating is None
+        or not operating.starts_at <= datetime.now(UTC) < operating.stops_at
+    ):
         return
     with closing(sqlite3.connect(DB_PATH)) as connection:
         events = [
@@ -444,8 +546,9 @@ async def deliver_pending_targets(*, policy: TrackingPolicy | None) -> None:
             valid = valid and revision == event.assessment.offer_revision
             from pricerecon.db.collection import refresh_unavailable
 
-            valid = valid and not refresh_unavailable(connection, intent.candidate_id,
-                                                     event.assessment.assessed_at)
+            valid = valid and not refresh_unavailable(
+                connection, intent.candidate_id, event.assessment.assessed_at
+            )
             valid = valid and target_delivery_valid(connection, event.event_id)
             if not valid:
                 event.status = "withheld"
