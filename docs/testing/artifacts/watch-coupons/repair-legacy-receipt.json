@@ -1,0 +1,34 @@
+{
+  "fixture": "original synthetic ef97ed1 persisted coupon, read by repaired application",
+  "cases": {
+    "restart": {
+      "state": "invalidated",
+      "issues": [
+        "application_receipt_missing"
+      ],
+      "lineage": "observation_only",
+      "payable": null,
+      "historical_total": {
+        "amount": "45.10",
+        "currency": "GBP"
+      }
+    },
+    "superseded": {
+      "state": "invalidated",
+      "issues": [
+        "application_receipt_missing",
+        "source_revision_superseded"
+      ],
+      "lineage": "superseded",
+      "payable": null,
+      "historical_total": {
+        "amount": "45.10",
+        "currency": "GBP"
+      }
+    }
+  },
+  "temporary_storage": true,
+  "public_no_coupon": "50.10",
+  "blocked_edges": [],
+  "notifications_sent": 0
+}

@@ -369,3 +369,153 @@ savings, alerts, deployment or activation acceptance is established. No installs
 external network/live acquisition, credentials/accounts, production DB operations,
 activation/deploy, push, PR, delegation or unrelated cleanup occurred. Only the
 local history-preserving merge, probe, receipt and tracker changes were committed.
+
+## Receipt-provenance repair — 2026-10-27
+
+Implementation repair only; ticket09 closure and integration acceptance remain
+parent-owned. Resumed existing isolated worktree
+`/Users/jay/.t3/worktrees/pricerecon/t3-a4ddf79d`, branch
+`t3/repair-ticket09-provenance`, at `ef97ed1ac74b4f9d7b194960610819e56f86b3fb`.
+Read and preserved all six interrupted, uncommitted files. No reset or discard
+was used. Read the TDD skill, spec/issue09, accepted public-discount contract,
+merger section above and original probe diff. The approved API plus normal
+`execute_discovery` seam and guarded temporary SQLite remained the test boundary.
+
+Committed the completed retained source as `e4aa5fec36fb27626ff75dad05f967cf5f8344ef`
+before merging integration. Merge `e84e4b7f42df1bf33ac0a83d5b51f991edd33380`
+brought in integration `6b93262cc11307d2ed78860add98924a3c8e7805`, including 05
+tracking and 06's lineage repair, without conflicts. No tracking/history owner
+implementation was edited. Follow-up `81d2d41` binds coupon proof to 06's newly
+available acquisition-origin metadata.
+
+### Repaired contract
+
+`CheckoutReceipt` carries a typed direct application observation, separate from
+the proposed accounting input: complete ordered codes/other promotions, applied
+result, eligibility, exact context, selected member, before/after whole scenarios,
+line allocations, quoted totals and terms/revision/policy linkage. Missing receipt
+data withholds reproduction while retaining opportunity, terms and applicability.
+The shared cost engine still owns allocation and payable arithmetic; this repair
+introduces no discount formula, shipping reuse or second accounting engine.
+
+Receipt support must be direct seller extraction with one source root and an
+explicit direct acquisition origin. Every application, context, component, FX and
+allocation claim must bind its provenance, context, observation time, retention
+and acquisition origin. Generic claims cannot become proof by receiving a role
+token. Overlap with opportunity/terms/compatibility/eligibility claim IDs or roots
+is rejected. Exact source-field fingerprints also reject the same retained field
+under newly issued IDs and roots. Locators are opaque coordinates, compared for
+equality; no substring or naming convention establishes checkout proof.
+
+The observation's values and lineage must match the proposed application and
+verified no-coupon base. Code ordering, eligibility, before/after amounts,
+shipping, allocations, context and policy/revision mismatches withhold the result.
+Rejected application inputs and reasons survive API/feed and persisted history
+reads. Unsafe pointers inside the added nested observation are sanitized too.
+Old persisted successes without a typed receipt are withdrawn on read, preserving
+their original total as historical even when later acquisitions supersede them.
+
+This remains an acquisition assertion boundary. A collector inventing an entire
+source observation and false provenance is not authenticated by these models.
+Real adapter mapping, direct-capture semantics, access/retention and live proof
+still require separate source qualification. All proof here is original synthetic
+data with synthetic retention; no real checkout is asserted.
+
+### Exact red and green observations
+
+- Archived **unmodified `ef97ed1`** into a temporary directory and ran its original
+  `python -m tests.monitoring.coupon_merger_probe <output>` with that archive's
+  source on `PYTHONPATH`. Exit **1**, exactly
+  `Non-application evidence accepted as receipt: ['compatibility-as-receipt', 'eligibility-as-receipt']`.
+  Both unsupported payables were GBP45.10; shipping control GBP47.20 and all
+  no-coupon totals GBP50.10 passed before that assertion. Archive/log/output are
+  retained for this session at
+  `/private/var/folders/kc/hjd9zkys3ts402ygmnrh89j40000gn/T/pricerecon-ticket09-red-2ft1hpgw`.
+  The original committed merger JSON above was not overwritten.
+- The initially retained repair passed **12 coupon tests in 10.08s**, but the
+  stronger `reidentified-compatibility` API case failed: new ID/root, identical
+  retained compatibility source field, still a verified GBP45.10. Command:
+  `python -m pytest -q tests/test_coupon_workflow.py -k direct_receipt`.
+  Red: **1 failed, 11 deselected in 1.11s**. Exact source-field rejection made
+  this green: **1 passed, 11 deselected in 1.38s**. The regression remains a
+  direct-acquisition case after merging 06, so missing metadata cannot mask it.
+- After 06 merged, a new `claim-origin-reused` case failed the same focused test:
+  a component could name an older acquisition but still support a result.
+  Red: **1 failed, 11 deselected in 1.43s**. Requiring direct receipt origin and
+  matching claim origins made the coupon suite green: **12 passed in 14.32s**.
+  Missing/reused receipt-origin cases are retained alongside it.
+- Seeded a marked temporary SQLite store through **`ef97ed1`'s normal
+  `persistence_before` workflow**, then read it through the repaired API and
+  acquired an ordinary no-coupon report. Red: the historical GBP45.10 became null
+  after supersession. Preserving the already-withdrawn historical result made
+  the check green. A second freshly seeded store confirmed both restart and
+  supersession, with no usable coupon payable and GBP50.10 base. This is a
+  guarded cross-version compatibility probe, not a new collected migration test.
+  [Retained legacy receipt](artifacts/watch-coupons/repair-legacy-receipt.json).
+
+The probe diff against `ef97ed1` retains **both entire-provenance substitutions**,
+the original no-result assertion and the genuine direct shipping control. It
+removes the new typed receipt in the substitution cases, so no checkout source
+remains accidentally. The shipping control separately supplies its observed new
+shipping and configuration revision. Added assertions require unchanged retained
+opportunity/terms/eligibility/application payloads and matching history reads.
+No earlier assertion or monetary control was removed or relaxed.
+
+### Final combined verification
+
+Using the parent's existing Python environment, with no installation:
+
+```sh
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python -m pytest -q \
+  tests/test_coupon_workflow.py tests/test_cost_workflow.py \
+  tests/test_qualification_workflow.py tests/test_discovery_workflow.py \
+  tests/test_monitoring_workflow.py tests/test_history_workflow.py \
+  tests/test_tracking_workflow.py
+```
+
+**85 passed in 77.54s** on the final combined source: 48 baseline workflows,
+12 coupon, 13 history and 12 tracking. The earlier combined pass before the
+acquisition-origin follow-up was **85 passed in 78.75s**. No skips, xfails,
+suppression, weakened assertions or removed tests.
+
+Focused Ruff passed the six repaired Python files. Focused mypy
+`--follow-imports=silent` passed `core/coupons.py`, `db/coupons.py` and
+`models/coupons.py`, with inherited unused-override notes only. `git diff --check`
+passed. The normal guarded workflows exercise API persistence, execution and
+captured notification behavior across the merged owners.
+
+Re-ran `tests.monitoring.coupon_merger_probe` and
+`tests.monitoring.coupon_workflows receipt_boundary_controls` as fresh guarded
+processes with absolute output paths. Both exited **0**:
+
+- [Three-case original probe repair receipt](artifacts/watch-coupons/repair-receipt-provenance.json):
+  compatibility-only and eligibility-only each remain
+  `applicable_not_reproduced`, `application_receipt_missing`, null payable;
+  direct changed-shipping control is GBP47.20; every no-coupon total GBP50.10.
+- [23 boundary/control/replay results](artifacts/watch-coupons/repair-receipt-controls.json):
+  relabelling, new IDs/roots for the same field, copied/AI support, missing/reused
+  acquisition origins, generic dependent claims, context/value/allocation/code/
+  eligibility/terms/revision changes are withheld. Opaque direct coordinates
+  support GBP45.10 without magic names. Replayed original receipt is retained
+  but yields no payable; the prior total stays historical.
+
+All three repair receipts record temporary storage, `blocked_edges=[]` and
+`notifications_sent=0`. Collection remains staged. No frontend behavior or file
+was changed by the repair or conflict resolution; frontend tests/build/browser
+were not rerun. This checkout has no built `frontend/dist`, so standalone API
+probes print the missing-static-build warning. API checks pass; no new UI
+acceptance is claimed. Existing UI receipts and ESLint blockage remain as dated
+above. Dependencies were linked to the existing environments only.
+
+The original dirty parent, integration checkout and sibling owners were not
+modified. No installs, network/live acquisition, credentials/accounts, production
+DB, activation/deployment, push, PR or delegation occurred. Only local repair
+commits and integration-into-repair merges were authorized and performed.
+
+Ticket09 remains open for parent acceptance. Ticket07 correction UI and its
+overlapping correction/acquisition invalidation remain unproven here, as do
+live coupon application, buyer acceptance, source mapping/rights/retention,
+freshness, comparisons/savings and activation. Passing no-coupon behavior does
+not settle any coupon-success or operational gate.
