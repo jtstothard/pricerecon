@@ -312,3 +312,152 @@ independent capture/receipt proof, access/rights/retention, freshness/calibratio
 comparison and complete-workflow acceptance, operating limits and activation
 remain separate gates. The passing deterministic suite does not close07 while
 the retained additional acceptance probe fails.
+
+## Isolated multi-configuration scope repair — 2026-10-27
+
+Implementation branch `t3/repair-multiconfig-acceptance`, worktree
+`/Users/jay/.t3/worktrees/pricerecon/t3-77103083`. The supplied clean isolated
+checkout fast-forwarded from `ef86af6` to requested integration
+`f561d76d55bf037ddec705ad488ebbc403934306` before edits; ancestry was checked.
+Local source commit `37c29d3` was followed by conflict-free integration merge
+`45be8902e8f1bf7279ef542b89642f082a6286f0`, incorporating ticket10 and merger
+tip `f8ff7e5024401991ca33b9bf08468476dc708227`. Both required ancestors are
+present. Only this worktree was edited; the integration checkout, original dirty
+parent and other workers' checkouts were not changed. The merger retains07
+acceptance and closure ownership. This repair does not close07 or repair10's
+separately documented shared-admission gap.
+
+### Scope and dependency rules
+
+The first correction's observed capture fixes its actual selection membership.
+Retained stable binding IDs connect those selections to later configuration
+definitions. An unrelated selection whose values happen to match the intended
+correction cannot qualify it or join its journal on recorrection. Selections
+that had already left the definition before that capture are excluded.
+
+Each qualification check now receives one exact configuration/binding/offer/cost
+path. Publication and correction readback use the same freshness, acquisition
+input, supported-selection, payable evidence and retained06 lineage checks.
+Corrections made after acquisition began are checked per journal, rather than
+using unrelated journals as a listing-wide veto. Partial acquisition, stale
+retained cost roots and unsupported human merchant-selection claims still
+withhold the affected path. Readback also checks exact dependency withdrawals,
+including after restart.
+
+Publication combines failures from all applicable journals before writing
+withdrawals. Failed binding/offer/cost revisions withdraw together; a shared
+configuration revision withdraws only when it has no surviving dependent offer.
+The capture's existing `publication_state=withdrawn` remains an aggregate marker;
+exact revision dependencies govern each surviving offer. A failed corrected
+offer cannot poison an unrelated supported variation or a fresh independent
+offer of the same definition.
+
+Correction writes withdraw this candidate's actual historical original-identity
+revisions and descendants. Other candidates' revisions of the global definition,
+and different identities preceding the subject capture, remain intact. An
+unrelated observed configuration cannot be attached to a journal: the API returns
+409 without mutation. Dispute projection and coupon receipt correction boundaries
+follow the same selection membership. Existing independent coupon receipt and
+source-revision gates remain in place.
+
+Tracking keeps its original subject, target, prices and accepted-send records.
+Requalification can release intent created on either the original subject or an
+actual descendant, provided the journal's intended values match. A successful
+journal cannot release another journal's differently corrected target merely
+because a descendant shares its original definition. The existing tracking
+engine still separately qualifies observations and crossings. A current
+assessment may acquire an additional withholding reason when its considered
+offer withdraws; that does not rewrite the target or older identity observations.
+
+### Observed red/green slices
+
+Read the TDD skill and used the spec's already buyer-approved API plus normal
+execution seams. The original ten correction workflows and every original95
+assertion remain. Seventeen additional subprocess workflows use the existing
+marked temporary-SQLite harness and controlled external edges.
+
+| Slice | Observed red before its repair | Observed green |
+| --- | --- | --- |
+| Exact merger multi-configuration probe | Fresh salmon plus blue left correction `required`; both withdrew | Both supported; correction requalified across restart |
+| Foreign observed descendant | Unrelated blue could enter mint's journal with201 |409, unchanged journal and blue evidence |
+| Another candidate sharing a definition | Its exact configuration revision withdrew | Original history and supported revision survive restart |
+| Converged definitions and recorrection | Shared-definition editor initially409; then unrelated blue descendant withdrew on next capture | Accepted actual descendant; unrelated selection stays supported through recorrection/restart |
+| Unrelated coupon | Mint correction invalidated blue's reproduced receipt | Blue receipt/result unchanged across restart |
+| Independent dispute | Blue dispute changed corrected mint to `conflicting` | Mint unresolved, blue conflicting |
+| Target created on a descendant | Fresh recorrection left its invalidation reason set | Original descendant target preserved and released after qualification/restart |
+| Independent journals sharing a definition | Successful mint-to-blue journal cleared blue-to-red target's invalidation | Only matching intent released; second remains withheld until its own evidence qualifies |
+| Former definition member | Historical membership withdrew a selection already blue before the mint correction | Only current mint subject and its descendants affected |
+| Earlier different identity on reused selection | Earlier blue observation invalidated by later mint correction | Blue history and target intent preserved |
+
+The exact retained merger probe ran unmodified. Own dated
+[red multi receipt](artifacts/watch-corrections/repair-scope-red-multi.json),
+[green multi receipt](artifacts/watch-corrections/repair-scope-green-multi.json),
+and [green single control](artifacts/watch-corrections/repair-scope-green-single.json)
+retain its full API outcomes. The single control passed before and after repair.
+Additional controls added after the initial scope fix pass for unrelated fresh
+matching evidence versus stale corrected cost roots, same-definition multiple
+offers with one stale payable dependency, multiple independent corrections and
+target release across restart, partial acquisition, unsupported human selection
+proof, and overlapping acquisition plus stale replay after restart. These are
+reported as controls, not invented additional red observations.
+
+### Verification commands and limits
+
+From this worktree, `venv` temporarily symlinked the existing parent `.venv`;
+`frontend/node_modules` symlinked integration's existing dependencies. No install
+or download occurred. Exact final guarded combined command:
+
+```sh
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python -m pytest -q \
+  tests/test_collection_workflow.py tests/test_monitoring_workflow.py \
+  tests/test_discovery_workflow.py tests/test_qualification_workflow.py \
+  tests/test_cost_workflow.py tests/test_history_workflow.py \
+  tests/test_coupon_workflow.py tests/test_tracking_workflow.py \
+  tests/test_correction_workflow.py
+```
+
+The first full run omitted Node from PATH: **122 passed, one failed in121.55s**.
+The sole failure was the existing form-payload test raising
+`FileNotFoundError: 'node'`; its retained
+[failure log](artifacts/watch-corrections/repair-scope-path-failure.txt) is not
+counted as green. The unchanged suite was rerun using the documented PATH above.
+
+Final combined result on `45be890`: **123 passed in119.11s**, no skips/xfails.
+This is every original95 workflow, ticket10's11 workflows and17 new correction
+scope workflows. [Full green log](artifacts/watch-corrections/repair-scope-green-suite.txt)
+and [verification manifest](artifacts/watch-corrections/repair-scope-verification.json)
+bind the result to the tested source. Final `git merge --no-edit
+integration/watch-category-discovery` reported `Already up to date`; ancestry
+of both `f561d76` and latest `f8ff7e5` was rechecked. Focused Ruff, four-file mypy
+and `git diff --check` pass. The local Python symlink was removed after checks;
+the shared environment itself was not altered.
+
+The exact probe commands use that same environment and Python executable:
+
+```sh
+python -m tests.monitoring.correction_merger_probe /tmp/ticket07-repair-green-multi.json
+python -m tests.monitoring.correction_merger_probe /tmp/ticket07-repair-green-single.json --single
+```
+
+Focused Ruff checks the four touched source files and both test files; focused
+mypy `--follow-imports=silent` checks those four source files, retaining inherited
+unused-override notes. No new scheduler, queue, platform, migration, API or UI
+shape was added. Ticket10's admitted-policy implementation and its separate
+unaccepted shared-admission probes were preserved, not weakened or relabelled.
+
+Frontend and retained browser-driver source exactly match merged integration.
+Reuse the merger's25 frontend tests, build and actual desktop/narrow collection
+and correction proof from `f8ff7e5`; no frontend/build/browser run was repeated.
+The new scope behavior is proven at the API/execution seam, not by a new browser
+walkthrough. The local unbuilt frontend warning is expected in API-only harness
+processes; it does not supply UI evidence.
+
+Collection stays staged. This is local offline source and deterministic evidence,
+not merger acceptance, buyer walkthrough, live source/offer/history/receipt
+qualification, calibrated freshness, complete source coverage or operating
+activation. No external network/live collection, credentials/accounts, production
+DB, activation/deploy, push, PR or delegation occurred. Existing09 receipt gates,
+claimed-send rollback, pending-send withdrawal, immutable original facts and
+history, and no stale-alert protections remain required by the combined suite.
