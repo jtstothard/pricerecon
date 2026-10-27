@@ -15,7 +15,7 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 | [05: Exact tracking](issues/05-track-exact-products.md) | 04 | Closed |
 | [06: Observation history](issues/06-show-observation-history.md) | 04 | Closed |
 | [07: Corrections](issues/07-correct-identities.md) | 05, 06 | Closed |
-| [08: Comparisons](issues/08-compare-qualified-offers.md) | 07 | In progress |
+| [08: Comparisons](issues/08-compare-qualified-offers.md) | 07 | Closed |
 | [09: Public coupons](issues/09-evaluate-public-coupons.md) | 04 | Closed |
 | [10: Shared limits](issues/10-prioritise-tracking.md) | 05 | Closed |
 | [11: Source evidence](issues/11-carry-source-evidence.md) | 03, 10 | In progress |
@@ -27,12 +27,11 @@ Work is limited to source implementation and deterministic offline verification 
 
 Ticket 01 source was integrated on 2026-10-27 in merge `a0e5c1a612252c61a62eabc7b56ebc3b3297ed85`, preserving implementer HEAD `9312871f269137d7b98ba7155d9523350e41e62e`. The subsequent rendered-form preservation repair was integrated in merge `3243c8f00e3f9dd9efde79327b6905eb3d4354b2`, preserving implementer HEAD `534cecaece62e30f50c680b40af5b4c7f561b6e4`. Integration checks passed **15 isolated workflow tests**, **25 frontend tests** and the frontend build. The parent subsequently passed the rendered edit/save/reload/manual-check regression. See the dated resolution log below and the [repair integration receipt](issues/01-verify-existing-monitoring.md#preservation-repair-integration-receipt-2026-10-27).
 
-Current frontier, 2026-10-27: tickets 01–07, 09 and 10 are closed for their offline
-scope. Ticket08 source `81f18ab` is integrated in `20728c2`; all 171 guarded
-workflows pass, including retained shared-grant/target-ownership behavior. 08
-remains open for the merger's reproduced literal-list default-factory mypy
-finding; the parent owns that contained repair. 11 retains its existing isolated
-implementation claim. 12 remains blocked by 08/11.
+Current frontier, 2026-10-27: tickets 01–10 are closed for their offline scope.
+Ticket08's integrated behavior passed the 171-case suite and three independent
+coupon probes; its contained type repair now passes uncached eight-file mypy and
+23 assessment/tracking workflows. 11 retains its existing isolated implementation
+claim. 12 remains blocked on 11.
 Earlier dated entries describe their historical state.
 
 Actual buyer walkthrough feedback, current source rights, live offer/history/cost proof, finite operating limits and named maintenance ownership cannot be fabricated by passing fixture tests. Keep these gates explicit in the final receipt.
@@ -258,3 +257,9 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   the parent's small source repair; 11 continues with its existing owner; 12
   remains blocked.** No product source repair or later ticket work occurred.
   See the [review receipt](../../docs/testing/watch-assessments.md#sole-merger-review--2026-10-27).
+
+- 2026-10-27: Parent fixed 08's sole merger type finding with an explicitly typed
+  fresh no-coupon default factory. Uncached eight-file mypy and 23 focused
+  workflows pass; 171-workflow/37-contract/frontend/build/browser merger proof is
+  reused. All 77 original dirty-parent files remain unchanged. **08 closed offline;
+  11 remains active; 12 blocked on 11.** See the [acceptance receipt](../../docs/testing/watch-assessments.md#parent-type-repair-and-offline-acceptance--2026-10-27).

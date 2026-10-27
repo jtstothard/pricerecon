@@ -1,0 +1,3 @@
+src/pricerecon/models/tracking.py:101: error: Argument "default_factory" to "Field" has incompatible type "Callable[[], list[str]]"; expected "Callable[[], list[Literal['public_no_coupon', 'public_coupon']]] | Callable[[dict[str, Any]], list[Literal['public_no_coupon', 'public_coupon']]]"  [arg-type]
+pyproject.toml: note: unused section(s): module = ['pricerecon.connectors.argos', 'tests.*', 'tests.test_connectors', 'tests.test_currys_diagnosis', 'tests.test_ebuyer', 'tests.test_hardware_routes', 'tests.test_hotukdeals', 'tests.test_reddit_fallbacks_live', 'tests.test_shadow_filters', 'tests.test_source_queries_routing', 'tests.test_watch_executor']
+Found 1 error in 1 file (checked 1 source file)

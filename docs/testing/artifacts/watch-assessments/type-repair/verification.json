@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-27",
+  "base": "fbe27584f3e7ea73ec375b0a405bc4213af9a60e",
+  "repair": "Explicit literal return annotation for fresh no-coupon default list",
+  "uncached_mypy_files": 8,
+  "focused_workflows": {
+    "passed": 23,
+    "seconds": 32.62
+  },
+  "reused_merger_evidence": {
+    "workflows": 171,
+    "contracts": 37,
+    "frontend_tests": 25,
+    "build": true,
+    "independent_probes": 3,
+    "desktop_narrow_withdrawal_receipt": true
+  },
+  "old_source_receipt_manifest": {
+    "matched": 44,
+    "total": 45,
+    "intentional_changed_paths": [
+      "src/pricerecon/models/tracking.py"
+    ]
+  },
+  "parent_files_unchanged": 77,
+  "sha256": {
+    "src/pricerecon/models/tracking.py": "caafa522a1abb5b946a2c790b835a8c1caca1192a2146bed80fbc80a0b80f9db",
+    "docs/testing/artifacts/watch-assessments/type-repair/black.txt": "1a56c7cd8457fd05d978cfbd139d7bfd86e86acaa9b57668e718ef8bccc0cf48",
+    "docs/testing/artifacts/watch-assessments/type-repair/mypy.txt": "34a6b528a646a535f0a566246f010bc863e870bd440aca3444abae0c081c3559",
+    "docs/testing/artifacts/watch-assessments/type-repair/red.txt": "b69c9b9df6a77f7cf5614e87f200f462ede0362249c84f68103514f707b16cec",
+    "docs/testing/artifacts/watch-assessments/type-repair/ruff.txt": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "docs/testing/artifacts/watch-assessments/type-repair/workflows.txt": "c8eef1753ae46b55c709ef6e4a5ebe3f1979c4039de26d58a72be1cb13349f89"
+  }
+}

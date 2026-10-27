@@ -4,17 +4,17 @@
 
 **Blocked by:** [07: Correct identities without transferring misleading prices](07-correct-identities.md)
 
-**Status:** in-progress — offline merger acceptance pending one type-check repair (2026-10-27)
+**Status:** closed — offline acceptance 2026-10-27
 
 **Assignee:** Codex implementer (isolated worktree)
 
 **Parent:** [Trustworthy UK watch discovery alongside existing monitoring](../../../docs/specs/watch-category-discovery.md)
 
-- [ ] Persist/version assessments and expose their cohort, method, evidence, exclusions, coverage, date/window and eligibility in API/feed details.
-- [ ] Separate new/used, quantity and destination/eligibility cohorts and exclude auction bids from buy-now comparisons; rank only currently qualified comparable costs within declared coverage.
-- [ ] Dated observed low comes only from qualifying retained observations within the stated window, not global/all-time claims; show missing coverage and history gaps.
-- [ ] Usual price, personal eligible price and current-best/observed-low gates remain independent. Defer numerical estimator/window/sufficiency calibration until accepted empirical evidence; show unavailable usual price and no invented savings in the meantime.
-- [ ] Corrections, stale evidence and policy changes invalidate derived comparisons; verify contradictory, sparse and duplicate evidence and the corresponding UI explanations.
+- [x] Persist/version assessments and expose their cohort, method, evidence, exclusions, coverage, date/window and eligibility in API/feed details.
+- [x] Separate new/used, quantity and destination/eligibility cohorts and exclude auction bids from buy-now comparisons; rank only currently qualified comparable costs within declared coverage.
+- [x] Dated observed low comes only from qualifying retained observations within the stated window, not global/all-time claims; show missing coverage and history gaps.
+- [x] Usual price, personal eligible price and current-best/observed-low gates remain independent. Defer numerical estimator/window/sufficiency calibration until accepted empirical evidence; show unavailable usual price and no invented savings in the meantime.
+- [x] Corrections, stale evidence and policy changes invalidate derived comparisons; verify contradictory, sparse and duplicate evidence and the corresponding UI explanations.
 
 ## Verification and authority
 
@@ -41,3 +41,20 @@ source or existing assertions were changed by this review. See the
 11 retains its existing owner; 12 remains blocked. Local commit/merge authority
 is governed by the tracker README's later authorisation, superseding the older
 issue-level no-commit sentence. Live/buyer/calibration/activation gates remain open.
+
+## Final offline acceptance — 2026-10-27
+
+Parent reproduced the exact uncached literal-factory error, then replaced the
+unannotated lambda with a factory declaring the required literal-list return
+type. It still returns a fresh no-coupon-only list; explicit public-coupon opt-in
+is preserved. Uncached mypy passes all eight affected modules, all 23 existing
+assessment/tracking workflows pass, and model Ruff/Black plus diff checks pass.
+The merger's 171-case suite, 37 contracts, 25 frontend tests/build, three independent
+probes and actual desktop/narrow/withdrawal proof are reused for this contained
+annotation repair. No source behavior, API/frontend shape or assertion changed.
+All 77 original dirty-parent hashes remain unchanged.
+
+**08 closed for offline scope; 11 remains in progress and 12 blocked on 11.**
+See the [type repair and acceptance](../../../docs/testing/watch-assessments.md#parent-type-repair-and-offline-acceptance--2026-10-27).
+Live, buyer, empirical calibration, source/operating and activation gates remain
+unproven; collection stays staged.

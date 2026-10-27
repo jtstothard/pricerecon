@@ -83,6 +83,10 @@ class TrackingList(TrackingModel):
     items: list[ExactTracking]
 
 
+def _default_scenario_kinds() -> list[Literal["public_no_coupon", "public_coupon"]]:
+    return ["public_no_coupon"]
+
+
 class TrackingPolicy(TrackingModel):
     """Explicit programmatic policy, never supplied by HTTP intent writes.
 
@@ -98,7 +102,7 @@ class TrackingPolicy(TrackingModel):
     destination_region: Token
     payment_method: Token
     allowed_scenario_kinds: list[Literal["public_no_coupon", "public_coupon"]] = Field(
-        default_factory=lambda: ["public_no_coupon"], min_length=1
+        default_factory=_default_scenario_kinds, min_length=1
     )
 
 
