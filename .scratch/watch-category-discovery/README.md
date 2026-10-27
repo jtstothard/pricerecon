@@ -17,7 +17,7 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 | [07: Corrections](issues/07-correct-identities.md) | 05, 06 | Blocked |
 | [08: Comparisons](issues/08-compare-qualified-offers.md) | 07 | Blocked |
 | [09: Public coupons](issues/09-evaluate-public-coupons.md) | 04 | Open — receipt-provenance repair required |
-| [10: Shared limits](issues/10-prioritise-tracking.md) | 05 | Ready — unclaimed |
+| [10: Shared limits](issues/10-prioritise-tracking.md) | 05 | In progress |
 | [11: Source evidence](issues/11-carry-source-evidence.md) | 03, 10 | Blocked |
 | [12: Integrated verification](issues/12-verify-complete-watch-workflow.md) | 08, 09, 11 | Blocked |
 

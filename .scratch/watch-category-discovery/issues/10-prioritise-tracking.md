@@ -4,7 +4,9 @@
 
 **Blocked by:** [05: Track exact products and send qualified target alerts](05-track-exact-products.md)
 
-**Status:** ready-for-agent
+**Status:** in-progress
+
+**Assignee:** Codex implementer (isolated worktree)
 
 **Parent:** [Trustworthy UK watch discovery alongside existing monitoring](../../../docs/specs/watch-category-discovery.md)
 
