@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-27",
+  "suite": "126 passed in 123.64s",
+  "retained_cases": [
+    "original-order",
+    "reverse-order",
+    "descendant-target"
+  ],
+  "source_sha256": {
+    "src/pricerecon/db/corrections.py": "f0e75811d475852f6e4fdfaa6cd9b5e4d9f915e3e11cb4610c84b69003abeaeb",
+    "tests/monitoring/correction_repair_merger_probe.py": "f3d2092e61ea903c23dbc3c2c3ef347ceabc1aa0ec561227808a01fab924474e",
+    "tests/test_correction_target_ownership.py": "168feca2334a679ad083fbeafc7e4a351888736028ed5776559447e7b53afd56"
+  },
+  "scope": "offline synthetic API/execution proof; no live or buyer acceptance"
+}

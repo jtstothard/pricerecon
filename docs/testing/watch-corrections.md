@@ -616,3 +616,47 @@ Ticket08 remains blocked/unclaimed and was not implemented. Collection remains
 staged. Buyer interpretation/walkthrough, live source/offer/history/cost/receipt
 proof, source rights/retention, freshness/calibration, operating limits,
 comparison/complete-workflow acceptance and activation remain separate gates.
+
+## Parent target-ownership repair and acceptance — 2026-10-27
+
+The remaining intent corruption was repaired directly in the isolated integration
+checkout as a contained review fix. Target ownership now uses the exact original
+`(binding ID, revision)` anchors from its retained creation capture, intersected
+with this journal's retained selection revisions. A descendant definition ID
+alone cannot authorise target reassignment. Targets created on the journal's own
+descendants still follow it; independent journals and older identities using a
+reused selection ID retain their own intent and versions. No schema/API/UI shape
+change or new state owner was needed.
+
+The original merger probe's intent assertion remains. New guarded pytest coverage
+runs its original journal order, reversed order and a fresh descendant-target
+control. Default and reverse order first reproduced the original intent failure.
+A new whole-record equality assertion initially also rejected an honest change to
+a withheld assessment's withdrawal reason; it was corrected to assert all buyer
+intent, mutation/invalidation version, target, notification and creation fields.
+Read projections remain allowed to expose newly withdrawn evidence. No original
+assertion was weakened.
+
+The first ownership implementation matched only stable selection IDs. The full
+run caught one retained older-identity reuse case: **125 passed, one failed**.
+Restricting membership to exact captured selection revisions repaired that case;
+the three new cases plus the older-identity regression passed together. The final
+complete cleared-environment suite passed **126 in 123.64s**: all123 retained
+workflows plus three target-ownership cases, with no skips/xfails. The original
+valid-sibling alert control separately passed with one captured qualifying send.
+Focused Ruff, Black, one-source mypy and diff checks pass.
+
+[Final log](artifacts/watch-corrections/target-ownership/final-suite.txt),
+[initial regression log](artifacts/watch-corrections/target-ownership/initial-suite.txt),
+[sibling control](artifacts/watch-corrections/target-ownership/sibling-control.json)
+and [source/receipt manifest](artifacts/watch-corrections/target-ownership/verification.json)
+retain the verification. The exact final command is the preceding nine-file suite
+plus `tests/test_correction_target_ownership.py`, with the documented Node PATH and
+parent interpreter. All app execution used the existing marked temporary SQLite
+harness and controlled external edges; original workspace files were not edited.
+
+Ticket07 is now closed for its offline implementation scope;08 is claimed next.
+Unchanged frontend/build and actual browser evidence remain the earlier retained
+proof, not a new buyer walkthrough. Ticket10's context bypass is still a separate
+open gate with its completed repair awaiting merger. Source/live/buyer/operating
+and activation acceptance remain unproven; collection stays staged.

@@ -4,15 +4,15 @@
 
 **Blocked by:** [05: Track exact products and send qualified target alerts](05-track-exact-products.md), [06: Show retained observations and acquisition gaps](06-show-observation-history.md)
 
-**Status:** open — independent-target intent repair required 2026-10-27
+**Status:** closed
 
-**Assignee:** Codex implementer (isolated worktree)
+**Assignee:** Codex (integration repair)
 
 **Parent:** [Trustworthy UK watch discovery alongside existing monitoring](../../../docs/specs/watch-category-discovery.md)
 
 - [x] Provide a persistent field/value correction interaction through the feed/API, with original evidence, attribution, correction lineage and current disputed/resolved state.
-- [ ] Invalidate affected bindings, cohorts, cost scenarios, history qualification and pending alert eligibility; never transfer a wrong configuration’s historical prices to the corrected product.
-- [ ] Retain tracking intent and explain what needs requalification; historical assessments remain clearly historical instead of displaying their old bargain claims as current.
+- [x] Invalidate affected bindings, cohorts, cost scenarios, history qualification and pending alert eligibility; never transfer a wrong configuration’s historical prices to the corrected product.
+- [x] Retain tracking intent and explain what needs requalification; historical assessments remain clearly historical instead of displaying their old bargain claims as current.
 - [x] Exercise overlap between acquisition, correction and alert dispatch, plus restart; stale assessment/evidence versions cannot publish as current or trigger a qualifying alert.
 - [x] Establish observable invalidation behavior that subsequent comparison and coupon slices must extend to their derived assessments; verify the correction workflow in the browser.
 
@@ -100,3 +100,13 @@ See [the dated scope repair review and exact reproducer](../../../docs/testing/w
 Ticket10's existing shared-admission failures remain open for its owner and were
 neither rerun nor reclassified. No 08 implementation or claim occurred. Collection
 stays staged; live, buyer, source-rights, freshness and activation gates stay open.
+
+## Final offline acceptance — 2026-10-27
+
+The parent repaired the independent-target intent finding by binding target updates
+to original captured selection revisions. All126 guarded workflows pass, including
+all123 retained cases, original/reverse journal orders, descendant targets, older
+identity reuse and restart. The valid-sibling alert control also passes.
+See [the final repair receipt](../../../docs/testing/watch-corrections.md#parent-target-ownership-repair-and-acceptance--2026-10-27).
+Previous open dispositions above remain historical; this resolution closes07 for
+offline scope only and releases08. Buyer/live/operating gates remain separate.

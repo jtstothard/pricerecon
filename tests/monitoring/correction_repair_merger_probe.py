@@ -24,7 +24,7 @@ def guard(harness):
     }
 
 
-async def independent_recorrection(output):
+async def independent_recorrection(output, *, reverse_journals=False, descendant_target=False):
     with MonitoringHarness() as harness:
         async with harness.session() as (client, _):
             initial = (await read_capture(harness, client, reports(harness)))["candidates"][0]
@@ -32,16 +32,30 @@ async def independent_recorrection(output):
                 await track(client, {**initial, "configurations": [configuration(initial, dial)]})
                 for dial in ("mint", "blue")
             ]
-            first, response = await correct(client, initial, value="blue")
-            assert response.status_code == 201, response.text
-            second, response = await correct(client, initial, "blue", "red")
-            assert response.status_code == 201, response.text
+            intended = "salmon" if descendant_target else "blue"
+            if reverse_journals:
+                second, response = await correct(client, initial, "blue", "red")
+                assert response.status_code == 201, response.text
+                first, response = await correct(client, initial, value=intended)
+                assert response.status_code == 201, response.text
+            else:
+                first, response = await correct(client, initial, value=intended)
+                assert response.status_code == 201, response.text
+                second, response = await correct(client, initial, "blue", "red")
+                assert response.status_code == 201, response.text
             harness.clock.advance(hours=0.1)
-            current = (await read_capture(harness, client, with_dials(harness, "blue", "red")))[
+            current = (await read_capture(harness, client, with_dials(harness, intended, "red")))[
                 "candidates"
             ][0]
+            if descendant_target:
+                saved.append(
+                    await track(
+                        client,
+                        {**current, "configurations": [configuration(current, intended)]},
+                    )
+                )
             before = [await get(client, f"/api/discovery/tracking/{s['id']}") for s in saved]
-            assert [t["intended_values"]["dial"] for t in before] == ["blue", "red"]
+            assert [t["intended_values"]["dial"] for t in before[:2]] == [intended, "red"]
             for endpoint in (first, second):
                 assert (await get(client, endpoint))[
                     "requalification"
@@ -49,7 +63,7 @@ async def independent_recorrection(output):
             _, response = await correct(
                 client,
                 current,
-                "blue",
+                intended,
                 "gold",
                 root=configuration(initial, "mint")["id"],
                 revision=1,
@@ -80,9 +94,31 @@ async def independent_recorrection(output):
                 )
                 + "\n"
             )
-            assert unchanged, (
-                "Recorrecting mint->blue to gold rewrites independent blue->red target intent"
-            )
+            assert (
+                unchanged
+            ), "Recorrecting mint->blue to gold rewrites independent blue->red target intent"
+            assert restarted[0]["intended_values"]["dial"] == "gold"
+            # A withheld assessment can reference an affected offer and gain an
+            # honest withdrawal reason. The independent buyer intent and its
+            # mutation/invalidation versions must nevertheless remain intact.
+            for field in (
+                "intended_values",
+                "revision",
+                "invalidation_revision",
+                "invalidation_reason",
+                "configuration_id",
+                "target_gbp",
+                "notifications",
+                "created_at",
+                "updated_at",
+            ):
+                assert (
+                    after[1][field] == before[1][field] == restarted[1][field]
+                ), f"Independent journal's target {field} changed during another journal's edit"
+            if descendant_target:
+                assert (
+                    restarted[2]["intended_values"]["dial"] == "gold"
+                ), "Target anchored to the corrected selection's descendant did not follow it"
 
 
 async def sibling_control(output):
@@ -183,5 +219,13 @@ async def sibling_control(output):
 
 
 if __name__ == "__main__":
-    run = sibling_control if "--sibling-control" in sys.argv[2:] else independent_recorrection
-    asyncio.run(run(Path(sys.argv[1]).resolve()))
+    if "--sibling-control" in sys.argv[2:]:
+        asyncio.run(sibling_control(Path(sys.argv[1]).resolve()))
+    else:
+        asyncio.run(
+            independent_recorrection(
+                Path(sys.argv[1]).resolve(),
+                reverse_journals="--reverse-journals" in sys.argv[2:],
+                descendant_target="--descendant-target" in sys.argv[2:],
+            )
+        )
