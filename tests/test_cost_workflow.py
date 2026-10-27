@@ -75,3 +75,11 @@ def test_allocated_basket_share_and_whole_basket_cost_cannot_masquerade_as_stand
 
 def test_many_valid_cost_extractions_retain_conflicts_without_crashing_or_voting():
     run_cost("repeated_cost_claims")
+
+
+def test_equivalent_fx_quanta_preserve_payable_totals_evidence_history_and_budget_fit():
+    run_cost("quantum_representations")
+
+
+def test_equivalent_quantum_claims_retain_all_evidence_and_material_conflicts():
+    run_cost("quantum_claims")

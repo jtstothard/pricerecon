@@ -590,11 +590,28 @@ async def invalid_acquisition():
                 state="observed",
                 evidence=scenario.context_evidence,
             )
-            quote.quantum = Decimal("1.00000000000000000000000000001")
-            scenario.fx_quotes = [quote]
-            feed = await read_capture(harness, client, [malformed_fx])
-            assert feed["candidates"] == []
-            assert feed["captures"][0]["outcomes"][0]["reason"] == "parse_error"
+            # Near-powers must remain rejected even at low ambient precision;
+            # valid numeric powers still obey the original representation caps.
+            from decimal import localcontext
+
+            for quantum in (
+                "1.00000000000000000000000000001",
+                "0.0100000000000000000000000000001",
+                "10.0000000000000000000000000001",
+                "0.999999999999999999999999999999",
+                "1" + "0" * 100,
+                "1.0e-100",
+                "1e101",
+                "0",
+                "-0.01",
+            ):
+                quote.quantum = Decimal(quantum)
+                scenario.fx_quotes = [quote]
+                with localcontext() as caller:
+                    caller.prec = 2
+                    feed = await read_capture(harness, client, [malformed_fx])
+                assert feed["candidates"] == [], quantum
+                assert feed["captures"][0]["outcomes"][0]["reason"] == "parse_error", quantum
             from pricerecon.core.discovery import execute_discovery
             from pricerecon.models.discovery import DiscoveryRequest
 
@@ -735,6 +752,153 @@ async def repeated_cost_claims():
             assert cost["total"] is None and cost["state"] == "unknown"
             assert len(cost["components"]) == 128
             assert "shipping:conflicting_components" in cost["issues"]
+
+
+async def quantum_representations():
+    from decimal import localcontext
+
+    with MonitoringHarness() as harness:
+        from pricerecon.models.qualification import MerchantEvidenceReport
+
+        async with harness.session() as (client, _):
+            response = await client.put(
+                "/api/discovery/watches/preferences",
+                json={"expected_revision": 0, "values": {"budget_gbp": "49.565"}},
+            )
+            assert response.status_code == 200
+            # Literal payable results for GBP48 plus USD2 at the stated rates.
+            # Each group includes an exact half tie, distinguishing HALF_EVEN.
+            cases = (
+                (
+                    ("0.01", "0.010", "1e-2", "10E-3"),
+                    "0.7825",
+                    ("49.57", "49.56", "49.56", "49.57"),
+                ),
+                (("1", "1.0", "1E+0", "10e-1"), "0.25", ("49.00", "48.00", "48.00", "49.00")),
+                (("1E+1", "10", "10.0", "100e-1"), "2.5", ("58.00", "48.00", "48.00", "58.00")),
+            )
+            modes = ("ROUND_HALF_UP", "ROUND_HALF_EVEN", "ROUND_DOWN", "ROUND_UP")
+            previous = []
+            for representations, rate, totals in cases:
+                for rounding, expected in zip(modes, totals, strict=True):
+                    for quantum in representations:
+                        payload = cost_report(harness, "quantum-equivalence").model_dump(
+                            mode="json"
+                        )
+                        scenario = payload["cost_scenarios"][0]
+                        scenario["components"][1].update(amount="2.00", currency="USD")
+                        scenario["fx_quotes"] = [
+                            {
+                                "purpose": "buyer_payment",
+                                "from_currency": "USD",
+                                "to_currency": "GBP",
+                                "rate": rate,
+                                "direction": "target_per_source",
+                                "converter": "synthetic-provider",
+                                "spread_included": True,
+                                "quantum": quantum,
+                                "rounding": rounding,
+                                "state": "observed",
+                                "evidence": scenario["context_evidence"],
+                            }
+                        ]
+                        # Deliberately low caller precision must not alter the
+                        # exact boundary or the evaluator's bounded arithmetic.
+                        with localcontext() as caller:
+                            caller.prec = 2
+                            report = MerchantEvidenceReport.model_validate(payload)
+                            supplied = report.cost_scenarios[0].model_dump(mode="json")
+                            feed = await read_capture(harness, client, [report])
+                        candidate = feed["candidates"][0]
+                        offer = candidate["offers"][0]
+                        cost = offer["cost_scenarios"][0]
+                        assert cost["total"] == {"amount": expected, "currency": "GBP"}, (
+                            quantum,
+                            rounding,
+                            cost["total"],
+                            expected,
+                        )
+                        assert cost["state"] == "verified_at_observation"
+                        assert {key: cost[key] for key in supplied} == supplied
+                        assert cost["known_subtotal"] == {"GBP": "48.00", "USD": "2.00"}
+                        public = candidate["public_delivered_total"]
+                        assert (public["amount"], public["currency"], public["state"]) == (
+                            expected,
+                            "GBP",
+                            "verified_at_observation",
+                        )
+                        budget = next(
+                            f for f in candidate["preference_fit"] if f["field"] == "budget"
+                        )
+                        assert budget["state"] == (
+                            "outside" if expected in {"49.57", "58.00"} else "fits"
+                        )
+                        history = await get(client, f"/api/discovery/offers/{offer['id']}/costs")
+                        assert history["scenarios"] == previous + [cost]
+                        previous = history["scenarios"]
+                        assert candidate["alert_eligible"] is False
+                        assert offer["comparison"]["state"] == "unresolved"
+            assert len(previous) == 48
+            assert harness.deliveries == harness.blocked_edges == []
+
+
+async def quantum_claims():
+    with MonitoringHarness() as harness:
+        from pricerecon.models.qualification import MerchantEvidenceReport
+
+        async with harness.session() as (client, _):
+            previous = []
+            for mode in ("equivalent", "different", "expired"):
+                payload = cost_report(harness, "quantum-claims").model_dump(mode="json")
+                scenario = payload["cost_scenarios"][0]
+                scenario["components"][1]["currency"] = "USD"
+                scenario["fx_quotes"] = []
+                for index, quantum in enumerate(("0.01", "0.010", "10e-3")):
+                    import copy
+
+                    evidence = copy.deepcopy(scenario["context_evidence"])
+                    evidence[0]["id"] = f"synthetic:quantum-claim:{index}"
+                    if mode == "expired" and index == 2:
+                        evidence[0]["expires_at"] = "2026-10-26T00:00:00Z"
+                    scenario["fx_quotes"].append(
+                        {
+                            "purpose": "buyer_payment",
+                            "from_currency": "USD",
+                            "to_currency": "GBP",
+                            "rate": "0.741",
+                            "direction": "target_per_source",
+                            "converter": "synthetic-provider",
+                            "spread_included": True,
+                            "quantum": "0.1" if mode == "different" and index == 2 else quantum,
+                            "rounding": "ROUND_HALF_UP",
+                            "state": "observed",
+                            "evidence": evidence,
+                        }
+                    )
+                report = MerchantEvidenceReport.model_validate(payload)
+                supplied = report.cost_scenarios[0].model_dump(mode="json")
+                candidate = (await read_capture(harness, client, [report]))["candidates"][0]
+                offer = candidate["offers"][0]
+                cost = offer["cost_scenarios"][0]
+                assert {key: cost[key] for key in supplied} == supplied
+                if mode == "equivalent":
+                    assert cost["total"] == {"amount": "49.56", "currency": "GBP"}, cost["issues"]
+                    assert cost["state"] == "verified_at_observation"
+                    assert candidate["public_delivered_total"]["amount"] == "49.56"
+                else:
+                    assert cost["total"] is None and cost["state"] == "unknown"
+                    assert candidate["public_delivered_total"]["amount"] is None
+                    issue = (
+                        "payment_fx_conflicting:USD:GBP"
+                        if mode == "different"
+                        else "fx:evidence_expired_at_observation"
+                    )
+                    assert issue in cost["issues"]
+                history = await get(client, f"/api/discovery/offers/{offer['id']}/costs")
+                assert history["scenarios"] == previous + [cost]
+                previous = history["scenarios"]
+                assert candidate["alert_eligible"] is False
+            assert harness.deliveries == harness.blocked_edges == []
 
 
 if __name__ == "__main__":

@@ -247,8 +247,12 @@ def evaluate_cost(
                 and q.from_currency == currency
                 and q.to_currency == funding
             ]
-            signatures = {q.model_dump_json(exclude={"evidence"}) for q in quotes}
-            if len(signatures) != 1:
+            # Quantum representations may differ while stating the same numeric
+            # increment. Keep every quote/evidence record for validation below.
+            quote_signatures = {
+                (q.model_dump_json(exclude={"evidence", "quantum"}), q.quantum) for q in quotes
+            }
+            if len(quote_signatures) != 1:
                 issues.append(
                     f"payment_fx_conflicting:{currency}:{funding}"
                     if quotes
@@ -275,7 +279,11 @@ def evaluate_cost(
                 issues.append("fx:assumptions_missing")
                 continue
             conditional |= quote.state == "conditional" or bool(quote.assumptions)
-            converted += (amount * quote.rate).quantize(quote.quantum, rounding=quote.rounding)
+            # The validated quantum is a numeric power of ten. quantize uses
+            # the operand's exponent, so discard coefficient trailing zeroes
+            # exactly without normalizing (and rounding) the supplied evidence.
+            quantum = Decimal((0, (1,), quote.quantum.adjusted()))
+            converted += (amount * quote.rate).quantize(quantum, rounding=quote.rounding)
         if not result.known_subtotal or funding is None:
             issues.append("payable_currency_unresolved")
         if not issues and funding is not None:
