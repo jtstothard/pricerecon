@@ -18,8 +18,8 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 | [08: Comparisons](issues/08-compare-qualified-offers.md) | 07 | Closed |
 | [09: Public coupons](issues/09-evaluate-public-coupons.md) | 04 | Closed |
 | [10: Shared limits](issues/10-prioritise-tracking.md) | 05 | Closed |
-| [11: Source evidence](issues/11-carry-source-evidence.md) | 03, 10 | Open — merger blocker |
-| [12: Integrated verification](issues/12-verify-complete-watch-workflow.md) | 08, 09, 11 | Blocked |
+| [11: Source evidence](issues/11-carry-source-evidence.md) | 03, 10 | Closed |
+| [12: Integrated verification](issues/12-verify-complete-watch-workflow.md) | 08, 09, 11 | In progress |
 
 ## Authority and acceptance
 
@@ -27,12 +27,12 @@ Work is limited to source implementation and deterministic offline verification 
 
 Ticket 01 source was integrated on 2026-10-27 in merge `a0e5c1a612252c61a62eabc7b56ebc3b3297ed85`, preserving implementer HEAD `9312871f269137d7b98ba7155d9523350e41e62e`. The subsequent rendered-form preservation repair was integrated in merge `3243c8f00e3f9dd9efde79327b6905eb3d4354b2`, preserving implementer HEAD `534cecaece62e30f50c680b40af5b4c7f561b6e4`. Integration checks passed **15 isolated workflow tests**, **25 frontend tests** and the frontend build. The parent subsequently passed the rendered edit/save/reload/manual-check regression. See the dated resolution log below and the [repair integration receipt](issues/01-verify-existing-monitoring.md#preservation-repair-integration-receipt-2026-10-27).
 
-Current frontier, 2026-10-27: tickets 01–10 are closed for their offline scope.
-Ticket08's integrated behavior passed the 171-case suite and three independent
-coupon probes; its contained type repair now passes uncached eight-file mypy and
-23 assessment/tracking workflows. 11 remains open after the sole merger reproduced the Shopify malformed-variant
-isolation/capture-receipt failure. Parent owns its contained repair. 12 remains
-blocked and unclaimed on 11; no 12 work was performed.
+Current frontier, 2026-10-27: tickets 01–11 are closed for their offline scope.
+The parent's contained Shopify isolation repair passes all 189 guarded workflows,
+37 contracts and the exact original challenge/control with preserved capture
+bounds. 12 is claimed for isolated integrated verification and handoff evidence.
+Actual buyer walkthrough feedback remains required; no live/production gate is
+accepted by these source results.
 Earlier dated entries describe their historical state.
 
 Actual buyer walkthrough feedback, current source rights, live offer/history/cost proof, finite operating limits and named maintenance ownership cannot be fabricated by passing fixture tests. Keep these gates explicit in the final receipt.
@@ -275,3 +275,10 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   and unclaimed.** See the [merger disposition](../../docs/testing/watch-source-evidence.md#sole-merger-disposition--2026-10-27)
   for required-check results, exact commands and retained failures. No application
   repair, 12 implementation, live acquisition or activation occurred.
+
+- 2026-10-27: Parent repaired 11's malformed Shopify variant isolation by sharing
+  retrieval while preserving separate typed-discovery and legacy-result parsers.
+  **189 guarded workflows, 37 contracts**, uncached connector mypy and zero-added
+  Ruff pass; exact challenge/control retain sibling prices and page bounds.
+  Existing frontend/build/browser proof is reused and 77 original dirty files
+  remain unchanged. **11 closed offline; 12 claimed.** See the [repair receipt](../../docs/testing/watch-source-evidence.md#parent-retailer-isolation-repair-and-offline-acceptance--2026-10-27).

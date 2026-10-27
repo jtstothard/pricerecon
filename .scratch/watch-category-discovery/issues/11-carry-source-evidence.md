@@ -4,17 +4,17 @@
 
 **Blocked by:** [03: Explain exact configuration and offer qualification](03-explain-offer-qualification.md), [10: Prioritise tracking under shared collection limits](10-prioritise-tracking.md)
 
-**Status:** open — merger blocker reproduced 2026-10-27
+**Status:** closed — offline acceptance 2026-10-27
 
 **Assignee:** Parent continuation for the contained source finding
 
 **Parent:** [Trustworthy UK watch discovery alongside existing monitoring](../../../docs/specs/watch-category-discovery.md)
 
-- [ ] Extend existing adapters only where needed to preserve selected variation, issuer/retrieval lineage, seller/condition/purchase mode, destination/availability, missing fields and acquisition outcomes through storage/API/UI.
+- [x] Extend existing adapters only where needed to preserve selected variation, issuer/retrieval lineage, seller/condition/purchase mode, destination/availability, missing fields and acquisition outcomes through storage/API/UI.
 - [x] Use retained or synthetic permitted fixtures for AliExpress browser-first and eBay Browse reviewed lead lanes and a contrasting retailer case; retrieval success alone cannot qualify selected SKU, stock, UK total or history rights.
 - [x] Account visibly for mandatory AliExpress, eBay/second-hand, brand-direct, UK retail, UK-shipping international and search/aggregator/community families, retaining blocked/unqualified states and paging/capture limits.
 - [x] Keep access/retention prerequisites explicit, route all attempts/retries/fallbacks through shared admission, and leave staged acquisition lanes inactive unless separately authorised.
-- [ ] Contract tests exercise real adapter result shapes and failure states at the application boundary without new network calls, credentials, account operations or archived merchant content beyond permitted evidence.
+- [x] Contract tests exercise real adapter result shapes and failure states at the application boundary without new network calls, credentials, account operations or archived merchant content beyond permitted evidence.
 
 ## Verification and authority
 
@@ -84,3 +84,22 @@ control passes. Reopened the adapter/failure-state checklist items for this
 concrete boundary failure; other checked items describe observed offline scope.
 The parent owns the small source repair; no repair or 12 work was performed here.
 See the [merger disposition and exact reproducer](../../../docs/testing/watch-source-evidence.md#sole-merger-disposition--2026-10-27).
+
+## Parent repair and final offline acceptance — 2026-10-27
+
+Shared Shopify retrieval now feeds discovery's typed per-product/per-variant
+parser directly. The legacy Watch result parser remains on the normal search
+path. One invalid variant no longer prevents valid siblings or capture bounds
+from reaching persistence/API. The exact retained challenge is now green, with
+its original assertions intact, plus strengthened page/limit/accounting checks.
+A two-check real-adapter legacy Watch control remains compatible.
+
+**189 guarded workflows passed** (all 186 retained plus three controls),
+**37 contracts passed**, uncached connector mypy and zero-added-finding Ruff
+checks passed. Unchanged frontend/build/browser and other type proof is reused;
+77 original dirty-parent hashes and lengths remain unchanged. No live evidence
+or source rights are inferred. See the [repair acceptance receipt](../../../docs/testing/watch-source-evidence.md#parent-retailer-isolation-repair-and-offline-acceptance--2026-10-27).
+
+**11 closed for offline scope; 12 claimed for isolated implementation.** Collection
+stays staged. Buyer, live, rights/retention, calibration and operational/activation
+gates remain separate and unproven.

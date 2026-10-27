@@ -1,0 +1,118 @@
+[
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 65,
+      "row": 19
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/connectors/shopify.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from __future__ import annotations\n\nimport json\nfrom datetime import datetime, timezone\nfrom decimal import Decimal\nfrom typing import Any\nfrom urllib.parse import quote_plus\n\nimport httpx\n\nfrom pricerecon.connectors.base import BaseConnector\nfrom pricerecon.connectors.external_browser import ExternalBrowserResult\nfrom pricerecon.connectors.specs import extract_specs\nfrom pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus\nfrom pricerecon.core.collection_transport import collection_http_client\nfrom pricerecon.models import NormalizedListing, SourceType\nfrom pricerecon.models.qualification import EvidenceSearchReport\n\n\n",
+          "end_location": {
+            "column": 1,
+            "row": 21
+          },
+          "location": {
+            "column": 1,
+            "row": 3
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 1,
+      "row": 3
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 3,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "SIM118",
+    "end_location": {
+      "column": 78,
+      "row": 87
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/connectors/shopify.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 78,
+            "row": 87
+          },
+          "location": {
+            "column": 71,
+            "row": 87
+          }
+        }
+      ],
+      "message": "Remove `.keys()`"
+    },
+    "location": {
+      "column": 57,
+      "row": 87
+    },
+    "message": "Use `key in dict` instead of `key in dict.keys()`",
+    "name": "in-dict-keys",
+    "noqa_row": 87,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/in-dict-keys"
+  },
+  {
+    "cell": null,
+    "code": "UP017",
+    "end_location": {
+      "column": 65,
+      "row": 179
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/connectors/shopify.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, timezone, UTC",
+          "end_location": {
+            "column": 40,
+            "row": 6
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        },
+        {
+          "content": "UTC",
+          "end_location": {
+            "column": 65,
+            "row": 179
+          },
+          "location": {
+            "column": 53,
+            "row": 179
+          }
+        }
+      ],
+      "message": "Convert to `datetime.UTC` alias"
+    },
+    "location": {
+      "column": 53,
+      "row": 179
+    },
+    "message": "Use `datetime.UTC` alias",
+    "name": "datetime-timezone-utc",
+    "noqa_row": 179,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/datetime-timezone-utc"
+  }
+]

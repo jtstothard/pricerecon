@@ -4,7 +4,9 @@
 
 **Blocked by:** [08: Compare qualified offers and explain price claims](08-compare-qualified-offers.md), [09: Evaluate public coupons without assuming stacks](09-evaluate-public-coupons.md), [11: Carry source evidence and access limits through acquisition](11-carry-source-evidence.md)
 
-**Status:** blocked and unclaimed — 11 malformed-variant merger finding remains open (2026-10-27)
+**Status:** in-progress — claimed 2026-10-27
+
+**Assignee:** Codex implementer (isolated worktree)
 
 **Parent:** [Trustworthy UK watch discovery alongside existing monitoring](../../../docs/specs/watch-category-discovery.md)
 
@@ -28,3 +30,12 @@ Shopify malformed-variant isolation/capture-receipt failure. This ticket remains
 blocked and unclaimed; no implementation or integrated acceptance was performed.
 The parent owns dispatch only after 11 is accepted. See the
 [11 merger disposition](../../../docs/testing/watch-source-evidence.md#sole-merger-disposition--2026-10-27).
+
+## Dependencies accepted and claim — 2026-10-27
+
+08, 09 and 11 are closed for offline scope. Parent's contained Shopify parser
+repair passes all 189 guarded workflows and 37 contracts, including the retained
+malformed-sibling probe and actual-adapter legacy Watch control. This ticket is
+claimed for an isolated implementer. Actual buyer walkthrough feedback remains
+required and must be obtained from the buyer, separately from automated browser
+proof; no feedback is asserted by this claim. Live/operating gates remain open.

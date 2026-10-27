@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-27",
+  "base": "48a15e00165eb12d74634e5aae66d91d708ae18c",
+  "application_workflows": {
+    "passed": 189,
+    "seconds": 170.46,
+    "retained": 186,
+    "added": 3,
+    "skips": 0,
+    "xfails": 0
+  },
+  "contracts": {
+    "passed": 37,
+    "warnings": 10
+  },
+  "uncached_mypy_changed_connector": "passed",
+  "ruff": {
+    "base": "48a15e00165eb12d74634e5aae66d91d708ae18c",
+    "baseline_findings": 5,
+    "current_findings": 5,
+    "added": []
+  },
+  "frontend_unchanged": "08aa2e1fe99d9702e09ae087f8fcc1925452b547",
+  "reused_proof": "merger 17-file types,25frontendtests/build,desktop/narrow source and assessment screenshots; remaining app files unchanged",
+  "original_parent_files_unchanged": 77,
+  "sha256": {
+    "src/pricerecon/connectors/shopify.py": "be16c6ceb5e1594c13e2382079a97a2a9307e698bf6994116a7873b7634ebab1",
+    "tests/monitoring/source_evidence_workflows.py": "8883885a1f552b0028a12dd21316b633baa4c5739a27b9f3e9de36be53bb01ec",
+    "tests/test_source_evidence_workflow.py": "c2716fde03840efaad90b0085410deab55dbb855e8631719f9e70d27972d9ca1",
+    "docs/testing/artifacts/watch-source-evidence/merger/retailer_isolation_probe.py": "d02928d586dec5ba4d9050b4e5ecc3af0d52ba1105d95c86c870056ed87a92a2",
+    "docs/testing/artifacts/watch-source-evidence/retailer-repair/black.log": "1a56c7cd8457fd05d978cfbd139d7bfd86e86acaa9b57668e718ef8bccc0cf48",
+    "docs/testing/artifacts/watch-source-evidence/retailer-repair/compatibility.log": "584c4c4d0762c396951455468f70daa8d94be8c938276869f12c774a4032f988",
+    "docs/testing/artifacts/watch-source-evidence/retailer-repair/contracts.log": "ca11c71f0c5852c02c771a81b92ed24d5cd2a7a0d2739f46511a8364e80e0b4e",
+    "docs/testing/artifacts/watch-source-evidence/retailer-repair/green.log": "75c0a537ace6f2da91800944fdc45520bb22cf2a167a6061aa7b56507400c62e",
+    "docs/testing/artifacts/watch-source-evidence/retailer-repair/mypy.log": "a819bdd3ad97092c623d5b677cadcc300fbfef3c7955b1e9fa088b81df74cb2d",
+    "docs/testing/artifacts/watch-source-evidence/retailer-repair/red.log": "5577d7ba2236229bd0a8e8a94d27de56e17f0d1b20773d1f0c20521240bff79e",
+    "docs/testing/artifacts/watch-source-evidence/retailer-repair/retailer-control.json": "9240f9a04edc7e5ba466bd6e5cdb42011d18df0640027ad0216de5e08e70c338",
+    "docs/testing/artifacts/watch-source-evidence/retailer-repair/retailer-control.log": "e7b878e252e76ad4c8e7118ee72fb89dd37e5d5fe9c7474ee6123922b7b20564",
+    "docs/testing/artifacts/watch-source-evidence/retailer-repair/retailer-malformed.json": "c1cf03d03b8fd6cc3dcdd4aa92b8d0fdae813b80571c842807ac401bff46db89",
+    "docs/testing/artifacts/watch-source-evidence/retailer-repair/retailer-malformed.log": "a7a3a37f24ba0f75f8bd636a4d83008732bbe8d8d40d62fc81884764b689e661",
+    "docs/testing/artifacts/watch-source-evidence/retailer-repair/ruff-comparison.json": "71336afebc7d131865b86eda7f7cee30f12151787213c427dcb837cdf6eb0f95",
+    "docs/testing/artifacts/watch-source-evidence/retailer-repair/ruff.json": "33cef924ff1a4dd0b12c3b7b188e913e87c6c352666cefc5669f5c1ee4065c71",
+    "docs/testing/artifacts/watch-source-evidence/retailer-repair/workflows.log": "9fb8c6aec7c7dc4c0d0306d0fbf9dbfd6a5a0b62723a8d4a88b3d1e926895143"
+  }
+}

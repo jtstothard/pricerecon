@@ -398,6 +398,57 @@ async def retailer():
                 assert harness.deliveries == harness.blocked_edges == []
 
 
+async def retailer_watch():
+    with MonitoringHarness() as harness, retailer_fixture(harness):
+        from pricerecon.core.collection_policy import operating_policy
+
+        from .workflows import LEGACY
+
+        harness.seed_legacy(
+            [
+                (
+                    7,
+                    {
+                        **LEGACY,
+                        "query": "SN0144",
+                        "synonym_groups": [],
+                        "source_queries": {},
+                        "filters": {},
+                        "sources": [
+                            {
+                                "connector": "shopify",
+                                "config": {"base_url": "https://www.sanmartin.watch"},
+                            }
+                        ],
+                    },
+                )
+            ]
+        )
+        policy = type(harness.test_policy).model_validate(
+            {
+                **harness.test_policy.model_dump(),
+                "provider_request_caps": {"shopify": {"limit": 20, "tracking_reserve": 0}},
+            }
+        )
+        with operating_policy(policy):
+            async with harness.session() as (client, _):
+                for _ in range(2):
+                    response = await client.post("/api/watches/7/check")
+                    assert response.status_code == 200, response.text
+                    assert response.json()["status"] == "completed"
+                    result = response.json()["result"]
+                    assert result["success"] is True
+                    assert result["listings_found"] == 2
+                    assert result["notifications_sent"] == 0
+                listings = await get(client, "/api/watches/7/listings")
+                assert {item["source_listing_id"] for item in listings["items"]} == {"201", "202"}
+                assert (await get(client, "/api/watches/7"))[
+                    "last_check_at"
+                ] == "2026-10-27T12:00:00Z"
+                assert len(harness.searches) == 4
+                assert harness.deliveries == harness.blocked_edges == []
+
+
 async def gates():
     with MonitoringHarness() as harness:
         from pricerecon import connectors

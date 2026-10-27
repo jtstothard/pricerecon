@@ -11,6 +11,7 @@ from urllib.parse import quote_plus
 import httpx
 
 from pricerecon.connectors.base import BaseConnector
+from pricerecon.connectors.external_browser import ExternalBrowserResult
 from pricerecon.connectors.specs import extract_specs
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 from pricerecon.core.collection_transport import collection_http_client
@@ -34,7 +35,6 @@ class ShopifyConnector(BaseConnector):
         self.evidence_use = (
             EvidenceUse.model_validate(evidence_use) if evidence_use is not None else None
         )
-        self._last_products_payload: object = None
 
     def validate_evidence_access(self) -> None:
         from pricerecon.connectors.evidence import receipt, require_evidence_use
@@ -66,9 +66,8 @@ class ShopifyConnector(BaseConnector):
         from pricerecon.connectors.shopify_evidence import shopify_evidence
 
         self.validate_evidence_access()
-        self._last_products_payload = None
-        await self.search(query, filters)
-        return shopify_evidence(self._last_products_payload, self.base_url, self.evidence_receipt)
+        payload, _ = await self._fetch_products_payload(query)
+        return shopify_evidence(payload, self.base_url, self.evidence_receipt)
 
     @property
     def source_role(self) -> SourceType:
@@ -90,6 +89,22 @@ class ShopifyConnector(BaseConnector):
     async def search(
         self, query: str, filters: dict[str, Any] | None = None
     ) -> list[NormalizedListing]:
+        payload, browser_result = await self._fetch_products_payload(query)
+        if not isinstance(payload, dict):
+            raise ConnectorDegradedError(
+                status=ConnectorStatus.parse_error,
+                message="shopify products response must be an object",
+                connector_id=self.connector_id,
+            )
+        listings = self._products_to_listings(payload.get("products", []))
+        if browser_result is not None:
+            return self.annotate_browser_result(listings, browser_result)
+        return listings
+
+    async def _fetch_products_payload(
+        self, query: str
+    ) -> tuple[object, ExternalBrowserResult | None]:
+        """Share retrieval while each caller validates its own result contract."""
         if not self.base_url:
             raise ConnectorDegradedError(
                 status=ConnectorStatus.auth_failed,
@@ -114,10 +129,7 @@ class ShopifyConnector(BaseConnector):
                         payload = json.loads(net_response.body)
                     except json.JSONDecodeError:
                         break
-                    self._last_products_payload = payload
-                    return self.annotate_browser_result(
-                        self._products_to_listings(payload.get("products", [])), browser_result
-                    )
+                    return payload, browser_result
             raise ConnectorDegradedError(
                 status=ConnectorStatus.unknown_error,
                 message="shopify browser override returned no intercepted products JSON",
@@ -133,9 +145,7 @@ class ShopifyConnector(BaseConnector):
             headers={"User-Agent": "Mozilla/5.0 (compatible; PriceRecon/1.0)"},
         )
         response.raise_for_status()
-        payload = response.json()
-        self._last_products_payload = payload
-        return self._products_to_listings(payload.get("products", []))
+        return response.json(), None
 
     async def fetch_variant_prices(self, handle: str) -> list[dict[str, Any]]:
         response = await self._client.get(

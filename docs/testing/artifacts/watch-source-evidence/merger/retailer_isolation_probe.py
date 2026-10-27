@@ -14,7 +14,7 @@ from tests.monitoring.harness import MonitoringHarness
 from tests.monitoring.source_evidence_workflows import admission, retailer_fixture
 from tests.monitoring.workflows import get
 
-OUT = Path(__file__).resolve().parent
+OUT = Path(sys.argv[2]).resolve() if len(sys.argv) > 2 else Path(__file__).resolve().parent
 MODE = sys.argv[1]
 
 
@@ -77,6 +77,11 @@ async def main():
                 assert candidates['202']['reported_currency'] is None
                 assert all(c['public_delivered_total']['amount'] is None for c in candidates.values())
                 assert feed['captures'][0]['outcomes'][0]['state'] == 'partial'
+                capture = feed['captures'][0]['outcomes'][0]['source_evidence']
+                assert capture['pages_captured'] == capture['page_limit'] == 1
+                assert capture['item_limit'] == 250
+                assert capture['inspected_count'] == 2
+                assert next(u['used'] for u in collection['usage'] if u['resource'] == 'pages') == 2
                 if MODE == 'malformed':
                     assert 'invalid_variant:0:2' in feed['captures'][0]['outcomes'][0]['source_evidence']['issues']
                 print(MODE, 'passed: valid variants and independent prices retained; no qualification, escape or notification')

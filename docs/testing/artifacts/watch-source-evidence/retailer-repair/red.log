@@ -1,0 +1,68 @@
+.F                                                                       [100%]
+=================================== FAILURES ===================================
+_ test_retailer_preserves_valid_siblings_and_actual_capture_bounds[malformed] __
+
+case = 'malformed'
+tmp_path = PosixPath('/private/tmp/pytest-of-jay/pytest-32/test_retailer_preserves_valid_1')
+
+    @pytest.mark.parametrize("case", ["control", "malformed"])
+    def test_retailer_preserves_valid_siblings_and_actual_capture_bounds(case, tmp_path):
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [
+                sys.executable,
+                "docs/testing/artifacts/watch-source-evidence/merger/retailer_isolation_probe.py",
+                case,
+                str(tmp_path),
+            ],
+            cwd=root,
+            env={
+                "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                "PYTHONDONTWRITEBYTECODE": "1",
+            },
+            capture_output=True,
+            text=True,
+            timeout=40,
+            check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Loaded 0 watches into scheduler
+E         discovery_connector_error
+E         Traceback (most recent call last):
+E           File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/core/acquisition.py", line 266, in acquire_sources
+E             report = await inspect(effective_query, connector_filters)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/connectors/shopify.py", line 70, in search_with_evidence
+E             await self.search(query, filters)
+E           File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/connectors/shopify.py", line 138, in search
+E             return self._products_to_listings(payload.get("products", []))
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/connectors/shopify.py", line 166, in _products_to_listings
+E             price=Decimal(str(variant.get("price") or "0")),
+E                   ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E         decimal.InvalidOperation: [<class 'decimal.ConversionSyntax'>]
+E         Traceback (most recent call last):
+E           File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/docs/testing/artifacts/watch-source-evidence/merger/retailer_isolation_probe.py", line 91, in <module>
+E             asyncio.run(main())
+E             ~~~~~~~~~~~^^^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+E             return runner.run(main)
+E                    ~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+E             return self._loop.run_until_complete(task)
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+E             return future.result()
+E                    ~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/docs/testing/artifacts/watch-source-evidence/merger/retailer_isolation_probe.py", line 74, in main
+E             assert set(candidates) == {'201', '202'}, (MODE, feed['captures'][0]['outcomes'], set(candidates))
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E         AssertionError: ('malformed', [{'source_evidence': {'route': 'shopify_products_v1', 'source_host': 'www.sanmartin.watch', 'capture_id': '87d729fd-7655-418d-951b-0713b45f84f2', 'retrieved_at': '2026-10-27T12:00:00Z', 'use': {'permission_reference': 'original-fixture', 'retention': 'synthetic'}, 'history_rights': 'unqualified', 'prerequisites': ['store-specific capture/display/reuse authority', 'separate archive grant', 'selected stock/fulfilment origin and UK checkout cost'], 'pages_captured': 0, 'page_limit': None, 'item_limit': None, 'detail_limit': None, 'discovered_count': None, 'inspected_count': None, 'next_page': None, 'content_truncated': None, 'completeness': 'unknown', 'issues': []}, 'source': 'shopify', 'route': 'connector_search_v1', 'state': 'failed', 'listing_count': 0, 'reason': 'connector_error', 'completeness': 'unknown', 'reused_capture_id': None}], set())
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python', 'docs/testing/artifacts/wat...g_count\': 0, \'reason\': \'connector_error\', \'completeness\': \'unknown\', \'reused_capture_id\': None}], set())\n').returncode
+
+tests/test_source_evidence_workflow.py:62: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_source_evidence_workflow.py::test_retailer_preserves_valid_siblings_and_actual_capture_bounds[malformed]
+1 failed, 1 passed, 15 deselected in 1.61s

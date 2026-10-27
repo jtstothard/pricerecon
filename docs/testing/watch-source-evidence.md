@@ -429,3 +429,58 @@ feedback and activation remain separate and unproven. Passing synthetic checks
 neither authorises new collection nor converts accepted research into current
 rights. The frontier is the parent's contained 11 repair and independent acceptance;
 12 dispatch remains with the parent after that gate passes.
+
+## Parent retailer isolation repair and offline acceptance — 2026-10-27
+
+**11 is closed for offline scope; 12 is claimed for isolated implementation.**
+Parent repaired the contained merger finding directly on integration based on
+`48a15e0`. Shopify's shared retrieval now returns the payload to the caller:
+discovery passes it directly to the existing typed evidence parser, and legacy
+Watch search retains its existing result parser/browser annotation. No duplicate
+HTTP path, fallback, arithmetic or accounting service was added. The unused
+intermediate payload instance state was removed.
+
+The retained original probe was added to the guarded suite. It accepts an optional
+output directory so new runs preserve the original merger's failed JSON/logs.
+Its original sibling/price/missing-currency/unqualified-total assertions remain;
+page count, limits and actual page accounting assertions were added. Before the
+repair: **one failed, one control passed**. After the repair: both pass. Valid
+variants201/202 keep GBP110.00/180.00 and the second currency stays unknown;
+invalid203 is omitted with `invalid_variant:0:2`. Both runs report partial scope,
+one captured products page, page limit1, item limit250 and two inspected variants.
+The two real HTTP sends (search plus products) debit two requests and two page
+resources. Neither result qualifies a UK total or sends notifications.
+
+A third API control runs two normal legacy Shopify Watch checks without a
+discovery-use declaration: each completes with two listings, four total HTTP sends,
+correct timestamp and no duplicate notification. Existing disclosure/use/browser/
+cap/failure/correction/assessment behavior remains covered by the full suite.
+
+- **189 guarded workflows passed in 170.46s**, all 186 retained plus three controls,
+  no skips or xfails. Same thirteen-module cleared-environment command as above.
+- **37 limiter/external-browser contracts passed**; ten inherited warnings.
+- Uncached mypy passes the changed connector with silent import following. The
+  merger's 17-file proof is reused for the unchanged other application modules.
+- Ruff comparison over all four changed Python files: **five inherited findings,
+  five current, zero added**; no suppression or assertion weakening. Changed helper
+  lines and new control pass Black; local source/document diff whitespace passes.
+- Frontend tree remains `08aa2e1fe99d9702e09ae087f8fcc1925452b547`; the merger's
+  25 tests/build and inspected desktop/narrow source/assessment/withdrawal browser
+  evidence are reused. Existing ESLint missing-config, chunk warning and raw-log
+  whitespace limitations remain recorded.
+- Original parent's **77 files** still match their initial byte lengths and SHA-256.
+  The source worktree was untouched; no new browser or fixture server was started.
+
+[Red/green logs, fresh exact probe/control JSON and updated hashes](artifacts/watch-source-evidence/retailer-repair/verification.json)
+bind the repair. Focused reproducer uses the preceding cleared environment:
+
+```sh
+python -m pytest -q tests/test_source_evidence_workflow.py \
+  -k 'valid_siblings or legacy_retailer'
+```
+
+No installs, network/live acquisition, credentials/accounts, production DB,
+activation, push or PR. Collection remains staged. Source-specific rights and
+retention, Militado/Merkur evidence, live selected-offer/history/coupon/delivery,
+empirical calibration, measured operating/physical limits, named maintenance owner
+and actual buyer/activation acceptance remain separate and unproven.

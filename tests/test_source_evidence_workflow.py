@@ -39,6 +39,33 @@ def test_independent_retailer_variants_keep_movement_price_and_missing_currency_
     run_source("retailer")
 
 
+@pytest.mark.parametrize("case", ["control", "malformed"])
+def test_retailer_preserves_valid_siblings_and_actual_capture_bounds(case, tmp_path):
+    root = Path(__file__).resolve().parents[1]
+    result = subprocess.run(
+        [
+            sys.executable,
+            "docs/testing/artifacts/watch-source-evidence/merger/retailer_isolation_probe.py",
+            case,
+            str(tmp_path),
+        ],
+        cwd=root,
+        env={
+            "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+            "PYTHONDONTWRITEBYTECODE": "1",
+        },
+        capture_output=True,
+        text=True,
+        timeout=40,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_legacy_retailer_watch_still_uses_normal_search_without_discovery_use_policy():
+    run_source("retailer_watch")
+
+
 def test_missing_use_authority_and_real_browser_accounting_stop_before_transport():
     run_source("gates")
 
