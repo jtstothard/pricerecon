@@ -49,7 +49,10 @@ def applicable_report(harness, listing_id="coupon"):
 
     payload = advertised_report(harness, listing_id).model_dump(mode="json")
     coupon = payload["coupons"][0]
-    evidence = coupon["opportunity_evidence"][0]
+    evidence = {
+        **coupon["opportunity_evidence"][0],
+        "acquisition_capture_id": coupon["opportunity_evidence"][0]["capture_id"],
+    }
     coupon["terms"] = {
         "literal": "Synthetic TEN: one selected watch, GBP 40 item minimum incl VAT, web, no account restriction; no other promotions; 12:00 inclusive to 13:00 exclusive UTC.",
         "codes": ["TEN"],
@@ -134,6 +137,7 @@ def reproduced_report(harness, listing_id="coupon", revision=1):
         "id": "synthetic:application",
         "locator": "$.checkout.receipt",
         "derived_from": ["synthetic-original:checkout"],
+        "acquisition_capture_id": coupon["opportunity_evidence"][0]["capture_id"],
     }
     after = payload["cost_scenarios"][0].copy()
     import copy
@@ -816,6 +820,15 @@ async def receipt_boundary_controls():
             }
         )
         replace_provenance(app, claim)
+        case(
+            "receipt-origin-missing", "application_receipt_not_direct"
+        ).application.receipt.acquisition_capture_id = None
+        case(
+            "receipt-origin-reused", "application_receipt_not_direct"
+        ).application.receipt.acquisition_capture_id = "older-acquisition"
+        case(
+            "claim-origin-reused", "application_claims_not_bound_to_direct_receipt"
+        ).application.payable.components[0].evidence[0].acquisition_capture_id = "older-acquisition"
         coupon = case("copied-receipt", "receipt:derived_claim_not_independent_support")
         coupon.application.receipt.input_claim_ids = [coupon.application.receipt.id]
         coupon.application.receipt.capture_id = "re-extracted-capture"

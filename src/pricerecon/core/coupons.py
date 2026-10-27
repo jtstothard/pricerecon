@@ -57,6 +57,7 @@ def receipt_issues(coupon: CouponAssessment, offer: MerchantOffer) -> list[str]:
         receipt.issuer_kind != "seller"
         or receipt.extractor_kind not in {"structured_data", "deterministic_dom"}
         or len(receipt.derived_from) != 1
+        or receipt.acquisition_capture_id != receipt.capture_id
     ):
         issues.append("application_receipt_not_direct")
 
@@ -100,6 +101,7 @@ def receipt_issues(coupon: CouponAssessment, offer: MerchantOffer) -> list[str]:
         "observed_at",
         "retrieved_at",
         "capture_id",
+        "acquisition_capture_id",
         "route",
         "derived_from",
         "retention",
