@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from pricerecon.models.corrections import CorrectionHistory
 from pricerecon.models.costs import PublicCostSummary
 from pricerecon.models.history import HistorySummary
 from pricerecon.models.qualification import Configuration, MerchantOffer, SelectionBinding
@@ -66,6 +67,8 @@ class DiscoveryOrigin(DiscoveryModel):
 
 
 class DiscoveryCapture(DiscoveryModel):
+    correction_input_revision: int = 0
+    publication_state: Literal["accepted", "withdrawn"] = "accepted"
     history_contract_version: Literal["observation-history-v1"] | None = None
     capture_id: str
     captured_at: datetime
@@ -152,6 +155,7 @@ class PreferenceFit(DiscoveryModel):
 
 
 class DiscoveryCandidate(DiscoveryModel):
+    corrections: list[CorrectionHistory] = Field(default_factory=list)
     history: HistorySummary = Field(default_factory=HistorySummary)
     id: str
     category: Literal["watches"] = "watches"

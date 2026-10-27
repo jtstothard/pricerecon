@@ -127,6 +127,20 @@ def project_lineage(connection: sqlite3.Connection, coupon: CouponAssessment) ->
                 latest_configuration[0] == coupon.configuration_revision
                 or latest_configuration[1] == row[3]
             )
+    from pricerecon.db.corrections import is_withdrawn
+
+    if row is not None and is_withdrawn(connection, "offer", coupon.offer_id, coupon.offer_revision):
+        current = False
+    if row is not None and coupon.application is not None and coupon.application.receipt is not None:
+        from pricerecon.models.corrections import CorrectionEntry
+
+        boundaries = [CorrectionEntry.model_validate_json(r[0]).recorded_at for r in connection.execute(
+            "SELECT payload_json FROM discovery_corrections WHERE candidate_id=?", (row[4],),
+        )]
+        receipt_time = coupon.application.receipt.observed_at
+        if boundaries and (receipt_time is None or receipt_time <= max(boundaries)):
+            current = False
+            coupon.issues = list(dict.fromkeys([*coupon.issues, "receipt_predates_correction"]))
     if not current:
         coupon.lineage = "superseded"
         coupon.state = "invalidated"

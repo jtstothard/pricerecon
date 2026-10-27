@@ -1,4 +1,5 @@
 import { parseTrackingList } from './tracking'
+import { parseCorrection } from './corrections'
 
 // Validate capture-bound qualification states before they reach the buyer feed.
 export function record(value: unknown): Record<string, unknown> {
@@ -80,7 +81,7 @@ export function configuration(value: unknown) {
   const config = record(value)
   return { ...resolution(config), id: text(config.id), revision: integer(config.revision), policy_version: text(config.policy_version) }
 }
-function fieldEvidence(value: unknown) {
+export function fieldEvidence(value: unknown) {
   const claim = record(value), context = record(claim.context)
   return {
     id: text(claim.id), subject: choice(claim.subject, ['configuration', 'selection', 'offer']),
@@ -148,6 +149,8 @@ export function costScenario(value: unknown) {
     key: text(cost.key), kind: choice(cost.kind, ['public_no_coupon', 'public_coupon', 'personal', 'payment', 'cashback']), state,
     captured_at: date(cost.captured_at), context: costContext(cost.context), context_evidence: list(cost.context_evidence, costEvidence),
     assumptions: list(cost.assumptions, text), issues: list(cost.issues, text),
+    withdrawn: cost.withdrawn === true,
+    historical_total: cost.historical_total === null ? null : (() => { const historical = record(cost.historical_total); return { amount: amount(historical.amount), currency: text(historical.currency) } })(),
     total: total === null ? null : { amount: amount(total.amount), currency: text(total.currency) },
     known_subtotal: moneyMap(cost.known_subtotal), merchant_payable: moneyMap(cost.merchant_payable), additional_liabilities: moneyMap(cost.additional_liabilities),
     components: list(cost.components, raw => {
@@ -276,6 +279,7 @@ function parseCandidate(value: unknown) {
     image: { attribution: text(image.attribution), provenance: text(image.provenance) },
     public_total: { state: totalState, amount: totalAmount, currency: nullableText(total.currency), scenario_id: nullableText(total.scenario_id), scenario_revision: total.scenario_revision === null ? null : integer(total.scenario_revision) },
     total_reason: text(total.reason), usual_reason: text(usual.reason),
+    corrections: list(candidate.corrections, parseCorrection),
     missing_data: list(candidate.missing_data, text),
     preference_fit: list(candidate.preference_fit, item => {
       const fit = record(item)

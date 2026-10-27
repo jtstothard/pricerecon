@@ -381,7 +381,7 @@ def evidence_revision_withdrawn(
         (assessment.offer_id, assessment.offer_revision),
     ).fetchone()
     references = [
-        ("configuration", intent.configuration_id, assessment.configuration_revision),
+        ("configuration", assessment.configuration_id or intent.configuration_id, assessment.configuration_revision),
         ("binding", row[0] if row else None, assessment.binding_revision),
         ("offer", assessment.offer_id, assessment.offer_revision),
         ("cost", assessment.scenario_id, assessment.scenario_revision),

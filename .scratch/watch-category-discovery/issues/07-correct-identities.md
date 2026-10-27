@@ -27,3 +27,14 @@ accepted in the [dated merger receipt](../../../docs/testing/watch-history.md#li
 This ticket is **READY and unclaimed**, reserved for parent dispatch. No 07
 implementation, verification or claim occurred in that merger. Its checklist,
 browser correction workflow and separate live/buyer/activation gates remain open.
+
+## Isolated implementation handoff — 2026-10-27
+
+Implementation and offline verification are recorded in
+[the dated correction receipt](../../../docs/testing/watch-corrections.md), on
+`t3/ticket07-corrections` at
+`/Users/jay/.t3/worktrees/pricerecon/ticket07-corrections`.
+All original 83 workflows remain green; the merged safe suite has 95 passes,
+including committed 09 repair checks and ten correction workflows. Actual guarded
+Chrome correction proof is retained with the receipt. Parent merger acceptance
+and closure remain pending; this worker does not close 07 or sibling tickets.

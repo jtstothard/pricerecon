@@ -1,0 +1,30 @@
+{
+  "result": "passed",
+  "fixture": "ticket07-correction-ui",
+  "fixture_identity_checked_before_writes": true,
+  "gates": [
+    "keyboard target creation",
+    "field/value correction",
+    "attribution/rationale/lineage",
+    "original mint evidence retained",
+    "target retained",
+    "price/cost/coupon/history withdrawn",
+    "reload persistence",
+    "stale edit 409",
+    "dispute and resolution",
+    "375px no overflow",
+    "keyboard correction submission",
+    "legacy intent unchanged",
+    "no browser errors"
+  ],
+  "guard": {
+    "automatic_checks": false,
+    "blocked_edges": [],
+    "fixture": "ticket07-correction-ui",
+    "fixture_id": null,
+    "notifications_sent": 0,
+    "temporary_storage": true
+  },
+  "buyer_acceptance": "unproven",
+  "live_acquisition": "not attempted"
+}
