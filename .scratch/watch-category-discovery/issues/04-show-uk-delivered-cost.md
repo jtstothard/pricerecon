@@ -37,3 +37,22 @@ for checklist coverage, application red/green, retained desktop/narrow browser
 proof, commands and remaining gates. Checklist acceptance and ticket closure are
 left to the merger. Collection remains staged; observation-time cost verification
 does not establish current freshness, comparison acceptance or a live offer.
+
+## Merger review: 2026-10-27 — remains open
+
+Integrated source `af2ab0f8ed031d91a0f1e5af36e93a6fcbfdb8b9` in history-preserving
+merge `ed1404b20d810371c07489044952552ab4d07452`. The 46 documented isolated
+workflows, 25 frontend tests, build and focused Ruff/mypy passed; retained browser
+artifacts were inspected. Existing ESLint configuration failure remains recorded.
+
+The precise-money/FX acceptance item is **not met**: equivalent rounding quanta
+`0.01`/`0.010` and `1E+1`/`10`/`10.0` produce different persisted API and public
+totals, all labelled `verified_at_observation`. The latter group also changes
+budget fit. See the [dated merger receipt](../../../docs/testing/watch-costs.md#merger-verification-2026-10-27)
+and retained isolated application probe. Canonicalize the quantum exactly or
+reject unsupported representations, then verify the repaired application behavior
+without regressing the near-power rejection. Merger made no implementation repair.
+
+Checklist closure is withheld. Tickets 05/06/09 stay blocked; parent owns future
+claims/dispatch. All source/live/legal/freshness/comparison/alert and activation
+gates remain separate.

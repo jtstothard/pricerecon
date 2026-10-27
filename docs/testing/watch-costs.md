@@ -244,3 +244,107 @@ supply those qualifications. Personal benefit realization and coupon execution
 remain outside this slice; no cashback reduces a public payable total. Collection
 and activation remain staged, with no real connector/network, credentials,
 accounts, production DB, purchase, deployment or notification sending.
+
+## Merger verification: 2026-10-27
+
+**Ticket04 remains open.** Source review and the documented checks support much
+of this offline slice, but an independently reproduced FX rounding defect breaks
+the precise-money acceptance item. Tickets05/06/09 remain blocked and unclaimed.
+This merger pass changes no implementation code and implements no later ticket.
+
+### Integration and review boundary
+
+Integration checkout `/Users/jay/.t3/worktrees/pricerecon/watch-category-integration`,
+branch `integration/watch-category-discovery`, was clean at
+`9c93d9f2188697d5130291004b159d528a071cbf`. Source checkout
+`/Users/jay/.t3/worktrees/pricerecon/t3-d772dea6`, branch
+`t3/ticket04-offer-cost-evidence`, was clean at
+`af2ab0f8ed031d91a0f1e5af36e93a6fcbfdb8b9`. Their merge base was the integration
+tip. Conflict-free `git merge --no-ff` produced
+`ed1404b20d810371c07489044952552ab4d07452`, preserving both tips as its parents.
+
+Reviewed the spec, implementation issue04, accepted UK-cost planning resolution
+and research/contract, this implementer receipt, and the scoped acquisition,
+models, evaluator, SQLite/API, feed and browser-workflow changes. The code retains
+explicit context and evidence, required component/inapplicability checks,
+included-charge accounting, unknown/conditional withholding, revision readback
+and separate benefits. Passing fixtures and source review do not establish
+current law, source permission, a real offer, freshness, comparable ranking or
+alert acceptance. The defect below prevents acceptance of precise FX accounting.
+
+### Observed blocker: numerically equal FX quanta change verified cost
+
+`models/costs.py:157-163` accepts coefficient digits `1` followed by zeroes as an
+explicit decimal power, preserving trailing zeroes. `core/costs.py:278` passes
+that representation directly to `Decimal.quantize`, which rounds to its exponent,
+not to the numerical increment. Consequently accepted equal quantum values have
+different rounding behavior. This is observable persisted application behavior,
+not only a private arithmetic assertion.
+
+The retained [application probe](../../tests/monitoring/cost_merger_probes.py)
+uses normal deterministic acquisition and API/feed readback under
+`MonitoringHarness`: same selected offer/context, GBP48 item, USD2.10 shipping,
+synthetic buyer FX rate 0.741, all other liabilities explicitly supported, and
+GBP49 budget. Only the quantum representation changes between captures.
+
+| Accepted quantum | Persisted/public GBP total | Budget fit |
+| --- | --- | --- |
+| `0.01` | `49.56` | outside |
+| `0.010` | `49.556` | outside |
+| `1E+1` | `48.00` | fits |
+| `10` | `50.00` | outside |
+| `10.0` | `49.60` | outside |
+
+All five return `verified_at_observation`, including the three noncanonical
+representations with wrong rounding. The probe confirms five retained history
+revisions, unchanged historical rows, matching feed/history amounts, unresolved
+comparison, disabled alerts, zero notifications and no blocked external-edge
+attempts. Its three numerical-equivalence assertions fail (exit1); observations
+are retained in [the JSON receipt](artifacts/watch-costs/merger-fx-quantum.json).
+
+From the integration checkout, reproduce without installations or live access:
+
+```sh
+env -i PATH=/usr/bin:/bin PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  -m tests.monitoring.cost_merger_probes /tmp/pricerecon-ticket04-fx-quantum.json
+```
+
+Required repair: canonicalize the quantum exactly before conversion, or reject
+unsupported noncanonical representations at acquisition. Preserve the existing
+near-power rejection without ambient Decimal rounding. Accepted equivalent
+numeric quanta must produce equivalent persisted payable amounts/budget outcomes;
+none may produce a wrongly verified total. Merger deliberately left the source
+unchanged and retained this red application probe for the repair owner.
+
+### Checks and artifacts
+
+- **Passed:** documented safe suite, **46 workflows in 53.54s**, using the cleared
+  environment and existing interpreter/dependencies above. This includes all 12
+  cost and all 34 retained qualification/discovery/legacy workflows. No application
+  imports overlapped the subsequent frontend build.
+- **Passed:** frontend `npm test -- --run`, **25 tests**; `npm run build`,
+  **633 modules**. Existing greater-than-500-kB Vite warning remains.
+- **Passed:** Ruff on models costs/qualification/discovery, core
+  costs/qualification/discovery/acquisition, API/storage discovery and the
+  cost/browser/UI-server workflows (**12 files**), plus the new merger probe.
+  Mypy `--follow-imports=silent` passed those **14 source files** documented
+  above; existing unused-override notes remain. `git diff --check` passed.
+- **Blocked, unchanged:** frontend `npm run lint`, exit 2: ESLint 10.12.0 cannot
+  find `eslint.config.*`. No installation, suppression or config workaround.
+- **Failed as an acceptance probe:** equivalent FX quantum application outcomes,
+  as detailed above. The 46-test success does not cover or override this failure.
+- **Inspected:** retained receipt plus desktop/narrow full-page and cost-detail
+  PNGs. Details show readable observation-qualified cost, known subtotal and
+  synthetic provenance; narrow detail text wraps. Receipt records keyboard
+  save/reload, 375px overflow check, legacy navigation and buyer acceptance
+  unproven. No new browser server/session or live route was run by this merger.
+
+The original dirty parent was preserved: status plus a deterministic content
+fingerprint of tracked and nonignored untracked files was captured before merge
+and checked after verification. Content SHA-256:
+`af79b778d587ac7d84b7881a17bf55f0a3fbff7fea8b6cac8897bda61f348224`.
+Source checkout remains clean at its original HEAD. Only local merge and review
+commits are authorized/performed; no installs, network/live collection,
+credentials/accounts, production database, activation, deployment, push, PR,
+delegation or unrelated cleanup occurred.

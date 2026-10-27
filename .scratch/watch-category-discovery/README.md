@@ -11,7 +11,7 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 | [01: Existing monitoring](issues/01-verify-existing-monitoring.md) | None | Closed |
 | [02: Candidate discovery](issues/02-discover-candidates.md) | 01 | Closed |
 | [03: Qualification](issues/03-explain-offer-qualification.md) | 02 | Closed |
-| [04: UK delivered cost](issues/04-show-uk-delivered-cost.md) | 03 | In progress; claimed |
+| [04: UK delivered cost](issues/04-show-uk-delivered-cost.md) | 03 | Open; merger found FX rounding repair required |
 | [05: Exact tracking](issues/05-track-exact-products.md) | 04 | Blocked |
 | [06: Observation history](issues/06-show-observation-history.md) | 04 | Blocked |
 | [07: Corrections](issues/07-correct-identities.md) | 05, 06 | Blocked |
@@ -65,3 +65,14 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   See the [repair merger receipt](../../docs/testing/watch-qualification.md#repair-merger-verification-2026-10-27).
   No 04 implementation occurred. Collection remains staged, totals unknown and
   source/live/buyer/retention/freshness/operating gates open.
+
+- 2026-10-27: 04 source `af2ab0f` integrated without conflicts in history-preserving
+  merge `ed1404b`, with parents `9c93d9f` and `af2ab0f`. The merger passed all
+  46 documented isolated workflows, 25 frontend tests, build and focused
+  Ruff/mypy; retained desktop/narrow browser artifacts were inspected.
+  An additional isolated application probe found equivalent FX rounding quanta
+  producing different persisted/public verified totals and different budget fit.
+  **04 remains open for repair; 05/06/09 remain blocked and unclaimed.**
+  See the [merger receipt and exact reproducer](../../docs/testing/watch-costs.md#merger-verification-2026-10-27).
+  No later ticket implementation or source repair occurred. Fixture success
+  establishes no legal/live/freshness/comparison/alert or activation acceptance.
