@@ -16,7 +16,7 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 | [06: Observation history](issues/06-show-observation-history.md) | 04 | Closed |
 | [07: Corrections](issues/07-correct-identities.md) | 05, 06 | In progress |
 | [08: Comparisons](issues/08-compare-qualified-offers.md) | 07 | Blocked |
-| [09: Public coupons](issues/09-evaluate-public-coupons.md) | 04 | Open — receipt-provenance repair required |
+| [09: Public coupons](issues/09-evaluate-public-coupons.md) | 04 | Closed |
 | [10: Shared limits](issues/10-prioritise-tracking.md) | 05 | In progress |
 | [11: Source evidence](issues/11-carry-source-evidence.md) | 03, 10 | Blocked |
 | [12: Integrated verification](issues/12-verify-complete-watch-workflow.md) | 08, 09, 11 | Blocked |
@@ -27,10 +27,12 @@ Work is limited to source implementation and deterministic offline verification 
 
 Ticket 01 source was integrated on 2026-10-27 in merge `a0e5c1a612252c61a62eabc7b56ebc3b3297ed85`, preserving implementer HEAD `9312871f269137d7b98ba7155d9523350e41e62e`. The subsequent rendered-form preservation repair was integrated in merge `3243c8f00e3f9dd9efde79327b6905eb3d4354b2`, preserving implementer HEAD `534cecaece62e30f50c680b40af5b4c7f561b6e4`. Integration checks passed **15 isolated workflow tests**, **25 frontend tests** and the frontend build. The parent subsequently passed the rendered edit/save/reload/manual-check regression. See the dated resolution log below and the [repair integration receipt](issues/01-verify-existing-monitoring.md#preservation-repair-integration-receipt-2026-10-27).
 
-Current frontier, 2026-10-27: tickets 01–06 are closed for their offline scope;
-07 is ready and unclaimed after 06 repair acceptance. Ticket 09 remains open for
-receipt-provenance repair and 10 is in progress in its own worktree. Earlier dated
-readiness/ownership entries below describe their state at that time.
+Current frontier, 2026-10-27: tickets 01–06 and 09 are closed for their offline
+scope. Tickets 07 and 10 are active in separate worktrees; neither slice has
+landed here. The 07 correction transaction/UI and overlapping acquisition must
+still be integrated against coupon lineage. Tickets 08/11/12 remain blocked by
+their other dependencies and acceptance gates. Earlier dated readiness/ownership
+entries below describe their state at that time.
 
 Actual buyer walkthrough feedback, current source rights, live offer/history/cost proof, finite operating limits and named maintenance ownership cannot be fabricated by passing fixture tests. Keep these gates explicit in the final receipt.
 
@@ -156,3 +158,19 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   No application-source repair or dependent implementation occurred. Collection
   stays staged; source/live/history/calibration/buyer/operating/activation gates
   remain separate and open.
+
+- 2026-10-27: 09 repair source `d2ab666` integrated without conflicts in
+  history-preserving merge `5a3124e`, with parents `61ab075` and `d2ab666`.
+  Both original unsupported substitutions independently failed before merge
+  and withhold payable afterwards. All **85 combined isolated workflows passed
+  in 72.80s**, as did the original probe, 23 receipt controls, focused Ruff/mypy
+  and diff checks. Genuine GBP45.10, changed-shipping GBP47.20 and base GBP50.10
+  remain; old stored role-less successes become historical only on restart and
+  supersession. Prior unchanged frontend/build/browser evidence is reused.
+  **09 closed for offline scope.** See the [repair merger acceptance](../../docs/testing/watch-coupons.md#receipt-provenance-repair-merger-acceptance--2026-10-27).
+  Active07/10 worktrees and original dirty parent remain untouched. The 07
+  correction append/invalidation transaction, UI and overlapping acquisition
+  remain an explicit coupon integration gate until that slice lands. No later
+  ticket was claimed or implemented; 12 remains blocked by its other gates.
+  Collection stays staged; live coupon/source/rights/retention/freshness/buyer/
+  operating/comparison/savings/activation acceptance remains unproven.

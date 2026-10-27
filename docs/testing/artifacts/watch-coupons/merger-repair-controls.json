@@ -1,0 +1,275 @@
+{
+  "fixture": "original-synthetic-ticket09-receipt-controls",
+  "cases": {
+    "opaque-positive": {
+      "state": "reproduced_at_observation",
+      "issues": [],
+      "expected_issue": null,
+      "payable": {
+        "amount": "45.10",
+        "currency": "GBP"
+      },
+      "original_application_retained": true,
+      "history_matches_feed": true,
+      "no_coupon": "50.10"
+    },
+    "receipt-source": {
+      "state": "applicable_not_reproduced",
+      "issues": [
+        "application_receipt_not_direct",
+        "application_claims_not_bound_to_direct_receipt"
+      ],
+      "expected_issue": "application_receipt_not_direct",
+      "payable": null,
+      "original_application_retained": true,
+      "history_matches_feed": true,
+      "no_coupon": "50.10"
+    },
+    "receipt-derived": {
+      "state": "applicable_not_reproduced",
+      "issues": [
+        "receipt:derived_claim_not_independent_support",
+        "application_receipt_not_direct",
+        "application_claims_not_bound_to_direct_receipt"
+      ],
+      "expected_issue": "receipt:derived_claim_not_independent_support",
+      "payable": null,
+      "original_application_retained": true,
+      "history_matches_feed": true,
+      "no_coupon": "50.10"
+    },
+    "receipt-terms": {
+      "state": "applicable_not_reproduced",
+      "issues": [
+        "receipt_lineage_mismatch"
+      ],
+      "expected_issue": "receipt_lineage_mismatch",
+      "payable": null,
+      "original_application_retained": true,
+      "history_matches_feed": true,
+      "no_coupon": "50.10"
+    },
+    "receipt-lineage": {
+      "state": "applicable_not_reproduced",
+      "issues": [
+        "receipt_lineage_mismatch"
+      ],
+      "expected_issue": "receipt_lineage_mismatch",
+      "payable": null,
+      "original_application_retained": true,
+      "history_matches_feed": true,
+      "no_coupon": "50.10"
+    },
+    "receipt-eligibility": {
+      "state": "applicable_not_reproduced",
+      "issues": [
+        "receipt_eligibility_mismatch"
+      ],
+      "expected_issue": "receipt_eligibility_mismatch",
+      "payable": null,
+      "original_application_retained": true,
+      "history_matches_feed": true,
+      "no_coupon": "50.10"
+    },
+    "receipt-codes": {
+      "state": "applicable_not_reproduced",
+      "issues": [
+        "receipt_application_values_mismatch"
+      ],
+      "expected_issue": "receipt_application_values_mismatch",
+      "payable": null,
+      "original_application_retained": true,
+      "history_matches_feed": true,
+      "no_coupon": "50.10"
+    },
+    "receipt-allocation": {
+      "state": "applicable_not_reproduced",
+      "issues": [
+        "receipt_allocations_mismatch"
+      ],
+      "expected_issue": "receipt_allocations_mismatch",
+      "payable": null,
+      "original_application_retained": true,
+      "history_matches_feed": true,
+      "no_coupon": "50.10"
+    },
+    "receipt-after": {
+      "state": "applicable_not_reproduced",
+      "issues": [
+        "receipt_after_scenario_mismatch"
+      ],
+      "expected_issue": "receipt_after_scenario_mismatch",
+      "payable": null,
+      "original_application_retained": true,
+      "history_matches_feed": true,
+      "no_coupon": "50.10"
+    },
+    "receipt-before": {
+      "state": "applicable_not_reproduced",
+      "issues": [
+        "receipt_before_scenario_mismatch"
+      ],
+      "expected_issue": "receipt_before_scenario_mismatch",
+      "payable": null,
+      "original_application_retained": true,
+      "history_matches_feed": true,
+      "no_coupon": "50.10"
+    },
+    "receipt-selection": {
+      "state": "applicable_not_reproduced",
+      "issues": [
+        "receipt:cost_context_mismatch",
+        "application_claims_not_bound_to_direct_receipt"
+      ],
+      "expected_issue": "receipt:cost_context_mismatch",
+      "payable": null,
+      "original_application_retained": true,
+      "history_matches_feed": true,
+      "no_coupon": "50.10"
+    },
+    "receipt-basket": {
+      "state": "applicable_not_reproduced",
+      "issues": [
+        "receipt:cost_context_mismatch",
+        "application_claims_not_bound_to_direct_receipt"
+      ],
+      "expected_issue": "receipt:cost_context_mismatch",
+      "payable": null,
+      "original_application_retained": true,
+      "history_matches_feed": true,
+      "no_coupon": "50.10"
+    },
+    "receipt-destination": {
+      "state": "applicable_not_reproduced",
+      "issues": [
+        "receipt:cost_context_mismatch",
+        "application_claims_not_bound_to_direct_receipt"
+      ],
+      "expected_issue": "receipt:cost_context_mismatch",
+      "payable": null,
+      "original_application_retained": true,
+      "history_matches_feed": true,
+      "no_coupon": "50.10"
+    },
+    "generic-claims": {
+      "state": "applicable_not_reproduced",
+      "issues": [
+        "application_claims_not_bound_to_direct_receipt"
+      ],
+      "expected_issue": "application_claims_not_bound_to_direct_receipt",
+      "payable": null,
+      "original_application_retained": true,
+      "history_matches_feed": true,
+      "no_coupon": "50.10"
+    },
+    "copied-receipt": {
+      "state": "applicable_not_reproduced",
+      "issues": [
+        "receipt:derived_claim_not_independent_support",
+        "application_receipt_not_direct",
+        "application_claims_not_bound_to_direct_receipt"
+      ],
+      "expected_issue": "receipt:derived_claim_not_independent_support",
+      "payable": null,
+      "original_application_retained": true,
+      "history_matches_feed": true,
+      "no_coupon": "50.10"
+    },
+    "claim-origin-reused": {
+      "state": "applicable_not_reproduced",
+      "issues": [
+        "application_claims_not_bound_to_direct_receipt"
+      ],
+      "expected_issue": "application_claims_not_bound_to_direct_receipt",
+      "payable": null,
+      "original_application_retained": true,
+      "history_matches_feed": true,
+      "no_coupon": "50.10"
+    },
+    "receipt-origin-reused": {
+      "state": "applicable_not_reproduced",
+      "issues": [
+        "application_receipt_not_direct",
+        "application_claims_not_bound_to_direct_receipt"
+      ],
+      "expected_issue": "application_receipt_not_direct",
+      "payable": null,
+      "original_application_retained": true,
+      "history_matches_feed": true,
+      "no_coupon": "50.10"
+    },
+    "receipt-origin-missing": {
+      "state": "applicable_not_reproduced",
+      "issues": [
+        "application_receipt_not_direct",
+        "application_claims_not_bound_to_direct_receipt"
+      ],
+      "expected_issue": "application_receipt_not_direct",
+      "payable": null,
+      "original_application_retained": true,
+      "history_matches_feed": true,
+      "no_coupon": "50.10"
+    },
+    "reidentified-compatibility": {
+      "state": "applicable_not_reproduced",
+      "issues": [
+        "non_application_evidence_is_not_receipt",
+        "application_claims_not_bound_to_direct_receipt"
+      ],
+      "expected_issue": "non_application_evidence_is_not_receipt",
+      "payable": null,
+      "original_application_retained": true,
+      "history_matches_feed": true,
+      "no_coupon": "50.10"
+    },
+    "renamed-compatibility": {
+      "state": "applicable_not_reproduced",
+      "issues": [
+        "non_application_evidence_is_not_receipt",
+        "application_claims_not_bound_to_direct_receipt"
+      ],
+      "expected_issue": "non_application_evidence_is_not_receipt",
+      "payable": null,
+      "original_application_retained": true,
+      "history_matches_feed": true,
+      "no_coupon": "50.10"
+    },
+    "relabeled-eligibility": {
+      "state": "applicable_not_reproduced",
+      "issues": [
+        "non_application_evidence_is_not_receipt",
+        "application_claims_not_bound_to_direct_receipt"
+      ],
+      "expected_issue": "non_application_evidence_is_not_receipt",
+      "payable": null,
+      "original_application_retained": true,
+      "history_matches_feed": true,
+      "no_coupon": "50.10"
+    },
+    "relabeled-compatibility": {
+      "state": "applicable_not_reproduced",
+      "issues": [
+        "non_application_evidence_is_not_receipt",
+        "application_claims_not_bound_to_direct_receipt"
+      ],
+      "expected_issue": "non_application_evidence_is_not_receipt",
+      "payable": null,
+      "original_application_retained": true,
+      "history_matches_feed": true,
+      "no_coupon": "50.10"
+    },
+    "replay": {
+      "state": "applicable_not_reproduced",
+      "issues": [
+        "receipt_lineage_mismatch"
+      ],
+      "payable": null,
+      "original_receipt_retained": true,
+      "prior_payable_historical_only": true
+    }
+  },
+  "collection_state": "staged",
+  "temporary_storage": true,
+  "blocked_edges": [],
+  "notifications_sent": 0
+}

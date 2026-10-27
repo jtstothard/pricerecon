@@ -529,3 +529,146 @@ is unchanged. No test rerun was needed for that documentation-only merge. The
 temporary `.venv` symlink was removed at handoff; the existing parent environment
 and ignored frontend dependency symlink were left intact. No ticket09 status or
 integration-branch write was performed by this repair.
+
+## Receipt-provenance repair merger acceptance — 2026-10-27
+
+**Ticket09 is closed for offline implementation.** The original receipt-provenance
+failure was independently reproduced before merging, then the same substitutions
+were withheld by the merged repair. This acceptance does not close live coupon
+success or the later 07 correction transaction/UI integration gate.
+
+### Identity, ancestry and source review
+
+Integration `/Users/jay/.t3/worktrees/pricerecon/watch-category-integration`,
+branch `integration/watch-category-discovery`, was clean at requested
+`61ab075703e64b9589deb34b12f8acbacd929972`. Source
+`/Users/jay/.t3/worktrees/pricerecon/t3-a4ddf79d`, branch
+`t3/repair-ticket09-provenance`, was clean at requested
+`d2ab666b9bc616c8172ebdd39b5194cf6aa2b623`. Integration was already an
+ancestor of source. Explicit `git merge --no-ff --no-edit d2ab666...` produced
+`5a3124e9f059e87a3bf5cb4e7925f7a85fb43422`, with the requested integration
+and source as first and second parents. There were no conflicts, and
+`git diff --quiet d2ab666 HEAD` confirmed identical merged/source trees before
+this acceptance documentation. No application repair was made by the merger.
+
+Read the spec/issue09, accepted public-discounts resolution/research, engineering
+standard, implementation environment, original merger findings and complete repair
+section. Reviewed the full source/probe diff against integration:
+
+- `CheckoutReceipt` requires an explicit observation, whose exact context,
+  eligibility, ordered promotion set, before/after values, selected member,
+  allocations, terms fingerprint, revisions and policies bind the proposed
+  application and its verified no-coupon base. A role token alone is insufficient.
+- Opportunity, terms, compatibility and eligibility IDs, inputs and provenance
+  roots are excluded from receipt/dependent support. Exact retained source-field
+  fingerprints also reject new IDs/roots for the same field. Locators are opaque
+  coordinates: no substring or label grants a receipt role. The opaque-coordinate
+  positive control proves that checkout-named fields are not required.
+- Direct seller extraction, observation time, acquisition origin, retention,
+  context and provenance bind application/context/component/FX/allocation claims.
+  Copied/AI support, missing or reused origins, mismatched values/context/lineage
+  and replayed receipts withhold payable. These checks validate acquisition
+  assertions; they do not authenticate a collector inventing a complete quote.
+- Existing substitution assertions and monetary controls remain. The new receipt
+  is explicitly removed in each entire-provenance substitution, and the genuine
+  shipping control supplies its independently retained changed quote. Existing
+  positive stack/basket fixtures add matching observed quotes without relaxing
+  their result assertions. No tests/assertions were removed or weakened, skipped,
+  marked xfail or suppressed. The shared cost engine still owns payable/FX
+  reconciliation; no cost-engine or frontend implementation changed.
+- Persisted successes without the new receipt are withdrawn on read, retaining
+  original evidence and historical cost through later supersession.
+
+### Independent red/green and combined verification
+
+Before merge, ran the **unchanged original** `tests.monitoring.coupon_merger_probe`
+from integration at `61ab075`, using the exact cleared-environment command in the
+original merger section. Exit **1** named both
+`compatibility-as-receipt` and `eligibility-as-receipt`: each was still a verified
+GBP45.10 with no independent checkout evidence. The GBP47.20 changed-shipping
+and GBP50.10 base controls passed first. The new
+[pre-repair receipt](artifacts/watch-coupons/merger-repair-red-provenance.json)
+is separate from, and does not overwrite, the original merger evidence.
+
+After merging, using the existing parent's Python environment and installed
+dependencies only:
+
+- **85 passed in 72.80s**, using the exact seven-file cleared-environment pytest
+  command in the repair section above: 48 baseline, 12 coupon, 13 history and
+  12 tracking workflows. No skips or xfails.
+- The original three-case probe exited **0**. Both substitutions now retain
+  opportunity/terms/eligibility/application evidence but expose
+  `applicable_not_reproduced`, `application_receipt_missing` and null payable in
+  matching feed/history responses. The genuine newly quoted shipping result
+  remains **GBP47.20**, and every public base remains **GBP50.10**.
+  [Merged probe receipt](artifacts/watch-coupons/merger-repair-provenance.json).
+- `tests.monitoring.coupon_workflows receipt_boundary_controls` exited **0**:
+  all **23** retained boundary/control/replay results pass, including genuine
+  opaque-coordinate **GBP45.10**, unchanged GBP50.10 base, retained rejected
+  payloads and matching API history. [Merged control receipt](artifacts/watch-coupons/merger-repair-controls.json).
+- Focused Ruff passed the six repaired Python files; focused mypy
+  `--follow-imports=silent` passed the three repaired source files, with inherited
+  unused-override notes only. `git diff --check 61ab075..HEAD` passed.
+
+The post-merge standalone commands were:
+
+```sh
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  -m tests.monitoring.coupon_merger_probe \
+  /tmp/pricerecon-ticket09-merger-iQqjJZ/post-repair-provenance.json
+
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  -m tests.monitoring.coupon_workflows receipt_boundary_controls \
+  /tmp/pricerecon-ticket09-merger-iQqjJZ/post-repair-controls.json
+```
+
+Before merging, also seeded a marked temporary database with pre-repair
+`coupon_workflows persistence_before`, through normal execution and API. Its
+stored original was `reproduced_at_observation`, GBP45.10, with no receipt field.
+After merge, a fresh guarded process checked both restart feed/history and then
+ordinary no-coupon reacquisition/history. Both reads expose `invalidated`, null
+payable and `application_receipt_missing`; supersession additionally records
+`source_revision_superseded`. The complete original application and GBP45.10
+cost remain historical, while base GBP50.10 is still verified at observation.
+[Merged legacy receipt](artifacts/watch-coupons/merger-repair-legacy.json).
+The local diagnostic script is retained at
+`/tmp/pricerecon-ticket09-merger-iQqjJZ/legacy_probe.py`, with marked storage at
+`/tmp/pricerecon-offline-ticket09-merger-b712g5x0`. Its first attempt compared
+the full public summary to a two-field money object and stopped at that diagnostic
+shape error; corrected assertions check state, amount and currency. No product
+code or existing assertion was changed to obtain the passing rerun.
+
+All retained merger probes report `collection_state: staged`, temporary storage,
+`blocked_edges: []` and `notifications_sent: 0`. The combined suite uses its
+existing guarded harness and captured notification transports.
+
+### Reused proof and remaining gates
+
+The repair delta contains no `frontend`, browser-driver or fixture-server change.
+Their exact tree equality was checked against pre-merge integration, so the
+dated **25 frontend tests**, production build and browser receipts above are
+reused. No new frontend/build/browser/buyer proof is claimed; no preview tools or
+browser session were used. Retained desktop/narrow PNG hashes still match the
+original merger record. The existing ESLint10 missing-config blockage remains.
+
+Ticket09's local issue and implementation graph are closed with this dated
+evidence. **07 correction integration remains pending until that active slice
+lands:** connect and verify its append/invalidation transaction, UI and
+overlapping correction/acquisition against coupon lineage. Present checks cover
+the accepted acquisition/revision/policy seam only. Active07/10 worktrees and the
+original dirty parent were untouched; source remains clean at its requested
+HEAD. No 07/10 implementation, later-ticket claim or other integration writer
+was introduced. Ticket12 remains blocked by other dependencies and complete
+workflow acceptance requirements.
+
+Collection remains staged. Real checkout application, production adapter mapping
+and direct-capture semantics, source access/rights/retention, freshness, qualified
+comparisons/savings, operating limits, buyer walkthrough and activation/deployment
+remain separate unproven gates. No installs, external network/live acquisition,
+credentials/accounts, production DB, activation/deploy, push, PR, delegation or
+unrelated cleanup occurred. Only local history-preserving merge, deterministic
+verification, retained receipts and acceptance documentation were performed.

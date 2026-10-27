@@ -1,0 +1,44 @@
+{
+  "fixture": "original synthetic 61ab075 role-less persisted coupon read by merged repair",
+  "cases": {
+    "restart": {
+      "state": "invalidated",
+      "issues": [
+        "application_receipt_missing"
+      ],
+      "lineage": "observation_only",
+      "payable": null,
+      "historical_total": {
+        "amount": "45.10",
+        "currency": "GBP"
+      },
+      "original_application_retained": true
+    },
+    "superseded": {
+      "state": "invalidated",
+      "issues": [
+        "application_receipt_missing",
+        "source_revision_superseded"
+      ],
+      "lineage": "superseded",
+      "payable": null,
+      "historical_total": {
+        "amount": "45.10",
+        "currency": "GBP"
+      },
+      "original_application_retained": true
+    }
+  },
+  "public_no_coupon": {
+    "state": "verified_at_observation",
+    "amount": "50.10",
+    "currency": "GBP",
+    "scenario_id": "c0cb59efe5fd626c3494ae8fbdf7a0eb4044c8dbee2518a6acf365b30942d085",
+    "scenario_revision": 2,
+    "reason": "Cost at observation only; freshness and comparison acceptance remain unvalidated."
+  },
+  "collection_state": "staged",
+  "temporary_storage": true,
+  "blocked_edges": [],
+  "notifications_sent": 0
+}
