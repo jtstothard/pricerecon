@@ -7,6 +7,11 @@ checkout was not edited or used for application execution. Only its existing Pyt
 environment was reused, with this checkout's source on `PYTHONPATH`. Frontend
 dependencies are symlinked to the integration checkout. No installs were performed.
 
+Implementation commit: `9343548`. Before handoff, merged latest integration tip
+`15beae4` in `c135131` and confirmed ancestry. That merge changes only the earlier
+monitoring browser receipt; the tested application/test source is identical to the
+implementation commit. No runtime rerun is needed for that documentation-only merge.
+
 ## Implemented boundary
 
 `/discover` and desktop/mobile navigation expose illustrated leads, editable
