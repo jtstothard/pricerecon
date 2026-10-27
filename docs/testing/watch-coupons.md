@@ -186,11 +186,48 @@ gates and buyer review. This branch grants no operational authority.
 
 ## Pre-handoff integration check — 2026-10-27
 
-Merged latest `integration/watch-category-discovery` again: **Already up to date**
-at `375a4a4` (parent claim commit). Both that integration tip and closed04 base
-`c682d568b3ce49e99beaf9d1d325bea75165d954` are ancestors. No conflicts or new
-sibling changes landed, so the verified combined behavior is the same tree.
-The final fixture-only wording correction (consistent ordered-stack/two-watch
-terms literals) was followed by **10 coupon workflows passed in 12.99s** and
-focused Ruff passed again. No source behavior changed after the 58-test pass.
-The receipt and three retained browser artifacts are committed with the slice.
+The integration tip advanced during final handoff to `bd5a3fb` (ticket06's
+committed observation history). The first refresh was refused because coupon
+edits were uncommitted; no merge ran over them. Committed the completed coupon
+slice locally as `9b9f875`, then merged the committed integration tip. This
+corrects the premature "Already up to date" wording in the initial slice commit.
+
+Resolved three conflicts by preserving **both** read-only endpoints and **both**
+fixture/driver modes. Coupon and history fixture switches are mutually exclusive
+to keep fixture identity and synthetic data unambiguous; existing modes remain.
+Automatic merges retained ticket06's acquisition/history/schema/typing/UI work
+and the coupon feed/storage/wiring. No sibling dirty work was read or imported.
+Rebuilt the combined frontend before new application imports.
+
+Before this refresh, the final fixture-only wording correction (consistent
+ordered-stack/two-watch terms literals) was followed by **10 coupon workflows
+passed in 12.99s** and focused Ruff passed again. No coupon source behavior
+changed after the original 58-test pass.
+
+### Combined verification
+
+- **65 passed in 92.84s** using the full command above plus
+  `tests/test_history_workflow.py`: all 48 retained workflows, 10 coupon workflows
+  and 7 ticket06 history workflows. No skips/xfails or weakened checks.
+- Combined frontend build and all 25 frontend tests passed. Focused Ruff passed
+  15 files; focused mypy passed 11 source files, including the merged history
+  models/storage, with inherited unused-override notes only.
+- Re-ran both browser workflows on the merged tree: coupons on **8889**, history
+  on **8890**, with separate fixture storage and browser sessions. Both passed
+  fixture identity, API/UI assertions, reload, desktop/narrow layout, legacy
+  navigation and browser-error checks. The coupon run includes the complete
+  £45.10 receipt and unchanged £50.10 public base; the history run includes all
+  retained capture/gap/age/policy evidence assertions. Updated retained coupon
+  screenshots from this combined run. The additional history receipt is retained
+  beside them as `merged-history-receipt.json`; full temporary artifacts are at
+  `/tmp/pricerecon-ticket09-browser-merged` and
+  `/tmp/pricerecon-ticket09-history-merged`.
+- Both combined fixture servers shut down: coupon `searches=3`, history
+  `searches=10`; each reported `blocked_edges=[]`, `notifications_sent=0` and
+  temporary storage. No automatic collection or live proof.
+
+Integration then advanced to `b97f37a` with the parent's ticket06 merger receipt
+and retained diagnostic. Its documented **derived-capture independence gap**
+remains open for the ticket06 owner; the 65 passing workflows do not close that
+additional failing acceptance probe or certify history independence. This worker
+reviewed the record and did not implement ticket06's repair or repeat the probe.

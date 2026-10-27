@@ -1,17 +1,17 @@
 // Validate capture-bound qualification states before they reach the buyer feed.
-function record(value: unknown): Record<string, unknown> {
+export function record(value: unknown): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new Error('Invalid discovery record')
   return Object.fromEntries(Object.entries(value))
 }
-function text(value: unknown): string {
+export function text(value: unknown): string {
   if (typeof value !== 'string') throw new Error('Invalid discovery text')
   return value
 }
-function list<T>(value: unknown, parse: (item: unknown) => T): T[] {
+export function list<T>(value: unknown, parse: (item: unknown) => T): T[] {
   if (!Array.isArray(value)) throw new Error('Invalid discovery list')
   return value.map(parse)
 }
-function choice<const T extends readonly string[]>(value: unknown, allowed: T): T[number] {
+export function choice<const T extends readonly string[]>(value: unknown, allowed: T): T[number] {
   const found = allowed.find(item => item === value)
   if (found === undefined) throw new Error('Unsupported discovery state')
   return found
@@ -22,11 +22,11 @@ function amount(value: unknown): string | null {
   if (!/^\d+(?:\.\d+)?(?:e[+-]?\d+)?$/i.test(result)) throw new Error('Invalid discovery amount')
   return result
 }
-function integer(value: unknown): number {
+export function integer(value: unknown): number {
   if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0) throw new Error('Invalid discovery count')
   return value
 }
-function date(value: unknown): string {
+export function date(value: unknown): string {
   const result = text(value)
   if (Number.isNaN(Date.parse(result))) throw new Error('Invalid discovery timestamp')
   return result
@@ -59,7 +59,7 @@ export function parsePreferences(value: unknown) {
   }
 }
 
-function nullableText(value: unknown): string | null {
+export function nullableText(value: unknown): string | null {
   return value === null ? null : text(value)
 }
 function resolution(value: unknown) {
@@ -74,7 +74,7 @@ function resolution(value: unknown) {
     }),
   }
 }
-function configuration(value: unknown) {
+export function configuration(value: unknown) {
   const config = record(value)
   return { ...resolution(config), id: text(config.id), revision: integer(config.revision), policy_version: text(config.policy_version) }
 }
@@ -99,7 +99,7 @@ function fieldEvidence(value: unknown) {
       destination: nullableText(context.destination), currency: nullableText(context.currency), quantity: context.quantity === null ? null : integer(context.quantity) },
   }
 }
-function binding(value: unknown) {
+export function binding(value: unknown) {
   const item = record(value)
   return { id: text(item.id), revision: integer(item.revision), configuration_id: text(item.configuration_id),
     configuration_revision: integer(item.configuration_revision), merchant_key: nullableText(item.merchant_key),
@@ -135,7 +135,7 @@ function moneyMap(value: unknown) {
     return [currency, parsed]
   }))
 }
-function costScenario(value: unknown) {
+export function costScenario(value: unknown) {
   const cost = record(value), total = cost.total === null ? null : record(cost.total)
   const state = choice(cost.state, ['verified_at_observation', 'conditional', 'unknown'])
   if ((state === 'unknown') !== (total === null)) throw new Error('Inconsistent cost state')
@@ -172,7 +172,7 @@ function costScenario(value: unknown) {
     }) }
 }
 
-function offer(value: unknown) {
+export function offer(value: unknown) {
   const item = record(value)
   choice(item.authenticity, ['unknown']); choice(item.internal_health, ['unknown'])
   return { id: text(item.id), revision: integer(item.revision), binding_id: text(item.binding_id),
@@ -306,7 +306,7 @@ export function parseDiscoveryFeed(value: unknown) {
         outcomes: list(capture.outcomes, raw => {
           const outcome = record(raw)
           return { source: text(outcome.source),
-            state: choice(outcome.state, ['success', 'success_empty', 'blocked', 'capped', 'failed', 'not_attempted']),
+            state: choice(outcome.state, ['success', 'success_empty', 'partial', 'cache_reuse', 'blocked', 'capped', 'failed', 'not_attempted']),
             listing_count: integer(outcome.listing_count),
             reason: outcome.reason === null ? null : text(outcome.reason) }
         }) }

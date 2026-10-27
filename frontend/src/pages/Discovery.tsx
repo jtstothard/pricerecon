@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { loadDiscovery, savePreferences, type DiscoveryCandidate, type DiscoveryFeed, type PreferenceProfile } from '../lib/discovery'
 import '../styles/discovery.css'
+import { ObservationHistory } from '../components/discovery/ObservationHistory'
 
 const strengthLabel = { hard: 'Hard constraint', soft: 'Soft preference', unset: 'Unset' }
 
@@ -148,6 +149,7 @@ function Candidate({ candidate }: { candidate: DiscoveryCandidate }) {
     </div>
     <details className="discovery-evidence">
       <summary>Price and evidence</summary>
+      <ObservationHistory candidateId={candidate.id} />
       <div className="discovery-qualification">
         {candidate.configurations.length === 0 && <p>Configuration unresolved: no typed evidence supplied.</p>}
         {candidate.configurations.map(config => <section key={config.id}>

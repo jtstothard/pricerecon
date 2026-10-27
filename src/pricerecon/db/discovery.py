@@ -18,6 +18,7 @@ from pricerecon.models.discovery import (
     PreferenceProfile,
     PreferenceUpdate,
 )
+from pricerecon.models.history import HistorySummary
 from pricerecon.models.qualification import (
     Configuration,
     MerchantEvidenceReport,
@@ -211,7 +212,7 @@ def save_capture(capture: DiscoveryCapture, candidates: list[DiscoveryCandidate]
             )
 
 
-def _hydrate(connection: sqlite3.Connection, candidate: DiscoveryCandidate) -> None:
+def hydrate_candidate(connection: sqlite3.Connection, candidate: DiscoveryCandidate) -> None:
     candidate.bindings = [
         SelectionBinding.model_validate_json(row[0])
         for row in connection.execute(
@@ -264,7 +265,10 @@ def _hydrate(connection: sqlite3.Connection, candidate: DiscoveryCandidate) -> N
 
 
 def get_feed() -> DiscoveryFeed:
-    with closing(sqlite3.connect(DB_PATH)) as connection:
+    from pricerecon.db.history import get_history
+
+    with closing(sqlite3.connect(DB_PATH)) as connection, connection:
+        connection.execute("BEGIN")
         captures = [
             DiscoveryCapture.model_validate_json(row[0])
             for row in connection.execute(
@@ -276,7 +280,14 @@ def get_feed() -> DiscoveryFeed:
         for row in rows:
             candidate = DiscoveryCandidate.model_validate_json(row[0])
             if candidate.id not in latest:
-                _hydrate(connection, candidate)
+                hydrate_candidate(connection, candidate)
+                history = get_history(candidate.id, connection=connection)
+                if history is not None:
+                    candidate.history = HistorySummary(
+                        observation_count=len(history.observations),
+                        last_good=history.last_good,
+                        validity=history.history_state,
+                    )
                 latest[candidate.id] = candidate
     for candidate in latest.values():
         candidate.public_delivered_total = public_summary(candidate.offers)
