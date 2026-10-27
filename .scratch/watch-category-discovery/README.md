@@ -14,7 +14,7 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 | [04: UK delivered cost](issues/04-show-uk-delivered-cost.md) | 03 | Closed |
 | [05: Exact tracking](issues/05-track-exact-products.md) | 04 | Closed |
 | [06: Observation history](issues/06-show-observation-history.md) | 04 | Closed |
-| [07: Corrections](issues/07-correct-identities.md) | 05, 06 | Ready — unclaimed |
+| [07: Corrections](issues/07-correct-identities.md) | 05, 06 | In progress |
 | [08: Comparisons](issues/08-compare-qualified-offers.md) | 07 | Blocked |
 | [09: Public coupons](issues/09-evaluate-public-coupons.md) | 04 | Open — receipt-provenance repair required |
 | [10: Shared limits](issues/10-prioritise-tracking.md) | 05 | In progress |
