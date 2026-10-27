@@ -410,3 +410,110 @@ claimed. The existing large frontend chunk warning and previously recorded
 repository-wide quality limitations remain. Collection stays staged; source
 qualification, calibration and live/buyer acceptance are separate gates.
 Ticket closure and integration acceptance remain with the parent merger.
+
+## Lineage repair merger acceptance: 2026-10-27
+
+**Ticket06 is accepted for source implementation and deterministic offline
+verification only.** Both integration and source checkouts were clean before
+merging. Integration branch `integration/watch-category-discovery` was at
+`a69c4eedec3630769416bfac2a3af552705d993b`; source branch
+`t3/fix-ticket06-lineage` was at `238019d5f264c28f53b26557371bf0709af51b30` and
+contained that integration commit (zero integration-only commits). The
+`--no-ff` merge completed without conflicts as
+`6b93262cc11307d2ed78860add98924a3c8e7805`, with those exact two parents. Its
+tracked tree matches source HEAD. Full history includes implementation `a856c08`,
+the retained interrupted receipt `39a0687` and both integration refresh merges.
+No application-source repair or conflict resolution was needed.
+
+### Current combined verification
+
+Read the accepted spec, issue06, original merger gap/reproducer above, repair
+response, engineering standard and watch-proof protocol. Used only the existing
+Python environment/dependencies, this checkout's source and the guarded normal
+application seam. All seven current safe workflow modules ran in one cleared
+environment with the documented existing Node 24 binary on PATH:
+
+```sh
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python -m pytest -q \
+  tests/test_monitoring_workflow.py tests/test_discovery_workflow.py \
+  tests/test_qualification_workflow.py tests/test_cost_workflow.py \
+  tests/test_history_workflow.py tests/test_coupon_workflow.py \
+  tests/test_tracking_workflow.py
+```
+
+**83 passed in 68.73s**, in one uninterrupted invocation: all 77 prior cases plus
+six new history workflows. No test was removed, skipped, xfailed or weakened.
+The earlier interrupted post-05/09 run is not counted as proof. Full repository
+pytest was not run: legacy fixtures may access configured storage/live edges.
+Fresh guarded processes use marked temporary SQLite, controlled clock/reports,
+paused automatic checks and captured transports; outgoing edges are blocked
+before application imports.
+
+The exact original `tests.monitoring.history_merger_probe` module is unchanged
+and was run separately against the merged tree:
+
+```sh
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  -m tests.monitoring.history_merger_probe \
+  "$PWD/docs/testing/artifacts/watch-history/merger-repair-derived-copy.json"
+```
+
+**Passed, exit 0.** The [merged-tree receipt](artifacts/watch-history/merger-repair-derived-copy.json)
+retains the original `supported_at_capture` / `initial` record. The derived copy
+is `unqualified` / `not_comparable`, names that original observation as
+`duplicate_of`, and keeps its original observation time. Original offer equality
+is true, last-good age is 3600 seconds, usual price is unavailable and savings
+null. Collection is staged, temporary storage true, blocked outgoing attempts
+empty and notifications sent zero.
+
+Focused Ruff passed the four changed source files, two changed workflow files
+and unchanged original probe (seven files). Focused
+`mypy --follow-imports=silent` passed `db/history.py`, `db/history_lineage.py`,
+`models/costs.py` and `models/qualification.py` (four source files); only existing
+unused-override notes appeared. Both commands used the same cleared environment
+and existing Python above. Diff whitespace checks pass. No suppression or
+quality threshold was changed; prior schema-bootstrap/repository Ruff debt and
+ESLint missing configuration remain recorded.
+
+### Checklist evidence and retained frontend proof
+
+- Existing observation, gap, cold-start and migration/restart workflows pass
+  alongside tracking/coupon and legacy workflows. Exact revision withdrawals
+  retain the original offers, costs and dependencies rather than rewriting them.
+- The six added workflows pass direct, transitive, unknown, cyclic/foreign,
+  cached/replayed and cross-route lineage cases. The retained cache envelope
+  prevents a later success label or extraction metadata from inventing a new
+  temporal acquisition. Unknown ownership is withheld rather than guessed.
+- Fresh direct price/availability remains supported and records an increase
+  when older configuration/selection definitions are reused, including partial
+  direct acquisition. Re-extracted shipping retains the original cost age while
+  the genuinely fresh offer remains supported. Original observation equality
+  is checked after recaptures, API reads and restart.
+- Frontend, browser drivers/fixtures and original probe match all 15 applicable
+  SHA-256 entries in the retained tracking source manifest. The merge adds no
+  frontend changes, and its tree equals the reviewed repair source. The prior
+  **25 frontend tests**, **638-module production build** and retained desktop/
+  narrow browser receipts remain applicable and were reused. No browser or
+  preview session was launched. The retained large-chunk warning remains;
+  browser fixture success is not buyer acceptance.
+
+**06 closed for offline scope; 07 READY and unclaimed**, since 05 is already
+closed. No 07 implementation or claim occurred. **09 remains separately open
+for receipt-provenance repair**; its known failing acceptance probe was not run
+or reclassified as passing by the 83-case suite. Active 09/10 worktrees and the
+original dirty parent were not edited; 10 remains in progress. Source worktree
+remains clean at the exact requested HEAD.
+
+Acquisition-origin metadata is still an adapter assertion needing real-source
+qualification. Synthetic dates establish no real longitudinal history or
+calibrated freshness/sufficiency. Collection stays staged; source rights,
+retention, coverage, calibration, operating limits, live/buyer acceptance,
+activation and deployment remain separate gates. No installs, network/live
+collection, credentials/accounts, production database access, activation,
+deployment, push, PR, delegation or unrelated cleanup occurred. Only the
+authorized local merge, probe artifact and dated receipt/tracker commit changed
+integration.
