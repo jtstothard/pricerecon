@@ -1,0 +1,53 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_independent_retailer_variants_keep_movement_price_and_missing_currency_separate _
+
+    def test_independent_retailer_variants_keep_movement_price_and_missing_currency_separate():
+>       run_source("retailer")
+
+tests/test_source_evidence_workflow.py:33: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'retailer', storage = None
+
+    def run_source(name, storage=None):
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-m", "tests.monitoring.source_evidence_workflows", name]
+            + ([str(storage)] if storage else []),
+            cwd=root,
+            env={
+                "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                "PYTHONDONTWRITEBYTECODE": "1",
+            },
+            capture_output=True, text=True, timeout=40, check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Loaded 0 watches into scheduler
+E         Traceback (most recent call last):
+E           File "<frozen runpy>", line 203, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/tests/monitoring/source_evidence_workflows.py", line 231, in <module>
+E             asyncio.run(globals()[sys.argv[1]]())
+E             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+E             return runner.run(main)
+E                    ~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+E             return self._loop.run_until_complete(task)
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+E             return future.result()
+E                    ~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/tests/monitoring/source_evidence_workflows.py", line 216, in retailer
+E             assert len(feed["candidates"]) == 2, feed
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E         AssertionError: {'category': 'watches', 'collection_state': 'staged', 'collection_reason': 'Live collection awaits explicit source policy, permissions and activation.', 'candidates': [], 'captures': [{'correction_input_revision': 0, 'publication_state': 'accepted', 'history_contract_version': 'observation-history-v1', 'capture_id': '70c6c692-b527-4544-a53a-546c2b8b1a7d', 'captured_at': '2026-10-27T12:00:00Z', 'request': {'category': 'watches', 'query': 'SN0144', 'sources': ['shopify'], 'source_queries': {}}, 'admission': {'mode': 'offline_verification', 'policy_reference': 'ticket11-original-fixtures', 'permission_reference': 'original-synthetic-data', 'activation_reference': 'guarded-child'}, 'outcomes': [{'source_evidence': None, 'source': 'shopify', 'route': 'connector_search_v1', 'state': 'blocked', 'listing_count': 0, 'reason': 'attempt_accounting_unavailable', 'completeness': 'unknown', 'reused_capture_id': None}]}], 'preferences': {'category': 'watches', 'revision': 0, 'updated_at': None, 'values': {'compact_max_width_mm': None, 'compact_strength': 'hard', 'colourful_dials': [], 'colourful_strength': 'soft', 'budget_gbp': None, 'budget_strength': 'hard'}, 'interpretation': [{'field': 'compact', 'strength': 'unset', 'meaning': 'Compact is unset; choose a maximum case width.'}, {'field': 'colourful', 'strength': 'unset', 'meaning': 'Colourful is unset; choose the dial colours you want.'}, {'field': 'budget', 'strength': 'unset', 'meaning': 'Budget is unset; choose a public UK delivered budget.'}]}, 'tracking': []}
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python', '-m', 'tests.monitoring.sou...strength\': \'unset\', \'meaning\': \'Budget is unset; choose a public UK delivered budget.\'}]}, \'tracking\': []}\n').returncode
+
+tests/test_source_evidence_workflow.py:21: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_source_evidence_workflow.py::test_independent_retailer_variants_keep_movement_price_and_missing_currency_separate
+1 failed, 2 deselected in 0.80s

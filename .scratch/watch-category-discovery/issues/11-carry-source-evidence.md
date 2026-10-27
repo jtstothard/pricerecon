@@ -10,11 +10,11 @@
 
 **Parent:** [Trustworthy UK watch discovery alongside existing monitoring](../../../docs/specs/watch-category-discovery.md)
 
-- [ ] Extend existing adapters only where needed to preserve selected variation, issuer/retrieval lineage, seller/condition/purchase mode, destination/availability, missing fields and acquisition outcomes through storage/API/UI.
-- [ ] Use retained or synthetic permitted fixtures for AliExpress browser-first and eBay Browse reviewed lead lanes and a contrasting retailer case; retrieval success alone cannot qualify selected SKU, stock, UK total or history rights.
-- [ ] Account visibly for mandatory AliExpress, eBay/second-hand, brand-direct, UK retail, UK-shipping international and search/aggregator/community families, retaining blocked/unqualified states and paging/capture limits.
-- [ ] Keep access/retention prerequisites explicit, route all attempts/retries/fallbacks through shared admission, and leave staged acquisition lanes inactive unless separately authorised.
-- [ ] Contract tests exercise real adapter result shapes and failure states at the application boundary without new network calls, credentials, account operations or archived merchant content beyond permitted evidence.
+- [x] Extend existing adapters only where needed to preserve selected variation, issuer/retrieval lineage, seller/condition/purchase mode, destination/availability, missing fields and acquisition outcomes through storage/API/UI.
+- [x] Use retained or synthetic permitted fixtures for AliExpress browser-first and eBay Browse reviewed lead lanes and a contrasting retailer case; retrieval success alone cannot qualify selected SKU, stock, UK total or history rights.
+- [x] Account visibly for mandatory AliExpress, eBay/second-hand, brand-direct, UK retail, UK-shipping international and search/aggregator/community families, retaining blocked/unqualified states and paging/capture limits.
+- [x] Keep access/retention prerequisites explicit, route all attempts/retries/fallbacks through shared admission, and leave staged acquisition lanes inactive unless separately authorised.
+- [x] Contract tests exercise real adapter result shapes and failure states at the application boundary without new network calls, credentials, account operations or archived merchant content beyond permitted evidence.
 
 ## Verification and authority
 
@@ -42,3 +42,27 @@ This ticket stays blocked and unclaimed. No 11 implementation occurred.
 blocking tickets are now closed for offline scope. This ticket is claimed for
 one isolated implementer; no source11 implementation is asserted here. Shared
 admission and staged activation constraints remain authoritative.
+
+### Implementation handoff — 2026-10-27, parent acceptance pending
+
+All five implementation checklist items have deterministic source proof in the
+isolated `t3/carry-source-evidence` branch. Existing AliExpress browser, eBay Browse
+and Shopify adapters feed native acquisition/storage/API/UI with original
+synthetic external payloads. Six mandatory families / 16 routes, blocked signing
+and source-use prerequisites, selected versus unbound prices, missing fields,
+pagination/truncation and source failures remain explicit. No acquisition lane is
+activated and no real Militado/Merkur evidence is promoted.
+
+The implementation's required local commits and integration merges were explicitly
+authorised by the current implement-spec task, overriding the older no-commit
+wording above. The latest integration includes08 and its type-factory repair.
+186 guarded workflows passed before that type-only refresh; 38 focused source /
+assessment / tracking workflows and 17-file uncached mypy pass afterwards.
+37 limiter/browser contracts, 25 frontend checks, build and actual merged desktop /
+narrow source and assessment UI proof pass. Existing ESLint missing-config and
+inherited Ruff diagnostics are retained separately. See the [dated source-evidence
+receipt](../../../docs/testing/watch-source-evidence.md) for exact identities,
+commands, hashes, red/green results and remaining gates.
+
+**Status remains in-progress.** The parent merger owns independent acceptance and
+closure; ticket12, buyer/live/rights/operating and activation gates remain separate.

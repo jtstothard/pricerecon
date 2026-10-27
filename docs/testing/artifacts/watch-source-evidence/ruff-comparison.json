@@ -1,0 +1,22 @@
+{
+  "added": [],
+  "removed": [
+    [
+      "src/pricerecon/connectors/ebay.py",
+      "I001",
+      "Import block is un-sorted or un-formatted"
+    ],
+    [
+      "src/pricerecon/connectors/ebay.py",
+      "I001",
+      "Import block is un-sorted or un-formatted"
+    ],
+    [
+      "src/pricerecon/connectors/shopify.py",
+      "I001",
+      "Import block is un-sorted or un-formatted"
+    ]
+  ],
+  "current": 45,
+  "baseline": 48
+}
