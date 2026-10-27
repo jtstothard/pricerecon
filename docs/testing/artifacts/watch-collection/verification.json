@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-27",
+  "source_head": "b14500b",
+  "integration_ancestor": "75f8a3a778e901e79f5ce1a1b76a26692d42a343",
+  "application_suite": {
+    "passed": 96,
+    "seconds": 85.25,
+    "cleared_environment": true
+  },
+  "native_limiter_browser_contracts": {
+    "passed": 37,
+    "seconds": 0.19,
+    "existing_warnings": 10
+  },
+  "frontend_tests": 25,
+  "frontend_build": {
+    "passed": true,
+    "modules": 640,
+    "existing_chunk_warning": true
+  },
+  "focused_mypy": {
+    "passed": true,
+    "source_files": 13
+  },
+  "focused_ruff": {
+    "passed": true,
+    "files": 16,
+    "legacy_baseline_added_findings": 0
+  },
+  "frontend_lint": {
+    "state": "blocked",
+    "exit": 2,
+    "reason": "existing ESLint10 missing eslint.config.*"
+  },
+  "browser": {
+    "passed": true,
+    "session": "ticket10-collection-abae9f24",
+    "port": 8896,
+    "viewports": [
+      "1280x900",
+      "375x812"
+    ],
+    "closed": true
+  },
+  "fixture_shutdown": {
+    "exit": 130,
+    "reason": "intentional Ctrl-C",
+    "blocked_edges": [],
+    "notifications_sent": 0,
+    "temporary_storage": true
+  },
+  "activation": "staged",
+  "ticket_closed": false,
+  "pushed": false
+}

@@ -1,6 +1,6 @@
 {
   "date": "2026-10-27",
-  "session": "ticket10-collection-c1aac2db",
+  "session": "ticket10-collection-abae9f24",
   "port": 8896,
   "fixture": {
     "automatic_checks": false,
@@ -14,9 +14,9 @@
     "attempts": [
       {
         "attempted_at": "2026-10-27T13:00:00Z",
-        "context_id": "7b9e6de1-d06c-4dfa-ab15-e4ad5b1c351b",
+        "context_id": "61ed04ce-426b-4c01-b2c7-e833634ceef0",
         "evidence_state": "unrefreshed",
-        "id": "65d8aeab-665f-4ce4-9449-d9081f669e6d",
+        "id": "c94ae938-005b-4be3-b9ed-0681ce2807b2",
         "last_good_age_seconds": 3600,
         "last_good_at": "2026-10-27T12:00:00Z",
         "next_eligible_at": "2026-10-27T13:00:00Z",
@@ -28,9 +28,9 @@
       },
       {
         "attempted_at": "2026-10-27T12:00:00Z",
-        "context_id": "98080796-3333-4ef6-9fb1-60711e360026",
+        "context_id": "e6c7507f-5e28-477f-a2cf-a3d133bf4dda",
         "evidence_state": "unrefreshed",
-        "id": "4ccf56fd-db0a-493b-b858-61a83e0f5935",
+        "id": "ed7c9fc4-ac11-42e3-964c-0b6f5652fa94",
         "last_good_age_seconds": 3600,
         "last_good_at": "2026-10-27T12:00:00Z",
         "next_eligible_at": "2026-10-27T12:00:00Z",
@@ -42,9 +42,9 @@
       },
       {
         "attempted_at": "2026-10-27T12:00:00Z",
-        "context_id": "03f3c59f-3974-462f-a5d6-d9042157ce98",
+        "context_id": "cb11fa81-3d0c-4b39-9225-72eab7f24d30",
         "evidence_state": "observed_at_attempt",
-        "id": "b09042eb-34f2-4dfd-942f-1057cdb56230",
+        "id": "9eec6576-94b5-434c-959f-1ace35b49f79",
         "last_good_age_seconds": 3600,
         "last_good_at": "2026-10-27T12:00:00Z",
         "next_eligible_at": "2026-10-27T12:00:00Z",
@@ -56,9 +56,9 @@
       },
       {
         "attempted_at": "2026-10-27T12:00:00Z",
-        "context_id": "f6f9494b-b39b-4332-b67f-dfdb43c86ffa",
+        "context_id": "2ec3df94-2c69-466b-bc01-85d26a91b36b",
         "evidence_state": "observed_at_attempt",
-        "id": "ea283b67-2c38-43ea-b6c7-cc707bf3bac4",
+        "id": "2ab8c8ab-94ed-4857-8f37-1feb18a90377",
         "last_good_age_seconds": 3600,
         "last_good_at": "2026-10-27T12:00:00Z",
         "next_eligible_at": "2026-10-27T12:00:00Z",

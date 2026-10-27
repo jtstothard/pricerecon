@@ -170,3 +170,56 @@ closes its own fresh browser session; the fixture is stopped after verification.
 
 Final combined verification and integration refresh are recorded below before
 handoff. Ticket10 is not integrated into the parent branch or closed by this worker.
+
+## Final merged-tree verification — 2026-10-27
+
+Implementation commits `c4c5b31` and `b14500b`; local history-preserving merge
+`b7f4be03bd53987e25b03f62d7e5567f0f4b2ce8` includes integration
+`75f8a3a778e901e79f5ce1a1b76a26692d42a343`. Integration ancestry was confirmed
+again before the final test run. Both 06/09 committed repairs were consumed,
+without editing their worktrees, implementing their fixes, or changing their
+acceptance records.
+
+Final cleared-environment application suite: **96 passed in 85.25s**. This includes
+all 85 retained legacy/discovery/qualification/cost/history/coupon/tracking
+workflows and the 11 new collection workflows. Separate native limiter and
+external-browser contract suite: **37 passed in 0.19s**, with 10 existing Pydantic
+deprecation warnings. No real acquisition or transport was used.
+
+An initial merged run passed 93 and failed three checks. Two were the retained
+restart harness refusing macOS-parent `/var/folders/...` temp roots from children
+whose cleared environment resolves `/tmp`; the documented `env -i` invocation
+resolved these without changing the guard. One exposed this worker's readback
+projection replacing the existing `acquisition_partial_or_reused` reason. The
+projection now preserves existing withholding reasons when adding a collection
+refresh gap. The three targeted checks then passed in 3.58s before the final
+96-case rerun. An earlier development run overlapped model edits with child
+imports and produced transient missing-policy-field failures; no such run is
+presented as acceptance.
+
+**25 frontend tests pass**. TypeScript/Vite production build passes, **640 modules**;
+the retained large-chunk warning remains. Focused Ruff passes all new and
+previously-clean touched files (16 source/workflow files). The retained
+[baseline comparison](artifacts/watch-collection/ruff-baseline.json) shows no added
+Ruff findings in the other touched legacy files; the native limiter's import
+finding was removed. Focused `mypy --follow-imports=silent` passes all **13** touched
+application source files checked, with only pre-existing unused-override notes.
+Frontend lint still exits 2 because ESLint10 cannot find `eslint.config.*`; no
+suppression/config workaround was introduced. Full-repository pytest was not run
+because retained legacy fixtures may touch their configured DB/live edges; this
+receipt uses the guarded application suite and controlled contract tests.
+
+Final Chrome verification on source `b14500b` used isolated session
+`ticket10-collection-abae9f24`, own loopback port **8896**, desktop **1280x900** and
+narrow **375x812**. It passed all retained checks and closed that session. The
+fixture stopped afterward; final guard receipt: `blocked_edges: []`,
+`notifications_sent: 0`, `temporary_storage: true`. The process exits 130 on the
+intentional Ctrl-C after printing that receipt; no fixture server remains running.
+[UI receipt](artifacts/watch-collection/receipt.json) and
+[source manifest](artifacts/watch-collection/source-manifest.json) bind the proof
+to the tested application/fixture source and integration ancestor. Documentation
+and receipt commits afterward do not change those source hashes.
+
+No budget, freshness window, cadence, owner or production activation was inferred
+from these results. Ticket10 remains for parent review/integration/acceptance;
+this worker has not closed it or merged its branch back into integration.
