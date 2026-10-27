@@ -179,7 +179,7 @@ env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
   tests/test_tracking_workflow.py
 ```
 
-Final combined result: **58 passed in 87.37s**, all retained 48 application
+Pre-merge combined result: **58 passed in 87.37s**, all retained 48 application
 workflows plus all 10 tracking workflows. No application workflows were removed,
 skipped or xfailed. An earlier combined run passed 55 tests in 92.53s before the
 last three tracking tracers were added.
@@ -239,3 +239,59 @@ Real source rights, operational limits/freshness/cadence, coupon success, retain
 live history, ticket 07 corrections, live transport behavior and buyer walkthrough
 remain separate gates. The first-observation baseline and ambiguous-transport
 tradeoffs above describe implemented behavior, not invented buyer acceptance.
+
+## Final integration verification — 2026-10-27
+
+The completed standalone slice was locally committed as
+`d97673e634382572a5e5f47f489d61e0abe461e7`. Integration advanced during handoff:
+the history implementation/merger receipt landed through `b97f37a`, then the
+coupon implementation through `2b4686b`. Both were merged locally, in `d46ccac`
+and `c86bd5c`, preserving the sibling modules and their migration versions 1.7/1.8
+alongside tracking's reserved 1.6. Six first-round conflicts and two second-round
+fixture conflicts were resolved by preserving all components, schema init calls,
+controlled clocks and mutually exclusive tracking/history/coupon fixture modes.
+No sibling implementation was replaced or imported from a dirty checkout.
+
+Post-merge verification exposed the renamed public `hydrate_candidate` contract;
+tracking now calls that committed owner. Two additional target-seam red/green
+tracers exercised the new committed contracts:
+
+- A complete-looking selected-price report marked partial/cache reuse could
+  initially trigger a target. Tracking now withholds with
+  `acquisition_partial_or_reused`; it cannot reset/advance qualified price state.
+- An exact cost revision withdrawn through 06's existing append-only contract
+  could initially resume a pending target. Tracking now consumes those exact
+  configuration/binding/offer/cost withdrawals in assessment, read projection
+  and the atomic per-channel claim, with `evidence_revision_withdrawn` visible
+  through API/UI. This consumes the committed contract; it adds no history
+  projection or ticket 07 correction implementation.
+
+The final combined application command adds `tests/test_history_workflow.py`
+and `tests/test_coupon_workflow.py` to the guarded command above. Result:
+**77 passed in 126.92s**: retained 48 + tracking 12 + history 7 + coupon 10. No test
+was removed, skipped, xfailed or weakened. All 25 frontend tests pass. The final
+TypeScript/Vite build has 638 modules. Focused Ruff on 14 files and mypy on 11
+application source files pass. The retained 41 legacy Ruff findings and
+ESLint-config blocker remain unchanged.
+
+All three actual-browser flows pass after the merges: tracking on 8885 with two
+captured sends, history on 8895 with zero sends, and coupons on 8896 with zero
+sends. They cover desktop/375px layout and existing intent. The shared driver
+needed its evidence-panel locator narrowed after the new tracking editor became
+the first `details` element; the original assertion was retained against the
+intended evidence panel. The first coupon browser run failed that locator check;
+the rerun passed. Fixture identities were checked before edits, and fixture
+guards recorded zero escaped edges. All servers are stopped before handoff.
+
+Tracking continues to use a verified standalone no-coupon payable scenario. The
+merged coupon component, persisted application scenarios and evidence remain
+separate; this merge does not turn coupon claims into target-alert inputs or
+select a new eligibility policy. The documented coupon extension seam remains
+deliberate.
+
+The parent's ticket 06 derived-capture independence gap and ticket 09 receipt
+provenance gap remain owned by their original tickets. Their intentionally
+failing merger probes were preserved and were not reclassified as passing tests
+or fixed here. Passing 77 workflows proves the retained suite and this tracking
+slice, not those separate acceptance gates. Parent-owned ticket closure and
+live/buyer/activation gates remain open.

@@ -228,9 +228,9 @@ def main():
             )
             assert evaluate('document.body.textContent.includes("Known subtotal: GBP 48.00")')
             assert evaluate('document.body.textContent.includes("shipping:unknown")')
-        if not evaluate('document.querySelector(".discovery-row:first-of-type details").open'):
+        if not evaluate('document.querySelector(".discovery-row:first-of-type > details.discovery-evidence").open'):
             command("click", ".discovery-row:first-of-type > details > summary")
-        assert evaluate('document.querySelector(".discovery-row:first-of-type details").open')
+        assert evaluate('document.querySelector(".discovery-row:first-of-type > details.discovery-evidence").open')
         assert evaluate('document.body.textContent.includes("Usual price unavailable")')
         assert evaluate('document.body.textContent.includes("No bargain alerts")')
         if args.costs:
