@@ -289,3 +289,124 @@ unproven separate gates. No installs, network/live acquisition, credentials,
 accounts, production database access, activation, deployment, push, PR,
 delegation or unrelated cleanup occurred. Only the local merge, retained probe,
 receipt and tracker updates were made.
+
+## Capture-lineage repair — 2026-10-27
+
+Implementation worktree `/Users/jay/.t3/worktrees/pricerecon/t3-695666da`, branch
+`t3/fix-ticket06-lineage`. Before edits, merged integration by fast-forward from
+`ef86af6` to the requested `b97f37a44241bf29d5a252a191e93e8bc240cb0f` and
+confirmed its ancestry. Repair implementation is committed as `a856c08`.
+The original dirty parent was not edited and no sibling dirty source was copied.
+The TDD skill was used at the already-approved API plus normal
+`execute_discovery` seam, with the existing guarded `MonitoringHarness`.
+
+### Repaired contract
+
+`db/history_lineage.py` resolves price and availability evidence to retained
+direct acquisition roots, scoped by merchant, product, variation and field.
+It follows transitive capture dependencies and input references across routes,
+and consults the retained cache envelope's `reused_capture_id` (either a field
+capture ID or an application capture ID). Replaying a cached extraction later
+as `success` cannot remove that origin. The first retained acquisition's
+provenance is not rewritten by later replays. Missing roots, unknown acquisition
+identity, cycles and mismatched selected-product contexts abstain with
+`capture_lineage_unknown`; an unknown owner stays null rather than being invented.
+
+The field and cost evidence contracts add optional `acquisition_capture_id`.
+A direct report names its immutable underlying capture, equal to `capture_id`
+on the original capture. An extraction preserves that origin; a new extractor,
+extraction ID or retrieval timestamp is insufficient. Known temporal ancestors
+and cache envelopes still take precedence over a contradictory claim of a new
+direct capture. Missing metadata defaults to unknown, including on older stored
+records; no migration guesses acquisition identity or upgrades old evidence.
+This is an adapter assertion whose real-source semantics still require source
+qualification, not proof supplied by a string or by these synthetic tests.
+
+The history fixtures now explicitly identify their controlled direct captures.
+The existing quantity-change fixture uses that same direct-capture factory,
+retaining its two `initial` assertions and all monetary/context checks. No
+previous assertion was deleted or weakened. All original retained offers, costs,
+field metadata and exact revision dependencies survive; the projection adds
+canonical lineage, duplicate ownership and qualification reasons. Configuration
+and selection definitions do not determine temporal capture ownership, so older
+manufacturer definitions can support a genuinely new direct offer fetch.
+
+Public cost provenance is traversed in its exact scenario/context and component
+role. Re-extracting a shipping quote cannot replace its original observation
+time. Retained cost evidence can support a fresh price/stock observation, but
+the effective last-good age remains as old as its oldest supporting evidence.
+Raw extraction timestamps remain inspectable alongside that projected age.
+Derived/replayed price or stock records are retained as `not_comparable` and
+unqualified, and cannot become another independent temporal opportunity or
+refresh last-good age. No new observation table, scheduler, platform, automatic
+collection or later-ticket behavior was added.
+
+### Red and green evidence
+
+The exact retained merger probe module is unchanged. Its initial invocation
+exited **1** with
+`AssertionError: Derived re-extraction counted as a new supported observation`.
+The [repair red receipt](artifacts/watch-history/repair-derived-copy-red.json)
+retains its original `supported_at_capture` / `unchanged` / null-owner defect.
+The identical probe command now exits **0**; the
+[repair green receipt](artifacts/watch-history/repair-derived-copy-green.json)
+retains the original as supported and the copy as unqualified,
+`not_comparable`, with the original observation ID as owner. Last-good age is
+3600 seconds, collection remains staged, outgoing attempts and sends are empty.
+
+Additional vertical red/green cycles through the same application seam:
+
+| Regression | Observed red | Green assertion |
+| --- | --- | --- |
+| Unknown acquisition | Unidentified upstream extraction remained supported | Retained with explicit unknown lineage, null owner, no price change and original last-good age |
+| Transitive extraction | Second extraction named the intermediate record | Both copies name the original; rewritten extraction times cannot refresh effective age |
+| Cache/restart | Cached extraction failed to name the original owner | Cache envelope survives process restart, success replay and another discovery route; original age and revisions survive |
+| Re-extracted shipping | Fresh offer plus copied shipping projected a new observation time | New direct price remains supported with its increase, but last-good evidence retains the original quote's age |
+
+Supplementary regressions cover partial cached price with fresh availability,
+fresh partial direct acquisition with retained definitions, cyclic and foreign
+roots, exact original-record equality before/after reads and restart, and
+absence of outgoing attempts or sends. The six new pytest workflows reuse the
+existing harness and fresh-process launcher; there are no skips, xfails,
+disabled assertions or test-specific production branches.
+
+### Verification and integration refresh
+
+- Before sibling integration refresh: **61 passed in 76.76s**, comprising all
+  **55 prior workflows** plus six new history workflows. Frontend **25 passed**,
+  production TypeScript/Vite build passed, focused Ruff passed six changed
+  Python files and focused mypy passed four source files.
+- Merged the latest integration, now including committed05 and09 work, as
+  `0f1b926aa9eb3f026846cfdc046a22e6b1355d00`. Its integration parent is
+  `8facf4198d0f812f52cfb1dce055e5dd74d18e16`; both that commit and the requested
+  `b97f37a` are confirmed ancestors. The merge had no conflicts; the two shared
+  evidence-model additions were combined automatically with09's coupon fields.
+  No sibling implementation was edited to obtain the merge.
+
+Reproduce using installed dependencies only, building before app imports:
+
+```sh
+(cd frontend && npm run build)
+env -i PATH=/opt/homebrew/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python -m pytest -q \
+  tests/test_monitoring_workflow.py tests/test_discovery_workflow.py \
+  tests/test_qualification_workflow.py tests/test_cost_workflow.py \
+  tests/test_history_workflow.py tests/test_coupon_workflow.py \
+  tests/test_tracking_workflow.py
+env -i PATH=/opt/homebrew/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  -m tests.monitoring.history_merger_probe /tmp/pricerecon-ticket06-repair.json
+```
+
+Python uses the already-installed parent environment; frontend `node_modules`
+is a local symlink to integration's installed dependencies. No install,
+download, network/live acquisition, credential/account use, production database
+access, activation, push, PR or delegation occurred. No browser was launched in
+this repair under the no-network boundary; prior browser artifacts remain
+retained evidence only. No buyer acceptance or real longitudinal evidence is
+claimed. The existing large frontend chunk warning and previously recorded
+repository-wide quality limitations remain. Collection stays staged; source
+qualification, calibration and live/buyer acceptance are separate gates.
+Ticket closure and integration acceptance remain with the parent merger.
