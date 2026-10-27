@@ -348,3 +348,120 @@ Source checkout remains clean at its original HEAD. Only local merge and review
 commits are authorized/performed; no installs, network/live collection,
 credentials/accounts, production database, activation, deployment, push, PR,
 delegation or unrelated cleanup occurred.
+
+## FX quantum repair: 2026-10-27
+
+Implementation handoff for the single merger blocker; ticket04 acceptance and
+closure remain with the merger. Worktree
+`/Users/jay/.t3/worktrees/pricerecon/t3-d53ed76f`, branch
+`t3/fix-fx-quantum-equivalence`, fast-forward merged
+`integration/watch-category-discovery` at
+`24a69438a316d338d7567c6179d1217b7b12d4f3` before edits. Ancestry was confirmed
+with `git merge-base --is-ancestor`. No edits were made in the original dirty
+parent or the integration checkout.
+
+### Repair and retained evidence
+
+The evaluator constructs an exact coefficient-one Decimal from the validated
+quantum's numeric adjusted exponent before quantizing. It never calls
+`normalize`, never changes ambient precision to normalize an input, and retains
+the original supplied quantum, quote evidence and scenario context. The exact
+coefficient validator, representation bounds, rounding modes, defaults and cost
+policy version are unchanged. Equivalent quantum values also share a numeric
+quote signature within a capture, while every supplied quote and its evidence
+remain retained and checked. Different increments and expired supporting evidence
+still withhold a total.
+
+### Observed red and green
+
+- **Original merger reproduction, red before edits:** the exact documented
+  `tests.monitoring.cost_merger_probes` command exited **1**. Persisted/public
+  totals were `49.56` / `49.556` for `0.01` / `0.010`, and `48.00` / `50.00` /
+  `49.60` for `1E+1` / `10` / `10.0`. Ten-unit budget fits were `fits` / `outside`
+  / `outside`. All five were labelled observation-verified, including the three
+  wrong totals. The new red JSON
+  was byte-identical to the retained [original merger artifact](artifacts/watch-costs/merger-fx-quantum.json);
+  that artifact is unchanged.
+- **Original reproduction, green:** the unchanged probe now exits **0**.
+  `0.01` / `0.010` both produce `49.56`, budget `outside`; `1E+1` / `10` / `10.0`
+  all produce `48.00`, budget `fits`. Feed, history and five appended revisions
+  agree, earlier rows remain unchanged, comparison remains unresolved, alerts
+  are false and notifications/blocked edges are empty. Retained
+  [repair JSON](artifacts/watch-costs/repair-fx-quantum.json).
+- **New application regression, red:**
+  `pytest -q tests/test_cost_workflow.py -k equivalent_fx` reported
+  **1 failed, 12 deselected in 1.34s**. The first noncanonical case returned
+  `49.565` for `0.010` under `ROUND_HALF_UP`, against literal expected `49.57`.
+  After the exponent repair it reported **1 passed, 12 deselected in 2.43s**.
+- **Equivalent claims regression, red:**
+  `pytest -q tests/test_cost_workflow.py -k equivalent_quantum_claims` reported
+  **1 failed, 13 deselected in 0.92s**: same-value quote representations produced
+  `payment_fx_conflicting:USD:GBP`. After numeric quantum comparison it reported
+  **1 passed, 13 deselected in 1.05s**; genuinely different increments and expired
+  evidence remained unknown.
+- **Affected suite after expanded boundary/budget checks:**
+  `pytest -q tests/test_cost_workflow.py` reported **14 passed in 16.97s**.
+
+The tests use the approved normal `execute_discovery` acquisition path and real
+isolated storage, followed by API/feed and append-only history readback. Expected
+totals are literal worked examples rather than duplicated evaluator arithmetic.
+The 48-capture regression covers four representations each of small, unit and
+ten-unit increments (including scientific forms), all four supported rounding
+modes and exact half ties, under caller Decimal precision **2**. Every capture
+checks supplied scenario/quote/component/context preservation, known subtotals,
+public totals, retained history, unresolved comparison and disabled alerts. The
+final controlled preference budget is **49.565**, exercising both fitting and
+outside outcomes near the small-quantum boundary. A separate three-capture
+workflow checks equivalent claims, genuine conflicts and expired evidence without
+discarding any supplied quote. Expanded malformed acquisition coverage rejects
+near-powers above/below one and near the small/ten-unit powers, overlong
+coefficients, out-of-bounds exponents, zero and negative quanta at precision 2.
+The retained malformed/normal execution workflow still proves staged collection
+without admission and no notifications or blocked external-edge attempts.
+
+### Verification commands and boundary
+
+Checks reused a temporary `.venv` symlink to
+`/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv` and installed frontend
+dependencies through the existing source checkout's `node_modules` symlink.
+The temporary interpreter symlink was removed after checks to leave a clean
+source checkout. No installs or dependency changes. Reproduce from this repair
+worktree with the same interpreter directly:
+
+```sh
+env -i PATH=/usr/bin:/bin PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  -m tests.monitoring.cost_merger_probes \
+  /tmp/pricerecon-ticket04-fx-quantum.json
+
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  -m pytest -q tests/test_cost_workflow.py \
+  tests/test_qualification_workflow.py tests/test_discovery_workflow.py \
+  tests/test_monitoring_workflow.py
+```
+
+The first full-suite invocation accidentally omitted the documented Node PATH:
+**47 passed, 1 failed in 54.86s**, solely `FileNotFoundError: 'node'` before the
+legacy form-payload workflow could run. No application assertion failed in that
+invocation; the corrected command above supplies the installed Node directory.
+The corrected full retained suite passed: **48 passed in 58.21s** — all original
+**46 workflows** plus the two new quantum regressions. No workflows were removed
+or skipped.
+
+Focused Ruff passed the documented source/workflow set plus the merger probe and
+test launcher (**14 files**); focused mypy `--follow-imports=silent` passed the
+same **14 source files** listed in the original receipt. Its first run identified
+a local variable type-name collision between component and quote signatures;
+renaming the quote variable resolved it without suppression. Existing unused
+override notes remain. `git diff --check` passed. Frontend source is unchanged;
+the merger's retained **25 tests/build** evidence was not repeated. The recorded
+ESLint missing-config blocker remains unchanged. No new browser/live proof was
+required for this numeric repair.
+
+Collection remains staged. No speculative legal rates, later-ticket work, live
+collection/network, credentials/accounts, production database, activation,
+deployment, push, PR or delegation. Only local commits are authorized. Existing
+legal/source/freshness/comparison/buyer and activation gates remain separate;
+passing this repair does not close ticket04.
