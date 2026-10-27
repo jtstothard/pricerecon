@@ -9,13 +9,15 @@ import json
 import logging
 import os
 import re
-from datetime import datetime, timedelta, timezone
+from dataclasses import replace
+from datetime import UTC, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from typing import Any
 from urllib.parse import ParseResult, parse_qs, urljoin, urlparse
 
 import httpx
 
+from pricerecon.connectors.aliexpress_browser import BrowserSearchReport, discovery_ids, parse_offer
 from pricerecon.connectors.base import BaseConnector
 from pricerecon.connectors.browser_client import BrowserClient
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
@@ -84,6 +86,8 @@ class AliExpressConnector(BaseConnector):
         self, query: str, filters: dict[str, Any] | None = None
     ) -> list[NormalizedListing]:
         filters = filters or {}
+        if self.has_external_browser():
+            return await self._search_browser_first(query, filters)
         listings: list[NormalizedListing] = []
         affiliate_failed: ConnectorDegradedError | None = None
 
@@ -156,6 +160,158 @@ class AliExpressConnector(BaseConnector):
         listings = [listing for listing in listings if listing.price is not None]
 
         return listings
+
+    async def inspect_browser_search(
+        self, query: str, filters: dict[str, Any] | None = None
+    ) -> BrowserSearchReport:
+        """Inspect a bounded public route without treating partial offers as prices."""
+        from urllib.parse import quote_plus
+
+        if not self.has_external_browser():
+            raise ValueError("Browser inspection requires a named external backend")
+        filters = filters or {}
+        limit = filters.get("browser_max_products", self.config.get("browser_max_products", 2))
+        if type(limit) is not int or not 1 <= limit <= 10:
+            raise ValueError("browser_max_products must be an integer from 1 to 10")
+        manual = query if query.isdigit() else self._extract_pid_from_url(query)
+        pid = self._normalize_pid(manual) if manual else None
+        discovery_url = None
+        if pid:
+            pids = [pid]
+        else:
+            slug = re.sub(r"[^a-z0-9]+", "-", query.lower()).strip("-")
+            if not slug:
+                raise ValueError("Browser discovery needs a nonempty query")
+            discovery_url = f"https://www.aliexpress.com/w/wholesale-{quote_plus(slug)}.html"
+            result = await self.navigate_external_browser(discovery_url)
+            if result is None or result.degraded:
+                raise ConnectorDegradedError(
+                    ConnectorStatus.parse_error,
+                    "AliExpress browser discovery unavailable",
+                    self.connector_id,
+                    {"reason": "browser_discovery_failed"},
+                )
+            if result.rendered.final_url != discovery_url:
+                raise ConnectorDegradedError(
+                    ConnectorStatus.parse_error,
+                    "AliExpress browser discovery redirected",
+                    self.connector_id,
+                    {"reason": "unverified_discovery_origin"},
+                )
+            try:
+                pids = discovery_ids(result)
+            except ValueError as exc:
+                raise ConnectorDegradedError(
+                    ConnectorStatus.parse_error,
+                    str(exc),
+                    self.connector_id,
+                    {"reason": "partial_browser_discovery"},
+                ) from None
+            if not pids and not re.search(
+                r"no results|no matching|couldn't find",
+                result.rendered.html + result.rendered.snapshot,
+                re.IGNORECASE,
+            ):
+                raise ConnectorDegradedError(
+                    ConnectorStatus.parse_error,
+                    "AliExpress discovery returned no recognisable product links",
+                    self.connector_id,
+                    {"reason": "unrecognised_browser_discovery"},
+                )
+        targets = pids[:limit]
+        requested_ids = filters.get("browser_product_ids")
+        if requested_ids is not None:
+            if not isinstance(requested_ids, list) or any(
+                not isinstance(value, str) or value not in pids for value in requested_ids
+            ):
+                raise ValueError("browser_product_ids must name products in this discovery result")
+            targets = list(dict.fromkeys(requested_ids))[:limit]
+        offers = []
+        for target in targets:
+            result = await self.navigate_external_browser(
+                f"https://www.aliexpress.com/item/{target}.html"
+            )
+            if result is None or result.degraded:
+                raise ConnectorDegradedError(
+                    ConnectorStatus.parse_error,
+                    "AliExpress product browser failed",
+                    self.connector_id,
+                    {"reason": "browser_product_failed", "product_id": target},
+                )
+            offer = parse_offer(target, result)
+            if not pid and any(
+                not re.search(rf"(?<!\w){re.escape(token)}(?!\w)", offer.title or "", re.IGNORECASE)
+                for token in self._query_strong_tokens(query)
+            ):
+                offer = replace(offer, issues=(*offer.issues, "query_title_mismatch"))
+            offers.append(offer)
+        report = BrowserSearchReport(
+            discovery_url, len(pids), len(offers), len(targets) < len(pids), tuple(offers)
+        )
+        self._last_browser_report = report
+        return report
+
+    async def _search_browser_first(
+        self, query: str, filters: dict[str, Any]
+    ) -> list[NormalizedListing]:
+        requested = filters.get("browser_variant", self.config.get("browser_variant", {}))
+        if not isinstance(requested, dict) or any(
+            key not in {"movement", "dial", "strap", "size", "sku"}
+            or not isinstance(value, str)
+            or not value.strip()
+            or len(value) > 100
+            for key, value in requested.items()
+        ):
+            raise ValueError("browser_variant must contain explicit string configuration values")
+        report = await self.inspect_browser_search(query, filters)
+        issues = [offer.qualification_issues(requested) for offer in report.offers]
+        if report.capped or any(issues):
+            raise ConnectorDegradedError(
+                ConnectorStatus.parse_error,
+                "AliExpress browser offers need configuration review",
+                self.connector_id,
+                {
+                    "reason": "unqualified_browser_offer",
+                    "discovered_count": report.discovered_count,
+                    "inspected_count": report.inspected_count,
+                    "capped": report.capped,
+                    "issues": issues,
+                },
+            )
+        return [
+            NormalizedListing(
+                source=self.connector_id,
+                source_type=SourceType.MARKETPLACE,
+                source_listing_id=f"{offer.pid}:{offer.selected_sku}",
+                title_raw=offer.title or query,
+                price=offer.displayed_price,
+                currency="GBP",
+                url=f"https://www.aliexpress.com/item/{offer.pid}.html",
+                timestamp_seen=datetime.now(UTC),
+                exact_variant_confirmed=True,
+                variant_match_confidence=VariantMatchConfidence.HIGH,
+                shipping_cost=None,
+                total_landed_cost=None,
+                in_stock=None,
+                risk_flags=["UK_TOTAL_UNVERIFIED"],
+                product_normalized=None,
+                condition=None,
+                condition_raw=None,
+                seller_or_store=None,
+                seller_feedback_score=None,
+                seller_feedback_pct=None,
+                location=None,
+                stock_state=None,
+                image_url=None,
+                mismatch_flags=None,
+                category=None,
+                variant_normalized={
+                    "aliexpress_source_lane": "browser_first",
+                    "browser_evidence": offer.summary(),
+                },
+            )
+            for offer in report.offers
+        ]
 
     def _is_affiliate_search_enabled(self, filters: dict[str, Any]) -> bool:
         if filters.get("affiliate_only") is False:
@@ -414,7 +570,7 @@ class AliExpressConnector(BaseConnector):
             "am4",
             "am5",
         }
-        tokens = [token.lower() for token in re.findall(r"[a-z0-9+.-]+", query or "")]
+        tokens = [token.lower() for token in re.findall(r"[a-z0-9+.-]+", (query or "").casefold())]
         strong: list[str] = []
         for token in tokens:
             normalized = token.strip("-._")

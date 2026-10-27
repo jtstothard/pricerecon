@@ -9,8 +9,10 @@ never falls back to a local browser.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import re
+import uuid
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -53,6 +55,10 @@ class RenderedContent:
     title: str = ""
     html: str = ""
     snapshot: str = ""
+    final_url: str | None = None
+    status: int | None = None
+    html_truncated: bool = False
+    snapshot_truncated: bool | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -149,9 +155,12 @@ class ExternalBrowserAdapter:
         backends: list[BrowserBackendConfig],
         *,
         client_factory: Callable[..., httpx.AsyncClient] = httpx.AsyncClient,
+        session_scope: str | None = None,
     ) -> None:
         self._backends = backends
         self._client_factory = client_factory
+        # Unscoped callers must not silently share another caller's context.
+        self._session_scope = session_scope or uuid.uuid4().hex
 
     @classmethod
     def from_config(
@@ -411,9 +420,14 @@ class ExternalBrowserAdapter:
                     backend, url, api_url, wait_ms, timeout_ms, response_body_limit
                 )
                 degradation = (
-                    BrowserDegradation.EMPTY_RESULT
-                    if not (rendered.html or rendered.snapshot or rendered.title or responses)
-                    else BrowserDegradation.NONE
+                    BrowserDegradation.BLOCKED
+                    if rendered.status in {401, 403, 429}
+                    else (
+                        BrowserDegradation.EMPTY_RESULT
+                        if (rendered.status is not None and rendered.status >= 400)
+                        or not (rendered.html.strip() or rendered.snapshot.strip() or responses)
+                        else BrowserDegradation.NONE
+                    )
                 )
                 attempts.append(BrowserAttempt(backend.name, degradation))
                 if degradation is BrowserDegradation.NONE:
@@ -520,7 +534,14 @@ class ExternalBrowserAdapter:
         endpoint = f"{backend.endpoint.rstrip('/')}/api/browser/session"
         async with self._client_factory(timeout=timeout_ms / 1000) as client:
             response = await client.post(
-                endpoint, json={"url": url, "apiUrl": api_url, "waitMs": wait_ms}
+                endpoint,
+                json={
+                    "url": url,
+                    "apiUrl": api_url,
+                    "waitMs": wait_ms,
+                    **({"renderMode": backend.options["render_mode"]} if "render_mode" in backend.options else {}),
+                    **({"readySelector": backend.options["ready_selector"]} if "ready_selector" in backend.options else {}),
+                },
             )
             response.raise_for_status()
             payload = response.json()
@@ -531,7 +552,12 @@ class ExternalBrowserAdapter:
         if not isinstance(html, str) or not isinstance(snapshot, str):
             raise ValueError("CloakBrowser rendered content must be strings")
         rendered = RenderedContent(
-            title=str(payload.get("title") or ""), html=html, snapshot=snapshot
+            title=str(payload.get("title") or ""),
+            html=html[:limit],
+            snapshot=snapshot[:limit],
+            final_url=str(payload["finalUrl"]) if payload.get("finalUrl") else None,
+            status=_as_status(payload.get("mainStatus")),
+            html_truncated=payload.get("htmlTruncated") is True or len(html) > limit,
         )
         responses: list[NetworkResponse] = []
         # A sidecar may provide explicit network captures. Do not label its
@@ -564,7 +590,7 @@ class ExternalBrowserAdapter:
                     intercepted=False,
                 )
             )
-        return rendered, responses, True
+        return rendered, responses, payload.get("networkInterceptionSupported") is not False
 
     async def _camofox_evaluate(
         self,
@@ -620,7 +646,15 @@ class ExternalBrowserAdapter:
         self, backend: BrowserBackendConfig, url: str, timeout_ms: int
     ) -> tuple[RenderedContent, list[NetworkResponse], bool]:
         opts = backend.options
-        user_id = str(opts.get("user_id", "pricerecon"))
+        # Camofox isolates BrowserContexts by userId, not sessionKey (tab group).
+        # Keep explicitly assigned account profiles intact. Anonymous contexts
+        # are owned by this connector and merchant origin, never a global ID.
+        origin = urlsplit(url)
+        scope = json.dumps(
+            [self._session_scope, backend.name, origin.scheme, origin.netloc.lower()]
+        )
+        context_id = hashlib.sha256(scope.encode()).hexdigest()[:24]
+        user_id = str(opts.get("user_id") or f"pricerecon-{context_id}")
         session_key = str(opts.get("session_key", "external-browser"))
         token = str(opts.get("api_key", opts.get("access_key", ""))).strip()
         headers = {"Authorization": f"Bearer {token}"} if token else {}
@@ -660,7 +694,11 @@ class ExternalBrowserAdapter:
                     if not isinstance(document, Mapping):
                         raise ValueError("Camofox snapshot response was not an object")
                     text = str(document.get("snapshot") or document.get("text") or "")
-                    if "/comments/" in text or attempt == 9:
+                    if (
+                        "/comments/" in text
+                        or origin.hostname not in {"reddit.com", "www.reddit.com"}
+                        or attempt == 9
+                    ):
                         break
                     await asyncio.sleep(1)
             finally:
@@ -670,7 +708,14 @@ class ExternalBrowserAdapter:
                     )
                 except Exception:
                     pass
-        return RenderedContent(snapshot=text), [], False
+        return RenderedContent(
+            snapshot=text,
+            final_url=str(document["url"]) if document.get("url") else None,
+            snapshot_truncated=(
+                bool(document.get("truncated") or document.get("hasMore"))
+                if "truncated" in document or "hasMore" in document else None
+            ),
+        ), [], False
 
     async def _playwright(
         self, backend: BrowserBackendConfig, url: str, wait_ms: int, timeout_ms: int, limit: int

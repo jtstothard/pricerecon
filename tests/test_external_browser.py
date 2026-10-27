@@ -27,7 +27,7 @@ async def test_single_named_backend_is_authoritative() -> None:
 
     def handler(request: httpx.Request) -> httpx.Response:
         seen.append(str(request.url))
-        return httpx.Response(200, json={"navigated": True, "title": "Argos"})
+        return httpx.Response(200, json={"navigated": True, "html": "<h1>Argos</h1>"})
 
     adapter = ExternalBrowserAdapter.from_config(
         CONFIG,
