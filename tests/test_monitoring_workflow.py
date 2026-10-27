@@ -1,5 +1,6 @@
 """Run monitoring checks separately from unsafe legacy API fixtures."""
 
+import json
 import os
 import subprocess
 import sys
@@ -7,7 +8,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 
-def run_scenario(name, shared_root=None):
+def run_scenario(name, shared_root=None, input_data=None):
     root = Path(__file__).resolve().parents[1]
     result = subprocess.run(
         [sys.executable, "-m", "tests.monitoring.workflows", name]
@@ -19,6 +20,7 @@ def run_scenario(name, shared_root=None):
             **({"TMPDIR": str(Path(shared_root).parent)} if shared_root else {}),
         },
         capture_output=True,
+        input=input_data,
         text=True,
         timeout=30,
         check=False,
@@ -32,6 +34,39 @@ def test_startup_and_api_checks_stay_inside_isolation():
 
 def test_legacy_searches_settings_matching_and_notifications_survive_restart():
     run_scenario("legacy")
+
+
+def test_form_title_edits_retain_saved_intent_through_api_and_restart():
+    from tests.monitoring.workflows import LEGACY
+
+    root = Path(__file__).resolve().parents[1]
+    payload_module = (root / "frontend/src/lib/watchPayload.ts").as_uri()
+    # Generate the real UI payload before the guarded application child starts.
+    # Node's installed type stripping needs no frontend install or network.
+    result = subprocess.run(
+        [
+            "node",
+            "--input-type=module",
+            "-e",
+            f"""
+import {{ readFileSync }} from 'node:fs';
+import {{ formDataFromWatch, buildWatchEditPayload }} from {json.dumps(payload_module)};
+const legacy = JSON.parse(readFileSync(0, 'utf8'));
+const payloads = [true, false].map(enabled => {{
+  const saved = {{ ...legacy, id: enabled ? 7 : 8, name: enabled ? legacy.name : 'Paused saved search', category: null, last_check_at: null, enabled }};
+  return buildWatchEditPayload({{ ...formDataFromWatch(saved), display_title: 'Edited label' }}, saved);
+}});
+process.stdout.write(JSON.stringify(payloads));
+""",
+        ],
+        input=json.dumps(LEGACY),
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    run_scenario("form_edit", input_data=result.stdout)
 
 
 def test_partial_source_failure_retains_last_good_evidence_without_recovery_alerts():

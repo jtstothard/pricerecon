@@ -144,8 +144,8 @@ without changing production time semantics.
 
 **Remaining acceptance:** a rendered browser/UI walkthrough of the saved-search
 workflow. The frontend tooling baseline in integration has been repaired; the
-previous missing-dependencies explanation is stale. This continuation has not
-run a frontend build/test or driven rendered UI, so it makes no UI-behavior claim.
+previous missing-dependencies explanation is stale. The earlier API continuation did not
+run a frontend build/test or drive rendered UI, so it makes no UI-behavior claim.
 The tests verify UI-consumed API data and an API edit only. A frontend build or
 helper-test result alone would not establish browser acceptance.
 
@@ -158,3 +158,82 @@ are captured deterministic successes; production delivery/retry/crash ambiguity,
 concurrent manual checks and later discovery qualification remain outside this
 slice. Source completion is ready for merger review; overall ticket acceptance
 stays open for the UI gate.
+
+## UI edit preservation follow-up (2026-10-27)
+
+The parent subsequently drove the rendered form against an isolated harness-backed
+server and observed a real preservation defect: saving only a display-title change
+reset notifications, timezone/window and nested spec exclusions. The saved `30m`
+interval remained in the payload but the select displayed the first preset instead.
+This follow-up repairs that defect; **post-fix browser acceptance is still pending**.
+
+Implementation checkout: `/Users/jay/.t3/worktrees/pricerecon/t3-d036dfd5`, branch
+`t3/preserve-watch-edit-intent`. Before edits, integration
+`4df9cc094e945712b6fa5df98071411992180c27` was fast-forward merged and verified as
+an ancestor. The original dirty parent checkout was not edited. Only its existing
+Python environment was reused. This checkout's `frontend/node_modules` is a symlink
+to the explicitly permitted integration dependency directory; no dependency,
+lockfile, browser install or download was needed.
+
+`WatchForm` now uses an edit payload that retains saved nested configuration and
+applies changes only to fields the form owns. Notifications/destinations, schedule
+timezone/window, source-specific config, disabled sources, spec rules, deduplication,
+seller thresholds, floor/component settings and grouping survive unrelated edits.
+Unchanged decimal values, null category and raw-query whitespace are retained.
+Deselecting a source disables its retained config; selecting it again enables that
+same config. New sources still receive normal defaults. New-watch defaults are
+unchanged. Pause/resume in the list uses the same preservation path instead of its
+own destructive defaults.
+
+Intentional edits still update fallback/raw queries, synonym groups, exclusions,
+price/condition filters, source selection and interval. Empty raw fields use fallback;
+choosing simple mode clears raw overrides while retaining matching rules, as before.
+Hidden nested spec exclusions/groups remain independent. Form arrays are copied so
+editing a synonym term cannot mutate the saved Watch before submission. Existing
+all-disabled source configurations permit unrelated edits without forcing a source
+on. A custom saved interval now has a selected `Every 30m (saved)` option.
+
+### Additional red/green receipts
+
+- Title-only frontend tracer: **1 failed, 17 skipped**, demonstrating resets across
+  source config/state, filters, grouping, notification destinations, timezone/window
+  and null category. After the edit-payload repair: **18 passed**.
+- Actual frontend payload through the accepted isolated API seam: **1 failed,
+  14 deselected**, reporting `Watch 7 lost schedule`; after repair: **1 passed,
+  14 deselected**. The test generates payloads with installed Node type stripping
+  before the guarded child starts, then sends them to the real API. It checks both
+  enabled and paused legacy Watches, every returned saved field except the intended
+  title/timestamp, lifespan restart, query routing, parts exclusion, silent baseline
+  and subsequent captured webhook/Telegram/Discord delivery. Application isolation
+  guards remain unchanged and report no unexpected edges.
+- React static-markup tracer for the custom interval: **1 failed, 18 skipped**, still
+  red after initial form hydration alone; adding the matching option produced
+  **1 passed, 18 skipped**. This is markup verification, not a browser walkthrough.
+- Retaining untouched raw overrides during another query edit: **1 failed,
+  19 skipped**, then **1 passed, 19 skipped**. An unchanged whitespace-only override
+  for an unavailable source was initially dropped; only deliberately changed empty
+  overrides are now removed.
+- Editing a Watch whose sources are all disabled: **1 failed, 20 skipped** with
+  `Select at least one source.`, then **1 passed, 20 skipped**. New-watch validation
+  still requires a selected source.
+
+Final checks in this checkout:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  -m pytest tests/test_monitoring_workflow.py -q
+```
+
+**15 passed in 16.13s**, no xfails; only the targeted isolated module was collected.
+From `frontend`, `npm test -- --run`: **25 passed**. `npm run build`: **passed**
+(TypeScript plus Vite; existing large-chunk advisory remains). Ruff and Black on
+both changed Python files, plus `git diff --check`: **passed**. No assertions were
+weakened, checks suppressed or untyped escape hatches added.
+
+**Rendered UI gate: PENDING.** The parent must repeat the actual title edit and
+saved-search walkthrough after local integration, including the selected custom
+interval and retained enabled/disabled state. This implementation did not run a
+post-fix browser session and does not claim UI acceptance. Separate merger owns
+integration; ticket 01 stays open. No push/PR, live source access, credentials,
+production database, deployment or activation occurred.
