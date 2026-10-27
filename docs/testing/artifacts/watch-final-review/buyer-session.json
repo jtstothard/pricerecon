@@ -1,0 +1,24 @@
+{
+  "presented_backend": "82afe34833ec4ade8e46d954291bee79dd4a6794",
+  "frontend": "08aa2e1fe99d9702e09ae087f8fcc1925452b547",
+  "marker": {
+    "fixture": "ticket12-connected-ui-v1",
+    "fixture_id": "154cdb142bfa47829eaaee6e44094686",
+    "temporary_storage": true,
+    "automatic_checks": false,
+    "blocked_edges": [],
+    "notifications_sent": 0,
+    "clock": "2026-10-27T12:00:00+00:00",
+    "actions": [
+      "baseline",
+      "cross",
+      "duplicate",
+      "drop",
+      "coupon",
+      "costs",
+      "stale"
+    ],
+    "limitations": "synthetic only; actual buyer feedback unproven; all collection staged"
+  },
+  "feedback": "pending actual buyer response; no acceptance inferred"
+}

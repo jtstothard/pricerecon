@@ -315,3 +315,9 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   All 77 original dirty files remain unchanged. [Review and repair receipt](../../docs/testing/watch-final-review.md).
   **12 remains open solely for actual buyer walkthrough feedback/acceptance.**
   Live, source-rights, calibration, operational and activation gates remain separate.
+
+- 2026-10-27: After repair commit `73d7cd9`, removed all 19 clean merged isolated
+  implementation worktrees, retaining all branches/history, main, integration
+  and the original dirty checkout. All 77 original file hashes/lengths match. The
+  verified synthetic buyer fixture remains available and 12 stays open pending
+  actual feedback. [Cleanup/session receipts](../../docs/testing/watch-final-review.md#implementation-checkout-cleanup--2026-10-27).

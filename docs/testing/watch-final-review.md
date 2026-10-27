@@ -99,3 +99,22 @@ feedback remains pending; ticket12 stays open.** Live source/rights/retention,
 Militado/Merkur evidence, real history/coupon/delivery, empirical calibration,
 finite operating/physical-resource limits, maintenance ownership and activation
 remain separate and unproven.
+
+## Implementation checkout cleanup — 2026-10-27
+
+After the repaired source committed as `73d7cd9`, removed all **19** isolated
+implementation worktrees with Git. Each checkout was clean, its exact HEAD was an
+integration ancestor, and ignored contents were limited to inspected build,
+dependency and tool/Python cache paths. No branch reference or committed history
+was deleted. The main checkout, original dirty checkout and integration checkout
+remain; integration dependencies and the original interpreter remain available.
+[Cleanup receipt](artifacts/watch-final-review/cleanup.json) records each identity.
+All 77 original file hashes/lengths remain unchanged after cleanup.
+
+The existing buyer fixture remains on 127.0.0.1:8892 with the same run identity,
+temporary storage, paused automatic checks and zero escaped edges.
+[Session receipt](artifacts/watch-final-review/buyer-session.json) records its
+presented backend/frontend identity and explicitly pending feedback. No buyer
+response has been received or invented. The buyer guide uses the retained
+integration path. Ticket12 stays open solely for actual walkthrough feedback;
+no autonomous source/review/cleanup work remains outstanding at this checkpoint.
