@@ -236,3 +236,136 @@ Final refresh merged `b97f37a44241bf29d5a252a191e93e8bc240cb0f` without conflict
 only the parent's documentation/tracker/diagnostic artifacts were added, with no
 application-source changes after combined verification. Both latest integration
 and closed04 ancestry checks passed. The worktree was clean after local merges.
+
+## Merger verification — 2026-10-27
+
+**Ticket09 remains open: compatibility or eligibility evidence alone can support
+a reproduced coupon payable.** This merger-only pass makes no production repair.
+
+### Integration identity and history
+
+Integration `/Users/jay/.t3/worktrees/pricerecon/watch-category-integration`,
+branch `integration/watch-category-discovery`, was clean at requested
+`b97f37a44241bf29d5a252a191e93e8bc240cb0f`. Source
+`/Users/jay/.t3/worktrees/pricerecon/t3-1a9ab422`, branch
+`t3/evaluate-public-coupons`, was clean at requested
+`db08536203eeba32cd7e462b28b977237492d955`. The integration tip was already
+an ancestor of source. The explicit `git merge --no-ff --no-edit db085362...`
+produced `2b4686bc2c60ff397502c9ace2f10e225423199f`, with integration/source
+as its first/second parents, without conflicts. Source remains unchanged and
+clean at its requested HEAD. The original dirty parent and active05/06 repair
+checkouts were not modified. Only the existing parent's Python executable and
+installed integration frontend dependencies were used.
+
+Read the spec/issue09, accepted public-discount resolution/research, standards,
+and this source receipt against history. Reviewed the source's prior merge
+`f5cf24a` conflict resolution: both read-only coupon/history endpoints remain,
+and both guarded fixture/driver modes remain, mutually exclusive. Its later
+`3dab4d6` merge brought in `b97f37a` documentation/probe artifacts only.
+The resulting integration application/frontend/driver/server tree exactly
+matches source HEAD. No actual conflict or implementation change was required
+in this merger.
+
+### Passing checks and bounded evidence
+
+- **65 passed in 78.31s** using the cleared-environment six-file pytest command
+  documented above, including `tests/test_history_workflow.py`: all **48 baseline**,
+  **seven history** and **ten coupon** workflows. No skips, xfails, removals or
+  weakened assertions. These passes do not override the additional failure below.
+- **25 frontend tests passed**, and the production TypeScript/Vite build passed,
+  run sequentially before application imports using installed Node24.14.1.
+  The existing large-chunk warning remains. Prior ESLint10 missing-config
+  blockage is retained from source; lint was not rerun or worked around.
+- Focused Ruff passed **15 merged Python files**, plus the new merger probe.
+  Focused mypy `--follow-imports=silent` passed **11 source files**, including
+  merged history storage/models; only inherited unused-override notes appeared.
+  `git diff --check` passed. No suppressions or dependency changes were added.
+- Inspected the actual retained [desktop PNG](artifacts/watch-coupons/desktop-coupons.png),
+  [375px PNG](artifacts/watch-coupons/narrow-coupons.png), browser JSON and driver.
+  They expose separate GBP45.10 payable, observation-only wording, explicit
+  compatibility/terms/minimum/time boundaries and no-coupon preservation.
+  The retained driver additionally asserts complete payable, expanded evidence,
+  opportunity/empty scope, reload, legacy navigation and no narrow overflow.
+  No new browser session or buyer acceptance is claimed. PNG SHA-256:
+  desktop `2623ce8463f889f9d52f0991cc5115b4208fc6b4f24e61684a9ae373684d2376`,
+  narrow `9b6b008d81d0118430e06a904c48c2e687bc73954a6fadc315ce948afcf22ba6`.
+- Application workflows exercise persistence/restart, exact SKU/basket/destination/
+  payment/quantity context, spend/currency thresholds, inclusive/exclusive expiry,
+  app/new-customer/member conditions, explicit ordered stack permission, unknown/
+  forbidden stacks and personal/payment/cashback separation. Terms/applicability
+  alone normally retain the no-coupon total without creating a coupon payable.
+  Complete basket commitment and included-tax-once reconciliation use the shared
+  cost engine. Direct source-supplied `public_coupon` costs remain withheld.
+- Changed terms fingerprints, acquisition/offer/binding/configuration/base-cost
+  revisions and policy versions withdraw old application results. Replacement
+  selected SKU cannot inherit the old result; old evidence/total remains
+  historical. Ticket07 correction UI is absent. Its correction transaction and
+  overlapping acquisition remain an explicit future integration gate, with no
+  end-to-end correction acceptance claimed here.
+
+### Reproduced coupon acceptance gap
+
+`core/coupons.py` checks application derivation roots against ordinary terms and
+opportunity roots, but excludes `terms.compatibility_evidence` and
+`eligibility.evidence`. The generic resulting-component checks then accept those
+same roots as application support. The typed `result: applied` and fully
+reconciled amounts do not establish that their evidence is a checkout receipt.
+
+The extra [guarded API/execution probe](../../tests/monitoring/coupon_merger_probe.py)
+submits two exact supported synthetic offers. In each, all original checkout
+evidence is removed from the application, payable context, components and line
+allocations. One input reuses only the **unchanged compatibility claim** (ID
+`synthetic:stack`, locator `$.terms.stack`, root `synthetic-original:stack`);
+the other reuses only the **unchanged eligibility claim** (locator `$.eligibility`,
+root `synthetic-original:eligibility`). Their evidence IDs, context, pointers,
+timestamps and roots remain visible as those non-application claims. No independent
+checkout capture supports either reduced payable.
+
+**Expected:** preserve the opportunity/terms/applicability and original evidence,
+but withhold reproduced application and verified coupon payable.
+
+**Observed independently in an inline diagnostic and the retained module:** both
+feed and persisted coupon-history API return `state: reproduced_at_observation`,
+`issues: []`, and verified resulting/merchant payable **GBP45.10**. All public
+no-coupon totals remain **GBP50.10**, savings remain null and alerts ineligible.
+This is a coupon evidence-classification failure independent of ticket06's
+documented derived-capture history gap.
+
+The same probe includes a positive shipping control with genuine synthetic
+checkout provenance and newly quoted **GBP4.20** shipping. The shared cost engine
+correctly yields **GBP47.20**, rather than reusing base shipping or subtracting
+an advertised discount. The JSON is written before the intended failing
+assertion. [Recorded receipt](artifacts/watch-coupons/merger-receipt-provenance.json).
+
+Reproduce from integration using existing dependencies only; current expected
+exit is **1**, naming both unsupported receipt cases:
+
+```sh
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD/src:$PWD" \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  -m tests.monitoring.coupon_merger_probe \
+  /tmp/pricerecon-ticket09-receipt-provenance.json
+```
+
+All inputs are original synthetic data. Temporary marked SQLite, paused checks,
+staged collection, controlled acquisition/time, captured notification transports
+and blocked outgoing edges were used. Both diagnostics recorded
+`blocked_edges: []`, `notifications_sent: 0`. No pytest test was weakened or
+replaced by this intentionally failing, non-collected acceptance probe.
+
+### Disposition and remaining gates
+
+**09 stays open for receipt-provenance repair**; the unchecked distinction between
+terms/applicability and reproduced exact application prevents acceptance. The
+passing no-coupon path does not close that gate. No later implementation or
+production fix was made. Ticket06's parent-owned lineage gap remains open,
+without repeating or modifying its diagnostic; active05/06 repair worktrees and
+their status were untouched. Ticket12 remains blocked by09 and its other gates.
+
+Collection stays staged. No live coupon/buyer proof, account eligibility,
+production evidence mapping, source rights/retention, freshness, comparisons,
+savings, alerts, deployment or activation acceptance is established. No installs,
+external network/live acquisition, credentials/accounts, production DB operations,
+activation/deploy, push, PR, delegation or unrelated cleanup occurred. Only the
+local history-preserving merge, probe, receipt and tracker changes were committed.
