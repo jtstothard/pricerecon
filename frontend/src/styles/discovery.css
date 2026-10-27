@@ -74,3 +74,6 @@
 .source-coverage, .source-receipt, .source-offer-evidence { overflow-wrap: anywhere; }
 .source-coverage h3 { margin-block: .5rem; }
 .source-coverage ul { padding-left: 1.25rem; }
+.price-assessments { min-width: 0; overflow-wrap: anywhere; }
+.price-assessments details { margin-block: .75rem; }
+.price-assessments dd { margin-inline: 0; }

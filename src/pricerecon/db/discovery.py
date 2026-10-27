@@ -309,8 +309,12 @@ def get_feed() -> DiscoveryFeed:
 
                 project_candidate(connection, candidate)
                 latest[candidate.id] = candidate
+        from pricerecon.db.assessments import get_assessments
+
+        assessments = get_assessments(connection).items
     for candidate in latest.values():
         candidate.public_delivered_total = public_summary(candidate.offers)
+        candidate.price_assessments = [a for a in assessments if candidate.id in a.candidate_ids]
     preferences = get_preferences()
     candidates = []
     for candidate in latest.values():

@@ -27,6 +27,7 @@ async def main(
     coupons=False,
     corrections=False,
     source_evidence=False,
+    assessments=False,
 ):
     with MonitoringHarness() as harness:
         from pricerecon.core.discovery import execute_discovery
@@ -127,8 +128,8 @@ async def main(
             async def fixture_identity():
                 return {
                     "fixture": (
-                        "ticket11-source-evidence-ui"
-                        if source_evidence
+                        "ticket11-source-evidence-ui" if source_evidence else
+                        "ticket08-assessment-ui" if assessments
                         else (
                             "ticket07-correction-ui"
                             if corrections
@@ -186,7 +187,7 @@ async def main(
 
                 await populate_history(harness)
             harness.outcomes["scan"] = RuntimeError("offline simulated acquisition failure")
-            harness.clock.advance()
+            harness.clock.advance(hours=0.1 if assessments else 1)
             await execute_discovery(
                 DiscoveryRequest(query="wristwatch", sources=[{"connector": "scan"}]),
                 admission=DiscoveryAdmission(
@@ -196,6 +197,19 @@ async def main(
                     activation_reference="offline-ui-harness",
                 ),
             )
+            if assessments:
+                from .assessment_workflows import capture as assessment_capture
+                from .assessment_workflows import coupon_report, policy, priced_report
+
+                supplied = policy(harness, allowed_scenario_kinds=["public_no_coupon", "public_coupon"])
+                feed = await assessment_capture(harness, client, [priced_report(harness, "68", "fixture-1")], supplied)
+                harness.clock.advance(hours=0.01)
+                report = coupon_report(harness, 3, "fixture-1")
+                candidate = next(c for c in feed["candidates"] if c["source_listing_id"] == "fixture-1")
+                revision = candidate["configurations"][0]["revision"] + 1
+                report.coupons[0].application.expected_configuration_revision = revision
+                report.coupons[0].application.receipt.observation.expected_configuration_revision = revision
+                await assessment_capture(harness, client, [report], supplied)
             print(
                 f"OFFLINE_UI_READY http://127.0.0.1:{port}/discover; fictional connector leads; temporary SQLite; paused scheduler",
                 flush=True,
@@ -240,6 +254,7 @@ if __name__ == "__main__":
     mode.add_argument("--history", action="store_true")
     mode.add_argument("--corrections", action="store_true")
     mode.add_argument("--source-evidence", action="store_true")
+    mode.add_argument("--assessments", action="store_true")
     args = parser.parse_args()
     try:
         asyncio.run(
@@ -250,12 +265,14 @@ if __name__ == "__main__":
                 or args.tracking
                 or args.history
                 or args.coupons
-                or args.corrections,
+                or args.corrections
+                or args.assessments,
                 tracking=args.tracking,
                 history=args.history,
                 coupons=args.coupons,
                 corrections=args.corrections,
                 source_evidence=args.source_evidence,
+                assessments=args.assessments,
             )
         )
     except KeyboardInterrupt:

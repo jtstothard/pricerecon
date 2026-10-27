@@ -178,6 +178,8 @@ def project_tracking(connection: sqlite3.Connection, intent: ExactTracking) -> E
         reasons.append("source_refresh_unavailable")
     if intent.invalidation_reason:
         reasons.append("evidence_invalidated")
+    if not coupon_assessment_valid(connection, assessment):
+        reasons.append("coupon_terms_or_receipt_changed")
     if evidence_revision_withdrawn(connection, intent, assessment):
         reasons.append("evidence_revision_withdrawn")
     if assessment.valid_until is not None and assessment.valid_until <= datetime.now(UTC):
@@ -370,8 +372,12 @@ def target_delivery_valid(connection: sqlite3.Connection, event_id: int) -> bool
         "SELECT MAX(revision) FROM discovery_cost_scenarios WHERE id=?",
         (event.assessment.scenario_id,),
     ).fetchone()[0]
+    coupon_valid = coupon_assessment_valid(connection, event.assessment)
+    if event.assessment.coupon_id is not None:
+        latest_cost = event.assessment.scenario_revision if coupon_valid else None
     return (
         event.intent_revision == intent.revision
+        and coupon_valid
         and event.invalidation_revision == intent.invalidation_revision
         and intent.invalidation_reason is None
         and not evidence_revision_withdrawn(connection, intent, event.assessment)
@@ -381,6 +387,31 @@ def target_delivery_valid(connection: sqlite3.Connection, event_id: int) -> bool
         and event.assessment.offer_revision == latest_offer
         and event.assessment.scenario_revision == latest_cost
     )
+
+
+def coupon_assessment_valid(connection: sqlite3.Connection, assessment: TrackingAssessment) -> bool:
+    """Receipt/terms/base revisions are checked under the dispatch write lock."""
+    if assessment.coupon_id is None:
+        return True
+    from pricerecon.core.qualification import identity_key
+    from pricerecon.db.coupons import project_lineage
+    from pricerecon.models.coupons import CouponAssessment
+
+    row = connection.execute(
+        "SELECT payload_json FROM discovery_coupons WHERE id=? ORDER BY revision DESC LIMIT 1",
+        (assessment.coupon_id,),
+    ).fetchone()
+    if row is None:
+        return False
+    coupon = project_lineage(connection, CouponAssessment.model_validate_json(row[0]))
+    base = connection.execute("SELECT MAX(revision) FROM discovery_cost_scenarios WHERE id=?",
+                              (assessment.base_scenario_id,)).fetchone()[0]
+    cost = coupon.resulting_cost
+    return (coupon.state == "reproduced_at_observation" and cost is not None
+            and coupon.revision == assessment.coupon_revision
+            and identity_key(coupon.model_dump_json()) == assessment.coupon_fingerprint
+            and (cost.id, cost.revision) == (assessment.scenario_id, assessment.scenario_revision)
+            and base == assessment.base_scenario_revision)
 
 
 def evidence_revision_withdrawn(

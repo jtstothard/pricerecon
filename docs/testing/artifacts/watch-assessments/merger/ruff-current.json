@@ -1,0 +1,267 @@
+[
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 40,
+      "row": 16
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/core/notifications.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "import asyncio\nimport sqlite3\nimport time\nfrom datetime import datetime\nfrom html import escape\nfrom typing import Any, Optional\n\nimport httpx\n\nfrom pricerecon.db.schema import DB_PATH\nfrom pricerecon.models import EventType\n\n\n",
+          "end_location": {
+            "column": 1,
+            "row": 19
+          },
+          "location": {
+            "column": 1,
+            "row": 7
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 1,
+      "row": 7
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 7,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 21,
+      "row": 46
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/core/notifications.py",
+    "fix": null,
+    "location": {
+      "column": 12,
+      "row": 46
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 46,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 110
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/core/notifications.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 110
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 110,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 21,
+      "row": 135
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/core/notifications.py",
+    "fix": null,
+    "location": {
+      "column": 12,
+      "row": 135
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 135,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "UP017",
+    "end_location": {
+      "column": 63,
+      "row": 299
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/core/notifications.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from datetime import datetime, UTC",
+          "end_location": {
+            "column": 30,
+            "row": 12
+          },
+          "location": {
+            "column": 1,
+            "row": 12
+          }
+        },
+        {
+          "content": "UTC",
+          "end_location": {
+            "column": 63,
+            "row": 299
+          },
+          "location": {
+            "column": 51,
+            "row": 299
+          }
+        }
+      ],
+      "message": "Convert to `datetime.UTC` alias"
+    },
+    "location": {
+      "column": 51,
+      "row": 299
+    },
+    "message": "Use `datetime.UTC` alias",
+    "name": "datetime-timezone-utc",
+    "noqa_row": 299,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/datetime-timezone-utc"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 25,
+      "row": 335
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/core/notifications.py",
+    "fix": null,
+    "location": {
+      "column": 16,
+      "row": 335
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 335,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "UP045",
+    "end_location": {
+      "column": 27,
+      "row": 394
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/core/notifications.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "str | None",
+          "end_location": {
+            "column": 27,
+            "row": 394
+          },
+          "location": {
+            "column": 14,
+            "row": 394
+          }
+        }
+      ],
+      "message": "Convert to `X | None`"
+    },
+    "location": {
+      "column": 14,
+      "row": 394
+    },
+    "message": "Use `X | None` for type annotations",
+    "name": "non-pep604-annotation-optional",
+    "noqa_row": 394,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
+  },
+  {
+    "cell": null,
+    "code": "UP045",
+    "end_location": {
+      "column": 33,
+      "row": 395
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/core/notifications.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "str | None",
+          "end_location": {
+            "column": 33,
+            "row": 395
+          },
+          "location": {
+            "column": 20,
+            "row": 395
+          }
+        }
+      ],
+      "message": "Convert to `X | None`"
+    },
+    "location": {
+      "column": 20,
+      "row": 395
+    },
+    "message": "Use `X | None` for type annotations",
+    "name": "non-pep604-annotation-optional",
+    "noqa_row": 395,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 39
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/db/schema.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 39
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 39,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 21,
+      "row": 46
+    },
+    "filename": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src/pricerecon/db/schema.py",
+    "fix": null,
+    "location": {
+      "column": 12,
+      "row": 46
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 46,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  }
+]

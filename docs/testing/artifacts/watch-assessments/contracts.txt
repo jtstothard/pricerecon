@@ -1,0 +1,32 @@
+.....................................                                    [100%]
+=============================== warnings summary ===============================
+src/pricerecon/models/listings.py:50
+  /Users/jay/.t3/worktrees/pricerecon/t3-e29f7fa4/src/pricerecon/models/listings.py:50: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class NormalizedListing(BaseModel):
+
+../t3-7260bb2e/.venv/lib/python3.14/site-packages/pydantic/_internal/_generate_schema.py:300
+../t3-7260bb2e/.venv/lib/python3.14/site-packages/pydantic/_internal/_generate_schema.py:300
+../t3-7260bb2e/.venv/lib/python3.14/site-packages/pydantic/_internal/_generate_schema.py:300
+../t3-7260bb2e/.venv/lib/python3.14/site-packages/pydantic/_internal/_generate_schema.py:300
+../t3-7260bb2e/.venv/lib/python3.14/site-packages/pydantic/_internal/_generate_schema.py:300
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/lib/python3.14/site-packages/pydantic/_internal/_generate_schema.py:300: PydanticDeprecatedSince20: `json_encoders` is deprecated. See https://pydantic.dev/docs/validation/2.14/concepts/serialization/#custom-serializers for alternatives. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    warnings.warn(
+
+src/pricerecon/models/watches.py:217
+  /Users/jay/.t3/worktrees/pricerecon/t3-e29f7fa4/src/pricerecon/models/watches.py:217: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class Watch(WatchBase):
+
+src/pricerecon/models/watches.py:235
+  /Users/jay/.t3/worktrees/pricerecon/t3-e29f7fa4/src/pricerecon/models/watches.py:235: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class Event(BaseModel):
+
+src/pricerecon/models/watches.py:250
+  /Users/jay/.t3/worktrees/pricerecon/t3-e29f7fa4/src/pricerecon/models/watches.py:250: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class PriceHistory(BaseModel):
+
+src/pricerecon/models/rate_limit.py:25
+  /Users/jay/.t3/worktrees/pricerecon/t3-e29f7fa4/src/pricerecon/models/rate_limit.py:25: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class RateLimitStatus(BaseModel):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+37 passed, 10 warnings in 0.37s

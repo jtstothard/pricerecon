@@ -1,0 +1,19 @@
+{
+  "result": "passed",
+  "fixture": "ticket08-assessment-ui",
+  "desktop": "1280x900",
+  "narrow": "375x812",
+  "horizontal_overflow": false,
+  "gates": [
+    "scoped coupon payable",
+    "retained dated low",
+    "historical assessment",
+    "independent unavailable gates",
+    "unchecked source",
+    "evidence",
+    "reload",
+    "correction withdraws current and low in buyer details"
+  ],
+  "buyer_acceptance": "unproven",
+  "live_evidence": "not attempted"
+}

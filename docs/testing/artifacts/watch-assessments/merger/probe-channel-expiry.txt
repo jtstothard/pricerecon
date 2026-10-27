@@ -1,0 +1,70 @@
+Loaded 0 watches into scheduler
+{
+  "mode": "channel_expiry",
+  "before": {
+    "items": [
+      {
+        "event_id": 1,
+        "tracking_id": 1,
+        "intent_revision": 1,
+        "offer_key": "faefa6cd41ee8b13b6827abc9fca0614cb08542ecc5b213f3ae9b591c66f6e98",
+        "delivered_gbp": "45.10",
+        "reason": "target_crossing",
+        "status": "pending",
+        "channels": {
+          "webhook": "not_attempted",
+          "discord": "not_attempted"
+        },
+        "guarantee": "External send/ack crashes are ambiguous; no exactly-once guarantee."
+      }
+    ]
+  },
+  "after": {
+    "items": [
+      {
+        "event_id": 1,
+        "tracking_id": 1,
+        "intent_revision": 1,
+        "offer_key": "faefa6cd41ee8b13b6827abc9fca0614cb08542ecc5b213f3ae9b591c66f6e98",
+        "delivered_gbp": "45.10",
+        "reason": "target_crossing",
+        "status": "withheld",
+        "channels": {
+          "webhook": "sent",
+          "discord": "withheld"
+        },
+        "guarantee": "External send/ack crashes are ambiguous; no exactly-once guarantee."
+      }
+    ]
+  },
+  "deliveries": [
+    [
+      "webhook",
+      "https://synthetic.invalid/captured",
+      {
+        "watch_id": null,
+        "event_type": "exact_target_crossing",
+        "watch_name": "Synthetic exact watch",
+        "listing": {
+          "tracking_id": 1,
+          "title_raw": "Synthetic exact watch",
+          "configuration_id": "59c72dc2203cb6fc29b450eddc15b7660654da5d87012c6e32cbccb1973f5ab7",
+          "offer_id": "7231eaf9ceaacde6e81e8ee2f26835a3d04945e27bd526da363fb2dc4dc53a9b",
+          "offer_key": "faefa6cd41ee8b13b6827abc9fca0614cb08542ecc5b213f3ae9b591c66f6e98",
+          "scenario_kind": "public_coupon",
+          "coupon_codes": "TEN",
+          "base_delivered_gbp": "50.10",
+          "delivered_gbp": "45.10",
+          "target_gbp": "47",
+          "reason": "target_crossing",
+          "observed_at": "2026-10-27T12:01:12+00:00",
+          "url": "https://merchant.invalid/coupon-path"
+        },
+        "message": "\ud83d\udce2 45.10 GBP verified UK delivered \u00b7 Synthetic exact watch\nTarget \u00a347 \u00b7 target_crossing\nVerified public coupon: TEN; no-coupon base \u00a350.10\nEvidence at 2026-10-27T12:01:12+00:00 \u00b7 https://merchant.invalid/coupon-path",
+        "timestamp": "2026-10-27T12:01:12+00:00"
+      }
+    ]
+  ],
+  "blocked_edges": [],
+  "result": "passed"
+}

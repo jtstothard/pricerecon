@@ -28,10 +28,11 @@ Work is limited to source implementation and deterministic offline verification 
 Ticket 01 source was integrated on 2026-10-27 in merge `a0e5c1a612252c61a62eabc7b56ebc3b3297ed85`, preserving implementer HEAD `9312871f269137d7b98ba7155d9523350e41e62e`. The subsequent rendered-form preservation repair was integrated in merge `3243c8f00e3f9dd9efde79327b6905eb3d4354b2`, preserving implementer HEAD `534cecaece62e30f50c680b40af5b4c7f561b6e4`. Integration checks passed **15 isolated workflow tests**, **25 frontend tests** and the frontend build. The parent subsequently passed the rendered edit/save/reload/manual-check regression. See the dated resolution log below and the [repair integration receipt](issues/01-verify-existing-monitoring.md#preservation-repair-integration-receipt-2026-10-27).
 
 Current frontier, 2026-10-27: tickets 01–07, 09 and 10 are closed for their offline
-scope. The parent's denied Watch status/timestamp repair passes all 160 guarded
-workflows, including the original shared-grant probes and new API/scheduler
-denial/empty/partial controls. 08 remains in progress with its independent
-worktree owner; 11 is claimed for isolated implementation. 12 remains blocked.
+scope. Ticket08 source `81f18ab` is integrated in `20728c2`; all 171 guarded
+workflows pass, including retained shared-grant/target-ownership behavior. 08
+remains open for the merger's reproduced literal-list default-factory mypy
+finding; the parent owns that contained repair. 11 retains its existing isolated
+implementation claim. 12 remains blocked by 08/11.
 Earlier dated entries describe their historical state.
 
 Actual buyer walkthrough feedback, current source rights, live offer/history/cost proof, finite operating limits and named maintenance ownership cannot be fabricated by passing fixture tests. Keep these gates explicit in the final receipt.
@@ -246,3 +247,14 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   parent files remain unchanged. See the [repair receipt](../../docs/testing/watch-collection.md#denied-watch-completion-repair-and-offline-acceptance--2026-10-27).
   Collection stays staged; live/source/physical-resource/operating/buyer gates
   remain separate.
+
+- 2026-10-27: Sole ticket08 merger integrated the complete source history
+  `81f18ab18d3417f17945ca46ec437e628689a892` without conflicts with `--no-ff`
+  in `20728c299d2b8a8d217e80dd0dcd5fef6fa79ea1`. **171 guarded workflows**, **37
+  contracts**, **25 frontend tests**, build and three independent coupon recovery/
+  expiry probes pass. Ruff adds no findings; supplied evidence and the original
+  77-file manifest match. Focused mypy independently fails on the new
+  `TrackingPolicy.allowed_scenario_kinds` default factory. **08 remains open for
+  the parent's small source repair; 11 continues with its existing owner; 12
+  remains blocked.** No product source repair or later ticket work occurred.
+  See the [review receipt](../../docs/testing/watch-assessments.md#sole-merger-review--2026-10-27).

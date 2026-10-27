@@ -321,6 +321,9 @@ def init_db(path: Path | None = None) -> None:
     from pricerecon.db.corrections import init_correction_tables
 
     init_correction_tables(conn)
+    from pricerecon.db.assessments import init_assessment_tables
+
+    init_assessment_tables(conn)
     conn.commit()
     _seed_sources(conn)
     _migrate_connector_ids(conn)
