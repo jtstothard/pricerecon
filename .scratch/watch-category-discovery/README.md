@@ -282,3 +282,13 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   Ruff pass; exact challenge/control retain sibling prices and page bounds.
   Existing frontend/build/browser proof is reused and 77 original dirty files
   remain unchanged. **11 closed offline; 12 claimed.** See the [repair receipt](../../docs/testing/watch-source-evidence.md#parent-retailer-isolation-repair-and-offline-acceptance--2026-10-27).
+
+
+- 2026-10-27: Ticket12 isolated implementation prepared a connected deterministic
+  five-case workflow, marked-temporary rollback/recovery, actual desktop/narrow
+  keyboard/browser evidence, machine receipts and a parent-run buyer package.
+  See [workflow receipt](../../docs/testing/watch-workflow.md) and
+  [buyer guide](../../docs/testing/watch-workflow-buyer-guide.md). **12 remains
+  open/in progress: actual buyer walkthrough feedback is unproven.** Parent owns
+  merge acceptance/closure, final two-axis review and cleanup. No live evidence,
+  rights/operating settlement, migration approval or activation follows.

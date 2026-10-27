@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "fixture_version": "ticket12-connected-v1",
+  "scope": "deterministic offline application only",
+  "gates": {
+    "named_cases": {
+      "Militado ML05/ML05B": {
+        "expected": "unresolved; total absent; no alert; real evidence blocked"
+      },
+      "Addiesdive AD2066 mint": {
+        "expected": "70.10 no-coupon incl VAT once; 58.10 crossing; 56.10 further drop; 50.10 base vs 45.10 synthetic receipt; correction withholds"
+      },
+      "San Martin SN0144": {
+        "expected": "Space Gray selected dial rejects mint binding; missing shipping unknown; conditional shipping remains conditional"
+      },
+      "Merkur Lightning salmon": {
+        "expected": "unresolved; total absent; no alert; real evidence blocked"
+      },
+      "Casio MTP-B145D-2A2VEF": {
+        "expected": "missing shipping/FX unknown; evidenced synthetic USD shipping conversion produces 49.68; independent target remains 40"
+      }
+    },
+    "history": {
+      "expected": [
+        "initial",
+        "unchanged",
+        "increased",
+        "decreased",
+        "unchanged",
+        "decreased"
+      ],
+      "gaps": [
+        "cache_reuse",
+        "failed",
+        "capped"
+      ],
+      "market_history_eligible": false
+    },
+    "targets": {
+      "expected_captured_sends": 3,
+      "amounts": [
+        "58.10",
+        "56.10",
+        "50.10"
+      ],
+      "coupon_target_policy": "public_no_coupon only; coupon 45.10 is comparison proof, not target eligibility under this policy",
+      "after_correction": "withheld; independent Casio target unchanged",
+      "after_restart": "same events, no searches or sends; 12 requests stay consumed"
+    },
+    "unavailable": [
+      "usual_price",
+      "personal_price",
+      "savings"
+    ],
+    "legacy": "saved queries/groups/exclusions/targets/settings/enabled-disabled jobs retained; additive migration and closed temporary rollback/recovery",
+    "browser": {
+      "viewports": [
+        "1280x900",
+        "375x812"
+      ],
+      "expected": [
+        "five case feed",
+        "keyboard preferences/target/correction",
+        "price and source evidence",
+        "reload",
+        "stale-write error",
+        "no horizontal overflow",
+        "no page errors"
+      ]
+    },
+    "buyer_feedback": "unproven",
+    "live_coupon_success": "unproven",
+    "real_history": "unproven",
+    "complete_market_coverage": "unproven",
+    "activation": "unproven"
+  },
+  "evidence": {
+    "observed": "observed.json",
+    "complete_api": "raw-api.json.gz",
+    "recovery": "recovery.json",
+    "browser": "browser/receipt.json",
+    "hashes": "provenance.json"
+  },
+  "limitations": "All qualified positive inputs are invented fixtures. Names do not certify real watch dimensions or real offers. Exact source adapter scope is retained separately."
+}

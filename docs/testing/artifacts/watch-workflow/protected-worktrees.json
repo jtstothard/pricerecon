@@ -1,0 +1,470 @@
+{
+  "schema_version": 1,
+  "original_77_files": [
+    {
+      "path": ".scratch/watch-category-discovery/issues/01-verify-existing-monitoring.md",
+      "sha256": "24afbdd88f059a8b12b62424a4ee224a4af70d5acf7668fe103f1b2b2c780a68",
+      "bytes": 1792,
+      "matches": true
+    },
+    {
+      "path": ".scratch/watch-category-discovery/issues/02-discover-candidates.md",
+      "sha256": "23196e77bb6c0ac32c983b4d7ab196e8de22fb47c83b3995a823769b6a6b7c44",
+      "bytes": 1888,
+      "matches": true
+    },
+    {
+      "path": ".scratch/watch-category-discovery/issues/03-explain-offer-qualification.md",
+      "sha256": "b48ad961cf6b4786ad6ff0e9428960c94a9b6e538eef1b164dcac1024383109d",
+      "bytes": 1888,
+      "matches": true
+    },
+    {
+      "path": ".scratch/watch-category-discovery/issues/04-show-uk-delivered-cost.md",
+      "sha256": "acd36503abb72dd63f01bc43278f06bde486c0ea2d32fd786c33e519ea8c8e85",
+      "bytes": 1982,
+      "matches": true
+    },
+    {
+      "path": ".scratch/watch-category-discovery/issues/05-track-exact-products.md",
+      "sha256": "d3f81b9807b51b88bde1e0358fcd5265c7193438c4fc02a869c31dfdb9593ab2",
+      "bytes": 1897,
+      "matches": true
+    },
+    {
+      "path": ".scratch/watch-category-discovery/issues/06-show-observation-history.md",
+      "sha256": "4afb495d7ae8451c31379bc416aac801bf62e056f0014522156736490f7a099e",
+      "bytes": 1820,
+      "matches": true
+    },
+    {
+      "path": ".scratch/watch-category-discovery/issues/07-correct-identities.md",
+      "sha256": "19f242a38cbd65f21718e4001e43e825f2a02a590ac716aa0e6d96182f06a542",
+      "bytes": 1964,
+      "matches": true
+    },
+    {
+      "path": ".scratch/watch-category-discovery/issues/08-compare-qualified-offers.md",
+      "sha256": "41a9ee8e001f5c26e59ae225e81af3fce439c3f750c2e163bb8b21025c4959e9",
+      "bytes": 1890,
+      "matches": true
+    },
+    {
+      "path": ".scratch/watch-category-discovery/issues/09-evaluate-public-coupons.md",
+      "sha256": "5a58861562edb6c3e77f4457b6f03215f22b9e95180448ca1bcd38c89249b2fb",
+      "bytes": 1884,
+      "matches": true
+    },
+    {
+      "path": ".scratch/watch-category-discovery/issues/10-prioritise-tracking.md",
+      "sha256": "ffb9e2e294501e97b0d66d18cf1120c795b0f4dcbbe67330a1d8698a7fd882e5",
+      "bytes": 1878,
+      "matches": true
+    },
+    {
+      "path": ".scratch/watch-category-discovery/issues/11-carry-source-evidence.md",
+      "sha256": "35ebb08b5375f7c548e412d9fc83849244ed72c9a22991530241af4c3419de5f",
+      "bytes": 2156,
+      "matches": true
+    },
+    {
+      "path": ".scratch/watch-category-discovery/issues/12-verify-complete-watch-workflow.md",
+      "sha256": "582dabf349c47eb9f3ef78255d86126a17b66006b6e229b795c456213efa2ed0",
+      "bytes": 2762,
+      "matches": true
+    },
+    {
+      "path": "GLOSSARY.md",
+      "sha256": "db2e04ec756b28eda5f909932e3361b2d4f763cd11974844534560d5b66d6e36",
+      "bytes": 782,
+      "matches": true
+    },
+    {
+      "path": "README.md",
+      "sha256": "402dfb982e7caa2a3c75d53fd1fc505522be02d9e9987a23e1d28e3057623e69",
+      "bytes": 12720,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/MAP.md",
+      "sha256": "257129ca15abf651e9b193f3fcc009de2137207903394c4228627858c1c3a0a6",
+      "bytes": 7438,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/README.md",
+      "sha256": "4728ce658302f3666e54403a7b8b63cb23aa233a07cc7c596640a6a954ebe6e6",
+      "bytes": 922,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/aliexpress-browser-receipts.md",
+      "sha256": "13c64375d279aeaf9ff79cf5004b42d78ed1aee6c4569aeb9c46e89f8aa707a6",
+      "bytes": 5897,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/aliexpress-browser-workflow.md",
+      "sha256": "2535f94c715e2e61d8d24b6ca4c20bc2c15aac63e2a5d8e1335599a59eb6bbeb",
+      "bytes": 9120,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/audit.md",
+      "sha256": "b8fbfacd8da29a156635c0e36f60dcdcd9defd4dddbd3e8e4391ebcd2715ad64",
+      "bytes": 10258,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/baseline-policy-research.md",
+      "sha256": "6697e3b443c40e4f253c184c847ec068d9f60c8126c86dbcacf9dca94653e52e",
+      "bytes": 27576,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/brief.md",
+      "sha256": "ca6ba59a7609fbf8246937dcb8e827c592ded276aaa2f49a4ae91e5249a4439d",
+      "bytes": 3530,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/browser-fix-deployment.md",
+      "sha256": "f8727ff58ce7a1efe14b8b1fa18cd01ac68e7691940b75ca08e4e8d253817b43",
+      "bytes": 8252,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/browser-readiness-check.md",
+      "sha256": "201a047f98313d47fe01edbfd546761967ea0fd2f44fa5f3d01831b8194a19a7",
+      "bytes": 8515,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/byparr-live-check.md",
+      "sha256": "25aa3f097e44ca9d325d6ce89fd4e64f7ef862bbbba2a207252d9677308d5f51",
+      "bytes": 5404,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/domain.md",
+      "sha256": "86a8c37b05405d62128fde56004613707c64dbc2a802ce04de668e1b3a06d5dc",
+      "bytes": 6152,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/ebay-auth-logging-fix.md",
+      "sha256": "8e877c230d7a947d4ebde624c469879674a021890893a80ab0edd967717a285b",
+      "bytes": 3668,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/experience-design-review.md",
+      "sha256": "e9638f7a3b147cce360404b35f4d43145e2652960907fc50fcd96cc84ac5ff93",
+      "bytes": 6183,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/experience-prototype.html",
+      "sha256": "d7ded8633308f8bf885eaa4b47212013a30d5145b3c13c088c000b1c3d0d19f6",
+      "bytes": 13402,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/identity-evidence-research.md",
+      "sha256": "21e21f4c9b58b21a9eb070018d9283136d1876d77c87ce267a14e7870060a195",
+      "bytes": 25465,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/observation-history-research.md",
+      "sha256": "245af5268b9b041a9a77694821b2b34a29c31c5c01a2c526f5c9c530a842b2b0",
+      "bytes": 38894,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/operating-envelope-research.md",
+      "sha256": "917dcb7758dc53fa68e4f05bdf2812d971f8b7d86fef73b91eb6044ea07a7323",
+      "bytes": 21294,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/pc-generalisation-research.md",
+      "sha256": "74de17216e993c2911a151e1df29b10c590ed7174e8c45bb479830eb55693b7a",
+      "bytes": 23175,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/probes/source-api-probe.py",
+      "sha256": "045c458d434d8dd0cd11a3b5d0bde3b7e343d237f728e6e92e6990b9fa576df5",
+      "bytes": 9655,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/public-discounts-research.md",
+      "sha256": "f8fe8b262a6871acd63554587aaca371325e39bfef6242723fdccce67beb4d21",
+      "bytes": 23837,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/risks-and-decisions.md",
+      "sha256": "91b6ad6b5d6fdf8818cb7dc5f1c030b13dac545c06e1372c891d0330cae585c5",
+      "bytes": 4892,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/roadmap.md",
+      "sha256": "ee4d85e525c9e410aebc09f0547d835996e71b6863509da8be10ed0904eb5ba0",
+      "bytes": 3016,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/san-martin-source-receipts.md",
+      "sha256": "f58283969c0f3082c98be16f3e7ea56c5035c0904bbdb8572401b39ff8cbd85a",
+      "bytes": 7652,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/source-access-actions.md",
+      "sha256": "5c54548a2858857b76728eb2534dbd3f81d30e5b625036caedf5a950fcee379b",
+      "bytes": 10521,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/source-access-followup.md",
+      "sha256": "e0542277caa7ad3b1044e4a396d4d3af6609af6b54cb2da7a1aa9416a673d9d0",
+      "bytes": 7981,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/source-api-access-receipts.md",
+      "sha256": "27d7ed80b0f8b661d58bda9f4076e395034e7e80df074ffc0a3cb0fda4b06ffd",
+      "bytes": 6572,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/source-api-probe-receipts.json",
+      "sha256": "47d877334ef778e47e3f4f7242bf81b145041f0c9b51289de085a55891fb54fd",
+      "bytes": 2602,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/source-qualification-access-resolution.md",
+      "sha256": "e00292df32d6fb4b8d90e32b000eddf604435dec68bf72534303bfd536a7daef",
+      "bytes": 16367,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/source-qualification-decision.md",
+      "sha256": "0ffbde5badb2c03719884944db3f650e9ae7849161f06ef26a89600f7556b4ed",
+      "bytes": 15573,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/source-qualification-live-pass.md",
+      "sha256": "f49a567208fb82c9ba94e9fcf97f6f9b7d1965d68eb3527658c3ca6e7062157d",
+      "bytes": 8533,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/source-qualification-research.md",
+      "sha256": "95f9414472890e4f741e48cd032604e1d2574ed663485feeddcb640e58d06b61",
+      "bytes": 17662,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/tickets/README.md",
+      "sha256": "7f6deaf59236548d93f435e1c55c99721ba542fa4f9a9e0d824d1ac257d112fa",
+      "bytes": 6640,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/tickets/baseline-policy.md",
+      "sha256": "3f882233f771269c3decd2c30b5b9ac90052516ba1a74632b9d589d478a8a705",
+      "bytes": 3503,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/tickets/experience-acceptance.md",
+      "sha256": "4e6dfb638ed053d9fe94efe35fd97cf60214484355840c0568d3c20ec896d6c3",
+      "bytes": 6289,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/tickets/identity-evidence.md",
+      "sha256": "4c20315fb0930986edb37aa93ea7cd6321ddf15edd3655f0f2cfce0dc6c21d75",
+      "bytes": 3903,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/tickets/observation-history.md",
+      "sha256": "bd899048dc173926d7447f9780c3265cdbcd5c334df05907ab63133070c107fe",
+      "bytes": 4154,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/tickets/operating-envelope.md",
+      "sha256": "6ffc5047665221d6caf91e79c9eb47495fce3e5db65ea6f5f95d83440b5ae8b5",
+      "bytes": 3322,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/tickets/pc-alternatives.md",
+      "sha256": "c938e019325d42a418ffeb3672d91e95d490be4de22359d02d430b17d6b47796",
+      "bytes": 3172,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/tickets/pc-compatibility.md",
+      "sha256": "58070970eaff93cc149a013250cefc76aa6ab6af53d7a3fe468e87d35e66fd24",
+      "bytes": 3143,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/tickets/pc-generalisation.md",
+      "sha256": "377ce1d3291a7e470930c12acc9182c5ac8ca82d6d8f9044a9b2c1e53623f272",
+      "bytes": 3529,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/tickets/public-discounts.md",
+      "sha256": "247ae67da564a6fa6e23f8403b0f96a33bfcfe00937d499a9a1e60fbfe5f1673",
+      "bytes": 4983,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/tickets/release-route.md",
+      "sha256": "6827a7f71691b0727a376db6d600ff2b2614fba335010e440fbb2a31fa97e43c",
+      "bytes": 5130,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/tickets/source-qualification.md",
+      "sha256": "4eaae8ca06e0bbf5348bd679fe0eca7dbddd3830d4b16cf1402612c1c8e60ee4",
+      "bytes": 18296,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/tickets/uk-cost.md",
+      "sha256": "4ef61883f545a12d8b7642ba2965cfbe18acee2f386c9e6a7d67458c0c3fd940",
+      "bytes": 4568,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/tickets/watch-proof.md",
+      "sha256": "1e27d7be6ab63afc571e04950256a7aa39a07d3295ffc230b55119de5ed80f43",
+      "bytes": 6337,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/uk-cost-research.md",
+      "sha256": "071e6302ab14c70d051189555f191370444e523bb0d6e099e2aab618b19b25b4",
+      "bytes": 24042,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/vertical-slice.md",
+      "sha256": "acad81ea0bf25a972d74f2221765a3534f1d9fdbdf8e522dcd2a53f7d5ba52b0",
+      "bytes": 5729,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/watch-proof-protocol.md",
+      "sha256": "11b41329918179a946890809f348c3d48e3054a022fe62ac028ef0ef0346db70",
+      "bytes": 7823,
+      "matches": true
+    },
+    {
+      "path": "docs/product/category-discovery/watch-research-context.md",
+      "sha256": "5ea9ee2d87182b13ab81d1aa18573770a9d760e042f75febf29f903129b5aa92",
+      "bytes": 10057,
+      "matches": true
+    },
+    {
+      "path": "docs/specs/watch-category-discovery.md",
+      "sha256": "cca78dc355f4ef7101ae82cc442f8dfd2792a4f62ee5cefb8e1741d1c87d3073",
+      "bytes": 23769,
+      "matches": true
+    },
+    {
+      "path": "services/cloakbrowser/README.md",
+      "sha256": "2597ec6eb94e05efd058ecdb540f54f21b0b016fcf90ff58443bd2032219f68d",
+      "bytes": 2662,
+      "matches": true
+    },
+    {
+      "path": "services/cloakbrowser/dom.integration.mjs",
+      "sha256": "70740ed572f1e6547fc63d539f7b0c1974f70e7fadd09f8830ba778397b053d3",
+      "bytes": 1828,
+      "matches": true
+    },
+    {
+      "path": "services/cloakbrowser/server.mjs",
+      "sha256": "8f027e94ab68e7ff5bd20b665a2873a9723e5005ff2a6cb59021831e30b49424",
+      "bytes": 12837,
+      "matches": true
+    },
+    {
+      "path": "services/cloakbrowser/server.test.mjs",
+      "sha256": "40b08809c8e7f8e64cf1922499d0b97f474f1410352fc81233458bfdd3da0895",
+      "bytes": 1547,
+      "matches": true
+    },
+    {
+      "path": "src/pricerecon/connectors/aliexpress.py",
+      "sha256": "1869f447fac7115bb2878f6c9aeaecc4dbe1ab3059ebd0e7f6586e9408b60990",
+      "bytes": 85335,
+      "matches": true
+    },
+    {
+      "path": "src/pricerecon/connectors/aliexpress_browser.py",
+      "sha256": "962d1f81bdf512087063e434a16f3dc3edc0dda93e24318d38af185b6c6ec706",
+      "bytes": 10978,
+      "matches": true
+    },
+    {
+      "path": "src/pricerecon/connectors/base.py",
+      "sha256": "275c3d6f9aacc724b79494af10945e8170136de32ee3c3ca05f99216a27630c8",
+      "bytes": 4034,
+      "matches": true
+    },
+    {
+      "path": "src/pricerecon/connectors/ebay.py",
+      "sha256": "e5fa4b073d7f0daf17fe05282843a1b0505633b64e594cd7db549991c72f147c",
+      "bytes": 23772,
+      "matches": true
+    },
+    {
+      "path": "src/pricerecon/connectors/external_browser.py",
+      "sha256": "98de66b9a95278cb559648c7efe656e43b57ca4b5f5c9c43315cd79742d45800",
+      "bytes": 35160,
+      "matches": true
+    },
+    {
+      "path": "tests/test_aliexpress_browser_workflow.py",
+      "sha256": "c031f1ec82902e08289170e241c1f118f8ca5be006e456ad128e9efa56fe220b",
+      "bytes": 8906,
+      "matches": true
+    },
+    {
+      "path": "tests/test_browser_readiness_regressions.py",
+      "sha256": "2fe9d707ce43da76e70ea0579249349f31461e9674b3d4c2700e42a869d848bf",
+      "bytes": 5666,
+      "matches": true
+    },
+    {
+      "path": "tests/test_ebay_secret_logging.py",
+      "sha256": "c3060a818cc3c66add7c03195edf7a206c9abb9bb20cbfd85755d07f5a93dffb",
+      "bytes": 3687,
+      "matches": true
+    },
+    {
+      "path": "tests/test_external_browser.py",
+      "sha256": "38b87dbd501cfdac55d7cbdb5ec177dd8d5a2157ecf595f264706402ab7aed52",
+      "bytes": 14506,
+      "matches": true
+    }
+  ],
+  "original_manifest_sha256": "69d33b8ddaae60f724077a10e66c63ac7a7f5d49877e2555874ebde43b3df5fb",
+  "integration_head": "9ce8d31236192a8e6b98152a835ff68b4dd03bda",
+  "integration_status": ""
+}

@@ -1,0 +1,63 @@
+F.                                                                       [100%]
+=================================== FAILURES ===================================
+__________ test_five_watch_discovery_to_correction_and_alert_restart ___________
+
+    def test_five_watch_discovery_to_correction_and_alert_restart():
+        with TemporaryDirectory(prefix="pricerecon-offline-", dir="/tmp") as directory:
+            storage = Path(directory)
+            (storage / ".offline-monitoring").write_text("ticket01-test-storage\n")
+>           run_workflow("connected", storage)
+
+tests/test_watch_workflow.py:32: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'connected', storage = PosixPath('/tmp/pricerecon-offline-fo6c4s6o')
+
+    def run_workflow(name, storage):
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-m", "tests.monitoring.watch_workflow", name, str(storage)],
+            cwd=root,
+            env={
+                "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                "PYTHONDONTWRITEBYTECODE": "1",
+            },
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Loaded 1 watches into scheduler
+E         Traceback (most recent call last):
+E           File "<frozen runpy>", line 203, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/tests/monitoring/watch_workflow.py", line 272, in <module>
+E             asyncio.run({"connected": connected, "resume": resume, "recovery": recovery}[sys.argv[1]](Path(sys.argv[2])))
+E             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+E             return runner.run(main)
+E                    ~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+E             return self._loop.run_until_complete(task)
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+E             return future.result()
+E                    ~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/tests/monitoring/watch_workflow.py", line 146, in connected
+E             supplied = policy(harness, window_end=harness.clock.now + timedelta(hours=12))
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/tests/monitoring/assessment_workflows.py", line 23, in policy
+E             return ComparisonPolicy(
+E                 **{**tracking_policy().model_dump(), "version": "synthetic-comparison-v1", **changes},
+E             ...<9 lines>...
+E                 },
+E             )
+E         TypeError: pricerecon.models.assessments.ComparisonPolicy() got multiple values for keyword argument 'window_end'
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python', '-m', 'tests.monitoring.wat...TypeError: pricerecon.models.assessments.ComparisonPolicy() got multiple values for keyword argument \'window_end\'\n').returncode
+
+tests/test_watch_workflow.py:25: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_watch_workflow.py::test_five_watch_discovery_to_correction_and_alert_restart
+1 failed, 1 passed in 1.93s

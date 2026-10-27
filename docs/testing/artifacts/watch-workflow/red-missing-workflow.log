@@ -1,0 +1,74 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+__________ test_five_watch_discovery_to_correction_and_alert_restart ___________
+
+    def test_five_watch_discovery_to_correction_and_alert_restart():
+        with TemporaryDirectory(prefix="pricerecon-offline-", dir="/tmp") as directory:
+            storage = Path(directory)
+            (storage / ".offline-monitoring").write_text("ticket01-test-storage\n")
+>           run_workflow("connected", storage)
+
+tests/test_watch_workflow.py:32: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'connected', storage = PosixPath('/tmp/pricerecon-offline-da6h0ond')
+
+    def run_workflow(name, storage):
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-m", "tests.monitoring.watch_workflow", name, str(storage)],
+            cwd=root,
+            env={
+                "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                "PYTHONDONTWRITEBYTECODE": "1",
+            },
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python: No module named tests.monitoring.watch_workflow
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python', '-m', 'tests.monitoring.wat...='/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python: No module named tests.monitoring.watch_workflow\n').returncode
+
+tests/test_watch_workflow.py:25: AssertionError
+________ test_temporary_legacy_backup_restore_and_repeatable_migration _________
+
+    def test_temporary_legacy_backup_restore_and_repeatable_migration():
+        with TemporaryDirectory(prefix="pricerecon-offline-", dir="/tmp") as directory:
+            storage = Path(directory)
+            (storage / ".offline-monitoring").write_text("ticket01-test-storage\n")
+>           run_workflow("recovery", storage)
+
+tests/test_watch_workflow.py:42: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'recovery', storage = PosixPath('/tmp/pricerecon-offline-drjbhok3')
+
+    def run_workflow(name, storage):
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-m", "tests.monitoring.watch_workflow", name, str(storage)],
+            cwd=root,
+            env={
+                "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                "PYTHONDONTWRITEBYTECODE": "1",
+            },
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python: No module named tests.monitoring.watch_workflow
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python', '-m', 'tests.monitoring.wat...='/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python: No module named tests.monitoring.watch_workflow\n').returncode
+
+tests/test_watch_workflow.py:25: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_watch_workflow.py::test_five_watch_discovery_to_correction_and_alert_restart
+FAILED tests/test_watch_workflow.py::test_temporary_legacy_backup_restore_and_repeatable_migration
+2 failed in 0.08s

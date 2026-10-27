@@ -1,0 +1,359 @@
+{
+  "schema_version": 1,
+  "gate": "unproven",
+  "activation": "staged",
+  "basis": "accepted dated source roster in actual API; no rights or operational commitments inferred",
+  "sources": [
+    {
+      "source": "AliExpress browser-first",
+      "family": "aliexpress",
+      "route": "aliexpress_browser_first_v1",
+      "accepted_status": "reviewed_lead",
+      "unsettled_requirements": [
+        "capture/display/reuse authority",
+        "bounded browser-origin accounting",
+        "separate archive grant"
+      ],
+      "access_authority": null,
+      "capture_authority": null,
+      "display_derivation_rights": null,
+      "retention_policy": null,
+      "deletion_policy": null,
+      "backup_policy": null,
+      "history_rights": null,
+      "cadence_and_freshness": null,
+      "maintenance_owner": null,
+      "gate": "unproven"
+    },
+    {
+      "source": "AliExpress affiliate",
+      "family": "aliexpress",
+      "route": "aliexpress_affiliate",
+      "accepted_status": "unqualified",
+      "unsettled_requirements": [
+        "intended capture and retention authority",
+        "detail/selection qualification"
+      ],
+      "access_authority": null,
+      "capture_authority": null,
+      "display_derivation_rights": null,
+      "retention_policy": null,
+      "deletion_policy": null,
+      "backup_policy": null,
+      "history_rights": null,
+      "cadence_and_freshness": null,
+      "maintenance_owner": null,
+      "gate": "unproven"
+    },
+    {
+      "source": "AliExpress DS",
+      "family": "aliexpress",
+      "route": "aliexpress_ds",
+      "accepted_status": "unsupported",
+      "unsettled_requirements": [
+        "demonstrated DS entitlement",
+        "source retention authority"
+      ],
+      "access_authority": null,
+      "capture_authority": null,
+      "display_derivation_rights": null,
+      "retention_policy": null,
+      "deletion_policy": null,
+      "backup_policy": null,
+      "history_rights": null,
+      "cadence_and_freshness": null,
+      "maintenance_owner": null,
+      "gate": "unproven"
+    },
+    {
+      "source": "eBay Browse new / used",
+      "family": "ebay_secondhand",
+      "route": "ebay_browse_search_v1",
+      "accepted_status": "reviewed_lead",
+      "unsettled_requirements": [
+        "provider-approved capture/display use",
+        "retention/derivation grant",
+        "destination and complete UK cost",
+        "freshness review"
+      ],
+      "access_authority": null,
+      "capture_authority": null,
+      "display_derivation_rights": null,
+      "retention_policy": null,
+      "deletion_policy": null,
+      "backup_policy": null,
+      "history_rights": null,
+      "cadence_and_freshness": null,
+      "maintenance_owner": null,
+      "gate": "unproven"
+    },
+    {
+      "source": "Chrono24",
+      "family": "ebay_secondhand",
+      "route": "chrono24_manual_lead",
+      "accepted_status": "blocked",
+      "unsettled_requirements": [
+        "approved automated/API/retention route",
+        "dealer/private seller and shipping quote evidence"
+      ],
+      "access_authority": null,
+      "capture_authority": null,
+      "display_derivation_rights": null,
+      "retention_policy": null,
+      "deletion_policy": null,
+      "backup_policy": null,
+      "history_rights": null,
+      "cadence_and_freshness": null,
+      "maintenance_owner": null,
+      "gate": "unproven"
+    },
+    {
+      "source": "Militado",
+      "family": "brand_direct",
+      "route": "militado_read_only",
+      "accepted_status": "blocked",
+      "unsettled_requirements": [
+        "recognized Web Bot Auth signer",
+        "store/manufacturer identity",
+        "capture/reuse authority"
+      ],
+      "access_authority": null,
+      "capture_authority": null,
+      "display_derivation_rights": null,
+      "retention_policy": null,
+      "deletion_policy": null,
+      "backup_policy": null,
+      "history_rights": null,
+      "cadence_and_freshness": null,
+      "maintenance_owner": null,
+      "gate": "unproven"
+    },
+    {
+      "source": "Watch Shop",
+      "family": "uk_retail",
+      "route": "watch_shop_public",
+      "accepted_status": "unqualified",
+      "unsettled_requirements": [
+        "current applicable access/use terms",
+        "selected offer delivery evidence; checkout may be required"
+      ],
+      "access_authority": null,
+      "capture_authority": null,
+      "display_derivation_rights": null,
+      "retention_policy": null,
+      "deletion_policy": null,
+      "backup_policy": null,
+      "history_rights": null,
+      "cadence_and_freshness": null,
+      "maintenance_owner": null,
+      "gate": "unproven"
+    },
+    {
+      "source": "WatchGecko",
+      "family": "uk_retail",
+      "route": "watchgecko_public",
+      "accepted_status": "unqualified",
+      "unsettled_requirements": [
+        "intended storage/display/deep-link authority",
+        "selected complete-watch offer"
+      ],
+      "access_authority": null,
+      "capture_authority": null,
+      "display_derivation_rights": null,
+      "retention_policy": null,
+      "deletion_policy": null,
+      "backup_policy": null,
+      "history_rights": null,
+      "cadence_and_freshness": null,
+      "maintenance_owner": null,
+      "gate": "unproven"
+    },
+    {
+      "source": "Sakura Watches",
+      "family": "uk_shipping_international",
+      "route": "sakura_clean_category",
+      "accepted_status": "unqualified",
+      "unsettled_requirements": [
+        "route-specific access and retention review",
+        "selected stock and buyer import cost"
+      ],
+      "access_authority": null,
+      "capture_authority": null,
+      "display_derivation_rights": null,
+      "retention_policy": null,
+      "deletion_policy": null,
+      "backup_policy": null,
+      "history_rights": null,
+      "cadence_and_freshness": null,
+      "maintenance_owner": null,
+      "gate": "unproven"
+    },
+    {
+      "source": "San Martin independent retailer",
+      "family": "uk_shipping_international",
+      "route": "shopify_products_v1",
+      "accepted_status": "reviewed_lead",
+      "unsettled_requirements": [
+        "store-specific reuse/archive authority",
+        "selected SKU and fulfilment evidence",
+        "UK checkout costs"
+      ],
+      "access_authority": null,
+      "capture_authority": null,
+      "display_derivation_rights": null,
+      "retention_policy": null,
+      "deletion_policy": null,
+      "backup_policy": null,
+      "history_rights": null,
+      "cadence_and_freshness": null,
+      "maintenance_owner": null,
+      "gate": "unproven"
+    },
+    {
+      "source": "Brave API",
+      "family": "search_aggregator_community",
+      "route": "brave_search",
+      "accepted_status": "unqualified",
+      "unsettled_requirements": [
+        "existing token and actual plan inventory",
+        "storage-entitled plan",
+        "merchant re-verification"
+      ],
+      "access_authority": null,
+      "capture_authority": null,
+      "display_derivation_rights": null,
+      "retention_policy": null,
+      "deletion_policy": null,
+      "backup_policy": null,
+      "history_rights": null,
+      "cadence_and_freshness": null,
+      "maintenance_owner": null,
+      "gate": "unproven"
+    },
+    {
+      "source": "SearXNG",
+      "family": "search_aggregator_community",
+      "route": "searxng_search",
+      "accepted_status": "unqualified",
+      "unsettled_requirements": [
+        "actual engine/upstream use and storage terms",
+        "merchant re-verification"
+      ],
+      "access_authority": null,
+      "capture_authority": null,
+      "display_derivation_rights": null,
+      "retention_policy": null,
+      "deletion_policy": null,
+      "backup_policy": null,
+      "history_rights": null,
+      "cadence_and_freshness": null,
+      "maintenance_owner": null,
+      "gate": "unproven"
+    },
+    {
+      "source": "Google Shopping",
+      "family": "search_aggregator_community",
+      "route": "google_shopping_lead",
+      "accepted_status": "blocked",
+      "unsettled_requirements": [
+        "permitted exact search route",
+        "merchant re-verification and reuse rights"
+      ],
+      "access_authority": null,
+      "capture_authority": null,
+      "display_derivation_rights": null,
+      "retention_policy": null,
+      "deletion_policy": null,
+      "backup_policy": null,
+      "history_rights": null,
+      "cadence_and_freshness": null,
+      "maintenance_owner": null,
+      "gate": "unproven"
+    },
+    {
+      "source": "Google Custom Search JSON API",
+      "family": "search_aggregator_community",
+      "route": "google_custom_search",
+      "accepted_status": "unsupported",
+      "unsettled_requirements": [
+        "supported alternative under separate decision"
+      ],
+      "access_authority": null,
+      "capture_authority": null,
+      "display_derivation_rights": null,
+      "retention_policy": null,
+      "deletion_policy": null,
+      "backup_policy": null,
+      "history_rights": null,
+      "cadence_and_freshness": null,
+      "maintenance_owner": null,
+      "gate": "unproven"
+    },
+    {
+      "source": "HotUKDeals",
+      "family": "search_aggregator_community",
+      "route": "hotukdeals_feed",
+      "accepted_status": "blocked",
+      "unsettled_requirements": [
+        "readable applicable feed/use conditions",
+        "retention authority"
+      ],
+      "access_authority": null,
+      "capture_authority": null,
+      "display_derivation_rights": null,
+      "retention_policy": null,
+      "deletion_policy": null,
+      "backup_policy": null,
+      "history_rights": null,
+      "cadence_and_freshness": null,
+      "maintenance_owner": null,
+      "gate": "unproven"
+    },
+    {
+      "source": "Reddit watch communities",
+      "family": "search_aggregator_community",
+      "route": "reddit_watch_communities",
+      "accepted_status": "blocked",
+      "unsettled_requirements": [
+        "provider-approved app/use case",
+        "approved retention scope"
+      ],
+      "access_authority": null,
+      "capture_authority": null,
+      "display_derivation_rights": null,
+      "retention_policy": null,
+      "deletion_policy": null,
+      "backup_policy": null,
+      "history_rights": null,
+      "cadence_and_freshness": null,
+      "maintenance_owner": null,
+      "gate": "unproven"
+    }
+  ],
+  "numerical_live_choices": {
+    "provider_request_caps": null,
+    "request_cap": null,
+    "page_cap": null,
+    "detail_cap": null,
+    "retry_cap": null,
+    "fallback_cap": null,
+    "browser_concurrency": null,
+    "browser_seconds": null,
+    "ai_calls": null,
+    "ai_tokens": null,
+    "ai_spend_gbp": null,
+    "logical_storage_bytes": null,
+    "physical_database_bytes": null,
+    "wal_bytes": null,
+    "log_bytes": null,
+    "retention_days": null,
+    "study_duration_hours": null,
+    "study_spend_gbp": null,
+    "operator_minutes": null,
+    "per_source_offer_freshness_seconds": null,
+    "recheck_schedule": null
+  },
+  "maintenance_owner": null,
+  "stop_resume_owner": null,
+  "migration_approval": null
+}
