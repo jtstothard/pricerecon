@@ -207,3 +207,160 @@ commitment, entitlement or measured sustainable cadence. Militado/Merkur evidenc
 real history/baseline calibration, live coupon/delivery, buyer feedback, migration
 approval and activation remain separate gates. PC/pens and personal benefit
 execution remain later scope.
+
+## Sole merger technical acceptance — 2026-10-27
+
+**Technical proof accepted for the offline slice; ticket12 stays open pending
+actual buyer feedback and the parent's final Standards and Spec review.** This
+was the bounded merger verification, not that final two-axis review. No buyer was
+contacted and neither actual-feedback checkbox was ticked.
+
+Integration `/Users/jay/.t3/worktrees/pricerecon/watch-category-integration`, branch
+`integration/watch-category-discovery`, was clean at
+`9ce8d31236192a8e6b98152a835ff68b4dd03bda`. Source
+`/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28`, branch
+`t3/watch-workflow-verification`, was clean at
+`5dc96638a298635fafb3c07dfaf9a88e87331459`, containing that integration. Integration
+had not moved, so no source refresh was needed. Exact identity checks used
+`git branch --show-current`, `git status --porcelain`, `git rev-parse HEAD` in
+both checkouts and `git merge-base --is-ancestor HEAD 5dc96638a298635fafb3c07dfaf9a88e87331459`
+in integration. All exited zero with the stated clean identities.
+
+Executed in integration:
+
+```sh
+git merge --no-ff 5dc96638a298635fafb3c07dfaf9a88e87331459 \
+  -m "Merge ticket 12 connected offline watch verification"
+```
+
+Conflict-free merge **`931b468b9e15603c2462d8ce5f6f0f2ae67e7725`** has parents
+`9ce8d31236192a8e6b98152a835ff68b4dd03bda` and
+`5dc96638a298635fafb3c07dfaf9a88e87331459`. Full source history is retained; no
+squash, rebase, reset, cherry-pick or checkout creation occurred. The merged tree
+initially matched source exactly. The only subsequent changes are this receipt,
+tracker disposition and merger verification artifacts. Production application,
+frontend and existing workflow assertions remain unchanged.
+
+### Independent results and evidence
+
+All commands ran from integration, with existing dependencies and the original
+parent interpreter. Build ran first and finished before any application/fixture
+import. The exact backend environment prefix is:
+
+```sh
+env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
+  PYTHONDONTWRITEBYTECODE=1 \
+  PYTHONPATH=/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src:/Users/jay/.t3/worktrees/pricerecon/watch-category-integration \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python
+```
+
+The full suite appended `-m pytest -q` and exactly the 14 modules listed above,
+in that order. No full-repository pytest or `tests/test_api.py` ran. Exact command
+arrays/environment/results are also retained in
+[merger/check-results.json](artifacts/watch-workflow/merger/check-results.json).
+
+| Gate | Independently observed result |
+| --- | --- |
+| Frontend build first | `env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin npm --prefix frontend run build`: exit 0; existing large-chunk warning retained in `merger/build.log`. |
+| Guarded application workflows | **191 passed in 177.26s**, no skip/xfail, including all 189 retained and the two connected tests; `merger/full-workflows.log`. |
+| Limiter/browser contracts | Same backend prefix plus `-m pytest -q tests/test_rate_limiter.py tests/test_external_browser.py`: **37 passed**, ten inherited warnings; `merger/contracts.log`. |
+| Frontend tests | Same cleared PATH, `npm --prefix frontend run test -- --run`: **25 passed**; `merger/frontend-tests.log`. |
+| Focused types | Backend prefix and exact `-m mypy --no-incremental` 17-file argv from source `checks.json`: **passed**, retained unused-config note; `merger/mypy.log`. |
+| Ruff against 9ce8d31 | Backend interpreter plus `docs/testing/artifacts/watch-workflow/merger/audit_evidence.py`: zero baseline/current/added findings across changed Python and both merger scripts; `merger/ruff.json`. No suppressions or assertion weakening. |
+| Evidence integrity | **6 final code hashes, 88 artifact hashes, 254 source/build hashes and 19 screenshot hashes match**; `merger/evidence-audit.json`. All 77 exact original manifest hashes and lengths match. |
+| Source/document whitespace | `git diff --cached --check 9ce8d31 -- . ':(glob,exclude)**/*.log'`: passed. Raw log whitespace separately retained in `merger/diff-raw-logs.log`; no globally clean whitespace claim. |
+| ESLint | `npm --prefix frontend run lint` in the same cleared environment: exit 2, existing missing `eslint.config.*`; `merger/eslint.log`. **Blocked**, no workaround/install. |
+| Retained desktop/narrow browser proof | Read actual driver/server/UI code, receipt and complete compressed feed; opened all 19 PNGs. Evidence reused with matching application/build/current-driver hashes; no new browser run. |
+| Additional closed-copy check | Backend prefix plus `docs/testing/artifacts/watch-workflow/merger/recovery_copy_probe.py`: **passed**; `merger/recovery-copy-probe.json` and `.log`. |
+
+The copied source receipts were checked against the actual assertions and public
+API/execution behavior, not accepted as independent correctness proof. Fixed
+expected literals (70.10/58.10/56.10, 50.10 base versus 45.10 synthetic receipt,
+49.68 FX and 60/40 targets) are specified independently of production calculations.
+The connected guarded suite verifies all five names: Militado/Merkur deliberately
+abstain; the three positive cases retain explicitly fictional VH31 dimensions,
+prices and dates. CEX/Scan are fixture edges; original illustrations stay labelled.
+Editable preferences, unknown dimensions, selected-dial/missing/conditional/FX
+costs and VAT-once, base/coupon separation, crossings/dedup/recovery, versioned
+scoped claims, cached/failed/capped history, correction lineage/unrelated intent
+and durable 12-request exhaustion across a fresh process are exercised at the
+approved seam. No synthetic history becomes market-history eligible. The retained
+source roster exposes six families/16 routes, unchecked/unqualified lanes and
+rights/caps gaps; none establishes actual stockists or complete market coverage.
+
+The inspected screenshots show readable preference/target/correction controls at
+1280×900 and 375×812, amount/scenario distinctions, conditional cashback excluded
+from payable, scoped current/dated-low versus unavailable usual/personal/savings,
+staged source coverage, saved correction lineage, conflict guidance and resolved
+reload. The driver asserts keyboard submission, persistence, 409 rejection/reload,
+no horizontal overflow and no page exceptions. A screenshot alone cannot prove
+keyboard interaction or absence of every browser error; those claims retain the
+driver/receipt boundary. Dense panels scroll and require actual buyer judgement.
+
+Browser provenance documents a storage-only post-run change from hash
+`c26f5fa4a92056434b6c3a6a23afa843ef28a9c0f4d2e6883c98131ba7947240` to current
+`0d867837b886fca65ca9052be71c37c4c70fb3977b70b38ed7b8c8751e9d504e`.
+Current bytes and all retained artifacts match; prior driver bytes are not
+retained for an independent historical diff. The storage-only explanation is
+documented provenance, not a newly reproduced browser run. An attempted hash
+reconstruction was an overconstraint in the merger audit, failed and was removed;
+`merger/audit-first.log` is retained. This did not change application tests or
+assertions. No UI changed and no substantive UI evidence gap required a new run.
+
+### Bounded recovery boundary check
+
+The source recovery receipt did not independently record connection closure for
+each copy, so one additional check instrumented only SQLite connection closure
+and `shutil.copy2`. It invoked the retained recovery workflow in a fresh guarded
+process with marked temporary storage. At all four copies every opened connection
+was closed, neither source nor destination had a WAL, and source/destination
+SHA256 and lengths matched. Independently specified public API assertions retain
+enabled 7/disabled 8, raw queries, groups, exclusions, schedules, notifications and
+target. Seed/feed counts are 5/5, pre-migration restore 0, post-migration restore 5.
+The source's schedule check remains active. Temporary storage was removed.
+
+The first probe expected only one initial feed read, while `seed()` and its caller
+each read it. That bookkeeping failure is retained in
+`merger/recovery-copy-probe-first.log`; corrected expected call counts pass.
+All copy-boundary and API-content assertions passed in both attempts. No product
+defect, reproducer requiring a product fix or assertion weakening was found.
+This proves closed temporary byte-copy roundtrips only. It does not certify a
+running database/WAL backup, deployment rollback or migration permission.
+
+Raw merger logs and probe/source hashes are retained in
+[merger/raw-sha256.json](artifacts/watch-workflow/merger/raw-sha256.json). The
+original preservation authority is
+`/Users/jay/.scratch/watch-category-discovery-implementation/initial-worktree-manifest.json`,
+SHA256 `93ada3e762355f117518d20a6dd2d0ad6f80e01cb2d49bea8ddff073e390c6b9`.
+The final local receipt commit follows the merge; resolve it with
+`git rev-parse integration/watch-category-discovery`. Source remains at the exact
+supplied SHA and clean. Both source and merge are ancestors of the final receipt
+commit. All 77 original hashes/lengths were checked again at handback. No application
+ran in the original checkout.
+
+### Parent continuation and unresolved gates
+
+The [buyer guide](watch-workflow-buyer-guide.md) is runnable from integration after
+this merge: use the integration path instead of its example source `cd`, finish
+the documented cleared-environment build, then use the backend prefix above with
+`-m tests.monitoring.discovery_ui_server --workflow --port 8892`. No package,
+browser, credentials or accounts need installing. Await `OFFLINE_UI_READY`, open
+`http://127.0.0.1:8892/discover`, and verify `/api/offline-verification` reports
+`ticket12-connected-ui-v1`, temporary storage, automatic checks false, no blocked
+edges and zero initial sends. Stop on an occupied port or different marker.
+Create the target before the parent's `baseline`; then `cross`, `duplicate`,
+`drop`, `costs`, `coupon`, correction and `stale` as directed. The helper is
+`-m tests.monitoring.watch_workflow_ui --port 8892 --step STEP` using the same
+backend prefix. It verifies per-run identity. Reload after each step, avoid
+merchant links, and Ctrl-C the fixture afterwards. This merger left no owned
+fixture/browser running.
+
+Actual buyer task feedback and parent's final Standards and Spec review/fixes,
+closure and cleanup remain outstanding. Real Militado/Merkur evidence is blocked;
+live offers/coupons/delivery, retained history/calibration, source-specific rights,
+retention/deletion/backup, numerical operating/physical DB/WAL/log/study/spend/
+operator limits, freshness, named owners, migration approval and activation are
+unproven. Existing ESLint configuration remains blocked. No release/global-best/
+complete-coverage claim follows. Collection stays staged. No push/PR, live/network
+acquisition, account/production operation, install, activation, purchase or
+unrelated cleanup occurred; the original 77 dirty files and source are preserved.

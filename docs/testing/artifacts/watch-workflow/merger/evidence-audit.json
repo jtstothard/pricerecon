@@ -1,0 +1,17 @@
+{
+  "base": "9ce8d31236192a8e6b98152a835ff68b4dd03bda",
+  "source": "5dc96638a298635fafb3c07dfaf9a88e87331459",
+  "initial_manifest": "/Users/jay/.scratch/watch-category-discovery-implementation/initial-worktree-manifest.json",
+  "initial_manifest_sha256": "93ada3e762355f117518d20a6dd2d0ad6f80e01cb2d49bea8ddff073e390c6b9",
+  "initial_entries": 77,
+  "all_original_hashes_and_lengths_match": true,
+  "verified_maps": {
+    "source_sha256": 6,
+    "artifact_sha256": 88
+  },
+  "provenance_hashes_matched": 254,
+  "browser_tested_hash_documented_only": "c26f5fa4a92056434b6c3a6a23afa843ef28a9c0f4d2e6883c98131ba7947240",
+  "browser_post_run_change": "Implementer documents storage-only change; prior driver bytes unavailable for independent diff",
+  "screenshots_hash_matched_and_visually_inspected": 19,
+  "ruff_added": 0
+}

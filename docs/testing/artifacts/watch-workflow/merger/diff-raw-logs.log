@@ -1,0 +1,211 @@
+docs/testing/artifacts/watch-workflow/browser-fourth.log:12: new blank line at EOF.
+docs/testing/artifacts/watch-workflow/build.log:14: trailing whitespace.
++[plugin builtin:vite-reporter] 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:3: trailing whitespace.
+++[plugin builtin:vite-reporter] 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:5: trailing whitespace.
++++[plugin builtin:vite-reporter] 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:7: trailing whitespace.
++++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:9: trailing whitespace.
++++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:11: trailing whitespace.
++++E         
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:13: trailing whitespace.
++++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:15: trailing whitespace.
++++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:17: trailing whitespace.
++++E         
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:19: trailing whitespace.
++++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:21: trailing whitespace.
++++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:23: trailing whitespace.
++++E         
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:25: trailing whitespace.
++++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:27: trailing whitespace.
++++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:29: trailing whitespace.
++++E         
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:31: trailing whitespace.
++++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:33: trailing whitespace.
++++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:35: trailing whitespace.
++++E         
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:37: trailing whitespace.
++++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:39: trailing whitespace.
++++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:41: trailing whitespace.
++++E         
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:43: trailing whitespace.
++++tests/test_watch_workflow.py:42: 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:45: trailing whitespace.
++++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:47: trailing whitespace.
++++E         
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:49: trailing whitespace.
++++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:51: trailing whitespace.
++++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:53: trailing whitespace.
++++E         
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:55: trailing whitespace.
++++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:57: trailing whitespace.
++++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:59: trailing whitespace.
++++E         
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:61: trailing whitespace.
++++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:63: trailing whitespace.
++++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:65: trailing whitespace.
++++E         
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:67: trailing whitespace.
++++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:69: trailing whitespace.
++++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:71: trailing whitespace.
++++E         
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:73: trailing whitespace.
+++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:75: trailing whitespace.
+++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:77: trailing whitespace.
+++E         
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:80: trailing whitespace.
+++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:82: trailing whitespace.
+++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:84: trailing whitespace.
+++E         
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:86: trailing whitespace.
+++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:88: trailing whitespace.
+++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:90: trailing whitespace.
+++E         
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:92: trailing whitespace.
+++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:94: trailing whitespace.
+++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:96: trailing whitespace.
+++E         
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:99: trailing whitespace.
+++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:101: trailing whitespace.
+++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:103: trailing whitespace.
+++E         
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:105: trailing whitespace.
+++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:107: trailing whitespace.
+++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:109: trailing whitespace.
+++E         
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:111: trailing whitespace.
+++tests/test_watch_workflow.py:42: 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:113: trailing whitespace.
+++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:115: trailing whitespace.
+++E         
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:117: trailing whitespace.
+++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:119: trailing whitespace.
+++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:121: trailing whitespace.
+++E         
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:123: trailing whitespace.
+++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:125: trailing whitespace.
+++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:127: trailing whitespace.
+++E         
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:129: trailing whitespace.
+++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:131: trailing whitespace.
+++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:133: trailing whitespace.
+++E         
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:135: trailing whitespace.
+++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:137: trailing whitespace.
+++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/diff-raw-logs.log:139: trailing whitespace.
+++E         
+docs/testing/artifacts/watch-workflow/eighth-connected.log:11: trailing whitespace.
++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/eighth-connected.log:12: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/eighth-connected.log:62: trailing whitespace.
++E         
+docs/testing/artifacts/watch-workflow/eslint.log:20: new blank line at EOF.
+docs/testing/artifacts/watch-workflow/fifth-connected.log:11: trailing whitespace.
++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/fifth-connected.log:12: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/fifth-connected.log:62: trailing whitespace.
++E         
+docs/testing/artifacts/watch-workflow/first-connected.log:11: trailing whitespace.
++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/first-connected.log:12: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/first-connected.log:56: trailing whitespace.
++E         
+docs/testing/artifacts/watch-workflow/fourth-connected.log:11: trailing whitespace.
++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/fourth-connected.log:12: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/fourth-connected.log:53: trailing whitespace.
++E         
+docs/testing/artifacts/watch-workflow/frontend-tests.log:14: new blank line at EOF.
+docs/testing/artifacts/watch-workflow/merger/build.log:14: trailing whitespace.
++[plugin builtin:vite-reporter] 
+docs/testing/artifacts/watch-workflow/merger/eslint.log:20: new blank line at EOF.
+docs/testing/artifacts/watch-workflow/merger/frontend-tests.log:14: new blank line at EOF.
+docs/testing/artifacts/watch-workflow/ninth-connected.log:11: trailing whitespace.
++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/ninth-connected.log:12: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/ninth-connected.log:62: trailing whitespace.
++E         
+docs/testing/artifacts/watch-workflow/red-missing-workflow.log:11: trailing whitespace.
++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/red-missing-workflow.log:12: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/red-missing-workflow.log:32: trailing whitespace.
++E         
+docs/testing/artifacts/watch-workflow/red-missing-workflow.log:45: trailing whitespace.
++tests/test_watch_workflow.py:42: 
+docs/testing/artifacts/watch-workflow/red-missing-workflow.log:46: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/red-missing-workflow.log:66: trailing whitespace.
++E         
+docs/testing/artifacts/watch-workflow/second-connected.log:11: trailing whitespace.
++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/second-connected.log:12: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/second-connected.log:62: trailing whitespace.
++E         
+docs/testing/artifacts/watch-workflow/seventh-connected.log:11: trailing whitespace.
++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/seventh-connected.log:12: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/seventh-connected.log:62: trailing whitespace.
++E         
+docs/testing/artifacts/watch-workflow/sixth-connected.log:11: trailing whitespace.
++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/sixth-connected.log:12: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/sixth-connected.log:62: trailing whitespace.
++E         
+docs/testing/artifacts/watch-workflow/third-connected.log:11: trailing whitespace.
++tests/test_watch_workflow.py:32: 
+docs/testing/artifacts/watch-workflow/third-connected.log:12: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-workflow/third-connected.log:63: trailing whitespace.
++E         

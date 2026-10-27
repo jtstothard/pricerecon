@@ -19,7 +19,7 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 | [09: Public coupons](issues/09-evaluate-public-coupons.md) | 04 | Closed |
 | [10: Shared limits](issues/10-prioritise-tracking.md) | 05 | Closed |
 | [11: Source evidence](issues/11-carry-source-evidence.md) | 03, 10 | Closed |
-| [12: Integrated verification](issues/12-verify-complete-watch-workflow.md) | 08, 09, 11 | In progress |
+| [12: Integrated verification](issues/12-verify-complete-watch-workflow.md) | 08, 09, 11 | Open: technical proof accepted; buyer feedback/final review pending |
 
 ## Authority and acceptance
 
@@ -30,9 +30,9 @@ Ticket 01 source was integrated on 2026-10-27 in merge `a0e5c1a612252c61a62eabc7
 Current frontier, 2026-10-27: tickets 01–11 are closed for their offline scope.
 The parent's contained Shopify isolation repair passes all 189 guarded workflows,
 37 contracts and the exact original challenge/control with preserved capture
-bounds. 12 is claimed for isolated integrated verification and handoff evidence.
-Actual buyer walkthrough feedback remains required; no live/production gate is
-accepted by these source results.
+bounds. 12's merged offline technical proof is accepted; actual buyer walkthrough
+feedback and the parent's final Standards and Spec review remain pending. 12 stays
+open. No live/production gate is accepted by these source results.
 Earlier dated entries describe their historical state.
 
 Actual buyer walkthrough feedback, current source rights, live offer/history/cost proof, finite operating limits and named maintenance ownership cannot be fabricated by passing fixture tests. Keep these gates explicit in the final receipt.
@@ -292,3 +292,19 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   open/in progress: actual buyer walkthrough feedback is unproven.** Parent owns
   merge acceptance/closure, final two-axis review and cleanup. No live evidence,
   rights/operating settlement, migration approval or activation follows.
+
+- 2026-10-27: Sole ticket12 merger preserved source `5dc9663` and integration
+  `9ce8d31` with conflict-free `--no-ff` merge `931b468`. Independently passed
+  **191 guarded workflows, 37 contracts, 25 frontend tests/build**, uncached
+  17-file mypy, zero-added Ruff and source/document whitespace. All retained
+  source/build/artifact hashes and 77 original dirty-file hashes/lengths match;
+  all 19 retained desktop/narrow screenshots were inspected. One additional
+  bounded recovery check verifies every temporary byte copy has closed
+  connections, no WAL, matching hashes and correct API restore roundtrips.
+  **12 technical proof accepted; remains open pending actual buyer feedback and
+  parent's final two-axis review.** No feedback checkbox was ticked and no final
+  review, product repair, new browser run, push/PR or cleanup occurred. Existing
+  ESLint blockage and raw-log whitespace are separate. See the
+  [merger receipt](../../docs/testing/watch-workflow.md#sole-merger-technical-acceptance--2026-10-27).
+  Collection stays staged; all live, calibration, source-rights, operating,
+  physical-resource, migration and activation gates remain separate and unproven.

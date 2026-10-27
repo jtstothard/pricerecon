@@ -4,7 +4,7 @@
 
 **Blocked by:** [08: Compare qualified offers and explain price claims](08-compare-qualified-offers.md), [09: Evaluate public coupons without assuming stacks](09-evaluate-public-coupons.md), [11: Carry source evidence and access limits through acquisition](11-carry-source-evidence.md)
 
-**Status:** in-progress — claimed 2026-10-27
+**Status:** open — technical proof accepted 2026-10-27; actual buyer feedback and parent's final two-axis review pending
 
 **Assignee:** Codex implementer (isolated worktree)
 
@@ -61,3 +61,24 @@ above remains unchecked until the actual buyer participates. Parent merger owns
 acceptance, closure, final two-axis code review and cleanup. All source/live/
 rights/retention/freshness/operating/migration/activation prerequisites remain
 separately unproven; positive fixture qualifications are not real market proof.
+
+## Sole merger technical acceptance — 2026-10-27
+
+Full source `5dc96638a298635fafb3c07dfaf9a88e87331459` was merged without conflicts
+with `--no-ff` in `931b468b9e15603c2462d8ce5f6f0f2ae67e7725`, first parent
+`9ce8d31236192a8e6b98152a835ff68b4dd03bda`. The merger independently passed 191
+guarded workflows, 37 contracts, 25 frontend tests/build, uncached 17-file mypy,
+zero-added-finding Ruff and source/document whitespace; inspected all 19 retained
+desktop/narrow screenshots and checked artifact/source/build hashes. One bounded
+independent copy-boundary check confirms closed connections, absent WAL and exact
+copy hashes plus public API legacy/candidate restore roundtrips. No product
+repair, new browser run or final two-axis review occurred. Existing ESLint
+missing-config blockage and raw-log whitespace remain separately recorded.
+
+See the [dated merger receipt](../../../docs/testing/watch-workflow.md#sole-merger-technical-acceptance--2026-10-27)
+for exact commands, retained raw results, hashes and limitations. Technical proof
+is accepted for this offline slice. **12 remains open**: both actual-feedback
+checkboxes remain unchecked; the parent owns buyer participation, final Standards
+and Spec review, any resulting fixes, closure and cleanup. Live evidence, source
+rights, real history/calibration, operating/physical-resource policy, migration
+approval and activation remain unproven; collection stays staged.

@@ -1,0 +1,19 @@
+
+> pricerecon-frontend@0.1.0 build
+> tsc && vite build
+
+vite v8.3.4 building client environment for production...
+transforming...
+✓ 645 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.45 kB │ gzip:   0.29 kB
+dist/assets/index-DwlOA6VL.css   84.37 kB │ gzip:  16.52 kB
+dist/assets/index-z04lkR9p.js   695.16 kB │ gzip: 192.88 kB
+
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 683ms

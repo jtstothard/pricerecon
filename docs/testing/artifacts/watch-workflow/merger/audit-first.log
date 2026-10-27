@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/docs/testing/artifacts/watch-workflow/merger/audit_evidence.py", line 55, in <module>
+    assert reconstructed_hash == browser['tested_driver_sha256'], reconstructed_hash
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0a6e4bee7d04e76d830eee12e7b429d872b958bbd87299f605010672333de186
