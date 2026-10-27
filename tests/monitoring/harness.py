@@ -37,6 +37,8 @@ class MonitoringHarness:
         self.clock = Clock()
         self.outcomes = {"cex": [], "scan": []}
         self.searches = []
+        self.reports = {}
+        self.report_overrides = {}
         self.deliveries = []
         self.blocked_edges = []
         self.search_started = asyncio.Event()
@@ -160,6 +162,16 @@ class MonitoringHarness:
 
                 async def cleanup(self):
                     pass
+
+                async def search_with_evidence(self, query, filters=None):
+                    from pricerecon.models.qualification import EvidenceSearchReport
+
+                    if source in harness.report_overrides:
+                        return harness.report_overrides[source]
+                    return EvidenceSearchReport(
+                        listings=await self.search(query, filters),
+                        evidence=harness.reports.get(source, []),
+                    )
 
                 async def search(self, query, filters=None):
                     harness.searches.append((source, query, filters))

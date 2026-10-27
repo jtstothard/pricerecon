@@ -195,3 +195,11 @@ Tracking and correction controls belong to their dependent tickets and are not
 simulated here. Source permissions/retention, operating caps, live activation and
 buyer walkthrough remain open. No live acquisition, credentials, accounts,
 production DB, deployment, push or PR was used.
+
+## Ticket03 continuation
+
+Configuration/selection/merchant-offer qualification now has separate persisted
+records and API/feed explanations. See the dated [ticket03 verification receipt](watch-qualification.md)
+for its synthetic fixtures, red/green evidence, migration/restart behavior, actual
+browser check and remaining live/cost/freshness gates. Ticket03 remains open for
+the merger; this does not amend ticket02's historical acceptance receipt.

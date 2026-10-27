@@ -40,3 +40,8 @@
   .discovery-fields { grid-template-columns: 1fr; gap: 14px; }
   .discovery-preferences { padding-inline: 12px; }
 }
+.discovery-qualification section { margin: 1rem 0; padding: .75rem; border: 1px solid var(--border); border-radius: .5rem; }
+.discovery-qualification dl { display: flex; flex-wrap: wrap; gap: .5rem 1rem; }
+.discovery-qualification dt { font-weight: 600; }
+.discovery-qualification dd { margin: 0; }
+.discovery-qualification p, .discovery-qualification li, .discovery-qualification dd { overflow-wrap: anywhere; }

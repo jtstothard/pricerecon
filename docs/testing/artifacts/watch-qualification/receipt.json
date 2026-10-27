@@ -1,0 +1,19 @@
+{
+  "result": "passed",
+  "fixture": "five named synthetic cases; Militado/Merkur abstain",
+  "fixture_identity_checked_before_writes": true,
+  "gates": [
+    "image-led feed",
+    "keyboard save",
+    "preferences survive reload",
+    "expanded evidence",
+    "375px no overflow",
+    "legacy queue navigation",
+    "separate qualification states",
+    "visible synthetic provenance",
+    "rejected dial mapping",
+    "used auction separation"
+  ],
+  "buyer_acceptance": "unproven",
+  "live_acquisition": "not attempted"
+}

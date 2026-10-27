@@ -1,4 +1,4 @@
-"""Lead-only discovery contracts. Legacy normalized output is not qualification."""
+"""Discovery feed contracts. Legacy normalized output remains lead-only."""
 
 from datetime import datetime
 from decimal import Decimal
@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from pricerecon.models.qualification import Configuration, MerchantOffer, SelectionBinding
 from pricerecon.models.watches import SourceConfig
 
 
@@ -145,7 +146,7 @@ class PreferenceUpdate(DiscoveryModel):
 class PreferenceFit(DiscoveryModel):
     field: Literal["compact", "colourful", "budget"]
     strength: Literal["hard", "soft", "unset"]
-    state: Literal["unknown", "unset"]
+    state: Literal["unknown", "unset", "fits", "outside"]
     reason: str
 
 
@@ -166,7 +167,11 @@ class DiscoveryCandidate(DiscoveryModel):
     advertised_item_price: Decimal | None
     reported_currency: str | None
     price_caveat: str = "Connector-reported item price only; may describe another variation or a normalized default."
-    identity_state: Literal["unresolved"] = "unresolved"
+    identity_state: Literal["unresolved", "supported", "conflicting", "rejected"] = "unresolved"
+    configuration: Configuration = Field(default_factory=Configuration)
+    configurations: list[Configuration] = Field(default_factory=list)
+    bindings: list[SelectionBinding] = Field(default_factory=list)
+    offers: list[MerchantOffer] = Field(default_factory=list)
     missing_data: list[str] = Field(
         default_factory=lambda: [
             "exact reference and generation",
