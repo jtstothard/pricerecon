@@ -72,6 +72,46 @@ function Preferences({ profile, onSaved }: { profile: PreferenceProfile; onSaved
   </details>
 }
 
+const costStateLabel = { verified_at_observation: 'Verified at observation', conditional: 'Conditional', unknown: 'Total unknown' }
+function subtotals(values: Record<string, string>) {
+  return Object.entries(values).map(([currency, value]) => `${currency} ${value}`).join('; ') || 'No separately added evidenced amount'
+}
+type Cost = DiscoveryCandidate['offers'][number]['cost_scenarios'][number]
+type CostClaim = Cost['context_evidence'][number]
+function CostEvidence({ claims }: { claims: CostClaim[] }) {
+  return <details><summary>Cost evidence and provenance ({claims.length})</summary><ul>{claims.map((claim, index) => <li key={`${claim.id}-${index}`}>
+    <p>{claim.retention === 'synthetic' ? 'Synthetic test evidence. ' : ''}{claim.issuer_kind}: {claim.issuer}; extractor {claim.extractor} ({claim.extractor_kind}); route {claim.route}; locator {claim.locator}.</p>
+    <p>Claim {claim.id}; capture {claim.capture_id}; observed {claim.observed_at ?? 'unknown'}; retrieved {claim.retrieved_at}; effective {claim.effective_at ?? 'not stated'}; expiry {claim.expires_at ?? 'not stated'}.</p>
+    <p>Lineage: {claim.derived_from.join(', ')}; input claims: {claim.input_claim_ids.join(', ') || 'none'}; permission {claim.permission_reference}; retention {claim.retention}.</p>
+    <dl>{Object.entries(claim.context).map(([field, value]) => <div key={field}><dt>{field.replace(/_/g, ' ')}</dt><dd>{Array.isArray(value) ? value.join(', ') : value ?? 'unknown'}</dd></div>)}</dl>
+    {claim.pointer && <a href={claim.pointer} target="_blank" rel="noreferrer">Cost evidence source</a>}
+  </li>)}</ul></details>
+}
+function Costs({ costs }: { costs: Cost[] }) {
+  return <details className="discovery-costs"><summary>Delivered cost scenarios ({costs.length})</summary>
+    <p>Costs describe the captured buyer scenario. Observation-time verification does not prove current freshness or comparison acceptance. Item lead prices are discovery prefilters.</p>
+    {costs.length === 0 && <p>No exact-scenario cost evidence supplied. Legacy normalized totals cannot certify delivered costs.</p>}
+    {costs.map(cost => <section key={`${cost.id}-${cost.revision}`}>
+      <h4>{cost.kind === 'public_no_coupon' ? 'Public no-coupon' : cost.kind} · {costStateLabel[cost.state]}{cost.total && ` · ${cost.total.currency} ${cost.total.amount}`}</h4>
+      <p>Observed capture {cost.captured_at}. Scenario revision {cost.revision}; offer revision {cost.offer_revision}; selection revision {cost.binding_revision}; configuration revision {cost.configuration_revision}; policy {cost.policy_version}. Freshness unvalidated.</p>
+      <p>Merchant payable: {subtotals(cost.merchant_payable)}. Additional import/carrier/payment liabilities: {subtotals(cost.additional_liabilities)}.</p>
+      <p>Known subtotal: {subtotals(cost.known_subtotal)}{cost.state === 'unknown' ? '; incomplete, not a delivered total.' : '.'}</p>
+      {cost.assumptions.length > 0 && <p><strong>Assumptions:</strong> {cost.assumptions.join('; ')}</p>}
+      <ul>{cost.issues.map((issue, i) => <li key={i}>{issue}</li>)}</ul>
+      <details><summary>Buyer scenario context</summary><dl>{Object.entries(cost.context).map(([field, value]) => <div key={field}><dt>{field.replace(/_/g, ' ')}</dt><dd>{Array.isArray(value) ? value.join(', ') : value ?? 'unknown'}</dd></div>)}</dl></details>
+      <CostEvidence claims={cost.context_evidence} />
+      <ul>{cost.components.map((part, i) => <li key={`${part.kind}-${i}`}>
+        <strong>{part.kind.replace(/_/g, ' ')}: {part.state.replace(/_/g, ' ')}</strong> · {part.currency ?? 'currency unspecified'} {part.amount ?? 'amount absent'} · {part.basis.replace(/_/g, ' ')}{part.included_in && `; included in ${part.included_in.replace(/_/g, ' ')} (counted once)`}
+        <p>Payer {part.payer}; collector {part.collector}. {part.reason}</p>
+        {part.assumptions.length > 0 && <p><strong>Assumptions:</strong> {part.assumptions.join('; ')}</p>}
+        <CostEvidence claims={part.evidence} />
+      </li>)}</ul>
+      {cost.fx_quotes.map((fx, i) => <div key={i}><p>{fx.purpose.replace(/_/g, ' ')}: 1 {fx.from_currency} → {fx.rate} {fx.to_currency}; {fx.converter}; {fx.state}. Spread included: {fx.spread_included === null ? 'unknown' : String(fx.spread_included)}; rounding {fx.quantum} {fx.rounding}. Customs valuation FX is excluded from buyer payment accounting.</p><p>{fx.assumptions.join('; ')}</p><CostEvidence claims={fx.evidence} /></div>)}
+      {cost.benefits.map((benefit, i) => <div key={i}><p><strong>{benefit.kind} {benefit.state}:</strong> {benefit.currency ?? 'currency unknown'} {benefit.amount ?? 'amount unknown'}; excluded from payable. {benefit.reason}</p><CostEvidence claims={benefit.evidence} /></div>)}
+    </section>)}
+  </details>
+}
+
 function Candidate({ candidate }: { candidate: DiscoveryCandidate }) {
   return <article className="discovery-row">
     <figure className="discovery-picture">
@@ -97,7 +137,8 @@ function Candidate({ candidate }: { candidate: DiscoveryCandidate }) {
       </li>)}</ul>
     </div>
     <div className="discovery-price">
-      <div className="discovery-total">Total unknown</div>
+      <div className="discovery-total">{candidate.public_total.amount === null ? 'Total unknown' : `${candidate.public_total.currency} ${candidate.public_total.amount}`}</div>
+      {candidate.public_total.amount !== null && <p className="discovery-cost-state">{costStateLabel[candidate.public_total.state]} · freshness unvalidated</p>}
       <p>Public UK delivered price</p>
       {candidate.advertised_item_price !== null && <p className="discovery-item-price">
         Item lead: {candidate.reported_currency ?? 'currency unknown'} {candidate.advertised_item_price}
@@ -129,6 +170,7 @@ function Candidate({ candidate }: { candidate: DiscoveryCandidate }) {
           <p>Authenticity unknown; internal health unknown. Photos and catalogue claims provide no assurance.</p>
           <p>Comparison {offer.comparison.state}. Cohort: {offer.comparison_cohort ?? 'unresolved'}.</p>
           <ul>{[...offer.qualification.issues, ...offer.comparison.issues].map((issue, i) => <li key={i}>{issue.field}: {issue.code} {issue.evidence_ids.join(', ')}</li>)}</ul>
+          <Costs costs={offer.cost_scenarios} />
           <details><summary>Field claims and rejected evidence</summary>
             <ul>{offer.evidence.map((claim, i) => <li key={`${claim.id}-${i}`}>
               <strong>{claim.subject} · {claim.field}:</strong> {claim.value} ({claim.assertion_state})

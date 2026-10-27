@@ -7,6 +7,7 @@ from uuid import uuid4
 
 from pricerecon.categories.watches import resolve_watch
 from pricerecon.core.acquisition import acquire_sources
+from pricerecon.core.costs import evaluate_costs
 from pricerecon.core.qualification import qualify_offer
 from pricerecon.db.discovery import save_capture
 from pricerecon.models.discovery import (
@@ -99,6 +100,30 @@ async def execute_discovery(
             candidate.identity_state = candidate.configuration.state
             candidate.bindings = [binding]
             candidate.offers = [qualify_offer(lead.source, report, binding, captured_at)]
+            candidate.offers[0].cost_scenarios = evaluate_costs(
+                report, candidate.offers[0], binding, captured_at
+            )
+            public_costs = [
+                c for c in candidate.offers[0].cost_scenarios if c.kind == "public_no_coupon"
+            ]
+            if (
+                len(public_costs) == 1
+                and public_costs[0].state == "verified_at_observation"
+                and public_costs[0].context.purchase_scope == "standalone"
+            ):
+                candidate.offers[0].comparison.issues = [
+                    issue
+                    for issue in candidate.offers[0].comparison.issues
+                    if issue.code != "uk_cost_unknown"
+                ]
+            if (
+                len(public_costs) == 1
+                and public_costs[0].state == "conditional"
+                and public_costs[0].context.purchase_scope == "standalone"
+            ):
+                for issue in candidate.offers[0].comparison.issues:
+                    if issue.code == "uk_cost_unknown":
+                        issue.code = "uk_cost_conditional"
             candidate.missing_data = list(
                 dict.fromkeys(
                     f"{issue.field}: {issue.code}"

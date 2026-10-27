@@ -5,12 +5,15 @@ from contextlib import closing
 from datetime import UTC, datetime
 
 from pricerecon.categories.watches import configuration_preference_fit, interpret, resolve_watch
+from pricerecon.core.costs import public_summary
 from pricerecon.core.qualification import qualify_offer
 from pricerecon.db.schema import DB_PATH
+from pricerecon.models.costs import CostHistory, CostScenario
 from pricerecon.models.discovery import (
     DiscoveryCandidate,
     DiscoveryCapture,
     DiscoveryFeed,
+    PreferenceFit,
     PreferenceProfile,
     PreferenceUpdate,
 )
@@ -72,6 +75,17 @@ def init_discovery_tables(connection: sqlite3.Connection) -> None:
             payload_json TEXT NOT NULL, PRIMARY KEY(offer_id, offer_revision, kind),
             FOREIGN KEY(offer_id, offer_revision) REFERENCES discovery_offers(id, revision)
         );
+        CREATE TABLE IF NOT EXISTS discovery_cost_scenarios (
+            id TEXT NOT NULL, revision INTEGER NOT NULL, capture_id TEXT NOT NULL,
+            offer_id TEXT NOT NULL, offer_revision INTEGER NOT NULL,
+            policy_version TEXT NOT NULL, payload_json TEXT NOT NULL,
+            PRIMARY KEY(id, revision),
+            FOREIGN KEY(offer_id, offer_revision) REFERENCES discovery_offers(id, revision)
+        );
+        CREATE INDEX IF NOT EXISTS idx_discovery_cost_offer
+            ON discovery_cost_scenarios(offer_id, offer_revision);
+        INSERT OR IGNORE INTO schema_migrations (version, description)
+            VALUES ('1.5', 'Append exact-offer buyer-scenario cost evidence revisions');
         INSERT OR IGNORE INTO schema_migrations (version, description)
             VALUES ('1.4', 'Separate configuration, selection, offer and comparison evidence revisions');
         INSERT OR IGNORE INTO schema_migrations (version, description)
@@ -149,9 +163,30 @@ def save_capture(capture: DiscoveryCapture, candidates: list[DiscoveryCandidate]
                         candidate.id,
                         offer.binding_id,
                         offer.binding_revision,
-                        offer.model_dump_json(exclude={"comparison"}),
+                        offer.model_dump_json(exclude={"comparison", "cost_scenarios"}),
                     ),
                 )
+                binding = next(b for b in candidate.bindings if b.id == offer.binding_id)
+                for cost in offer.cost_scenarios:
+                    cost.offer_revision = offer.revision
+                    cost.binding_revision = binding.revision
+                    cost.configuration_revision = binding.configuration_revision
+                    cost.revision = connection.execute(
+                        "SELECT COALESCE(MAX(revision), 0) + 1 FROM discovery_cost_scenarios WHERE id = ?",
+                        (cost.id,),
+                    ).fetchone()[0]
+                    connection.execute(
+                        "INSERT INTO discovery_cost_scenarios VALUES (?, ?, ?, ?, ?, ?, ?)",
+                        (
+                            cost.id,
+                            cost.revision,
+                            capture.capture_id,
+                            offer.id,
+                            offer.revision,
+                            cost.policy_version,
+                            cost.model_dump_json(),
+                        ),
+                    )
                 connection.execute(
                     "INSERT INTO discovery_assessments VALUES (?, ?, 'comparison', ?, ?)",
                     (
@@ -210,6 +245,13 @@ def _hydrate(connection: sqlite3.Connection, candidate: DiscoveryCandidate) -> N
         )
     ]
     for offer in candidate.offers:
+        offer.cost_scenarios = [
+            CostScenario.model_validate_json(row[0])
+            for row in connection.execute(
+                "SELECT payload_json FROM discovery_cost_scenarios WHERE offer_id = ? AND offer_revision = ? ORDER BY rowid",
+                (offer.id, offer.revision),
+            )
+        ]
         row = connection.execute(
             "SELECT payload_json FROM discovery_assessments WHERE offer_id = ? AND offer_revision = ? AND kind = 'comparison'",
             (offer.id, offer.revision),
@@ -232,17 +274,37 @@ def get_feed() -> DiscoveryFeed:
             if candidate.id not in latest:
                 _hydrate(connection, candidate)
                 latest[candidate.id] = candidate
+    for candidate in latest.values():
+        candidate.public_delivered_total = public_summary(candidate.offers)
     preferences = get_preferences()
-    candidates = [
-        candidate.model_copy(
-            update={
-                "preference_fit": configuration_preference_fit(
-                    preferences.values, candidate.configurations
-                ),
-            }
+    candidates = []
+    for candidate in latest.values():
+        candidate.preference_fit = configuration_preference_fit(
+            preferences.values, candidate.configurations
         )
-        for candidate in latest.values()
-    ]
+        total = candidate.public_delivered_total
+        budget = preferences.values.budget_gbp
+        if (
+            budget is not None
+            and total.state == "verified_at_observation"
+            and total.currency == "GBP"
+            and total.amount is not None
+        ):
+            candidate.preference_fit = [
+                fit for fit in candidate.preference_fit if fit.field != "budget"
+            ] + [
+                PreferenceFit(
+                    field="budget",
+                    strength=preferences.values.budget_strength,
+                    state="fits" if total.amount <= budget else "outside",
+                    reason=(
+                        "Public delivered cost at observation is within budget."
+                        if total.amount <= budget
+                        else "Public delivered cost at observation is above budget."
+                    ),
+                )
+            ]
+        candidates.append(candidate)
     return DiscoveryFeed(candidates=candidates, captures=captures, preferences=preferences)
 
 
@@ -279,3 +341,15 @@ def save_preferences(update: PreferenceUpdate) -> PreferenceProfile:
             (profile.revision, profile.model_dump_json()),
         )
     return profile
+
+
+def get_cost_history(offer_id: str) -> CostHistory:
+    with closing(sqlite3.connect(DB_PATH)) as connection:
+        scenarios = [
+            CostScenario.model_validate_json(row[0])
+            for row in connection.execute(
+                "SELECT payload_json FROM discovery_cost_scenarios WHERE offer_id = ? ORDER BY rowid",
+                (offer_id,),
+            )
+        ]
+    return CostHistory(offer_id=offer_id, scenarios=scenarios)

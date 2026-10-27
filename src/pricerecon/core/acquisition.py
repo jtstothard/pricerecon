@@ -266,6 +266,12 @@ async def acquire_sources(
                         matching[locator] = report.model_copy(deep=True)
                     else:
                         retained = matching[locator]
+                        known_costs = {cost.model_dump_json() for cost in retained.cost_scenarios}
+                        retained.cost_scenarios.extend(
+                            cost
+                            for cost in report.cost_scenarios
+                            if cost.model_dump_json() not in known_costs
+                        )
                         known = {claim.model_dump_json() for claim in retained.claims}
                         retained.claims.extend(
                             claim for claim in report.claims if claim.model_dump_json() not in known

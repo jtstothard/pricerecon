@@ -18,14 +18,14 @@ from .harness import MonitoringHarness
 from .workflows import LEGACY, listing
 
 
-async def main(port, qualification=False):
+async def main(port, qualification=False, costs=False):
     with MonitoringHarness() as harness:
         from pricerecon.core.discovery import execute_discovery
         from pricerecon.models.discovery import DiscoveryAdmission, DiscoveryRequest
 
-        assert harness.application.frontend_dist.joinpath("index.html").is_file(), (
-            "Build frontend first"
-        )
+        assert harness.application.frontend_dist.joinpath(
+            "index.html"
+        ).is_file(), "Build frontend first"
         harness.seed_legacy(
             [(7, LEGACY), (8, {**LEGACY, "name": "Paused saved search", "enabled": False})]
         )
@@ -39,7 +39,7 @@ async def main(port, qualification=False):
         harness.outcomes["cex"] = [
             listing(harness, "cex", f"fixture-{i}", name, "48.00") for i, name in enumerate(names)
         ]
-        if qualification:
+        if qualification or costs:
             from .qualification_workflows import synthetic_report
 
             harness.reports["cex"] = [
@@ -63,15 +63,51 @@ async def main(port, qualification=False):
                 for c in harness.reports["cex"][1].claims
                 if c.subject == "selection" and c.field == "dial"
             ).value = "Space Gray"
+        if costs:
+            from pricerecon.models.costs import ConditionalBenefit
+
+            from .cost_workflows import cost_report
+
+            verified = cost_report(harness, "fixture-1")
+            personal = verified.cost_scenarios[0].model_copy(deep=True)
+            personal.key, personal.kind = "cashback", "cashback"
+            personal.assumptions = ["Synthetic cashback eligibility and payment remain conditional"]
+            personal.benefits = [
+                ConditionalBenefit(
+                    kind="cashback",
+                    amount="10.00",
+                    currency="GBP",
+                    state="conditional",
+                    reason="Synthetic estimate excluded from payable",
+                    evidence=personal.context_evidence,
+                )
+            ]
+            verified.cost_scenarios.append(personal)
+            conditional = cost_report(harness, "fixture-2")
+            conditional.cost_scenarios[0].components[1].state = "conditional"
+            conditional.cost_scenarios[0].components[1].assumptions = [
+                "Synthetic shipping quote assumes the stated region"
+            ]
+            unknown = cost_report(harness, "fixture-4")
+            unknown.cost_scenarios[0].components[1].state = "unknown"
+            unknown.cost_scenarios[0].components[1].amount = None
+            unknown.cost_scenarios[0].components[1].currency = None
+            harness.reports["cex"] = [verified, conditional, unknown]
         async with harness.session() as (_, scheduler):
             fixture_router = APIRouter()
 
             @fixture_router.get("/api/offline-verification")
             async def fixture_identity():
                 return {
-                    "fixture": "ticket03-qualification-ui"
-                    if qualification
-                    else "ticket02-discovery-ui",
+                    "fixture": (
+                        "ticket04-cost-ui"
+                        if costs
+                        else (
+                            "ticket03-qualification-ui"
+                            if qualification
+                            else "ticket02-discovery-ui"
+                        )
+                    ),
                     "temporary_storage": True,
                     "automatic_checks": False,
                     "blocked_edges": harness.blocked_edges,
@@ -139,8 +175,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=8877)
     parser.add_argument("--qualification", action="store_true")
+    parser.add_argument("--costs", action="store_true")
     args = parser.parse_args()
     try:
-        asyncio.run(main(args.port, args.qualification))
+        asyncio.run(main(args.port, args.qualification, args.costs))
     except KeyboardInterrupt:
         print("OFFLINE_UI_STOPPED", flush=True)

@@ -105,6 +105,72 @@ function binding(value: unknown) {
     configuration_revision: integer(item.configuration_revision), merchant_key: nullableText(item.merchant_key),
     product_id: nullableText(item.product_id), variation_id: nullableText(item.variation_id), resolution: resolution(item.resolution) }
 }
+function costContext(value: unknown) {
+  const context = record(value)
+  const stringFields = ['configuration_key', 'merchant_key', 'product_id', 'variation_id', 'seller', 'condition', 'purchase_mode',
+    'destination_country', 'destination_nation', 'destination_region', 'shipping_service', 'seller_establishment',
+    'goods_location', 'dispatch_country', 'customs_origin', 'dispatch_route', 'basket_id', 'consignment_id', 'grouping_basis',
+    'purchase_scope', 'payment_method', 'display_currency', 'charge_currency', 'funding_currency']
+  return { ...Object.fromEntries(stringFields.map(key => [key, nullableText(context[key])])),
+    quantity: context.quantity === null ? null : integer(context.quantity),
+    basket_members: list(context.basket_members, text), consignment_members: list(context.consignment_members, text) }
+}
+function costEvidence(value: unknown) {
+  const claim = record(value)
+  return { id: text(claim.id), issuer: text(claim.issuer),
+    issuer_kind: choice(claim.issuer_kind, ['seller', 'carrier', 'payment_provider', 'customs', 'ai_inference', 'human_correction', 'search_lead']),
+    extractor: text(claim.extractor), extractor_kind: choice(claim.extractor_kind, ['structured_data', 'deterministic_dom', 'ai', 'human']),
+    observed_at: claim.observed_at === null ? null : date(claim.observed_at), retrieved_at: date(claim.retrieved_at),
+    effective_at: claim.effective_at === null ? null : date(claim.effective_at), expires_at: claim.expires_at === null ? null : date(claim.expires_at),
+    capture_id: text(claim.capture_id), route: text(claim.route), pointer: link(claim.pointer), locator: text(claim.locator),
+    derived_from: list(claim.derived_from, text), input_claim_ids: list(claim.input_claim_ids, text),
+    permission_reference: text(claim.permission_reference), retention: choice(claim.retention, ['minimal_fields', 'synthetic']),
+    context: costContext(claim.context) }
+}
+function moneyMap(value: unknown) {
+  return Object.fromEntries(Object.entries(record(value)).map(([currency, raw]) => {
+    const parsed = amount(raw)
+    if (parsed === null || !/^[A-Z]{3}$/.test(currency)) throw new Error('Invalid cost subtotal')
+    return [currency, parsed]
+  }))
+}
+function costScenario(value: unknown) {
+  const cost = record(value), total = cost.total === null ? null : record(cost.total)
+  const state = choice(cost.state, ['verified_at_observation', 'conditional', 'unknown'])
+  if ((state === 'unknown') !== (total === null)) throw new Error('Inconsistent cost state')
+  choice(cost.freshness, ['unvalidated'])
+  return { id: text(cost.id), revision: integer(cost.revision), policy_version: text(cost.policy_version),
+    offer_id: text(cost.offer_id), offer_revision: integer(cost.offer_revision), binding_id: text(cost.binding_id),
+    binding_revision: integer(cost.binding_revision), configuration_id: text(cost.configuration_id), configuration_revision: integer(cost.configuration_revision),
+    key: text(cost.key), kind: choice(cost.kind, ['public_no_coupon', 'personal', 'payment', 'cashback']), state,
+    captured_at: date(cost.captured_at), context: costContext(cost.context), context_evidence: list(cost.context_evidence, costEvidence),
+    assumptions: list(cost.assumptions, text), issues: list(cost.issues, text),
+    total: total === null ? null : { amount: amount(total.amount), currency: text(total.currency) },
+    known_subtotal: moneyMap(cost.known_subtotal), merchant_payable: moneyMap(cost.merchant_payable), additional_liabilities: moneyMap(cost.additional_liabilities),
+    components: list(cost.components, raw => {
+      const part = record(raw)
+      return { kind: choice(part.kind, ['basket_other_items', 'item', 'shipping', 'merchant_tax', 'merchant_fee', 'import_tax', 'duty', 'carrier_fee', 'payment_fee']),
+        state: choice(part.state, ['observed', 'derived', 'conditional', 'unknown', 'conflicting', 'not_applicable']),
+        amount: amount(part.amount), currency: nullableText(part.currency), basis: choice(part.basis, ['per_unit', 'scenario']),
+        included_in: nullableText(part.included_in), payer: text(part.payer), collector: text(part.collector), reason: text(part.reason),
+        assumptions: list(part.assumptions, text), evidence: list(part.evidence, costEvidence) }
+    }),
+    benefits: list(cost.benefits, raw => {
+      const benefit = record(raw)
+      choice(benefit.accounting, ['excluded_from_payable'])
+      return { kind: choice(benefit.kind, ['personal', 'payment', 'cashback']), state: choice(benefit.state, ['conditional', 'unknown', 'conflicting']),
+        amount: amount(benefit.amount), currency: nullableText(benefit.currency), reason: text(benefit.reason), evidence: list(benefit.evidence, costEvidence) }
+    }),
+    fx_quotes: list(cost.fx_quotes, raw => {
+      const fx = record(raw)
+      if (typeof fx.spread_included !== 'boolean' && fx.spread_included !== null) throw new Error('Invalid FX spread state')
+      return { purpose: choice(fx.purpose, ['buyer_payment', 'customs_valuation']), from_currency: text(fx.from_currency), to_currency: text(fx.to_currency),
+        rate: amount(fx.rate), direction: choice(fx.direction, ['target_per_source']), converter: text(fx.converter), spread_included: fx.spread_included,
+        quantum: amount(fx.quantum), rounding: choice(fx.rounding, ['ROUND_HALF_UP', 'ROUND_HALF_EVEN', 'ROUND_DOWN', 'ROUND_UP']),
+        state: choice(fx.state, ['observed', 'conditional', 'unknown', 'conflicting']), assumptions: list(fx.assumptions, text), evidence: list(fx.evidence, costEvidence) }
+    }) }
+}
+
 function offer(value: unknown) {
   const item = record(value)
   choice(item.authenticity, ['unknown']); choice(item.internal_health, ['unknown'])
@@ -116,17 +182,19 @@ function offer(value: unknown) {
     purchase_mode: nullableText(item.purchase_mode), item_price: amount(item.item_price), currency: nullableText(item.currency),
     destination: nullableText(item.destination), qualification: resolution(item.qualification), comparison: resolution(item.comparison),
     comparison_cohort: nullableText(item.comparison_cohort), policy_version: text(item.policy_version),
-    evidence: list(item.evidence, fieldEvidence) }
+    evidence: list(item.evidence, fieldEvidence), cost_scenarios: list(item.cost_scenarios, costScenario) }
 }
 
 function parseCandidate(value: unknown) {
   const candidate = record(value), image = record(candidate.image)
   const total = record(candidate.public_delivered_total), usual = record(candidate.usual_price)
-  if (candidate.alert_eligible !== false || candidate.savings !== null || total.amount !== null || usual.amount !== null) {
+  if (candidate.alert_eligible !== false || candidate.savings !== null || usual.amount !== null) {
     throw new Error('Unsupported qualified discovery claim')
   }
   const identity_state = choice(candidate.identity_state, ['unresolved', 'supported', 'conflicting', 'rejected'])
-  choice(total.state, ['unknown'])
+  const totalState = choice(total.state, ['verified_at_observation', 'conditional', 'unknown'])
+  const totalAmount = amount(total.amount)
+  if ((totalState === 'unknown') !== (totalAmount === null)) throw new Error('Inconsistent public total')
   choice(usual.state, ['unavailable'])
   choice(image.kind, ['original_placeholder'])
   choice(image.permission, ['original_artwork'])
@@ -143,6 +211,7 @@ function parseCandidate(value: unknown) {
     reported_currency: candidate.reported_currency === null ? null : text(candidate.reported_currency),
     price_caveat: text(candidate.price_caveat),
     image: { attribution: text(image.attribution), provenance: text(image.provenance) },
+    public_total: { state: totalState, amount: totalAmount, currency: nullableText(total.currency), scenario_id: nullableText(total.scenario_id), scenario_revision: total.scenario_revision === null ? null : integer(total.scenario_revision) },
     total_reason: text(total.reason), usual_reason: text(usual.reason),
     missing_data: list(candidate.missing_data, text),
     preference_fit: list(candidate.preference_fit, item => {

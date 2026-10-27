@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from pricerecon.models.costs import PublicCostSummary
 from pricerecon.models.qualification import Configuration, MerchantOffer, SelectionBinding
 from pricerecon.models.watches import SourceConfig
 
@@ -95,12 +96,6 @@ class PlaceholderImage(DiscoveryModel):
     permission: Literal["original_artwork"] = "original_artwork"
 
 
-class UnknownTotal(DiscoveryModel):
-    state: Literal["unknown"] = "unknown"
-    amount: None = None
-    reason: str = "Exact configuration, merchant selection and UK payable components need checking."
-
-
 class UnavailableUsualPrice(DiscoveryModel):
     state: Literal["unavailable"] = "unavailable"
     amount: None = None
@@ -166,7 +161,9 @@ class DiscoveryCandidate(DiscoveryModel):
     image: PlaceholderImage = Field(default_factory=PlaceholderImage)
     advertised_item_price: Decimal | None
     reported_currency: str | None
-    price_caveat: str = "Connector-reported item price only; may describe another variation or a normalized default."
+    price_caveat: str = (
+        "Connector-reported item price only; may describe another variation or a normalized default."
+    )
     identity_state: Literal["unresolved", "supported", "conflicting", "rejected"] = "unresolved"
     configuration: Configuration = Field(default_factory=Configuration)
     configurations: list[Configuration] = Field(default_factory=list)
@@ -186,7 +183,7 @@ class DiscoveryCandidate(DiscoveryModel):
             "UK shipping, taxes and other payable costs",
         ]
     )
-    public_delivered_total: UnknownTotal = Field(default_factory=UnknownTotal)
+    public_delivered_total: PublicCostSummary = Field(default_factory=PublicCostSummary)
     usual_price: UnavailableUsualPrice = Field(default_factory=UnavailableUsualPrice)
     savings: None = None
     alert_eligible: Literal[False] = False
