@@ -8,8 +8,8 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 
 | Ticket | Requires | State |
 | --- | --- | --- |
-| [01: Existing monitoring](issues/01-verify-existing-monitoring.md) | None | Source integrated; final rendered UI PENDING |
-| [02: Candidate discovery](issues/02-discover-candidates.md) | 01 | Blocked |
+| [01: Existing monitoring](issues/01-verify-existing-monitoring.md) | None | Closed |
+| [02: Candidate discovery](issues/02-discover-candidates.md) | 01 | In progress |
 | [03: Qualification](issues/03-explain-offer-qualification.md) | 02 | Blocked |
 | [04: UK delivered cost](issues/04-show-uk-delivered-cost.md) | 03 | Blocked |
 | [05: Exact tracking](issues/05-track-exact-products.md) | 04 | Blocked |
@@ -28,3 +28,9 @@ Work is limited to source implementation and deterministic offline verification 
 Ticket 01 source was integrated on 2026-10-27 in merge `a0e5c1a612252c61a62eabc7b56ebc3b3297ed85`, preserving implementer HEAD `9312871f269137d7b98ba7155d9523350e41e62e`. The subsequent rendered-form preservation repair was integrated in merge `3243c8f00e3f9dd9efde79327b6905eb3d4354b2`, preserving implementer HEAD `534cecaece62e30f50c680b40af5b4c7f561b6e4`. Integration checks passed **15 isolated workflow tests**, **25 frontend tests** and the frontend build. Post-fix rendered-UI verification is **PENDING** with the parent; ticket 01 remains in progress and tickets 02–12 remain blocked. See the [repair integration receipt](issues/01-verify-existing-monitoring.md#preservation-repair-integration-receipt-2026-10-27).
 
 Actual buyer walkthrough feedback, current source rights, live offer/history/cost proof, finite operating limits and named maintenance ownership cannot be fabricated by passing fixture tests. Keep these gates explicit in the final receipt.
+
+## Resolution log
+
+- 2026-10-27: 01 closed with 15 isolated application workflows, 25 frontend tests,
+  successful build and [rendered browser preservation proof](../../docs/testing/monitoring-ui-verification.md).
+  02 claimed; the other blockers remain authoritative.

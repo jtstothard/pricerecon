@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** in-progress
+**Status:** closed
 
 **Assignee:** Codex implementer (isolated worktree)
 
@@ -26,7 +26,7 @@ Source/API gates above are verified in the isolated ticket branch; see
 red/green results, reproducible command and limitations. Both original strict
 xfails are resolved, with 14 passing isolated workflow tests.
 
-- [ ] Rendered browser/UI saved-search walkthrough (not exercised by this slice).
+- [x] Rendered browser/UI saved-search walkthrough (not exercised by this slice).
 
 Local commits/merges were explicitly authorized for the continuation. Pushes,
 PRs and live work remain unauthorized. The separate merger was subsequently
@@ -105,3 +105,14 @@ cleaned.
 the actual browser workflow against the implementer checkout. These integration
 checks do not establish UI acceptance or close ticket 01. Tickets 02–12 remain
 blocked.
+
+## Resolution — 2026-10-27
+
+Closed after source integration (`e15bb5e`) and the parent’s actual rendered browser
+regression check on source `534ceca`. The previous PENDING browser notes above are
+superseded for this ticket by [the browser receipt](../../../docs/testing/monitoring-ui-verification.md).
+All 15 isolated monitoring workflows and 25 frontend tests passed; the frontend
+build passed. Browser title-only edit/save/reload retained source/matching/filter/
+schedule/notification intent, then manual check/detail rendered the controlled offer.
+This is offline legacy-monitoring regression proof, not later discovery usability,
+live source qualification or activation acceptance.

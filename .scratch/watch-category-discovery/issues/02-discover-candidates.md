@@ -4,7 +4,9 @@
 
 **Blocked by:** [01: Verify existing monitoring in isolation](01-verify-existing-monitoring.md)
 
-**Status:** ready-for-agent
+**Status:** in-progress
+
+**Assignee:** Codex implementer (isolated worktree)
 
 **Parent:** [Trustworthy UK watch discovery alongside existing monitoring](../../../docs/specs/watch-category-discovery.md)
 
