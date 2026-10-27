@@ -8,7 +8,7 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 
 | Ticket | Requires | State |
 | --- | --- | --- |
-| [01: Existing monitoring](issues/01-verify-existing-monitoring.md) | None | In progress |
+| [01: Existing monitoring](issues/01-verify-existing-monitoring.md) | None | Source integrated; final rendered UI PENDING |
 | [02: Candidate discovery](issues/02-discover-candidates.md) | 01 | Blocked |
 | [03: Qualification](issues/03-explain-offer-qualification.md) | 02 | Blocked |
 | [04: UK delivered cost](issues/04-show-uk-delivered-cost.md) | 03 | Blocked |
@@ -23,6 +23,8 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 
 ## Authority and acceptance
 
-Work is limited to source implementation and deterministic offline verification with isolated storage and controlled external edges. Local commit/merge authority was requested separately because each issue excludes commits. No live collection, accounts, production database, activation, deployment, purchases or pushes are authorised.
+Work is limited to source implementation and deterministic offline verification with isolated storage and controlled external edges. The buyer explicitly authorised local commits/merges for this continuation, overriding the older issue-level prohibition. No live collection, accounts, production database, activation, deployment, purchases, pushes or PRs are authorised.
+
+Ticket 01 source was integrated on 2026-10-27 in merge `a0e5c1a612252c61a62eabc7b56ebc3b3297ed85`, preserving implementer HEAD `9312871f269137d7b98ba7155d9523350e41e62e`. The targeted isolated workflow passed **14 tests, no xfails** on integration. Final rendered-UI verification is **PENDING** with the parent; ticket 01 remains in progress and tickets 02–12 remain blocked. See the [ticket 01 integration receipt](issues/01-verify-existing-monitoring.md#integration-receipt-2026-10-27).
 
 Actual buyer walkthrough feedback, current source rights, live offer/history/cost proof, finite operating limits and named maintenance ownership cannot be fabricated by passing fixture tests. Keep these gates explicit in the final receipt.

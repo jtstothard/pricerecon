@@ -29,5 +29,36 @@ xfails are resolved, with 14 passing isolated workflow tests.
 - [ ] Rendered browser/UI saved-search walkthrough (not exercised by this slice).
 
 Local commits/merges were explicitly authorized for the continuation. Pushes,
-PRs, live work and merging this branch into integration remain unauthorized here.
+PRs and live work remain unauthorized. The separate merger was subsequently
+authorized to integrate this branch locally, as recorded below.
 Overall ticket acceptance remains open pending rendered-UI verification.
+
+## Integration receipt (2026-10-27)
+
+Source review covered the implementation diff and
+[isolated-monitoring receipt](../../../docs/testing/isolated-monitoring.md).
+Before merging, both worktrees were clean; implementer branch
+`t3/verify-monitoring-isolation` was at the requested HEAD
+`9312871f269137d7b98ba7155d9523350e41e62e` and contained current integration tip
+`85ca66d171375edc9dcf2ed87a54754ff344ec52` in its ancestry.
+
+Merged without squash into `integration/watch-category-discovery` in
+`a0e5c1a612252c61a62eabc7b56ebc3b3297ed85`. No conflicts or source/test edits
+were required; the implementer history and assertions are preserved.
+
+From `/Users/jay/.t3/worktrees/pricerecon/watch-category-integration`:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 \
+PYTHONPATH=/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src \
+  /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python \
+  -m pytest tests/test_monitoring_workflow.py -q
+```
+
+Result: **14 passed in 14.67s**, no xfails. Only the targeted module was collected;
+each workflow uses the retained fresh-process isolation. No installs, network,
+live collection or broad fixture suite were used. The original parent checkout
+was left untouched; only its existing Python interpreter was used.
+
+**Rendered UI gate: PENDING.** The parent is checking the browser. This merge
+does not claim UI acceptance or close ticket 01. Tickets 02–12 remain blocked.
