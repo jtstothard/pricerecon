@@ -19,7 +19,7 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 | [09: Public coupons](issues/09-evaluate-public-coupons.md) | 04 | Closed |
 | [10: Shared limits](issues/10-prioritise-tracking.md) | 05 | Closed |
 | [11: Source evidence](issues/11-carry-source-evidence.md) | 03, 10 | Closed |
-| [12: Integrated verification](issues/12-verify-complete-watch-workflow.md) | 08, 09, 11 | Open — visual discovery blocker; retest required |
+| [12: Integrated verification](issues/12-verify-complete-watch-workflow.md) | 08, 09, 11 | Accepted offline autonomous technical scope; human/live gates unproven |
 
 ## Authority and acceptance
 
@@ -28,11 +28,12 @@ Work is limited to source implementation and deterministic offline verification 
 Ticket 01 source was integrated on 2026-10-27 in merge `a0e5c1a612252c61a62eabc7b56ebc3b3297ed85`, preserving implementer HEAD `9312871f269137d7b98ba7155d9523350e41e62e`. The subsequent rendered-form preservation repair was integrated in merge `3243c8f00e3f9dd9efde79327b6905eb3d4354b2`, preserving implementer HEAD `534cecaece62e30f50c680b40af5b4c7f561b6e4`. Integration checks passed **15 isolated workflow tests**, **25 frontend tests** and the frontend build. The parent subsequently passed the rendered edit/save/reload/manual-check regression. See the dated resolution log below and the [repair integration receipt](issues/01-verify-existing-monitoring.md#preservation-repair-integration-receipt-2026-10-27).
 
 Current frontier, 2026-10-28: tickets 01–11 retain their closed offline scope.
-Technical integration/final-review repairs passed 215 guarded workflows and 37 contracts.
-Actual buyer research is now recorded. The buyer could not assess visual appeal
-without meaningful watch images, so 12 remains open for follow-up design/retesting.
-Other task-level buyer acceptance and all live/production gates remain unproven.
-Earlier dated entries describe their historical state.
+Ticket12 is accepted for offline autonomous technical scope after prior actual
+design approval, delegated browser/workflow QA and independent sole-merger review.
+See [final review receipt](../../docs/testing/ticket12-autonomous-qa.md#final-independent-sole-merger-review--2026-10-28).
+Actual task-by-task human comprehension, source/live/history/calibration,
+operating/migration and release gates remain unproven. Historical entries retain
+their original dated status.
 
 Actual buyer walkthrough feedback, current source rights, live offer/history/cost proof, finite operating limits and named maintenance ownership cannot be fabricated by passing fixture tests. Keep these gates explicit in the final receipt.
 

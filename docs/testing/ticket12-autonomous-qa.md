@@ -85,3 +85,51 @@ Build/frontend logs have terminal trailing whitespace trimmed; content retained.
 Screenshots and receipts have SHA256 manifest. Own preview tab closed and own
 fixture stopped with `OFFLINE_UI_STOPPED`; final guard receipt retained. Original
 buyer fixture and integration checkout remain untouched.
+
+
+## Final independent sole-merger review — 2026-10-28
+
+Candidate `c73121b095d737cb924c11dee63cc1fcdd88728f`, reviewed in
+`/Users/jay/.t3/worktrees/pricerecon/t3-b645c5ab`, was merged with `--no-ff`
+onto `a8b1599e8c45cf19fa820ea5096bc671c76a8272` as
+`22a7fac1e0bfd598c64c7b7d57895a478ce638a3` in
+`/Users/jay/.t3/worktrees/pricerecon/watch-category-integration`.
+
+Standards: zero blockers against CONTRIBUTING.md and engineering-standard.md.
+The single scoped CSS rule uses the existing secondary-text token, introduces no
+unchecked escapes or source-boundary behavior, and repairs the reproduced dark
+Technical attribution. Inspected before/after desktop and narrow screenshots,
+all 12 final product views and both comparison screenshots using view_image.
+
+Spec: zero blockers against ticket12, the watch discovery spec and buyer guide.
+Reviewed actual-browser receipt/narrative for desktop/narrow keyboard forms,
+preferences/reload, direct routes, image load/error, costs/history and correction.
+Validated receipt assertions for all 12 no-overflow layouts, captured notification
+counts 0/1/1/2, retained GBP60 target, salmon intended values, withheld assessment
+and zero blocked edges. Browser actions were performed by the delegated QA agent;
+this reviewer inspected their retained evidence and did not claim a new browser
+execution or human comprehension observation. Screenshots are viewport captures
+at different workflow stages; the final correction readback is in the JSON receipt.
+
+Independent checks: all 26 artifact SHA256 hashes, candidate and merge diff checks,
+19 focused ProductFlow/DiscoveryImage/IdentityCorrection tests on both candidate
+and merged checkout, and candidate TypeScript/production build passed. Existing
+large-bundle advisory remains. Initial merged ProductFlow run lacked jsdom;
+offline npm ci --ignore-scripts restored pinned dependencies and all 19 passed.
+The reported full 86 frontend and 50 guarded tests were inspected in retained logs,
+not redundantly rerun for this CSS/evidence change. Merge tree exactly equalled
+the candidate before this documentation-only receipt/tracker update.
+
+Ticket12 is accepted for offline autonomous technical scope following actual prior
+design approval and explicit delegation of mechanical checks. Actual task-by-task
+human comprehension remains unproven. Source access/rights, real longitudinal
+history, usual-price calibration, full market coverage, real freshness, production
+migration, operating limits/ownership and live activation/release remain separate
+unresolved gates. Merkur remains unresolved abstention. Historical pending entries
+are preserved as history, not current mechanical-test blockers.
+
+Integration started clean with no untracked files and remained clean after merge
+checks; existing receipts were preserved. No browser/server was opened here, no
+buyer fixture8895 or sibling checkout was mutated, and no live collection,
+accounts, real notifications, push or PR occurred. QA shutdown receipt records
+OFFLINE_UI_STOPPED. Parent owns candidate cleanup and buyer-fixture refresh.

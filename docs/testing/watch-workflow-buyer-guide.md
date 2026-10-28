@@ -1,6 +1,6 @@
 # Parent-run buyer walkthrough: synthetic watch workflow
 
-**Offline autonomous technical acceptance complete; parent review/merge pending.**
+**Offline autonomous technical acceptance complete; independent review and merge complete.**
 The buyer accepted the refined design, then explicitly delegated remaining checks
 (“keep going doing all the checks yourself”). The [delegated QA receipt](ticket12-autonomous-qa.md)
 records current desktop/narrow browser checks, a Technical-caption repair and
