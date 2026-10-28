@@ -172,3 +172,20 @@ with Militado and San Martin variant decisions and Merkur exact-reference
 resolution required. Actual buyer visual-first/remaining-task retest and browser
 load/failure/narrow/keyboard checks remain unproven. No public distribution,
 live acquisition, production operation, activation or release acceptance.
+
+
+## Buyer feedback on private Casio image walkthrough — 2026-10-28
+
+After being given the running private walkthrough at
+`http://127.0.0.1:8893/discover?walkthrough=ticket12`, the buyer replied:
+“looks good”. Record this as positive visual feedback on the presented Casio
+image slice, not task-by-task acceptance of the full workflow. The session marker
+was `ticket12-connected-ui-v1`, run `ed68a1dd2ed14dec81a0cdd7cf982477`, with
+`ticket12-private-images-v1`, temporary storage, automatic checks disabled,
+zero blocked edges and zero initial captured notifications. Presented integration
+HEAD was `a2f7c174bbef03078a899cefbcedab8de11d2133`.
+
+Viewport, keyboard use, image-load failure behavior and completion/understanding
+of the remaining tasks were not reported. Four missing image cases and their
+permission/variant/reference decisions remain unresolved. Ticket12 stays open;
+no production, live-market or full five-watch acceptance follows from this feedback.
