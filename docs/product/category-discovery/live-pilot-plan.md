@@ -1,6 +1,6 @@
 # One-off live watch pilot proposal
 
-Status: ready for scope review; offer acquisition NOT started. Prepared 2026-10-28
+Status: envelope approved by buyer 2026-10-28; runner/preflight pending, offer acquisition NOT started. Prepared 2026-10-28
 against integration `84314a7351ac1c87c31ee2543592935f01ea0bf2`.
 
 ## Purpose and products
@@ -145,3 +145,13 @@ offline runner preparation and gated preflight/execution; it does not override
 missing provider prerequisites. No live offer requests have been made in preparing
 this plan; four public documentation pages were opened and searched for current
 requirements. No credentials, accounts or deployed services were inspected.
+
+
+## Buyer authorization — 2026-10-28
+
+Buyer approved the proposed numerical envelope (“yes”) and explicitly requested
+continued autonomous implementation with implement-spec, without repeated routine
+approval requests. This supersedes the proposal's pending-approval status and
+older source-only wording for this bounded pilot. Codex owns session execution
+and stop/cleanup. External source prerequisites still need evidence; no broader
+paid, recurring, account-linking, deployment or production operation is implied.
