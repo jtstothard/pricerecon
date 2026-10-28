@@ -153,3 +153,22 @@ guide](../../../docs/testing/watch-workflow-buyer-guide.md) and [receipt](../../
 **Still open:** one photographed model enables a bounded image retest, not the
 five-watch visual comparison. Other cases require rights/variant decisions;
 Merkur additionally needs an exact reference. Buyer acceptance remains unproven.
+
+
+## Sole merger private-image acceptance — 2026-10-28
+
+Candidate `cae6d04610ca7b24f5044595b3787d58fa9a9e28` accepted for the bounded
+private single-Casio slice and merged with `--no-ff` as
+`95ec1e6957018fe65932d024c7a06ee851515e6a`. Independent Standards and Spec
+reviews found zero blockers; 64 guarded candidate workflows, 42 frontend tests,
+build, focused Ruff and uncached three-source mypy passed. Merged tree equals
+candidate; 10 guarded discovery/watch tests and the frontend/static checks were
+repeated successfully. See the [dated merger receipt](../../../docs/testing/watch-images.md#sole-merger-private-image-review--2026-10-28)
+for official terms/identity checks and the UK suffix refresh limitation.
+
+**Status remains open.** The feed has one photographed model, four placeholders;
+the gallery has two views of that same model. Four assets/permissions remain,
+with Militado and San Martin variant decisions and Merkur exact-reference
+resolution required. Actual buyer visual-first/remaining-task retest and browser
+load/failure/narrow/keyboard checks remain unproven. No public distribution,
+live acquisition, production operation, activation or release acceptance.

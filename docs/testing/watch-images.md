@@ -249,3 +249,79 @@ source coverage, general redistribution right or release claim follows.
 Final re-merge before handoff: `integration/watch-category-discovery` remained at
 `d14506a75692ba61641f8a578208b65321bf8929`; merge reported already up to date.
 Parent retains integration ownership.
+
+
+## Sole merger private-image review — 2026-10-28
+
+Independently reviewed candidate `cae6d04610ca7b24f5044595b3787d58fa9a9e28`
+on `t3/watch-image-walkthrough` in the clean pinned `t3-ad24f213` checkout,
+against integration `d14506a75692ba61641f8a578208b65321bf8929`. Read the latest
+image receipt, fixture README/manifest, buyer guide, ticket12, originating spec,
+engineering standard and CONTRIBUTING. Both axes were reviewed directly by the
+sole reviewer, without subagents, as dispatched.
+
+**Standards: zero blocking findings.** Test-only routing reads the repository
+manifest at startup, verifies SHA256, and serves only preloaded allowlisted
+names. Caller input cannot select a filesystem path or upstream URL. Unknown and
+encoded traversal routes return 404 in the guarded API workflow. No production
+source imports/mounts this router; the frontend query flag cannot mount it or
+activate collection. The private resolver permits only same-origin hash-shaped
+asset routes and abstains while missing/loading/failed, without remote fallback.
+No new qualification, cost, history or alert bypass was found.
+
+**Spec: zero blocking findings for the bounded private single-model slice.**
+The existing Casio feed card resolves the original persisted HTTPS depiction to
+local bytes, with attribution/provenance beside it. The separate expandable
+gallery supplies two views of that same model; it is not five-watch completion.
+The four other feed candidates remain explicit placeholders. Synthetic delivered
+cost and alert eligibility remain independent, including withheld Casio total.
+Actual buyer visual-first acceptance and remaining task retest are still open.
+
+Official public-page checks: the Europe product page links precisely the front
+and wrist source URLs in the manifest. Both local images were independently
+viewed and decoded as 1200×1200 PNG/JPEG; hashes exactly match the manifest.
+The official Europe terms were independently fetched directly after the web
+reader timed out: section 1 excepts solely private copying from its prior-written-
+permission requirement. This supports the documented narrow private-use
+assessment, not an open or redistribution licence. UK official terms were also
+read and their restrictive other-website wording confirmed. Refreshing the UK
+product page failed (web-reader timeout; direct response was an error page), so
+the full VEF suffix is retained as implementer-recorded identity evidence rather
+than independently refreshed proof. Europe independently establishes base-model
+identity; no regional packaging or merchant SKU qualification follows.
+
+Sources: [Europe terms](https://www.casio.com/europe/terms/),
+[Europe product](https://www.casio.com/europe/watches/casio/product.MTP-B145D-2A2V/),
+[UK terms](https://www.casio.com/uk/legal/terms-of-use/).
+Copyright/trademark notices are retained on card and gallery; repository licence
+does not cover these files. No broader distribution is accepted.
+
+Independent candidate checks on a stable checkout:
+
+- Guarded discovery/watch/final-review/correction/ownership pytest selection:
+  **64 passed in 74.19s**.
+- Frontend `npm test -- --run`: **42 passed**; `npm run build`: passed.
+- Ruff over all five changed Python workflow/test files: passed.
+- Uncached mypy over discovery_images, discovery and core/discovery: passed
+  (existing unused-section note); `git diff --check`: passed.
+
+Merged locally with `--no-ff` as `95ec1e6957018fe65932d024c7a06ee851515e6a`,
+first parent the integration SHA above, second parent the candidate. Merge tree
+`333ecc6d53f028ff08b7db97d67e5945b15496d1` exactly equals the candidate tree.
+On the stable merged checkout, discovery + watch pytest passed **10 tests in
+11.30s**, frontend passed **42 tests**, build/types passed, and the same Ruff,
+uncached three-source mypy and whitespace checks passed. API tests finished
+before either build began; no checkout moved during a test run. Existing Vite
+large-chunk advisory remains. Candidate and integration were clean before the
+merge; candidate remained pinned and clean afterward. This receipt/tracker is a
+separate local documentation commit. No sibling files were edited or cleaned.
+
+**Ticket12 stays open.** Four usable assets still require owned photographs with
+retention/display permission or separately authorized rights-holder contact.
+Militado needs exact ML05/ML05B/dial/finish selection; San Martin needs exact
+size/dial/revision; Merkur needs its original Lightning reference/link and photo
+permission; Addiesdive needs permission for the mint AD2066 depiction. Browser
+load/failure, desktop/narrow keyboard usability and actual buyer visual-first/
+remaining-task retest remain unproven. No browser preview, external messages,
+accounts, price acquisition, production database, activation, push, PR or public
+distribution occurred. No live/release acceptance follows.
