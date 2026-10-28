@@ -49,3 +49,40 @@ contents: tool/Python/build caches and a zero-byte ordinary pricerecon.db in the
 first checkout (no tables, no symlink, single link). No untracked user contents
 were removed. Main, integration, original dirty planning and unrelated research
 checkouts are retained. Integration is clean after this receipt commit.
+
+
+## Existing deployment reconciliation — 2026-10-28
+
+Buyer explicitly requested continuing until human intervention is necessary.
+Read-only investigation followed the documented deployed PriceRecon route.
+Direct SSH via configured `docker-app-vm` (192.168.10.251:22) timed out; no
+authentication/config changes or host scan followed. Existing `proxmox` alias
+worked; VM101 status running and QEMU guest-agent ping succeeded. Guest-agent
+Python performed bounded Docker metadata/file-name inspection, not app startup.
+
+Observed deployment: `/srv/docker-state/stacks/pricerecon` exists; running
+`pricerecon` container has EBAY_APP_ID=true and EBAY_CERT_ID=true. Only booleans
+were returned; values were never printed, exported, copied, used in an API call,
+or stored in this repository. Mount destinations include `/app/pricerecon.db`
+and `/app/config.yml`; neither production DB nor config contents were read.
+The separate postgres container's eBay fields are absent, as expected.
+
+Targeted approval/entitlement/contract/review filename inspection in the known
+stack returned only unrelated AliExpress and browser-contract source/test files,
+not an eBay provider approval or transient-use record. The repository's named
+source-access records document successful old probes but explicitly leave the
+app/use/retention issue unresolved. This bounded inventory does not claim the
+approval is absent from the owner's email or eBay account.
+
+**Human intervention now needed:** locate the existing application's eBay
+production/Browse approval or account record and the applicable use agreement
+covering this private transient comparison. No new app or duplicate account is
+requested. A non-secret approval/use document or an already accessible signed-in
+account view can resolve this; a fresh buyer authorization cannot create provider
+approval. Credentials already have a deployment route, so do not ask the buyer
+to paste them. Once actual evidence is available, review its app/use/retention
+scope, inject existing credentials through a private route and run the already
+approved envelope. If the existing application lacks the required provider
+approval, that provider/account step belongs to the owner; no outreach/account
+changes were made or implied here. All live request counters remain zero and
+the shared grant remains unconsumed.
