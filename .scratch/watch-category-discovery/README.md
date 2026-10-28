@@ -371,3 +371,14 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   The macOS sanitized-temp mismatch passed with `TMPDIR=/tmp`. Retained
   [minimal receipts](../../docs/testing/artifacts/live-pilot-runner/verification.json)
   contain only gate outcomes/resource aggregates, not merchant records.
+
+- 2026-10-28: Sole merger fresh Standards/Spec recheck accepted repaired candidate
+  `2e35d725eec94b1fa9bec954e29f606cf137f4fc`; no concrete blockers on either axis.
+  All four original findings verified fixed; 131 candidate regressions and 24
+  merged focused tests passed, mypy 127 sources and focused Ruff passed.
+  History-preserving merge `93cc6628d5c0d1a8e32ba3f972cfaec1df91f2ba` exactly
+  matched the candidate tree before this receipt update.
+  [Separate review axes and commands](../../docs/testing/live-pilot-merger-recheck.md).
+  **Source/offline scope complete; live follow-on unexecuted and gated on genuine
+  provider evidence, authorized secret handling and actual exclusion preflight.**
+  Parent owns genuine preflight and worktree cleanup; no live acceptance claimed.
