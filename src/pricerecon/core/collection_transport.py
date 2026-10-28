@@ -63,6 +63,16 @@ def collection_http_client(
     *, timeout: float = 30.0, transport: httpx.AsyncBaseTransport | None = None
 ) -> httpx.AsyncClient:
     """Public HTTPX event hooks run before each transport send/redirect."""
+    from pricerecon.pilot_bounds import active_pilot, pilot_transport
+
+    pilot = active_pilot.get()
+    if pilot is not None:
+        from pricerecon.pilot_bounds import PilotTransport
+
+        transport = PilotTransport(
+            transport or pilot_transport.get() or httpx.AsyncHTTPTransport(retries=0), pilot
+        )
     return httpx.AsyncClient(
-        event_hooks={"request": [account_request]}, timeout=timeout, transport=transport
+        event_hooks={"request": [account_request]}, timeout=timeout, transport=transport,
+        trust_env=pilot is None, headers={"Accept-Encoding": "identity"} if pilot else None,
     )

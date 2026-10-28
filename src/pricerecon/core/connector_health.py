@@ -8,12 +8,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from pricerecon.db.connection import connect
 from pricerecon.db.schema import DB_PATH
 from pricerecon.models import SourceType
 
 
 def get_db(path: Path | None = None) -> sqlite3.Connection:
-    conn = sqlite3.connect(path or DB_PATH)
+    conn = connect(path or DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 

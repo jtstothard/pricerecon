@@ -14,6 +14,7 @@ from pricerecon.categories.watches import configuration_matches_values, configur
 from pricerecon.core import notifications
 from pricerecon.core.coupons import public_cost_paths
 from pricerecon.core.qualification import identity_key
+from pricerecon.db.connection import connect
 from pricerecon.db.discovery import get_preferences, load_capture_candidates
 from pricerecon.db.history_lineage import temporal_claims
 from pricerecon.db.schema import DB_PATH
@@ -415,7 +416,7 @@ def decide(
 
 async def evaluate_tracking_capture(capture_id: str, *, policy: TrackingPolicy | None) -> None:
     now = datetime.now(UTC)
-    with closing(sqlite3.connect(DB_PATH)) as connection, connection:
+    with closing(connect(DB_PATH)) as connection, connection:
         connection.execute("BEGIN IMMEDIATE")
         from pricerecon.core.collection_policy import current_policy
         from pricerecon.db.collection import storage_size
@@ -516,7 +517,7 @@ async def deliver_pending_targets(*, policy: TrackingPolicy | None) -> None:
         or not operating.starts_at <= datetime.now(UTC) < operating.stops_at
     ):
         return
-    with closing(sqlite3.connect(DB_PATH)) as connection:
+    with closing(connect(DB_PATH)) as connection:
         events = [
             TargetEvent.model_validate_json(r[0])
             for r in connection.execute(
@@ -526,7 +527,7 @@ async def deliver_pending_targets(*, policy: TrackingPolicy | None) -> None:
     for event in events:
         if event.status != "pending":
             continue
-        with closing(sqlite3.connect(DB_PATH)) as connection, connection:
+        with closing(connect(DB_PATH)) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
             intent = ExactTracking.model_validate_json(
                 connection.execute(
@@ -580,7 +581,7 @@ async def deliver_pending_targets(*, policy: TrackingPolicy | None) -> None:
                 durable_key=f"exact-target:{event.event_id}",
             )
         # This acknowledgement describes local attempts, not exactly-once delivery.
-        with closing(sqlite3.connect(DB_PATH)) as connection, connection:
+        with closing(connect(DB_PATH)) as connection, connection:
             event.status = "attempted" if event.notification_channels else "channels_unset"
             connection.execute(
                 "UPDATE exact_tracking_events SET payload_json=? WHERE event_id=?",

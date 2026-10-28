@@ -53,7 +53,11 @@ async def acquire_sources(
     verification_sources: set[str] | None = None,
 ) -> AcquisitionResult:
     """Use the existing registry, config, health, lifecycle and search boundary."""
-    runtime_config = load_config()
+    from pricerecon.pilot_bounds import active_pilot
+
+    # The isolated pilot never inherits production browser, source or credential
+    # config. Its one explicitly supplied source is the only admitted edge.
+    runtime_config = {} if active_pilot.get() is not None else load_config()
     connector_defaults = (
         runtime_config.get("connectors", {}) if isinstance(runtime_config, dict) else {}
     )

@@ -9,6 +9,7 @@ from pricerecon.models import NormalizedListing, SourceType
 from pricerecon.models.qualification import (
     EvidenceContext,
     EvidenceSearchReport,
+    IdentityField,
     MerchantEvidenceReport,
     OfferField,
 )
@@ -38,6 +39,11 @@ class BrowseShipping(BaseModel):
     shippingCost: BrowseMoney | None = None
 
 
+class BrowseAspect(BaseModel):
+    name: str = Field(min_length=1)
+    value: str = Field(min_length=1)
+
+
 class BrowseItem(BaseModel):
     itemId: str = Field(min_length=1)
     title: str = Field(min_length=1)
@@ -51,6 +57,7 @@ class BrowseItem(BaseModel):
     estimatedAvailabilities: list[BrowseStock] = Field(default_factory=list)
     shipToLocationUsedForEstimate: BrowseDestination | None = None
     shippingOptions: list[BrowseShipping] = Field(default_factory=list)
+    localizedAspects: list[BrowseAspect] = Field(default_factory=list)
 
 
 class BrowsePage(BaseModel):
@@ -59,12 +66,14 @@ class BrowsePage(BaseModel):
     total: int | None = Field(default=None, ge=0)
 
 
-def browse_evidence(payload: object, capture: SourceReceipt) -> EvidenceSearchReport:
+def browse_evidence(
+    payload: object, capture: SourceReceipt, *, details: dict[int, object] | None = None
+) -> EvidenceSearchReport:
     page = BrowsePage.model_validate(payload)
     capture.pages_captured, capture.page_limit = 1, 1
     capture.item_limit = 50
     capture.discovered_count = page.total
-    capture.inspected_count = len(page.itemSummaries)
+    capture.inspected_count = 0 if details is not None else len(page.itemSummaries)
     capture.next_page = bool(page.next)
     capture.completeness = "partial" if page.next else "unknown"
     if page.next:
@@ -72,7 +81,17 @@ def browse_evidence(payload: object, capture: SourceReceipt) -> EvidenceSearchRe
     listings, reports = [], []
     for index, raw in enumerate(page.itemSummaries):
         try:
-            item = BrowseItem.model_validate(raw)
+            is_detail = details is not None and index in details
+            item = BrowseItem.model_validate(
+                details[index] if details is not None and is_detail else raw
+            )
+            locator = f"itemDetails[{index}]" if is_detail else f"itemSummaries[{index}]"
+            if is_detail:
+                from urllib.parse import quote
+
+                pointer = "https://api.ebay.com/buy/browse/v1/item/" + quote(item.itemId, safe="")
+            else:
+                pointer = item.itemWebUrl
             bid = "AUCTION" in item.buyingOptions
             price = item.currentBidPrice if bid else item.price
             context = EvidenceContext(
@@ -104,20 +123,50 @@ def browse_evidence(payload: object, capture: SourceReceipt) -> EvidenceSearchRe
                 fields.append(("item_price", str(price.value)))
                 if price.currency:
                     fields.append(("currency", price.currency))
+            claim_capture = (
+                capture.model_copy(update={"route": "ebay_browse_item_v1"})
+                if is_detail
+                else capture
+            )
             claims = [
                 claim(
-                    capture,
+                    claim_capture,
                     subject="offer",
                     field=name,
                     value=value,
                     issuer=item.seller.username or "eBay seller unspecified",
                     issuer_kind="seller",
-                    pointer=item.itemWebUrl,
-                    locator=f"itemSummaries[{index}].{name}",
+                    pointer=pointer,
+                    locator=f"{locator}.{name}",
                     context=context,
                 )
                 for name, value in fields
             ]
+            # Item specifics are seller assertions, not manufacturer definitions
+            # or proof of a selected variation. Keep their source locators.
+            aspect_fields: dict[str, IdentityField] = {
+                "brand": "maker",
+                "reference number": "reference",
+                "dial colour": "dial",
+                "dial color": "dial",
+                "movement": "movement",
+            }
+            for aspect_index, aspect in enumerate(item.localizedAspects):
+                field = aspect_fields.get(aspect.name.casefold())
+                if field is not None:
+                    claims.append(
+                        claim(
+                            claim_capture,
+                            subject="configuration",
+                            field=field,
+                            value=aspect.value,
+                            issuer=item.seller.username or "eBay seller unspecified",
+                            issuer_kind="seller",
+                            pointer=pointer,
+                            locator=f"{locator}.localizedAspects[{aspect_index}]",
+                            context=context,
+                        )
+                    )
             listing = NormalizedListing.model_validate(
                 {
                     "source": "ebay",
@@ -182,9 +231,13 @@ def browse_evidence(payload: object, capture: SourceReceipt) -> EvidenceSearchRe
             capture.issues.append(f"invalid_item:{index}")
             continue
         # Keep the listing/report pair atomic at the item boundary.
+        if details is not None and is_detail:
+            capture.inspected_count += 1
         listings.append(listing)
         reports.append(report)
     partial = bool(page.next or capture.issues)
+    if partial:
+        capture.completeness = "partial"
     return EvidenceSearchReport(
         listings=listings,
         evidence=reports,

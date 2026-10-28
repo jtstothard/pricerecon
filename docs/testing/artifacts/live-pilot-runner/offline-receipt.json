@@ -1,0 +1,15 @@
+{
+  "cleanup": true,
+  "code_version": "bounded-pilot-v1",
+  "details": 0,
+  "duration_seconds": 2.125,
+  "log_bytes": 400,
+  "normalized_bytes": 1540,
+  "pages": 2,
+  "physical_bytes": 323584,
+  "policy_version": "live-pilot-plan-2026-10-28-v1",
+  "requests": 3,
+  "response_bytes": 98,
+  "schema": "pricerecon.watch-pilot.v1",
+  "state": "success_empty"
+}

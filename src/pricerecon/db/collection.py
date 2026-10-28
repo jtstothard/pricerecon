@@ -4,6 +4,7 @@ import sqlite3
 from contextlib import closing
 from datetime import UTC, datetime
 
+from pricerecon.db.connection import connect
 from pricerecon.db.schema import DB_PATH
 from pricerecon.models.collection import (
     CollectionAttempt,
@@ -52,7 +53,7 @@ def collection_status() -> CollectionStatus:
     selection = DurableAdmission.select_policy()
     policy = selection.policy
     now = datetime.now(UTC)
-    with closing(sqlite3.connect(DB_PATH)) as connection:
+    with closing(connect(DB_PATH)) as connection:
         connection.row_factory = sqlite3.Row
         rows = connection.execute("SELECT * FROM collection_attempts ORDER BY rowid DESC LIMIT 100")
         attempts = []
@@ -147,7 +148,7 @@ def storage_size(connection: sqlite3.Connection) -> int:
 
 def reject_capture(context_id: str, reason: str, state: str) -> None:
     """Rollback evidence freshness while retaining the existing control receipt."""
-    with closing(sqlite3.connect(DB_PATH)) as connection, connection:
+    with closing(connect(DB_PATH)) as connection, connection:
         connection.execute("BEGIN IMMEDIATE")
         connection.execute(
             """UPDATE collection_attempts SET state=?, reason=?, last_good_at=(
@@ -165,7 +166,7 @@ def verification_sources(request: DiscoveryRequest) -> set[str]:
 
     candidate_ids = {intent.candidate_id for intent in list_tracking().items}
     result = set()
-    with closing(sqlite3.connect(DB_PATH)) as connection:
+    with closing(connect(DB_PATH)) as connection:
         for row in connection.execute(
             "SELECT payload_json FROM discovery_leads ORDER BY rowid DESC"
         ):
