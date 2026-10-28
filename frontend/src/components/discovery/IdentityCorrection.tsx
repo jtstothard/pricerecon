@@ -27,18 +27,20 @@ export function IdentityCorrection({ candidate, onSaved }: { candidate: Discover
         field, value, actor, rationale, state,
       })
       await onSaved()
-      setMessage('Correction saved. Target retained; dependent results withdrawn until fresh evidence qualifies.')
+      setMessage('Correction saved. Your saved price target stays. Old prices and buying assessments no longer apply to the corrected watch. Price alerts pause until fresh matching evidence supports it. Saving does not fetch a new price or change the reference image.')
       setValue(''); setRationale('')
     } catch (failure: unknown) {
       setError(failure instanceof Error ? failure.message : 'Correction could not be saved.')
     } finally { setSaving(false) }
   }
   return <details className="identity-correction">
-    <summary>Correct identity fields</summary>
-    <p>Human corrections retain original evidence and target intent. Merchant selection, stock and payable costs need independent fresh evidence. Previously accepted messages remain in delivery history.</p>
+    <summary>Correct a wrong watch match</summary>
+    <p>Use this when the app has identified the watch incorrectly. For example, if the app recorded a blue dial but the watch you meant has a green dial, correct the dial here. Old blue-dial prices do not prove the green-dial price.</p>
+    <p>Choosing another option in a shop or editing a reference photo is a different action. Saving does not fetch a new price, refresh the source or change the reference image.</p>
+    <p>Your saved price target stays. Price alerts pause until fresh evidence matches the corrected watch. Old prices, coupons and buying assessments are kept as history, but cannot support buying the corrected watch. Already sent alerts stay in delivery history.</p>
     {candidate.corrections.map(item => <section className="correction-state" key={item.configuration_id}>
       <h3>Identity {item.state} · {label(item.requalification)}</h3>
-      <p>Correction revision {item.revision}. {item.requalification === 'required' ? 'Old results are historical and withdrawn. Current price and alert eligibility need requalification.' : 'Fresh compatible evidence supports the new configuration; original prices remain historical.'}</p>
+      <p>Correction revision {item.revision}. {item.requalification === 'required' ? 'Your saved price target stays, but old prices, coupons and buying assessments no longer apply to this watch. Price alerts are paused until fresh matching evidence supports the corrected watch. Saving alone does not fetch a new price or change the reference image.' : 'Fresh matching evidence now supports the corrected watch. Prices for the original watch remain history; they are not prices for the corrected watch.'}</p>
       <dl>{Object.entries(item.values).map(([key, current]) => <div key={key}><dt>Intended {label(key)}</dt><dd>{current}</dd></div>)}</dl>
       <ul>{item.needs.map(need => <li key={need}>{need}</li>)}</ul>
       <ol className="correction-lineage">{item.lineage.map(entry => <li key={entry.id}>
@@ -57,7 +59,7 @@ export function IdentityCorrection({ candidate, onSaved }: { candidate: Discover
       <label>Identity state<select name="correction_state" value={state} onChange={event => setState(event.target.value === 'disputed' ? 'disputed' : 'corrected')}><option value="corrected">Corrected; fresh evidence required</option><option value="disputed">Disputed; withhold qualification</option></select></label>
       <label>Your name<input required maxLength={250} name="correction_actor" autoComplete="name" value={actor} onChange={event => setActor(event.target.value)} /></label>
       <label>Reason<textarea required maxLength={1000} name="correction_rationale" value={rationale} onChange={event => setRationale(event.target.value)} /></label>
-      <button type="submit" disabled={saving || !configuration}>{saving ? 'Saving correction…' : 'Save identity correction'}</button>
+      <button type="submit" disabled={saving || !configuration}>{saving ? 'Saving correction…' : 'Save corrected watch match'}</button>
     </form>
     {error && <p role="alert">{error} Reload the feed before retrying.</p>}
     {message && <p role="status">{message}</p>}

@@ -190,7 +190,7 @@ record future task completion, viewport and assistance explicitly.
 | Missing baseline/current-best/dated-low | Task outcome not yet established | Pending |
 | Source coverage and age | Task outcome not yet established | Pending |
 | Preferences and unknown dimensions | Requests fuzzy search, brand/category facets and similarity; visual-first browsing blocked without meaningful images | Follow-up needed |
-| Correction and preserved target | Task outcome not yet established | Pending |
+| Correction and preserved target | Buyer: “What correcting the dial changes” was unclear; copy repair implemented | Pending buyer retest |
 | Alert eligibility/noise and errors | Wants target/restock/significant-bargain alerts and configurable in-app/Telegram/Discord routing; live UI task not confirmed | Follow-up needed |
 | Desktop/narrow/keyboard usability | Task outcome not yet established | Pending |
 
@@ -209,8 +209,30 @@ After the parent proposed three checks, the buyer replied:
 1. “confirm” to editing preferences and persistence after reload — confirmed.
 2. “GBP 70.10” to the tracking demonstration — observed current displayed price;
    saving a GBP60 target and crossing/deduplication are not yet confirmed.
-3. “this is not clear” to payable/conditional costs and correction consequences —
-   comprehension blocker; clarification requested on costs, correction, or both.
+3. “this is not clear”, subsequently specified as “What correcting the dial changes”.
+   The reported confusion concerns correction consequences; costs were not reported unclear.
 
 Do not treat this as complete task acceptance. Ticket12 stays open; preserve the
 positive visual feedback and the newly confirmed preference/reload result.
+
+
+## Correction clarity repair — 2026-10-28; buyer retest pending
+
+The parent explained that correction repairs an erroneous watch match (for example,
+mint recorded when salmon was intended). Old mint prices do not prove a salmon
+price; the saved target stays and price alerts pause until fresh matching evidence.
+The UI now puts a labelled example and these buying consequences before the form,
+distinguishes correction from choosing a shop option or editing a photo, and explains
+withdrawn evidence and the saved state in plain language. Saving promises no new
+price, immediate source refresh or reference-image change. Current/original and
+intended values and all invalidation behavior remain unchanged.
+
+Verification: focused rendered React component regression failed on the old copy
+and passed after the repair; saved withdrawn-state rendering is also covered.
+All 57 frontend tests, TypeScript/production build, 27 existing guarded public
+application correction regressions and `git diff --check` passed. The build retains
+its bundle-size advisory. Integration base: `a532ef7774ce6330e491d02ae333ce379317a712`.
+No browser, server, live source or account was used. Parent must retest whether the
+buyer understands the correction before and after saving; ticket12 remains open.
+Preferences/reload are confirmed and GBP70.10 was observed, but target creation,
+price crossing and complete workflow acceptance are not established by that feedback.
