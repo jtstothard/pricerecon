@@ -34,3 +34,40 @@ TDD: mounted-route test first failed because the buying summary was absent (10 e
 Final checks: 86 frontend tests across 8 files; TypeScript and Vite production build; git diff --check. Existing >500kB bundle advisory remains. Dependencies installed from lockfile with `npm ci --offline --ignore-scripts`; no new dependency or lockfile edit. No backend or form submission semantics touched, so guarded backend regressions were not repeated. No browser, preview, server, live/network/account, push or PR work. Source and mounted DOM proof only; actual visual/keyboard/narrow usability and buyer acceptance remain pending.
 
 Integration merged before edits (fast-forward to e635f4ad51e0e58faa78e6e00dd7e8dbc8fbc973) and checked/merged again before handoff (already up to date). Integration checkout untouched. Implementation checkout: `/Users/jay/.t3/worktrees/pricerecon/t3-d586f139`, branch `t3/product-page-hierarchy`. Parent owns review, merge and walkthrough rebuild.
+
+
+## Sole merger product hierarchy review — 2026-10-28
+
+Candidate `23785c6efd85e92da47a8b6ba2300ec0d3958006`, checkout
+`/Users/jay/.t3/worktrees/pricerecon/t3-d586f139`, reviewed against expected
+integration `e635f4ad51e0e58faa78e6e00dd7e8dbc8fbc973`; merged locally with
+`--no-ff` as `569d58984205daf304f8585afca5c4ba9bec6f78`.
+
+Standards: zero blockers against CONTRIBUTING.md and docs/engineering-standard.md.
+No unchecked escapes, dependencies, API/source boundaries or backend changes.
+Product-scoped CSS uses existing theme tokens with explicit responsive overrides;
+mounted-route coverage exercises hierarchy and continued navigation/action routing.
+
+Spec: zero blockers against the product refinement plan/critique, buyer guide and
+latest product-only brief. Image/title, supported essential specs, price state,
+condition and Track precede flat detail navigation. Comparison markup is unchanged.
+Costs, history and technical evidence remain accessible; unknown/conditional and
+withdrawn evidence, reference-image warnings and full attribution are retained.
+Existing native form controls, arbitrary values and explicit actor/reason behavior
+remain intact. No invented specs or nested disclosures/subcards were introduced.
+Source review supports responsive intent and specificity coherence, not visual QA.
+
+Independent candidate checks: 86 frontend tests across 8 files, TypeScript/Vite
+production build and diff check passed. Merged checks: 21 ProductFlow, Comparison
+and IdentityCorrection tests across 3 files plus TypeScript/production build passed.
+Node v26.12.1; merged DOM tests used the candidate's installed jsdom through
+WATCH_DOM_MODULE without installing dependencies. Existing >500kB bundle advisory
+remains. Merge tree exactly equalled candidate before this documentation receipt;
+merge diff check passed. Integration started clean with no untracked files and
+remained clean after checks; prior tracked receipts were preserved.
+
+Ticket12 remains OPEN: actual buyer retest of product hierarchy/comprehension,
+narrow viewport and keyboard usability, tracking/correction and full acceptance
+are pending. No browser, preview, server, network/live/account, push, PR, subagents,
+reset/clean or sibling writes occurred. Backend checks were not repeated because
+backend behavior is unchanged. Parent owns cleanup and walkthrough rebuild.

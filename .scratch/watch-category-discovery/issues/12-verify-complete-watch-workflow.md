@@ -447,3 +447,15 @@ subagents, reset/clean or sibling mutations were performed.
 ## Product hierarchy refinement — 2026-10-28
 
 Buyer feedback: comparison is better; product pages still need good visual hierarchy. Focused product-only refinement introduces an image-led buying brief, primary tracking link, essential specs and condition, ranked view titles and flat fact rows for offers/charges/capture lineage. Comparison is preserved. See [plan, pre-edit critique and verification receipt](../../../docs/product/category-discovery/product-page-refinement.md). No backend semantics changed; presets, arbitrary custom values and required correction actor/reason remain intact. Parent review/merge/rebuild follows. Buyer retest, actual narrow/keyboard usability and complete acceptance remain pending. Ticket12 remains OPEN.
+
+
+## Sole merger product hierarchy disposition — 2026-10-28
+
+Candidate `23785c6efd85e92da47a8b6ba2300ec0d3958006` passed separate Standards
+and Spec review with zero blockers; merged with `--no-ff` as
+`569d58984205daf304f8585afca5c4ba9bec6f78`. Candidate: 86 frontend tests and
+types/build passed; merged: 21 focused frontend tests and types/build passed.
+Exact candidate tree equality and diff checks passed before the receipt. See
+[full two-axis receipt](../../../docs/product/category-discovery/product-page-refinement.md#sole-merger-product-hierarchy-review--2026-10-28).
+Ticket12 remains OPEN pending actual buyer retest, narrow/keyboard usability and
+complete tracking/correction acceptance. Parent owns cleanup/walkthrough rebuild.
