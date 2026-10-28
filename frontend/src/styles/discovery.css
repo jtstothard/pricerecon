@@ -108,3 +108,18 @@
 @media (max-width: 380px) {
   .discovery-row { grid-template-columns: 105px minmax(0, 1fr); column-gap: 12px; }
 }
+
+/* Expanded information follows the same label/value rhythm at every depth. */
+.discovery-page dl > div { display: grid; grid-template-columns: minmax(8rem, 1fr) minmax(0, 2fr); gap: 8px 18px; padding-block: 5px; border-bottom: 1px solid var(--border); }
+.discovery-page dl { margin-block: 10px 18px; }
+.discovery-page dt { font-weight: 600; }
+.discovery-page dd { margin: 0; overflow-wrap: anywhere; }
+.discovery-evidence > details { border-top: 1px solid var(--border); }
+.discovery-evidence details details { margin-left: 12px; }
+.discovery-evidence li { margin-block: 8px; }
+.discovery-qualification dl { display: block; }
+.discovery-page h5 { font-size: .9rem; margin-block: 14px 6px; }
+@media (max-width: 480px) {
+  .discovery-page dl > div { grid-template-columns: 1fr; gap: 3px; }
+  .discovery-evidence details details { margin-left: 6px; }
+}

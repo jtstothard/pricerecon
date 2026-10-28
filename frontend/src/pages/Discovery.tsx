@@ -1,3 +1,4 @@
+import { DetailRows } from '../components/discovery/DetailRows'
 import DiscoveryImage from '../components/discovery/DiscoveryImage'
 import { useEffect, useState, type FormEvent } from 'react'
 import { usePageTitle } from '../hooks/usePageTitle'
@@ -96,27 +97,32 @@ function CostEvidence({ claims }: { claims: CostClaim[] }) {
   </li>)}</ul></details>
 }
 function Costs({ costs }: { costs: Cost[] }) {
-  return <details className="discovery-costs"><summary>Delivered cost scenarios ({costs.length})</summary>
+  return <details className="discovery-costs"><summary>Cost options ({costs.length})</summary>
     <p>Costs describe the captured buyer scenario. Observation-time verification does not prove current freshness or comparison acceptance. Item lead prices are discovery prefilters.</p>
     {costs.length === 0 && <p>No exact-scenario cost evidence supplied. Legacy normalized totals cannot certify delivered costs.</p>}
     {costs.map(cost => <section key={`${cost.id}-${cost.revision}`}>
-      <h4>{cost.kind === 'public_no_coupon' ? 'Public no-coupon' : cost.kind} · {costStateLabel[cost.state]}{cost.total && ` · ${cost.total.currency} ${cost.total.amount}`}</h4>
+      <h4>{cost.kind === 'public_no_coupon' ? 'Public no-coupon' : cost.kind.replace(/_/g, ' ')} · {costStateLabel[cost.state]}{cost.total && ` · ${cost.total.currency} ${cost.total.amount}`}</h4>
       {cost.withdrawn && <p className="discovery-caution">Historical cost withdrawn after identity correction. Retained original total: {cost.historical_total?.currency} {cost.historical_total?.amount}. These components do not establish a current payable price.</p>}
-      <p>Observed capture {cost.captured_at}. Scenario revision {cost.revision}; offer revision {cost.offer_revision}; selection revision {cost.binding_revision}; configuration revision {cost.configuration_revision}; policy {cost.policy_version}. Freshness unvalidated.</p>
-      <p>Merchant payable: {subtotals(cost.merchant_payable)}. Additional import/carrier/payment liabilities: {subtotals(cost.additional_liabilities)}.</p>
-      <p>Known subtotal: {subtotals(cost.known_subtotal)}{cost.state === 'unknown' ? '; incomplete, not a delivered total.' : '.'}</p>
+      <p>Observed {cost.captured_at}. Freshness unvalidated.</p>
+      <DetailRows rows={[
+        ['Merchant payable', subtotals(cost.merchant_payable)],
+        ['Additional liabilities', subtotals(cost.additional_liabilities)],
+        ['Known subtotal', <>{subtotals(cost.known_subtotal)}{cost.state === 'unknown' && '; incomplete, not a delivered total.'}</>],
+      ]} />
       {cost.assumptions.length > 0 && <p><strong>Assumptions:</strong> {cost.assumptions.join('; ')}</p>}
       <ul>{cost.issues.map((issue, i) => <li key={i}>{issue}</li>)}</ul>
       <details><summary>Buyer scenario context</summary><dl>{Object.entries(cost.context).map(([field, value]) => <div key={field}><dt>{field.replace(/_/g, ' ')}</dt><dd>{Array.isArray(value) ? value.join(', ') : value ?? 'unknown'}</dd></div>)}</dl></details>
-      <CostEvidence claims={cost.context_evidence} />
-      <ul>{cost.components.map((part, i) => <li key={`${part.kind}-${i}`}>
+
+      <h5>Charges</h5><ul>{cost.components.map((part, i) => <li key={`${part.kind}-${i}`}>
         <strong>{part.kind.replace(/_/g, ' ')}: {part.state.replace(/_/g, ' ')}</strong> · {part.currency ?? 'currency unspecified'} {part.amount ?? 'amount absent'} · {part.basis.replace(/_/g, ' ')}{part.included_in && `; included in ${part.included_in.replace(/_/g, ' ')} (counted once)`}
         <p>Payer {part.payer}; collector {part.collector}. {part.reason}</p>
         {part.assumptions.length > 0 && <p><strong>Assumptions:</strong> {part.assumptions.join('; ')}</p>}
         <CostEvidence claims={part.evidence} />
       </li>)}</ul>
-      {cost.fx_quotes.map((fx, i) => <div key={i}><p>{fx.purpose.replace(/_/g, ' ')}: 1 {fx.from_currency} → {fx.rate} {fx.to_currency}; {fx.converter}; {fx.state}. Spread included: {fx.spread_included === null ? 'unknown' : String(fx.spread_included)}; rounding {fx.quantum} {fx.rounding}. Customs valuation FX is excluded from buyer payment accounting.</p><p>{fx.assumptions.join('; ')}</p><CostEvidence claims={fx.evidence} /></div>)}
-      {cost.benefits.map((benefit, i) => <div key={i}><p><strong>{benefit.kind} {benefit.state}:</strong> {benefit.currency ?? 'currency unknown'} {benefit.amount ?? 'amount unknown'}; excluded from payable. {benefit.reason}</p><CostEvidence claims={benefit.evidence} /></div>)}
+      <details><summary>Currency conversion</summary>{cost.fx_quotes.map((fx, i) => <div key={i}><p>{fx.purpose.replace(/_/g, ' ')}: 1 {fx.from_currency} → {fx.rate} {fx.to_currency}; {fx.converter}; {fx.state}. Spread included: {fx.spread_included === null ? 'unknown' : String(fx.spread_included)}; rounding {fx.quantum} {fx.rounding}. Customs valuation FX is excluded from buyer payment accounting.</p><p>{fx.assumptions.join('; ')}</p><CostEvidence claims={fx.evidence} /></div>)}
+      </details>
+      <h5>Benefits excluded from payable</h5>{cost.benefits.map((benefit, i) => <div key={i}><p><strong>{benefit.kind} {benefit.state}:</strong> {benefit.currency ?? 'currency unknown'} {benefit.amount ?? 'amount unknown'}; excluded from payable. {benefit.reason}</p><CostEvidence claims={benefit.evidence} /></div>)}
+      <details><summary>Technical evidence</summary><p>Scenario revision {cost.revision}; offer revision {cost.offer_revision}; selection revision {cost.binding_revision}; configuration revision {cost.configuration_revision}; policy {cost.policy_version}.</p><CostEvidence claims={cost.context_evidence} /></details>
     </section>)}
   </details>
 }
@@ -141,48 +147,50 @@ export function Candidate({ candidate, tracking, onSaved }: { candidate: Discove
     <div className="discovery-tracking">{candidate.configurations.map(configuration => <ExactTrackingControl key={configuration.id} candidate={candidate} configuration={configuration}
       intent={tracking.find(intent => intent.configuration_id === configuration.id || (intent.candidate_id === candidate.id && candidate.corrections.some(c => c.configuration_id === intent.configuration_id)))} onSaved={onSaved} />)}</div>
     <div className="discovery-correction"><IdentityCorrection candidate={candidate} onSaved={onSaved} /></div>
-    <details className="discovery-evidence">
-      <summary>Price and evidence</summary>
-      <p>Category discovery from {candidate.source}. Merchant selection and comparison are assessed separately.</p>
-      {candidate.offers.map(offer => <p key={offer.id}>{offer.seller ?? 'Seller unknown'} · {offer.condition ?? 'condition unknown'} · {offer.purchase_mode ?? 'purchase mode unknown'}</p>)}
-      <ul className="discovery-fit">{candidate.preference_fit.filter(fit => fit.state !== 'unset').map(fit => <li key={fit.field}>
-        <strong>{strengthLabel[fit.strength]}:</strong> {fit.reason}
-      </li>)}</ul>
-      <p>Public UK delivered price (no coupon)</p>
-      {candidate.advertised_item_price !== null && <p className="discovery-item-price">
-        {candidate.corrections.some(c => c.requalification === 'required') ? 'Historical item lead (withdrawn)' : 'Item lead'}: {candidate.reported_currency ?? 'currency unknown'} {candidate.advertised_item_price}
-      </p>}
-      <p className="discovery-quiet">Usual price unavailable</p>
-      {!tracking.some(intent => candidate.configurations.some(config => config.id === intent.configuration_id)) && <p className="discovery-quiet">No bargain alerts until exact tracking and qualification.</p>}
-      <PriceAssessments assessments={candidate.price_assessments} />
-
-      <ObservationHistory key={`${candidate.capture_id}:${candidate.corrections.map(c => c.revision).join('-')}`} candidateId={candidate.id} />
+    <div className="discovery-evidence">
+      <details><summary>Price breakdown</summary>
+        <h3>UK delivered price</h3>
+        <dl><div><dt>Public total, no coupon</dt><dd>{candidate.public_total.amount === null ? 'Total unknown' : `${candidate.public_total.currency} ${candidate.public_total.amount}`} — {costStateLabel[candidate.public_total.state]}</dd></div></dl>
+        <p>{candidate.total_reason}</p>
+        <p>{candidate.price_caveat}</p>
+        {!tracking.some(intent => candidate.configurations.some(config => config.id === intent.configuration_id)) && <p>No bargain alerts until exact tracking and qualification.</p>}
+        {candidate.advertised_item_price !== null && <dl><div><dt>{candidate.corrections.some(c => c.requalification === 'required') ? 'Historical item lead (withdrawn)' : 'Item lead'}</dt><dd>{candidate.reported_currency ?? 'currency unknown'} {candidate.advertised_item_price}</dd></div></dl>}
+        <p><strong>Missing data:</strong> {candidate.missing_data.join('; ')}.</p>
+        {candidate.offers.map(offer => <section key={offer.id}><h3>{offer.seller ?? 'Seller unknown'}</h3><Costs costs={offer.cost_scenarios} /><CouponPanel coupons={offer.coupons} renderCost={cost => <Costs costs={[cost]} />} /></section>)}
+      </details>
+      <details><summary>Watch details</summary>
+      <ul className="discovery-fit">{candidate.preference_fit.filter(fit => fit.state !== 'unset').map(fit => <li key={fit.field}><strong>{strengthLabel[fit.strength]}:</strong> {fit.reason}</li>)}</ul>
       <div className="discovery-qualification">
         {candidate.configurations.length === 0 && <p>Configuration unresolved: no typed evidence supplied.</p>}
         {candidate.configurations.map(config => <section key={config.id}>
-          <h3>Configuration {config.state}</h3>
-          <p>Revision {config.revision}; policy {config.policy_version}.</p>
+          <h3>Watch identity: {config.state}</h3>
           <dl>{Object.entries(config.values).map(([field, value]) => <div key={field}><dt>{field.replace(/_/g, ' ')}</dt><dd>{value}</dd></div>)}</dl>
-          <ul>{config.issues.map((issue, i) => <li key={i}>{issue.field}: {issue.code} {issue.evidence_ids.join(', ')}</li>)}</ul>
+          <ul>{config.issues.map((issue, i) => <li key={i}>{issue.field}: {issue.code.replace(/_/g, ' ')}</li>)}</ul>
+          <details><summary>Technical evidence</summary><p>Revision {config.revision}; policy {config.policy_version}.</p><ul>{config.issues.map((issue, i) => <li key={i}>{issue.evidence_ids.join(', ')}</li>)}</ul></details>
         </section>)}
         {candidate.bindings.map(binding => <section key={binding.id}>
-          <h3>Selected variation {binding.resolution.state}</h3>
+          <h3>Selected variation: {binding.resolution.state}</h3>
+          <details><summary>Technical evidence</summary>
           <p>{binding.merchant_key ?? 'Merchant unknown'} / {binding.product_id ?? 'product unknown'} / {binding.variation_id ?? 'variation unknown'}; binding revision {binding.revision}, configuration revision {binding.configuration_revision}.</p>
           <ul>{binding.resolution.issues.map((issue, i) => <li key={i}>{issue.field}: {issue.code} {issue.evidence_ids.join(', ')}</li>)}</ul>
+          </details>
         </section>)}
         {candidate.offers.map(offer => <section key={offer.id}>
           <h3>Merchant offer {offer.qualification.state}</h3>
           {offer.source_evidence && <SourceOfferEvidence evidence={offer.source_evidence} />}
-          <p>{offer.seller ?? 'Seller unknown'} · {offer.condition ?? 'condition unknown'} · {offer.purchase_mode ?? 'purchase mode unknown'}</p>
-          <p>Quantity {offer.quantity ?? 'unknown'}; availability {offer.availability ?? 'unknown'}; destination {offer.destination ?? 'unknown'}. Selected item price: {offer.currency ?? 'currency unknown'} {offer.item_price ?? 'unknown'}.</p>
+          <DetailRows rows={[
+            ['Seller', offer.seller], ['Condition', offer.condition], ['Buying mode', offer.purchase_mode],
+            ['Quantity', offer.quantity], ['Availability', offer.availability], ['Destination', offer.destination],
+            ['Selected item price', `${offer.currency ?? 'currency unknown'} ${offer.item_price ?? 'unknown'}`],
+          ]} />
           {offer.condition_description && <p>Seller condition description: {offer.condition_description}</p>}
           {offer.visible_condition && <p>Visible-condition claim: {offer.visible_condition}</p>}
           <p>Authenticity unknown; internal health unknown. Photos and catalogue claims provide no assurance.</p>
-          <p>Comparison {offer.comparison.state}. Cohort: {offer.comparison_cohort ?? 'unresolved'}.</p>
-          <ul>{[...offer.qualification.issues, ...offer.comparison.issues].map((issue, i) => <li key={i}>{issue.field}: {issue.code} {issue.evidence_ids.join(', ')}</li>)}</ul>
-          <Costs costs={offer.cost_scenarios} />
-          <CouponPanel coupons={offer.coupons} renderCost={cost => <Costs costs={[cost]} />} />
-          <details><summary>Field claims and rejected evidence</summary>
+          <p>Comparison: {offer.comparison.state}</p>
+          <ul>{[...offer.qualification.issues, ...offer.comparison.issues].map((issue, i) => <li key={i}>{issue.field}: {issue.code.replace(/_/g, ' ')}</li>)}</ul>
+          <details><summary>Technical evidence: field claims</summary>
+            <p>Comparison cohort: {offer.comparison_cohort ?? 'unresolved'}</p>
+            <ul>{[...offer.qualification.issues, ...offer.comparison.issues].map((issue, i) => <li key={i}>{issue.field}: {issue.code}; {issue.evidence_ids.join(', ')}</li>)}</ul>
             <ul>{offer.evidence.map((claim, i) => <li key={`${claim.id}-${i}`}>
               <strong>{claim.subject} · {claim.field}:</strong> {claim.value} ({claim.assertion_state})
               <p>{claim.retention === 'synthetic' ? 'Synthetic test evidence. ' : ''}{claim.issuer_kind}: {claim.issuer}; extractor {claim.extractor} ({claim.extractor_kind}); route {claim.route}; locator {claim.locator}.</p>
@@ -195,14 +203,17 @@ export function Candidate({ candidate, tracking, onSaved }: { candidate: Discove
           </details>
         </section>)}
       </div>
-      <p>{candidate.price_caveat}</p>
-      <p>{candidate.total_reason}</p>
-      <p><strong>Usual price unavailable.</strong> {candidate.usual_reason} No savings claim.</p>
-      <p><strong>Missing data:</strong> {candidate.missing_data.join('; ')}.</p>
+      </details>
+      <details><summary>Price history</summary>
+        <PriceAssessments assessments={candidate.price_assessments} />
+        <p><strong>Usual price unavailable.</strong> {candidate.usual_reason} No savings claim.</p>
+        <ObservationHistory key={`${candidate.capture_id}:${candidate.corrections.map(c => c.revision).join('-')}`} candidateId={candidate.id} />
+      </details>
+      <details><summary>Sources</summary>
+      <dl><div><dt>Source</dt><dd>{candidate.source}</dd></div></dl>
       <p>Discovered using “{candidate.query}”. Captured <time dateTime={candidate.captured_at}>{new Date(candidate.captured_at).toLocaleString()}</time>. This capture does not establish current availability.</p>
-      <p>{candidate.image.attribution}. {candidate.image.provenance}</p>
       {candidate.url && <p><a href={candidate.url} target="_blank" rel="noreferrer">Open source listing</a> (unverified lead)</p>}
-      <details><summary>Capture lineage</summary>
+      <details><summary>Technical evidence: capture lineage</summary>
         <p>Capture: <code>{candidate.capture_id}</code>. Source listing: {candidate.source_listing_id}. Connector-reported source: {candidate.reported_source}.</p>
         <ul>{candidate.evidence.map(evidence => <li key={evidence.id}>
           <strong>{evidence.field === 'title' ? 'Reported title' : 'Reported item price'}:</strong> {evidence.value}
@@ -211,7 +222,8 @@ export function Candidate({ candidate, tracking, onSaved }: { candidate: Discove
           <p>Derived from: <code>{evidence.derived_from.join(', ')}</code></p>
         </li>)}</ul>
       </details>
-    </details>
+      </details>
+    </div>
   </article>
 }
 

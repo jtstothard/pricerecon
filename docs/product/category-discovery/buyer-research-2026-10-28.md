@@ -171,3 +171,34 @@ available. No backend or legacy Watch behavior changes.
 No browser/server/live/network/account work occurred. Parent must review/merge and
 retest the actual simpler flow one task at a time. Ticket12 stays open; buyer
 comprehension, narrow/keyboard use and complete acceptance are pending.
+
+
+## Expanded hierarchy follow-up — 2026-10-28; buyer retest pending
+
+Actual buyer feedback: “That's much clearer, i just think the collapsible sections
+could use simplifying too. Put the data in hierachical order, make it easy to glance
+over and understand.” This is positive feedback on the simplified default, not
+acceptance of the remaining tasks or the expanded presentation.
+
+The default image/title/price/specs/tracking layout is retained. The large Price
+and evidence accordion is replaced by compact Price breakdown, Watch details,
+Price history and Sources disclosures. Expanded facts use responsive label/value
+rows; results, conditions and missing data precede detailed evidence. IDs,
+revisions, policies, extractor records and lineage sit in deeper Technical evidence
+controls. Correction fields precede correction history; required name/reason,
+original/intended values, dispute controls and consequences remain available.
+Unknown/conditional/observation-verified payable states, withdrawn history,
+synthetic warnings, excluded cashback, source gaps and tracking eligibility remain
+represented. No totals, specifications or reasons were invented.
+
+Verification: 67 frontend tests passed, including rendered grouping/order,
+comparison withdrawal/synthetic warnings, source gaps, cost states/liabilities/
+benefits and existing default/correction regressions. TypeScript noEmit,
+production build and git diff --check passed; the existing bundle-size advisory
+remains. Presentation only: no backend/API behaviour changed, so guarded backend
+checks were not rerun. No browser, server, live/network/account, push or PR work.
+
+Parent owns merge and walkthrough refresh. Let the buyer choose a watch, open one
+relevant group, and locate the result, conditions and supporting evidence without
+a narrated data dump. Expanded comprehension, actual narrow/keyboard usability,
+target/crossing, correction and full acceptance remain pending. Ticket12 stays open.
