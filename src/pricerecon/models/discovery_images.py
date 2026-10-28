@@ -3,7 +3,7 @@
 from typing import Literal
 from urllib.parse import urlsplit
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, TypeAdapter, field_validator
 
 
 class PermittedImage(BaseModel):
@@ -21,10 +21,16 @@ class PermittedImage(BaseModel):
     @field_validator("url")
     @classmethod
     def public_image_url(cls, value: str) -> str:
+        # urllib defers port validation and differs from browser URL parsing.
+        # Validate both grammars before retaining the original display URL.
+        TypeAdapter(HttpUrl).validate_python(value)
         parts = urlsplit(value)
+        _ = parts.port
         if (
             parts.scheme != "https"
             or not parts.hostname
+            or "\\" in value
+            or any(ord(c) < 32 or ord(c) == 127 for c in value)
             or parts.username
             or parts.password
             or parts.query

@@ -81,6 +81,7 @@ async def permitted_image():
             )
             image = (await get(client, "/api/discovery/watches"))["candidates"][0]["image"]
             assert image["kind"] == "photo"
+            assert image["attribution"] == "Offline fixture author"
             assert image["permission_reference"] == "fixture-permission-v1"
             assert image["identity_reference"] == "fixture-depiction-v1"
         async with harness.session() as (client, _):
@@ -113,6 +114,16 @@ async def image_rejections():
             {"url": "https://user:secret@assets.invalid/a"},
             {"url": "https://assets.invalid/a?token=secret"},
             {"kind": "unknown"},
+            *(
+                {"url": url}
+                for url in [
+                    "https://assets.invalid:999999/control.jpg",
+                    "https://assets.invalid:no/control.jpg",
+                    "https://assets.invalid\\evil/control.jpg",
+                    "https://%zz/control.jpg",
+                    "https://256.256.256.256/control.jpg",
+                ]
+            ),
         ]
         items = []
         for index, change in enumerate(changes):
@@ -133,13 +144,18 @@ async def image_rejections():
                 ),
             )
             feed = (await get(client, "/api/discovery/watches"))["candidates"]
-            assert len(feed) == 9
+            assert len(feed) == len(changes) + 1
             for candidate in feed:
                 assert candidate["image"]["kind"] == (
                     "illustration"
                     if candidate["source_listing_id"] == "control"
                     else "original_placeholder"
                 )
+            valid_image = next(c["image"] for c in feed if c["source_listing_id"] == "control")
+            assert valid_image["attribution"] == "Fixture artist"
+            assert valid_image["permission_reference"] == "fixture-rights"
+        async with harness.session() as (client, _):
+            assert (await get(client, "/api/discovery/watches"))["candidates"] == feed
         assert harness.blocked_edges == []
         assert harness.deliveries == []
 

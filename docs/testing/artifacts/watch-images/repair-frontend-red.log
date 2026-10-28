@@ -1,0 +1,147 @@
+
+> pricerecon-frontend@0.1.0 test
+> vitest --run
+
+
+ RUN  v5.0.5 /Users/jay/.t3/worktrees/pricerecon/t3-e17dc593/frontend
+
+ ❯ src/components/__tests__/DiscoveryFeed.test.ts (12 tests | 10 failed) 17ms
+   × keeps the lead and sibling with an explicit placeholder for https://assets.invalid:999999/control.jpg 7ms
+   × keeps the lead and sibling with an explicit placeholder for https://assets.invalid:no/control.jpg 1ms
+   × keeps the lead and sibling with an explicit placeholder for https://assets.invalid\evil/control.jpg 4ms
+   × keeps the lead and sibling with an explicit placeholder for https://%zz/control.jpg 0ms
+   × keeps the lead and sibling with an explicit placeholder for https://256.256.256.256/control.jpg 0ms
+   × isolates malformed persisted image metadata 0ms
+   × isolates malformed persisted image metadata 0ms
+   × isolates malformed persisted image metadata 0ms
+   × isolates malformed persisted image metadata 0ms
+   × still rejects invalid qualification even with a malformed image 2ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/__tests__/DiscoveryFeed.test.ts > keeps the lead and sibling with an explicit placeholder for https://assets.invalid:999999/control.jpg
+ FAIL  src/components/__tests__/DiscoveryFeed.test.ts > keeps the lead and sibling with an explicit placeholder for https://assets.invalid:no/control.jpg
+ FAIL  src/components/__tests__/DiscoveryFeed.test.ts > keeps the lead and sibling with an explicit placeholder for https://%zz/control.jpg
+ FAIL  src/components/__tests__/DiscoveryFeed.test.ts > keeps the lead and sibling with an explicit placeholder for https://256.256.256.256/control.jpg
+TypeError: Invalid URL
+ ❯ parseCandidate src/lib/discovery.ts:272:46
+    270|   if (imageKind === 'original_placeholder') choice(image.permission, […
+    271|   else {
+    272|     const rawUrl = text(image.url), parsed = new URL(rawUrl)
+       |                                              ^
+    273|     if (parsed.protocol !== 'https:' || parsed.username || parsed.pass…
+    274|       || image.depicts_exact_watch !== true || image.source_listing_id…
+ ❯ list src/lib/discovery.ts:16:16
+ ❯ parseDiscoveryFeed src/lib/discovery.ts:323:17
+ ❯ src/components/__tests__/DiscoveryFeed.test.ts:20:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/components/__tests__/DiscoveryFeed.test.ts > keeps the lead and sibling with an explicit placeholder for https://assets.invalid\evil/control.jpg
+AssertionError: expected { kind: 'photo', …(5) } to match object { kind: 'original_placeholder', …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "kind": "original_placeholder",
+-   "url": null,
++   "kind": "photo",
++   "url": "https://assets.invalid\\evil/control.jpg",
+  }
+
+ ❯ src/components/__tests__/DiscoveryFeed.test.ts:23:36
+     21|   expect(feed.candidates).toHaveLength(2)
+     22|   expect(feed.candidates[0].source_listing_id).toBe(captured.candidate…
+     23|   expect(feed.candidates[0].image).toMatchObject({ kind: 'original_pla…
+       |                                    ^
+     24|   expect(feed.candidates[1].source_listing_id).toBe(captured.candidate…
+     25| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/components/__tests__/DiscoveryFeed.test.ts > isolates malformed persisted image metadata
+Error: Invalid discovery record
+ ❯ record src/lib/discovery.ts:7:82
+      5| // Validate capture-bound qualification states before they reach the b…
+      6| export function record(value: unknown): Record<string, unknown> {
+      7|   if (typeof value !== 'object' || value === null || Array.isArray(val…
+       |                                                                                  ^
+      8|   return Object.fromEntries(Object.entries(value))
+      9| }
+ ❯ parseCandidate src/lib/discovery.ts:258:44
+ ❯ list src/lib/discovery.ts:16:16
+ ❯ parseDiscoveryFeed src/lib/discovery.ts:323:17
+ ❯ src/components/__tests__/DiscoveryFeed.test.ts:29:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/components/__tests__/DiscoveryFeed.test.ts > isolates malformed persisted image metadata
+Error: Unsupported discovery state
+ ❯ choice src/lib/discovery.ts:20:34
+     18| export function choice<const T extends readonly string[]>(value: unkno…
+     19|   const found = allowed.find(item => item === value)
+     20|   if (found === undefined) throw new Error('Unsupported discovery stat…
+       |                                  ^
+     21|   return found
+     22| }
+ ❯ parseCandidate src/lib/discovery.ts:268:21
+ ❯ list src/lib/discovery.ts:16:16
+ ❯ parseDiscoveryFeed src/lib/discovery.ts:323:17
+ ❯ src/components/__tests__/DiscoveryFeed.test.ts:29:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/components/__tests__/DiscoveryFeed.test.ts > isolates malformed persisted image metadata
+Error: Invalid discovery text
+ ❯ text src/lib/discovery.ts:11:40
+      9| }
+     10| export function text(value: unknown): string {
+     11|   if (typeof value !== 'string') throw new Error('Invalid discovery te…
+       |                                        ^
+     12|   return value
+     13| }
+ ❯ parseCandidate src/lib/discovery.ts:276:12
+ ❯ list src/lib/discovery.ts:16:16
+ ❯ parseDiscoveryFeed src/lib/discovery.ts:323:17
+ ❯ src/components/__tests__/DiscoveryFeed.test.ts:29:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  src/components/__tests__/DiscoveryFeed.test.ts > isolates malformed persisted image metadata
+Error: Invalid depiction evidence
+ ❯ parseCandidate src/lib/discovery.ts:274:111
+    272|     const rawUrl = text(image.url), parsed = new URL(rawUrl)
+    273|     if (parsed.protocol !== 'https:' || parsed.username || parsed.pass…
+    274|       || image.depicts_exact_watch !== true || image.source_listing_id…
+       |                                                                                                               ^
+    275|     for (const key of ['attribution', 'provenance', 'permission_refere…
+    276|       if (!text(image[key]).trim()) throw new Error('Missing depiction…
+ ❯ list src/lib/discovery.ts:16:16
+ ❯ parseDiscoveryFeed src/lib/discovery.ts:323:17
+ ❯ src/components/__tests__/DiscoveryFeed.test.ts:29:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  src/components/__tests__/DiscoveryFeed.test.ts > still rejects invalid qualification even with a malformed image
+AssertionError: expected [Function] to throw error including 'Unsupported qualified discovery claim' but got 'Invalid discovery record'
+
+Expected: "Unsupported qualified discovery claim"
+Received: "Invalid discovery record"
+
+ ❯ src/components/__tests__/DiscoveryFeed.test.ts:41:42
+     39|   const feed = feedWith(null)
+     40|   feed.candidates[0].alert_eligible = true
+     41|   expect(() => parseDiscoveryFeed(feed)).toThrow('Unsupported qualifie…
+       |                                          ^
+     42| })
+     43|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  10 failed | 30 passed (40)
+   Start at  12:12:07
+   Duration  346ms (import 37%, transform 35%, tests 18%, worker 9%)

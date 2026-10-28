@@ -72,3 +72,40 @@ Final integration re-merge reported already up to date at the same full SHA.
 rendering do not prove browser load-error interaction, narrow layout or keyboard
 usability; those and buyer task completion remain retest gates. No full-suite,
 live-source, asset-rights or release acceptance claim follows from these passes.
+
+## P1 malformed image repair — 2026-10-28
+
+The merger reproducer showed that `urlsplit` did not validate an unread port:
+`https://assets.invalid:999999/control.jpg` persisted as a photo and the browser
+URL constructor then rejected the entire feed. Backend validation now applies
+Pydantic's HTTP URL grammar and explicitly reads the urllib port, retaining the
+existing unsigned HTTPS policy and rejecting backslashes/control characters.
+The frontend catches only depiction parsing failures and returns an explicit
+unavailable-product-image placeholder; candidate qualification parsing remains
+strict outside that boundary.
+
+Red/green receipts are retained under `artifacts/watch-images/repair-*.log`.
+The guarded normal execution/API rejection loop failed before the repair and
+passed afterward (7 focused workflows), including out-of-range/nonnumeric ports,
+backslash host confusion, invalid host escapes and invalid numeric hosts. All
+14 leads survive with only the valid illustration admitted; attribution and
+permission references survive API/session restart. The existing photo control
+also retains its attribution contract. No network/image loading is involved.
+
+The frontend regression uses a minimized synthetic captured feed from the supplied
+review fixture (two leads, no source coverage, captures or evidence collections).
+Against the original decoder it reports 10 failures and 30 passes; the repaired
+decoder passes all 40 tests. Valid photo/illustration attribution survives;
+malformed reports cannot escape as photos, and an invalid qualification still
+throws. Frontend build passes with the existing large-chunk advisory. Focused
+Ruff, uncached three-source mypy and whitespace checks pass. The broader guarded
+discovery/watch/final-review/correction selection passed 63 tests in 62.67s. The trailing blank
+line in the retained original frontend log was removed.
+
+Ticket12 remains open for meaningful permitted assets and buyer visual-first
+retest. These offline controls do not establish rights, actual remote image
+loading, browser usability or buyer acceptance. No integration checkout edits,
+push, PR, live access, production action or browser run were performed.
+
+Final local merge of `integration/watch-category-discovery` at
+`dd43df3a4575c426465fcfcb408d13e3167f4c02` reported already up to date.

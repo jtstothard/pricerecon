@@ -1,0 +1,12 @@
+
+> pricerecon-frontend@0.1.0 test
+> vitest --run
+
+
+ RUN  v5.0.5 /Users/jay/.t3/worktrees/pricerecon/t3-e17dc593/frontend
+
+
+ Test Files  3 passed (3)
+      Tests  40 passed (40)
+   Start at  12:12:40
+   Duration  207ms (import 43%, transform 35%, tests 12%, worker 10%)
