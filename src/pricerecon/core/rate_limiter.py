@@ -10,6 +10,7 @@ from datetime import UTC, datetime, timedelta, timezone
 from threading import Lock
 from typing import Literal, Optional
 
+from pricerecon.db.connection import connect
 from pricerecon.models.collection import OperatingPolicy, Priority, Resource
 from pricerecon.models.rate_limit import (
     RateLimitConfig,
@@ -335,7 +336,7 @@ class DurableAdmission:
         from pricerecon.db.schema import DB_PATH
 
         if connection is None:
-            with closing(sqlite3.connect(DB_PATH)) as owned, owned:
+            with closing(connect(DB_PATH)) as owned, owned:
                 owned.execute("BEGIN IMMEDIATE")
                 return DurableAdmission.select_policy(owned)
         supplied = supplied_policy()
@@ -409,7 +410,7 @@ class DurableAdmission:
         if not self.policy.starts_at <= now < self.policy.stops_at:
             raise AdmissionDenied('operating_policy_expired', state='blocked')
         if connection is None:
-            with closing(sqlite3.connect(DB_PATH)) as owned, owned:
+            with closing(connect(DB_PATH)) as owned, owned:
                 owned.execute('BEGIN IMMEDIATE')
                 self.debit(costs, connection=owned)
             return
@@ -458,7 +459,6 @@ class DurableAdmission:
 
 
     def begin(self) -> None:
-        import sqlite3
         from contextlib import closing
         from uuid import uuid4
 
@@ -467,7 +467,7 @@ class DurableAdmission:
         now = datetime.now(UTC)
         attempt_id = str(uuid4())
         reason = None
-        with closing(sqlite3.connect(DB_PATH)) as connection, connection:
+        with closing(connect(DB_PATH)) as connection, connection:
             connection.execute('BEGIN IMMEDIATE')
             rows = connection.execute('''SELECT id, state, next_eligible_at FROM collection_attempts
                 WHERE scope_id=? AND source=? AND next_eligible_at IS NOT NULL
@@ -497,7 +497,6 @@ class DurableAdmission:
         self.debit({'elapsed_seconds': self.policy.run_timeout_seconds})
 
     def finish(self, state: str, reason: str | None = None) -> None:
-        import sqlite3
         from contextlib import closing
 
         from pricerecon.db.schema import DB_PATH
@@ -505,7 +504,7 @@ class DurableAdmission:
         if not self.attempt_id:
             return
         now = datetime.now(UTC)
-        with closing(sqlite3.connect(DB_PATH)) as connection, connection:
+        with closing(connect(DB_PATH)) as connection, connection:
             # A denied overlap cannot extend the existing source lease.
             connection.execute('''UPDATE collection_attempts SET state=?, reason=?,
                 last_good_at=CASE WHEN ? IN ('success', 'success_empty') THEN attempted_at

@@ -19,11 +19,12 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 | [09: Public coupons](issues/09-evaluate-public-coupons.md) | 04 | Closed |
 | [10: Shared limits](issues/10-prioritise-tracking.md) | 05 | Closed |
 | [11: Source evidence](issues/11-carry-source-evidence.md) | 03, 10 | Closed |
-| [12: Integrated verification](issues/12-verify-complete-watch-workflow.md) | 08, 09, 11 | Accepted offline autonomous technical scope; human/live gates unproven |
+| [12: Integrated verification](issues/12-verify-complete-watch-workflow.md) | 08, 09, 11 | Completed in accepted offline scope; human/live/release gates unproven |
+| [Follow-on: finite live pilot](../../docs/product/category-discovery/live-pilot-runner.md) | Buyer-approved live-pilot plan; source prerequisites | Offline containment prepared; parent review and live activation blocked/pending |
 
 ## Authority and acceptance
 
-Work is limited to source implementation and deterministic offline verification with isolated storage and controlled external edges. The buyer explicitly authorised local commits/merges for this continuation, overriding the older issue-level prohibition. No live collection, accounts, production database, activation, deployment, purchases, pushes or PRs are authorised.
+The original12 scope is source implementation and deterministic offline verification with isolated storage and controlled external edges. Local commits/merges are explicitly authorised. The separately approved [finite pilot](../../docs/product/category-discovery/live-pilot-plan.md) permits bounded preparation and gated parent execution; it does not supply missing provider prerequisites. This implementation task makes no live calls. Accounts, production database/VM mutation, deployment, purchases, pushes and PRs remain outside scope.
 
 Ticket 01 source was integrated on 2026-10-27 in merge `a0e5c1a612252c61a62eabc7b56ebc3b3297ed85`, preserving implementer HEAD `9312871f269137d7b98ba7155d9523350e41e62e`. The subsequent rendered-form preservation repair was integrated in merge `3243c8f00e3f9dd9efde79327b6905eb3d4354b2`, preserving implementer HEAD `534cecaece62e30f50c680b40af5b4c7f561b6e4`. Integration checks passed **15 isolated workflow tests**, **25 frontend tests** and the frontend build. The parent subsequently passed the rendered edit/save/reload/manual-check regression. See the dated resolution log below and the [repair integration receipt](issues/01-verify-existing-monitoring.md#preservation-repair-integration-receipt-2026-10-27).
 
@@ -349,3 +350,24 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   permitted exact imagery, unresolved selections/reference and remaining buyer
   retests; Casio “looks good” feedback is bounded to that slice.
   [Review receipt](../../docs/testing/watch-images.md#sole-merger-reuse-only-documentation-review--2026-10-28).
+
+
+- 2026-10-28: Bounded pilot implementer merged integration input
+  `5e26693cbe3f088392f4ed0727ee69c1ccdf3c3f` before work, preserving the clean
+  dedicated checkout and leaving the original/buyer state untouched. Added
+  controlled acquisition/connector/normalizer runner, finite grant accounting,
+  streaming/route/retry restrictions, memory auth, bounded SQLite, independent
+  deadline/cleanup supervisor, and zero-request blocked CLI preflight.
+  [Implementation receipt](../../docs/product/category-discovery/live-pilot-runner.md).
+  **Follow-on remains blocked for app approval, transient retention and actual
+  backup exclusions; parent review, eligible activation and live execution have
+  not happened.** Original12 are completed only in their accepted offline scope.
+  No live call, external documentation read, credential inspection, account action,
+  browser, push/PR/deployment, production/VM/scheduler mutation or new entitlement.
+
+  Verification: **108 combined guarded tests passed**, then **12 expanded pilot
+  tests passed**; all11 changed source files pass mypy, new files/tests pass
+  Ruff/Black, and existing touched files have zero added Ruff findings (34 baseline).
+  The macOS sanitized-temp mismatch passed with `TMPDIR=/tmp`. Retained
+  [minimal receipts](../../docs/testing/artifacts/live-pilot-runner/verification.json)
+  contain only gate outcomes/resource aggregates, not merchant records.

@@ -364,6 +364,10 @@ class eBayConnector(BaseConnector):
         from pricerecon.connectors.ebay_evidence import browse_evidence
 
         self.validate_evidence_access()
+        from pricerecon.pilot_bounds import active_pilot
+
+        if active_pilot.get() is not None:
+            return await self._pilot_search(query)
         if self.has_external_browser():
             raise ConnectorDegradedError(
                 ConnectorStatus.disabled,
@@ -373,6 +377,59 @@ class eBayConnector(BaseConnector):
         self._last_browse_payload = None
         await self.search(query, filters)
         return browse_evidence(self._last_browse_payload, self.evidence_receipt)
+
+    async def _pilot_search(self, query: str) -> EvidenceSearchReport:
+        """Same Browse normalizer, restricted acquisition; no identity upgrades.
+
+        Exact query text chooses detail candidates, never establishes a selected
+        variation or UK delivered total. Detail payloads must validate and match
+        the searched item, and remain bounded transient memory only.
+        """
+        from urllib.parse import quote
+
+        from pricerecon.connectors.ebay_evidence import BrowseItem, BrowsePage, browse_evidence
+        from pricerecon.pilot_bounds import QUERIES, active_pilot
+
+        bounds = active_pilot.get()
+        if bounds is None or self._client is None or query not in QUERIES:
+            raise RuntimeError("Pilot context required")
+        if self.has_external_browser():
+            bounds.deny("pilot_browser_denied")
+        token = await self.ensure_token()
+        headers = {"Authorization": f"Bearer {token}", "X-EBAY-C-MARKETPLACE-ID": "EBAY_GB"}
+        response = await self._client.get(
+            "https://api.ebay.com/buy/browse/v1/item_summary/search", headers=headers,
+            params={"q": query, "limit": "5", "filter": "conditions:{NEW},buyingOptions:{FIXED_PRICE},deliveryCountry:GB"},
+        )
+        page = BrowsePage.model_validate(response.json())
+        if len(page.itemSummaries) > 5:
+            bounds.deny("pilot_lead_cap")
+        inspected = 0
+        for raw in page.itemSummaries:
+            item = BrowseItem.model_validate(raw)
+            if (query.casefold() not in item.title.casefold()
+                    or item.conditionId != "1000" or item.buyingOptions != ["FIXED_PRICE"]):
+                continue
+            if inspected == 2:
+                break
+            bounds.candidates[item.itemId] = query
+            detail = await self._client.get(
+                "https://api.ebay.com/buy/browse/v1/item/" + quote(item.itemId, safe=""),
+                headers=headers,
+            )
+            parsed = BrowseItem.model_validate(detail.json())
+            if parsed.itemId != item.itemId:
+                bounds.deny("pilot_detail_identity_ambiguous")
+            inspected += 1
+        report = browse_evidence(page.model_dump(), self.evidence_receipt)
+        if report.source_evidence is None:
+            bounds.deny("pilot_receipt_missing")
+            raise RuntimeError("Pilot receipt unavailable")
+        report.source_evidence.item_limit = 5
+        report.source_evidence.detail_limit = 2
+        report.source_evidence.inspected_count = inspected
+        bounds.normalized(len(report.model_dump_json().encode()))
+        return report
 
     @property
     def source_role(self) -> SourceType:
@@ -387,6 +444,29 @@ class eBayConnector(BaseConnector):
             await self._client.aclose()
 
     async def ensure_token(self) -> str:
+
+        from pricerecon.pilot_bounds import active_pilot
+
+        pilot = active_pilot.get()
+        if pilot is not None:
+            pilot.check()
+            if pilot.token is None:
+                if self._client is None:
+                    raise RuntimeError("HTTP client not initialized")
+                response = await self._client.post(
+                    "https://api.ebay.com/identity/v1/oauth2/token",
+                    headers={"Authorization": f"Basic {_get_basic_auth(self.app_id, self.cert_id)}"},
+                    data={"grant_type": "client_credentials", "scope": "https://api.ebay.com/oauth/api_scope"},
+                )
+                payload = response.json()
+                value = payload.get("access_token")
+                if not isinstance(value, str) or not value:
+                    pilot.deny("pilot_auth_schema")
+                else:
+                    pilot.token = value
+            if pilot.token is None:
+                raise RuntimeError("Pilot token unavailable")
+            return pilot.token
 
         token = self.token_store.get_token()
         if token:

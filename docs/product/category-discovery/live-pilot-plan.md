@@ -1,6 +1,6 @@
 # One-off live watch pilot proposal
 
-Status: envelope approved by buyer 2026-10-28; runner/preflight pending, offer acquisition NOT started. Prepared 2026-10-28
+Status: envelope approved by buyer 2026-10-28; offline runner/preflight prepared for parent review; live activation blocked, offer acquisition NOT started. Prepared 2026-10-28
 against integration `84314a7351ac1c87c31ee2543592935f01ea0bf2`.
 
 ## Purpose and products
@@ -155,3 +155,15 @@ approval requests. This supersedes the proposal's pending-approval status and
 older source-only wording for this bounded pilot. Codex owns session execution
 and stop/cleanup. External source prerequisites still need evidence; no broader
 paid, recurring, account-linking, deployment or production operation is implied.
+
+
+## Implementation follow-on — 2026-10-28
+
+The [runner implementation receipt](live-pilot-runner.md) records the controlled
+application-seam runner, additional containment, commands and unresolved evidence.
+Default/execute preflight returns zero-request `blocked`: existing app approval,
+source-specific transient retention and actual backup exclusion are unproven.
+No public documentation allowance or live acquisition budget was consumed here.
+Parent review/integration, source-backed live activation and any eligible live
+execution remain outstanding; synthetic proof does not close them. The original
+12-ticket offline scope remains accepted without implying release acceptance.

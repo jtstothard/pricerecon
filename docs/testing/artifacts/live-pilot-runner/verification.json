@@ -1,0 +1,18 @@
+{
+  "black": "passed",
+  "combined_command": "TMPDIR=/tmp PYTHONPATH=src python -m pytest tests/test_live_pilot.py tests/test_collection_workflow.py tests/test_shared_grant_workflow.py tests/test_discovery_workflow.py tests/test_source_evidence_workflow.py tests/test_ebay_secret_logging.py tests/test_rate_limiter.py -q --disable-warnings",
+  "combined_tests_passed": 108,
+  "existing_file_ruff_added": 0,
+  "existing_file_ruff_baseline": 34,
+  "final_pilot_tests_passed": 12,
+  "integration_input": "5e26693cbe3f088392f4ed0727ee69c1ccdf3c3f",
+  "live_activation": "blocked_unwired",
+  "live_requests": 0,
+  "mypy_source_files": 11,
+  "new_file_ruff": "passed",
+  "original12": "completed_offline_scoped",
+  "parent_review": "pending",
+  "provider_documentation_requests": 0,
+  "release_acceptance": false,
+  "schema": "pricerecon.watch-pilot-verification.v1"
+}
