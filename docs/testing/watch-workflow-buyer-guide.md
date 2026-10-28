@@ -401,3 +401,16 @@ Local validation: `cd frontend && npm ci --offline --ignore-scripts && npm test 
 Latest buyer feedback: comparison is better; product pages need fixing and good visual hierarchy. The [product refinement receipt](../product/category-discovery/product-page-refinement.md) records the pre-edit plan and critique. Product pages now lead with the watch image, model, essential supported specs, delivered price/condition and Track action; peer navigation opens ranked detail views with readable rows. Comparison remains unchanged. Reference, synthetic, conditional, unknown and withdrawn states remain explicit. Technical holds full attribution and retained records.
 
 Parent should rebuild after review/merge, then ask the buyer to identify the model, price status, condition and tracking action; inspect Costs and Technical separately at desktop/narrow widths and with keyboard. No new browser session or visual acceptance is claimed. Tracking/correction attribution and full task-level acceptance remain pending; ticket12 stays open.
+
+
+## Buyer design acceptance — 2026-10-28
+
+After the refined product pages were rebuilt and presented in the existing private
+walkthrough, the buyer replied: “Much better, use that”. The current product-page
+visual hierarchy and design are accepted and retained as the implementation
+baseline (presented integration `914a1a6f12e5367b9529ffaa3483e5ba1d4df1ac`).
+This supersedes the pending product-design retest statement above. Preferences/
+reload were separately confirmed earlier. Narrow-screen/keyboard testing and the
+complete tracking/alert/correction workflow are not established by this design
+approval; ticket12 remains open for those remaining checks. No live activation,
+production migration, push or publication is authorized by design acceptance.

@@ -71,3 +71,16 @@ narrow viewport and keyboard usability, tracking/correction and full acceptance
 are pending. No browser, preview, server, network/live/account, push, PR, subagents,
 reset/clean or sibling writes occurred. Backend checks were not repeated because
 backend behavior is unchanged. Parent owns cleanup and walkthrough rebuild.
+
+
+## Buyer design acceptance — 2026-10-28
+
+After the refined product pages were rebuilt and presented in the existing private
+walkthrough, the buyer replied: “Much better, use that”. The current product-page
+visual hierarchy and design are accepted and retained as the implementation
+baseline (presented integration `914a1a6f12e5367b9529ffaa3483e5ba1d4df1ac`).
+This supersedes the pending product-design retest statement above. Preferences/
+reload were separately confirmed earlier. Narrow-screen/keyboard testing and the
+complete tracking/alert/correction workflow are not established by this design
+approval; ticket12 remains open for those remaining checks. No live activation,
+production migration, push or publication is authorized by design acceptance.
