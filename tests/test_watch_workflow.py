@@ -40,3 +40,20 @@ def test_temporary_legacy_backup_restore_and_repeatable_migration():
         storage = Path(directory)
         (storage / ".offline-monitoring").write_text("ticket01-test-storage\n")
         run_workflow("recovery", storage)
+
+
+def test_private_walkthrough_serves_real_attributed_images_without_qualifying_prices():
+    root = Path(__file__).resolve().parents[1]
+    result = subprocess.run(
+        [sys.executable, "-m", "tests.monitoring.watch_image_workflow"],
+        cwd=root,
+        env={
+            "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+            "PYTHONDONTWRITEBYTECODE": "1",
+        },
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr

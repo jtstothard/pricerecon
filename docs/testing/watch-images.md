@@ -169,3 +169,83 @@ are not established. No rights adjudication, live acquisition or activation
 acceptance is implied. Original and sibling worktrees were not edited or cleaned;
 parent retains cleanup ownership. This receipt and tracker update are a separate
 local documentation commit after the history-preserving merge.
+
+## Real private-use asset slice — 2026-10-28
+
+Base integration tip `d14506a75692ba61641f8a578208b65321bf8929` was merged
+into the implementation worktree before changes. No integration checkout was
+modified. The task authorized finite public source/terms research and image
+retrieval; no accounts, source price ingestion, contacts, production DB,
+deployment, activation, push, PR, browser preview or server launch occurred.
+
+This slice retrieves and retains **two actual unchanged Casio images**, rather
+than treating test URLs as assets. Both files were opened with the local image
+viewer. The front photograph and wrist photograph show the exact named blue
+Casio base model; the UK manufacturer page supplies the VEF heading. Regional
+packaging/merchant SKU/offer identity remain separate. Europe-hosted copies and
+Europe terms are the reuse basis: section 1 excepts solely private copying from
+its written-permission requirement. UK terms contain additional restrictive
+other-website wording, so the initial UK-hosted candidate was replaced rather
+than silently relying on only its permissive paragraph. No UK-only lifestyle
+file remains in the committed assets.
+
+The [rights/identity/hash manifest](../../tests/fixtures/watch-images/manifest.json)
+and [source findings, alternatives and missing-case decisions](../../tests/fixtures/watch-images/README.md)
+limit these copyrighted files to Jay's solely private non-commercial local
+walkthrough. They are not repository-licensed or publishable product assets.
+The source records supply actual links and restrictive terms for Militado,
+Addiesdive and San Martin; no matching open-licensed alternative was found in
+the finite searches. Merkur's exact Lightning reference remains unresolved;
+other salmon Merkurs were explicitly rejected. The minimum next step is owned
+photos or permission for the other cases, plus exact variant/reference selection
+where missing. No seller or rights holder was contacted.
+
+The existing original HTTPS depiction contract still passes normal discovery
+execution, persistence and the public feed API. Its unsigned URL validator is
+unchanged. A **test fixture only** router loads two hash-verified files into a
+fixed allowlist, with no caller-controlled file paths, fetch, proxy or production
+mount. Only `/discover?walkthrough=ticket12` opts the UI into the marked local
+manifest. It validates hash-shaped local paths and never falls back to remote
+images on pending/failed/missing mapping. The ordinary app retains original
+HTTPS behavior. Notices remain beside the card and gallery. Fixture cost
+updates retain the image; restart retains its original provenance. No image
+field enters cost, qualification, history or alerts. The Casio seed still has
+no known delivered total and is not alert eligible.
+
+Approved TDD seams were supplied in the dispatch: existing public API + normal
+execution under MonitoringHarness; focused rendered UI. API red failed on the
+missing fixture image module, green verifies actual served content/hash/MIME,
+no-store, traversal/unknown-path rejection, five preserved leads, four explicit
+placeholders, independent withheld price, normal cost progression and restart.
+UI red failed on the missing private resolver; green uses the real asset
+manifest to verify local rendering, copyright attribution, unsafe-route rejection
+and abstention without remote fallback. No private-method/DB assertion was used.
+All API work uses marked temporary SQLite, paused scheduling, controlled
+connector/time edges and captured notifications; guard/delivery lists are empty
+in the dedicated image workflow. Source retrieval was separate from that guard.
+
+[Raw red/green/check logs](artifacts/watch-image-walkthrough/):
+
+- Broader discovery/watch/final-review/correction/ownership selection: **64 passed**.
+- After final Europe asset/manifest replacement, discovery + connected watch
+  selection: **10 passed**. These include the real-image workflow.
+- Frontend: **42 passed**; TypeScript and Vite build passed (existing chunk-size advisory).
+- Focused Ruff passed; uncached existing image/discovery/core model mypy passed.
+- `git diff --check` passed.
+
+Commands use the retained `t3-7260bb2e/.venv/bin/python` and Node 24.14.1.
+Only this worktree's ignored `frontend/node_modules` symlink points to existing
+integration dependencies. The built `frontend/dist` is present locally; rebuild
+from the committed sources after parent integration, before launching the
+[updated walkthrough](watch-workflow-buyer-guide.md). No running fixture was
+left behind. Build/API runs were sequential after the initial regression run.
+
+**Acceptance remains open.** Two views of one model make a real single-product
+visual check possible, not a meaningful five-watch comparison. Four missing
+cases, actual browser load/failure/keyboard/narrow behavior and the buyer's
+visual-first/remaining-task feedback remain unproven. No live buying-price,
+source coverage, general redistribution right or release claim follows.
+
+Final re-merge before handoff: `integration/watch-category-discovery` remained at
+`d14506a75692ba61641f8a578208b65321bf8929`; merge reported already up to date.
+Parent retains integration ownership.

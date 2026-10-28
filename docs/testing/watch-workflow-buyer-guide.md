@@ -10,12 +10,13 @@ Ticket12 remains open for follow-up design, retesting and acceptance/closure. Th
 This is the implemented application running against invented watch evidence in
 temporary SQLite. It has no production data, live collection, merchant sessions,
 accounts or real notification transport. All five names remain in the feed;
-Militado and Merkur remain unresolved. Illustrations are original placeholders,
-not product photos. Positive dimensions and prices are fictional test inputs.
+Militado and Merkur remain unresolved. Casio now has two real manufacturer reference photographs for solely private use;
+the other four cases retain explicit generic placeholders. See the
+[image rights and missing-case record](../../tests/fixtures/watch-images/README.md).
+The real photo never qualifies the synthetic price or merchant configuration. Positive dimensions and prices are fictional test inputs.
 
-The parent may already have presented a verified running session at
-http://127.0.0.1:8892/discover. Use that session for feedback; the launch steps
-below are for starting a fresh fixture after the existing one has stopped.
+Start a fresh fixture after building this revision. Earlier running sessions and
+retained screenshots predate the real-photo assets and do not prove this revision.
 
 ## Launch safely
 
@@ -39,11 +40,16 @@ env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
   -m tests.monitoring.discovery_ui_server --workflow --port 8892
 ```
 
-Wait for `OFFLINE_UI_READY`. Open **http://127.0.0.1:8892/discover** in a clean
+Wait for `OFFLINE_UI_READY`. Open **http://127.0.0.1:8892/discover?walkthrough=ticket12** in a clean
 local browser session. Before edits, the parent must verify
 `http://127.0.0.1:8892/api/offline-verification` returns fixture
 `ticket12-connected-ui-v1`, `temporary_storage=true`, `automatic_checks=false`,
-`blocked_edges=[]` and zero initial notifications. If the port is occupied or the
+`blocked_edges=[]` and zero initial notifications. Also check `images` identifies
+`ticket12-private-images-v1`. The image manifest at `/api/offline-watch-images`
+must list two registered files. The query flag enables local image resolution;
+without it the ordinary application uses original HTTPS image URLs. In private
+mode a missing/invalid manifest withholds images and never falls back to remote
+image requests. If the port is occupied or the
 marker differs, stop; do not use an existing backend as a fallback. The fixture
 binds only 127.0.0.1; outbound application edges stay audit-guarded. Avoid merchant
 links: all review interactions belong to this synthetic local application.
@@ -67,6 +73,21 @@ start polling. Ctrl-C stops the fixture, prints its final guard receipt and remo
 its temporary database. Starting again gives a fresh five-case seed; there is no
 persisted buyer state to clean from another checkout.
 
+## Image retest scope
+
+This is a private personal session for Jay, not a publishable asset pack. The
+Casio card displays the retained front photo; “View both Casio reference photos”
+opens the front and wrist views with copyright notices. All image bytes come from
+the loopback fixture; no image proxy, remote collection or merchant access is
+needed. Four explicit missing cases remain; their source/permission findings and
+minimum decisions are in the [rights record](../../tests/fixtures/watch-images/README.md).
+The parent can test whether the real Casio depiction supports visual interest,
+then whether its details explain the still-unknown synthetic delivered total.
+Record the buyer's words. Do not mark five-case visual browsing accepted based
+on this one photographed model. Retest desktop/narrow layout, load failure and
+keyboard interaction with the buyer; this revision has build/static UI/API proof,
+not a new browser session. Earlier screenshot receipts remain historical only.
+
 ## Walkthrough tasks and expected observations
 
 Let the buyer describe what they understand before explaining the expected state.
@@ -75,7 +96,7 @@ form with automated observations.
 
 1. **Discover and edit preferences.** Find the five watch cases without changing
    the saved Watch queue. Set compact 38mm, colourful mint/salmon and delivered
-   budget £150, then reload. Try375px width as well as1280px. Militado/Merkur
+   budget £150, then reload. Try 375px width as well as 1280px. Militado/Merkur
    dimensions stay unknown; a £1 item lead does not satisfy a delivered budget.
    Ask what the buyer believes is known about fit, price and source coverage.
 2. **Explain payable and benefits.** Expand Addiesdive's Price and evidence and

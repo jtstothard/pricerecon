@@ -24,6 +24,9 @@ async def serve(port):
         harness.seed_legacy(
             [(7, LEGACY), (8, {**LEGACY, "name": "Paused saved search", "enabled": False})]
         )
+        from .watch_images import install_images
+
+        install_images(harness.application.app)
         identity = uuid4().hex
         harness.stack.enter_context(
             patch.object(
@@ -45,6 +48,7 @@ async def serve(port):
                     "automatic_checks": False,
                     "blocked_edges": harness.blocked_edges,
                     "notifications_sent": len(harness.deliveries),
+                    "images": "ticket12-private-images-v1; Casio only; four explicit gaps",
                     "clock": harness.clock.now.isoformat(),
                     "actions": [
                         "baseline",

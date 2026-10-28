@@ -67,6 +67,11 @@ async def capture(harness, client, reports, *, leads=False, sources=("cex",), co
             listing(harness, source, r.source_listing_id, CASES[r.source_listing_id], "1")
             for r in reports
         ]
+        from .watch_images import depiction
+
+        for item in harness.outcomes[source]:
+            if item.source_listing_id == "casio":
+                item.discovery_image = depiction()
         if leads:
             harness.outcomes[source] += [
                 listing(harness, source, key, CASES[key], "1") for key in ("militado", "merkur")

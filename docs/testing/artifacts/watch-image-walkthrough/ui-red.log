@@ -1,0 +1,29 @@
+
+> pricerecon-frontend@0.1.0 test
+> vitest --run src/components/__tests__/DiscoveryImage.test.ts
+
+
+ RUN  v5.0.5 /Users/jay/.t3/worktrees/pricerecon/t3-ad24f213/frontend
+
+ ❯ src/components/__tests__/DiscoveryImage.test.ts (4 tests | 1 failed) 11ms
+   × uses registered local bytes in the private walkthrough while retaining attribution 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/__tests__/DiscoveryImage.test.ts > uses registered local bytes in the private walkthrough while retaining attribution
+Error: Cannot find module '/src/components/discovery/OfflineImages' imported from /Users/jay/.t3/worktrees/pricerecon/t3-ad24f213/frontend/src/components/__tests__/DiscoveryImage.test.ts
+ ❯ src/components/__tests__/DiscoveryImage.test.ts:37:55
+     35|
+     36| it('uses registered local bytes in the private walkthrough while retai…
+     37|   const { OfflineImageContext, parseOfflineImages } = await import('..…
+       |                                                       ^
+     38|   const assets = parseOfflineImages({ fixture: 'ticket12-private-image…
+     39|     source_url: 'https://www.casio.com/product.png',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  12:31:35
+   Duration  196ms (transform 54%, import 27%, tests 13%, worker 6%)

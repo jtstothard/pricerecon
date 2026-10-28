@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useContext, useState } from 'react'
+import { OfflineImageContext } from './OfflineImages'
 
 type Image = {
   kind: 'photo' | 'illustration' | 'original_placeholder'
@@ -11,9 +12,11 @@ type Image = {
 
 export default function DiscoveryImage({ image }: { image: Image }) {
   const [failed, setFailed] = useState(false)
-  const available = image.kind !== 'original_placeholder' && image.url && !failed
+  const localAssets = useContext(OfflineImageContext)
+  const displayUrl = localAssets === null ? image.url : localAssets.get(image.url ?? '')
+  const available = image.kind !== 'original_placeholder' && displayUrl && !failed
   return <figure className="discovery-picture">
-    {available ? <img src={image.url ?? undefined} alt={image.kind === 'photo' ? 'Photograph of the depicted watch' : 'Illustration of the depicted watch'}
+    {available ? <img src={displayUrl ?? undefined} alt={image.kind === 'photo' ? 'Photograph of the depicted watch' : 'Illustration of the depicted watch'}
       loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} /> :
       <p>Product image unavailable. Generic placeholder; does not depict this watch.</p>}
     <figcaption>{available ? image.kind === 'photo' ? 'Photograph' : 'Product illustration; not a photograph' : 'Placeholder'}

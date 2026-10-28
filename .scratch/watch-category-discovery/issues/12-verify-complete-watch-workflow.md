@@ -138,3 +138,18 @@ passed, with merged-tree/API/frontend/types/static checks repeated successfully.
 See the [dated merger receipt](../../../docs/testing/watch-images.md#independent-merger-recheck-and-acceptance--2026-10-28).
 **12 stays open** for meaningful permitted exact-watch assets and actual buyer
 visual-first/remaining-task retest. No live, rights, browser or release acceptance.
+
+
+## Bounded exact-image research and usable private slice — 2026-10-28
+
+Two real unchanged Casio reference photographs now have a source/rights/hash
+manifest and fixture-only local serving. The opt-in private walkthrough renders
+them without outbound image requests; original HTTPS image evidence still passes
+normal execution/API/persistence validation. Prices and configuration evidence
+remain synthetic and separately qualified. See [rights findings and precise four
+missing cases](../../../tests/fixtures/watch-images/README.md), [updated launch
+guide](../../../docs/testing/watch-workflow-buyer-guide.md) and [receipt](../../../docs/testing/watch-images.md).
+
+**Still open:** one photographed model enables a bounded image retest, not the
+five-watch visual comparison. Other cases require rights/variant decisions;
+Merkur additionally needs an exact reference. Buyer acceptance remains unproven.
