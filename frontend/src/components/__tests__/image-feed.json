@@ -1,0 +1,259 @@
+{
+  "source_coverage": [],
+  "cohort_gaps": [],
+  "category": "watches",
+  "collection_state": "staged",
+  "collection_reason": "Live collection awaits explicit source policy, permissions and activation.",
+  "candidates": [
+    {
+      "price_assessments": [],
+      "corrections": [],
+      "history": {
+        "observation_count": 1,
+        "last_good": null,
+        "validity": "unavailable",
+        "reason": "Retained captures only; freshness and usual price are uncalibrated."
+      },
+      "id": "e55ae4933bce75828c6d7400ea413b1f619b645dc4b877431902ba9986c99198",
+      "category": "watches",
+      "origin": "category_discovery",
+      "source": "cex",
+      "reported_source": "cex",
+      "source_listing_id": "bad-port",
+      "title": "Malformed image URL control",
+      "query": "control",
+      "url": "https://merchant.invalid/bad-port",
+      "capture_id": "ccba5f0b-af58-48ab-b69e-c10737cfa980",
+      "captured_at": "2026-10-27T12:00:00Z",
+      "evidence": [],
+      "image": {
+        "kind": "photo",
+        "url": "https://assets.invalid:999999/control.jpg",
+        "attribution": "Fixture",
+        "provenance": "Synthetic",
+        "permission_reference": "fixture-rights",
+        "identity_reference": "fixture-depiction",
+        "source_listing_id": "bad-port",
+        "depicts_exact_watch": true
+      },
+      "advertised_item_price": "90.00",
+      "reported_currency": "GBP",
+      "price_caveat": "Connector-reported item price only; may describe another variation or a normalized default.",
+      "identity_state": "unresolved",
+      "configuration": {
+        "state": "unresolved",
+        "values": {},
+        "evidence_ids": [],
+        "issues": [
+          {
+            "field": "product_kind",
+            "code": "missing_evidence",
+            "evidence_ids": []
+          },
+          {
+            "field": "maker",
+            "code": "missing_evidence",
+            "evidence_ids": []
+          },
+          {
+            "field": "reference",
+            "code": "missing_evidence",
+            "evidence_ids": []
+          },
+          {
+            "field": "generation",
+            "code": "missing_evidence",
+            "evidence_ids": []
+          },
+          {
+            "field": "movement",
+            "code": "missing_evidence",
+            "evidence_ids": []
+          },
+          {
+            "field": "case_width_mm",
+            "code": "missing_evidence",
+            "evidence_ids": []
+          },
+          {
+            "field": "dial",
+            "code": "missing_evidence",
+            "evidence_ids": []
+          },
+          {
+            "field": "strap",
+            "code": "missing_evidence",
+            "evidence_ids": []
+          },
+          {
+            "field": "date_display",
+            "code": "missing_evidence",
+            "evidence_ids": []
+          }
+        ],
+        "id": "9b73f67d2fccb95072c142912aacd441ba2700ffd2d4fa2c015f814f07842f37",
+        "revision": 1,
+        "policy_version": "watch-identity-v1"
+      },
+      "configurations": [],
+      "bindings": [],
+      "offers": [],
+      "missing_data": [],
+      "public_delivered_total": {
+        "state": "unknown",
+        "amount": null,
+        "currency": null,
+        "scenario_id": null,
+        "scenario_revision": null,
+        "reason": "Expand exact-offer scenarios; no single public scenario is selected."
+      },
+      "usual_price": {
+        "state": "unavailable",
+        "amount": null,
+        "reason": "No qualified history or accepted baseline calibration."
+      },
+      "savings": null,
+      "alert_eligible": false,
+      "preference_fit": []
+    },
+    {
+      "price_assessments": [],
+      "corrections": [],
+      "history": {
+        "observation_count": 1,
+        "last_good": null,
+        "validity": "unavailable",
+        "reason": "Retained captures only; freshness and usual price are uncalibrated."
+      },
+      "id": "5411617202b94ea4f6f9da8474475c401e300c5ea1d5a9b657706d02c37f12f8",
+      "category": "watches",
+      "origin": "category_discovery",
+      "source": "cex",
+      "reported_source": "cex",
+      "source_listing_id": "good-lead",
+      "title": "Unaffected buying lead",
+      "query": "control",
+      "url": "https://merchant.invalid/good-lead",
+      "capture_id": "ccba5f0b-af58-48ab-b69e-c10737cfa980",
+      "captured_at": "2026-10-27T12:00:00Z",
+      "evidence": [],
+      "image": {
+        "kind": "original_placeholder",
+        "attribution": "PriceRecon original SVG illustration",
+        "provenance": "Original generic artwork; not a product photograph or evidence of dial colour.",
+        "permission": "original_artwork"
+      },
+      "advertised_item_price": "90.00",
+      "reported_currency": "GBP",
+      "price_caveat": "Connector-reported item price only; may describe another variation or a normalized default.",
+      "identity_state": "unresolved",
+      "configuration": {
+        "state": "unresolved",
+        "values": {},
+        "evidence_ids": [],
+        "issues": [
+          {
+            "field": "product_kind",
+            "code": "missing_evidence",
+            "evidence_ids": []
+          },
+          {
+            "field": "maker",
+            "code": "missing_evidence",
+            "evidence_ids": []
+          },
+          {
+            "field": "reference",
+            "code": "missing_evidence",
+            "evidence_ids": []
+          },
+          {
+            "field": "generation",
+            "code": "missing_evidence",
+            "evidence_ids": []
+          },
+          {
+            "field": "movement",
+            "code": "missing_evidence",
+            "evidence_ids": []
+          },
+          {
+            "field": "case_width_mm",
+            "code": "missing_evidence",
+            "evidence_ids": []
+          },
+          {
+            "field": "dial",
+            "code": "missing_evidence",
+            "evidence_ids": []
+          },
+          {
+            "field": "strap",
+            "code": "missing_evidence",
+            "evidence_ids": []
+          },
+          {
+            "field": "date_display",
+            "code": "missing_evidence",
+            "evidence_ids": []
+          }
+        ],
+        "id": "37061fe6009913224a1fefed4150fb4395916d16aff666bd7f244e4d3bb0d563",
+        "revision": 1,
+        "policy_version": "watch-identity-v1"
+      },
+      "configurations": [],
+      "bindings": [],
+      "offers": [],
+      "missing_data": [],
+      "public_delivered_total": {
+        "state": "unknown",
+        "amount": null,
+        "currency": null,
+        "scenario_id": null,
+        "scenario_revision": null,
+        "reason": "Expand exact-offer scenarios; no single public scenario is selected."
+      },
+      "usual_price": {
+        "state": "unavailable",
+        "amount": null,
+        "reason": "No qualified history or accepted baseline calibration."
+      },
+      "savings": null,
+      "alert_eligible": false,
+      "preference_fit": []
+    }
+  ],
+  "captures": [],
+  "preferences": {
+    "category": "watches",
+    "revision": 0,
+    "updated_at": null,
+    "values": {
+      "compact_max_width_mm": null,
+      "compact_strength": "hard",
+      "colourful_dials": [],
+      "colourful_strength": "soft",
+      "budget_gbp": null,
+      "budget_strength": "hard"
+    },
+    "interpretation": [
+      {
+        "field": "compact",
+        "strength": "unset",
+        "meaning": "Compact is unset; choose a maximum case width."
+      },
+      {
+        "field": "colourful",
+        "strength": "unset",
+        "meaning": "Colourful is unset; choose the dial colours you want."
+      },
+      {
+        "field": "budget",
+        "strength": "unset",
+        "meaning": "Budget is unset; choose a public UK delivered budget."
+      }
+    ]
+  },
+  "tracking": []
+}

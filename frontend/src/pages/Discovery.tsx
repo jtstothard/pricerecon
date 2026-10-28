@@ -1,3 +1,4 @@
+import DiscoveryImage from '../components/discovery/DiscoveryImage'
 import { useEffect, useState, type FormEvent } from 'react'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { loadDiscovery, savePreferences, type DiscoveryCandidate, type DiscoveryFeed, type PreferenceProfile } from '../lib/discovery'
@@ -122,18 +123,7 @@ function Costs({ costs }: { costs: Cost[] }) {
 
 function Candidate({ candidate, tracking, onSaved }: { candidate: DiscoveryCandidate; tracking: ExactTracking[]; onSaved: () => Promise<void> }) {
   return <article className="discovery-row" data-candidate={candidate.id}>
-    <figure className="discovery-picture">
-      <svg viewBox="0 0 100 180" role="img" aria-label="Generic watch placeholder, not a product photograph">
-        <rect x="32" y="0" width="36" height="180" rx="8" fill="#536b7d" />
-        <path d="M33 22h34M33 30h34M33 150h34M33 158h34" stroke="#90a6b4" strokeWidth="2" />
-        <rect x="14" y="49" width="72" height="82" rx="33" fill="#b6c6cf" />
-        <rect x="86" y="83" width="6" height="13" rx="2" fill="#90a6b4" />
-        <circle cx="50" cy="90" r="29" fill="#243a49" />
-        <path d="M50 66v5m24 19h-5m-19 24v-5M26 90h5m19-18v18l13 9" stroke="#ebf1f5" strokeWidth="2" fill="none" />
-        <circle cx="50" cy="90" r="3" fill="#ebf1f5" />
-      </svg>
-      <figcaption>Original illustration<br />Not a product photo</figcaption>
-    </figure>
+    <DiscoveryImage key={candidate.image.url} image={candidate.image} />
     <div className="discovery-description">
       <p className="discovery-quiet">Category discovery from {candidate.source}</p>
       <h2>{candidate.title}</h2>

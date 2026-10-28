@@ -1,0 +1,14 @@
+
+> pricerecon-frontend@0.1.0 build
+> tsc && vite build
+
+vite v8.3.4 building client environment for production...
+transforming...
+✓ 646 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.45 kB │ gzip:   0.29 kB
+dist/assets/index-DY5pbOKu.css   84.52 kB │ gzip:  16.56 kB
+dist/assets/index-z2ryfI6i.js   695.82 kB │ gzip: 192.97 kB
+
+✓ built in 1.17s
