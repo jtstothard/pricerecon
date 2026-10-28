@@ -4,7 +4,7 @@
 
 **Blocked by:** [08: Compare qualified offers and explain price claims](08-compare-qualified-offers.md), [09: Evaluate public coupons without assuming stacks](09-evaluate-public-coupons.md), [11: Carry source evidence and access limits through acquisition](11-carry-source-evidence.md)
 
-**Status:** open — technical proof and final review repairs verified 2026-10-27; actual buyer walkthrough feedback pending
+**Status:** open — buyer interview recorded 2026-10-28; visual discovery blocked and follow-up acceptance required
 
 **Assignee:** Codex implementer (isolated worktree)
 
@@ -96,3 +96,21 @@ receipt](../../../docs/testing/watch-final-review.md).
 ticket.** The existing feedback request and running synthetic fixture are not
 an acceptance response. The unchecked buyer gate remains unchecked. Source/
 live/operating/activation gates stay independently unproven; no release claim.
+
+## Actual buyer research — 2026-10-28
+
+Buyer feedback has been obtained through an actual research interview. The buyer
+reports being unable to judge feed candidates without meaningful watch images:
+“It's impossible to say without images. I would browse by visuals and then look
+at details.” Visual discovery therefore remains an acceptance blocker; actual
+completion/understanding of the other walkthrough tasks is not confirmed.
+
+The [research synthesis](../../../docs/product/category-discovery/buyer-research-2026-10-28.md)
+records visual/theme/spec similarity, fuzzy search, brand/category facets, fit/
+materials/movement preferences, save/monitor requests and configurable alert
+routing. New sold-price-first/asking-price-fallback benchmark requests remain
+unqualified requirements, not permission to invent a baseline or activate sources.
+
+**12 stays open.** The buyer feedback portion is received, while the combined
+usability/acceptance checkbox remains unchecked. Follow-up design and retesting
+are required. Prior deterministic technical passes remain their bounded proof.

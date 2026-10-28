@@ -1,9 +1,10 @@
 # Parent-run buyer walkthrough: synthetic watch workflow
 
-**Feedback gate: unproven.** The parent must present this concrete package and
-obtain actual buyer feedback. No buyer was contacted by the implementer. The
-screenshots and automated pass are review aids, not a substitute for that feedback.
-Ticket12 remains open for actual buyer feedback and acceptance/closure. The
+**Feedback received; acceptance incomplete.** The buyer interview on 2026-10-28
+identified a blocking visual-discovery problem. See the [research synthesis](../product/category-discovery/buyer-research-2026-10-28.md).
+Further task-level testing is required. The screenshots and automated pass remain review aids; task-level buyer
+acceptance must be established separately.
+Ticket12 remains open for follow-up design, retesting and acceptance/closure. The
 [final two-axis review and verified repairs](watch-final-review.md) are complete.
 
 This is the implemented application running against invented watch evidence in
@@ -147,20 +148,26 @@ They are not mockups or live merchant screenshots.
 
 ## Feedback record for the parent
 
-Status: **unproven — not yet conducted**. Leave every answer empty until the actual
-buyer participates. Retain timestamp, presented build/source identity, viewport,
-fixture operations and any assistance provided.
+Status: **research interview conducted 2026-10-28; full walkthrough acceptance incomplete**.
+The buyer could not judge visual appeal without meaningful watch images. Other
+task-specific comprehension/interaction results remain unproven. Preserve the
+interview [findings](../product/category-discovery/buyer-research-2026-10-28.md) and
+record future task completion, viewport and assistance explicitly.
 
 | Task | Buyer explanation / difficulty / requested change | Acceptance decision |
 | --- | --- | --- |
-| Payable versus conditional/cashback | Pending actual buyer | Pending |
-| Missing baseline/current-best/dated-low | Pending actual buyer | Pending |
-| Source coverage and age | Pending actual buyer | Pending |
-| Preferences and unknown dimensions | Pending actual buyer | Pending |
-| Correction and preserved target | Pending actual buyer | Pending |
-| Alert eligibility/noise and errors | Pending actual buyer | Pending |
-| Desktop/narrow/keyboard usability | Pending actual buyer | Pending |
+| Payable versus conditional/cashback | Task outcome not yet established | Pending |
+| Missing baseline/current-best/dated-low | Task outcome not yet established | Pending |
+| Source coverage and age | Task outcome not yet established | Pending |
+| Preferences and unknown dimensions | Requests fuzzy search, brand/category facets and similarity; visual-first browsing blocked without meaningful images | Follow-up needed |
+| Correction and preserved target | Task outcome not yet established | Pending |
+| Alert eligibility/noise and errors | Wants target/restock/significant-bargain alerts and configurable in-app/Telegram/Discord routing; live UI task not confirmed | Follow-up needed |
+| Desktop/narrow/keyboard usability | Task outcome not yet established | Pending |
 
 The parent owns feedback, acceptance/closure, final Standards-versus-Spec review
 and later cleanup. No live access/retention/freshness/budget/ownership/migration or
 activation gate is resolved by this walkthrough.
+
+The initial interview is requirements/usability feedback, not completed acceptance
+of all rows above. The unchanged “Pending” rows mean task-level outcomes were not
+established, rather than that no buyer conversation occurred.

@@ -19,7 +19,7 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 | [09: Public coupons](issues/09-evaluate-public-coupons.md) | 04 | Closed |
 | [10: Shared limits](issues/10-prioritise-tracking.md) | 05 | Closed |
 | [11: Source evidence](issues/11-carry-source-evidence.md) | 03, 10 | Closed |
-| [12: Integrated verification](issues/12-verify-complete-watch-workflow.md) | 08, 09, 11 | Open — buyer feedback pending |
+| [12: Integrated verification](issues/12-verify-complete-watch-workflow.md) | 08, 09, 11 | Open — visual discovery blocker; retest required |
 
 ## Authority and acceptance
 
@@ -27,12 +27,11 @@ Work is limited to source implementation and deterministic offline verification 
 
 Ticket 01 source was integrated on 2026-10-27 in merge `a0e5c1a612252c61a62eabc7b56ebc3b3297ed85`, preserving implementer HEAD `9312871f269137d7b98ba7155d9523350e41e62e`. The subsequent rendered-form preservation repair was integrated in merge `3243c8f00e3f9dd9efde79327b6905eb3d4354b2`, preserving implementer HEAD `534cecaece62e30f50c680b40af5b4c7f561b6e4`. Integration checks passed **15 isolated workflow tests**, **25 frontend tests** and the frontend build. The parent subsequently passed the rendered edit/save/reload/manual-check regression. See the dated resolution log below and the [repair integration receipt](issues/01-verify-existing-monitoring.md#preservation-repair-integration-receipt-2026-10-27).
 
-Current frontier, 2026-10-27: tickets 01–11 are closed for their offline scope.
-12's integrated technical proof and final review repairs are verified. Independent
-Standards/Spec reviews found four defects; all four are fixed with 215 guarded
-workflows, 37 contracts and seven original reviewer script runs passing. Actual
-buyer walkthrough feedback remains pending, so 12 stays open. No live/production
-gate is accepted by these source results.
+Current frontier, 2026-10-28: tickets 01–11 retain their closed offline scope.
+Technical integration/final-review repairs passed 215 guarded workflows and 37 contracts.
+Actual buyer research is now recorded. The buyer could not assess visual appeal
+without meaningful watch images, so 12 remains open for follow-up design/retesting.
+Other task-level buyer acceptance and all live/production gates remain unproven.
 Earlier dated entries describe their historical state.
 
 Actual buyer walkthrough feedback, current source rights, live offer/history/cost proof, finite operating limits and named maintenance ownership cannot be fabricated by passing fixture tests. Keep these gates explicit in the final receipt.
@@ -321,3 +320,10 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   and the original dirty checkout. All 77 original file hashes/lengths match. The
   verified synthetic buyer fixture remains available and 12 stays open pending
   actual feedback. [Cleanup/session receipts](../../docs/testing/watch-final-review.md#implementation-checkout-cleanup--2026-10-27).
+
+- 2026-10-28: Recorded actual buyer interview and requested capabilities in the
+  [research synthesis](../../docs/product/category-discovery/buyer-research-2026-10-28.md).
+  Visual-first browsing is blocked without meaningful watch images. **12 remains
+  open for follow-up and retesting; feedback is received, acceptance incomplete.**
+  New benchmark/notification requirements do not establish data rights, empirical
+  calibration or activation authority. No source behavior or tests changed.
