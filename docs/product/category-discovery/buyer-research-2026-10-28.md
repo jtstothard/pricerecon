@@ -32,8 +32,11 @@ The buyer would browse first and open details for an appealing watch. Requested
 navigation/search capabilities:
 
 - A “find more like this” action, with visual or specification similarity.
-- Familiar ecommerce filters including brand and category. The intended category
-  taxonomy remains an open question; do not invent one from the interview.
+- Familiar ecommerce filters including brand and watch type/style. The buyer
+  explicitly named dress and pilot watches, and confirmed wanting both include
+  and exclude controls. Movement, functions and personal-interest themes remain
+  separate facets. No initial type selections/exclusions or exhaustive taxonomy
+  were chosen; no broader product-category expansion was requested.
 - Fuzzy/semantic discovery queries such as “pokemon”, “video games” and
   “colourful watches”, rather than requiring an exact reference.
 
@@ -134,8 +137,11 @@ from the interview or activate any external delivery.
    appropriately attributed, permitted images representing the depicted watch.
    Retest the buyer's visual-first task. Preserve honest illustration/photo labels;
    do not attach an unrelated design image to a named purchasable offer.
-2. **Discovery design:** specify/test semantic search, brand/category facets and
-   separate visual/spec/theme similarity behaviour. Clarify category vocabulary.
+2. **Discovery design:** specify/test semantic search, brand and watch-type/style
+   facets with inclusion/exclusion, and separate visual/spec/theme similarity.
+   Make overlapping/unknown type labels understandable rather than silently
+   treating an unclassified watch as a match. Exact matching semantics remain
+   a design question; the buyer confirmed the controls, not an algorithm.
    Missing corpus/metadata should remain visible rather than fabricated matches.
 3. **Save/monitor experience:** specify editable saved interests, item targets,
    retail-stock events and per-event/channel configuration, reusing existing owners.
