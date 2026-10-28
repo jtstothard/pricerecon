@@ -47,3 +47,11 @@ def test_candidate_lineage_and_preferences_survive_a_fresh_process_without_reacq
         Path(shared_root, ".offline-monitoring").write_text("ticket01-test-storage\n")
         run_discovery("before_restart", shared_root)
         run_discovery("after_restart", shared_root)
+
+
+def test_permitted_exact_depiction_survives_execution_api_and_restart():
+    run_discovery("permitted_image")
+
+
+def test_invalid_or_unmatched_images_fall_back_without_losing_leads():
+    run_discovery("image_rejections")

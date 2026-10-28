@@ -265,8 +265,18 @@ function parseCandidate(value: unknown) {
   const totalAmount = amount(total.amount)
   if ((totalState === 'unknown') !== (totalAmount === null)) throw new Error('Inconsistent public total')
   choice(usual.state, ['unavailable'])
-  choice(image.kind, ['original_placeholder'])
-  choice(image.permission, ['original_artwork'])
+  const imageKind = choice(image.kind, ['original_placeholder', 'photo', 'illustration'])
+  let imageUrl: string | null = null
+  if (imageKind === 'original_placeholder') choice(image.permission, ['original_artwork'])
+  else {
+    const rawUrl = text(image.url), parsed = new URL(rawUrl)
+    if (parsed.protocol !== 'https:' || parsed.username || parsed.password || parsed.search || parsed.hash || /\s/.test(rawUrl)
+      || image.depicts_exact_watch !== true || image.source_listing_id !== candidate.source_listing_id) throw new Error('Invalid depiction evidence')
+    for (const key of ['attribution', 'provenance', 'permission_reference', 'identity_reference']) {
+      if (!text(image[key]).trim()) throw new Error('Missing depiction evidence')
+    }
+    imageUrl = rawUrl
+  }
   return {
     identity_state, configuration: configuration(candidate.configuration),
     price_assessments: candidate.price_assessments === undefined ? [] : list(candidate.price_assessments, parsePriceAssessment),
@@ -280,7 +290,9 @@ function parseCandidate(value: unknown) {
     advertised_item_price: amount(candidate.advertised_item_price),
     reported_currency: candidate.reported_currency === null ? null : text(candidate.reported_currency),
     price_caveat: text(candidate.price_caveat),
-    image: { attribution: text(image.attribution), provenance: text(image.provenance) },
+    image: { kind: imageKind, url: imageUrl, attribution: text(image.attribution), provenance: text(image.provenance),
+      permission_reference: imageKind === 'original_placeholder' ? null : text(image.permission_reference),
+      identity_reference: imageKind === 'original_placeholder' ? null : text(image.identity_reference) },
     public_total: { state: totalState, amount: totalAmount, currency: nullableText(total.currency), scenario_id: nullableText(total.scenario_id), scenario_revision: total.scenario_revision === null ? null : integer(total.scenario_revision) },
     total_reason: text(total.reason), usual_reason: text(usual.reason),
     corrections: list(candidate.corrections, parseCorrection),

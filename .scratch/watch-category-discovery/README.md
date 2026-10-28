@@ -327,3 +327,8 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   open for follow-up and retesting; feedback is received, acceptance incomplete.**
   New benchmark/notification requirements do not establish data rights, empirical
   calibration or activation authority. No source behavior or tests changed.
+
+- 2026-10-28: Isolated ticket12 image-support implementation supplies validated
+  photo/illustration/placeholder API and rendering contracts. No justified retained
+  exact-watch assets were found. **12 stays open for assets and actual buyer
+  retest.** [Bounded receipt](../../docs/testing/watch-images.md).

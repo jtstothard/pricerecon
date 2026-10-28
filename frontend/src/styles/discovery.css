@@ -77,3 +77,6 @@
 .price-assessments { min-width: 0; overflow-wrap: anywhere; }
 .price-assessments details { margin-block: .75rem; }
 .price-assessments dd { margin-inline: 0; }
+
+.discovery-picture img { max-width: 100%; height: 180px; object-fit: contain; }
+.discovery-picture figcaption { overflow-wrap: anywhere; }

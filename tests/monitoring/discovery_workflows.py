@@ -52,6 +52,98 @@ async def independent():
             ] == candidate["id"]
 
 
+async def permitted_image():
+    with MonitoringHarness() as harness:
+        from pricerecon.core.discovery import execute_discovery
+        from pricerecon.models.discovery import DiscoveryAdmission, DiscoveryRequest
+
+        item = listing(harness, "cex", "image-control", "Synthetic image contract control")
+        item.discovery_image = {
+            "kind": "photo",
+            "url": "https://assets.invalid/control.jpg",
+            "attribution": "Offline fixture author",
+            "provenance": "Synthetic contract metadata only",
+            "permission_reference": "fixture-permission-v1",
+            "identity_reference": "fixture-depiction-v1",
+            "source_listing_id": "image-control",
+            "depicts_exact_watch": True,
+        }
+        harness.outcomes["cex"] = [item]
+        async with harness.session() as (client, _):
+            await execute_discovery(
+                DiscoveryRequest(query="control", sources=[{"connector": "cex"}]),
+                admission=DiscoveryAdmission(
+                    mode="offline_verification",
+                    policy_reference="fixture",
+                    permission_reference="fixture",
+                    activation_reference="harness",
+                ),
+            )
+            image = (await get(client, "/api/discovery/watches"))["candidates"][0]["image"]
+            assert image["kind"] == "photo"
+            assert image["permission_reference"] == "fixture-permission-v1"
+            assert image["identity_reference"] == "fixture-depiction-v1"
+        async with harness.session() as (client, _):
+            assert (await get(client, "/api/discovery/watches"))["candidates"][0]["image"] == image
+        assert harness.blocked_edges == []
+        assert harness.deliveries == []
+
+
+async def image_rejections():
+    with MonitoringHarness() as harness:
+        from pricerecon.core.discovery import execute_discovery
+        from pricerecon.models.discovery import DiscoveryAdmission, DiscoveryRequest
+
+        base = {
+            "kind": "illustration",
+            "url": "https://assets.invalid/control.png",
+            "attribution": "Fixture artist",
+            "provenance": "Synthetic contract control",
+            "permission_reference": "fixture-rights",
+            "identity_reference": "fixture-identity",
+            "source_listing_id": "control",
+            "depicts_exact_watch": True,
+        }
+        changes = [
+            {"source_listing_id": "other-watch"},
+            {"depicts_exact_watch": False},
+            {"permission_reference": " "},
+            {"identity_reference": ""},
+            {"url": "javascript:alert(1)"},
+            {"url": "https://user:secret@assets.invalid/a"},
+            {"url": "https://assets.invalid/a?token=secret"},
+            {"kind": "unknown"},
+        ]
+        items = []
+        for index, change in enumerate(changes):
+            item = listing(harness, "cex", str(index), "Rejected image control")
+            item.discovery_image = {**base, "source_listing_id": str(index), **change}
+            items.append(item)
+        valid = listing(harness, "cex", "control", "Illustration control")
+        valid.discovery_image = base
+        harness.outcomes["cex"] = [*items, valid]
+        async with harness.session() as (client, _):
+            await execute_discovery(
+                DiscoveryRequest(query="control", sources=[{"connector": "cex"}]),
+                admission=DiscoveryAdmission(
+                    mode="offline_verification",
+                    policy_reference="fixture",
+                    permission_reference="fixture",
+                    activation_reference="harness",
+                ),
+            )
+            feed = (await get(client, "/api/discovery/watches"))["candidates"]
+            assert len(feed) == 9
+            for candidate in feed:
+                assert candidate["image"]["kind"] == (
+                    "illustration"
+                    if candidate["source_listing_id"] == "control"
+                    else "original_placeholder"
+                )
+        assert harness.blocked_edges == []
+        assert harness.deliveries == []
+
+
 async def query_lineage():
     with MonitoringHarness() as harness:
         from pricerecon.core.discovery import execute_discovery

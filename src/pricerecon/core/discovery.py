@@ -5,6 +5,8 @@ from datetime import UTC, datetime
 from typing import Literal
 from uuid import uuid4
 
+from pydantic import ValidationError
+
 from pricerecon.categories.watches import resolve_watch
 from pricerecon.core.acquisition import acquire_sources
 from pricerecon.core.costs import evaluate_costs
@@ -21,6 +23,7 @@ from pricerecon.models.discovery import (
     DiscoveryRequest,
     LeadEvidence,
 )
+from pricerecon.models.discovery_images import PermittedImage
 from pricerecon.models.qualification import MerchantEvidenceReport, safe_pointer
 from pricerecon.models.tracking import TrackingPolicy
 
@@ -118,6 +121,13 @@ async def execute_discovery(
                 advertised_item_price=price,
                 reported_currency=listing.currency or None,
             )
+            if listing.discovery_image is not None:
+                try:
+                    image = PermittedImage.model_validate(listing.discovery_image)
+                    if image.source_listing_id == listing.source_listing_id:
+                        candidate.image = image
+                except (ValidationError, ValueError):
+                    pass  # Invalid depiction evidence never discards the buying lead.
             report = lead.evidence_report or MerchantEvidenceReport(
                 source_listing_id=listing.source_listing_id
             )

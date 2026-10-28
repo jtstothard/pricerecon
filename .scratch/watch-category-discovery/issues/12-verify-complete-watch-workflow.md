@@ -114,3 +114,16 @@ unqualified requirements, not permission to invent a baseline or activate source
 **12 stays open.** The buyer feedback portion is received, while the combined
 usability/acceptance checkbox remains unchecked. Follow-up design and retesting
 are required. Prior deterministic technical passes remain their bounded proof.
+
+## Bounded image contract implementation — 2026-10-28
+
+The isolated image-support branch adds validated permitted photo/illustration
+reports through normal execution, persisted captures and feed API, plus attributed
+rendering and unavailable-image fallback. Bare source image URLs grant no rights.
+No retained meaningful exact-watch assets with justified rights were found; no
+product depiction or asset approval was invented. See the
+[implementation and verification receipt](../../../docs/testing/watch-images.md).
+
+**12 remains open.** Meaningful permitted assets, actual buyer visual-first retest
+and remaining walkthrough acceptance are still required. No live retrieval,
+source onboarding, activation or deployment was performed.
