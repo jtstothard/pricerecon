@@ -1,6 +1,14 @@
 # Parent-run buyer walkthrough: synthetic watch workflow
 
-**Feedback received; acceptance incomplete.** The buyer interview on 2026-10-28
+**Offline autonomous technical acceptance complete; parent review/merge pending.**
+The buyer accepted the refined design, then explicitly delegated remaining checks
+(“keep going doing all the checks yourself”). The [delegated QA receipt](ticket12-autonomous-qa.md)
+records current desktop/narrow browser checks, a Technical-caption repair and
+precise limits. This supersedes historical pending mechanical-test statements
+below. Actual task-by-task human comprehension and live/release readiness remain
+unproven; the following interview and walkthrough history is retained.
+
+The buyer interview on 2026-10-28
 identified a blocking visual-discovery problem. See the [research synthesis](../product/category-discovery/buyer-research-2026-10-28.md).
 Further task-level testing is required. The screenshots and automated pass remain review aids; task-level buyer
 acceptance must be established separately.
