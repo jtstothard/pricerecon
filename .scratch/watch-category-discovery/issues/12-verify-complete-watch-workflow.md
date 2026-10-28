@@ -252,3 +252,34 @@ No browser, server, live source or account was used. Parent must retest whether 
 buyer understands the correction before and after saving; ticket12 remains open.
 Preferences/reload are confirmed and GBP70.10 was observed, but target creation,
 price crossing and complete workflow acceptance are not established by that feedback.
+
+
+## Sole merger correction clarity review — 2026-10-28
+
+Candidate `293841168d0c312a785edb2345d6188b521657b7` from
+`/Users/jay/.t3/worktrees/pricerecon/t3-c513f13d` was reviewed against integration
+base `a532ef7774ce6330e491d02ae333ce379317a712` and merged with `--no-ff` as
+`bef526372a008d21eae3b35245da79caf62ee8a7`.
+
+Standards review: zero blockers against `CONTRIBUTING.md` and
+`docs/engineering-standard.md`. The narrow diff introduces no unchecked escape
+hatches or behavior changes; rendered component regressions cover the copy.
+Spec review: zero blockers against ticket12, this guide and the explicit repair
+brief. Copy distinguishes an app's wrong watch match from shop selection/photo
+editing; original prices/coupons/assessments remain history, withdrawn from the
+corrected watch; target stays and alerts pause pending fresh matching evidence.
+Blue/green is explicitly an example, not a claim about the active fixture.
+The buyer clarified correction consequences; costs were not reported unclear.
+
+Independent checks (all passed):
+- Candidate and merged checkout: Node 24 `npm --prefix frontend test -- --run src/components/__tests__/IdentityCorrection.test.ts` (2 tests each).
+- Merged checkout: Node 24 `frontend/node_modules/.bin/tsc --project frontend/tsconfig.json --noEmit`.
+- Candidate: `git diff --check a532ef7...HEAD`.
+- Merged checkout: `git diff --exit-code 293841168d0c312a785edb2345d6188b521657b7 HEAD` (exact tree equality) and `git diff --check a532ef7..HEAD`.
+
+The implementer's reported 57 frontend tests, 27 guarded correction regressions
+and production build were not independently repeated for this copy-only repair.
+No browser/live/network/account/contact/push/PR or sibling mutation occurred.
+Integration was clean before merge and after merged checks. Parent owns fixture
+restart, candidate-worktree cleanup and actual buyer retest before/after saving.
+**Ticket12 remains open; actual buyer comprehension and full acceptance are pending.**
