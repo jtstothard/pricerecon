@@ -1,0 +1,37 @@
+{
+  "base_integration": "d14506a75692ba61641f8a578208b65321bf8929",
+  "scope": "private personal non-commercial local image walkthrough; no browser/server run",
+  "assets_manifest": "tests/fixtures/watch-images/manifest.json",
+  "actual_assets": 2,
+  "photographed_cohort_cases": [
+    "casio"
+  ],
+  "missing_cases": [
+    "militado: permission and exact variant",
+    "addies: permission",
+    "san: permission and exact size/dial/revision",
+    "merkur: exact Lightning reference and permission"
+  ],
+  "checks": {
+    "regression_workflows": "64 passed",
+    "final_discovery_watch_workflows": "10 passed",
+    "frontend": "42 passed",
+    "typescript_build": "passed; existing chunk advisory",
+    "focused_ruff": "passed",
+    "three_source_mypy": "passed"
+  },
+  "gates": {
+    "actual_retrieved_casio_bytes": "passed",
+    "private_loopback_asset_serving_api": "passed",
+    "browser_usability": "unproven",
+    "five_case_visual_comparison": "blocked",
+    "buyer_acceptance": "open",
+    "production_activation": "not authorized"
+  },
+  "build_files": {
+    "frontend/dist/index.html": "124f044358fbf76f5326730ee7d4828e82491c052dffa522f58e28ab2c1f5d51",
+    "frontend/dist/favicon.svg": "3d2b71c159a4d30f8e3fa56a5662e5fec5888b925e7fd7d983613838db3c90e0",
+    "frontend/dist/assets/index-CHxG7CPV.js": "f1f2777fe0b6fa8e566751a81369d8bdab28dcbe590c812b276e03e08b5c4c71",
+    "frontend/dist/assets/index-DY5pbOKu.css": "5a4c4c4b7236ea74b4d95e1a068e12d69214d635f961c5908f9f4a232e386876"
+  }
+}

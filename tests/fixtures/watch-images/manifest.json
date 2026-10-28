@@ -1,0 +1,32 @@
+{
+  "checked_on": "2026-10-28",
+  "product_url": "https://www.casio.com/uk/watches/casio/product.MTP-B145D-2A2V/",
+  "terms_url": "https://www.casio.com/europe/terms/",
+  "attribution": "All Rights Reserved, Copyright © CASIO COMPUTER CO., LTD. CASIO is a registered trademark of CASIO COMPUTER CO., LTD.",
+  "use_scope": "Solely Jay’s private personal non-commercial walkthrough; no publishing, distribution, commercial deployment or general asset licence. Retain notices. Reassess permission before any broader use.",
+  "permission_basis": "Europe terms section 1 reserves express written permission for downloads/copying other than solely private use. These copies are for Jay’s solely private personal non-commercial local walkthrough. This is a narrow assessment of that express exception, not an open licence. UK terms have additional other-website wording and are not the reuse basis.",
+  "identity_basis": "Europe page links these individual MTP-B145D-2A2V images. UK page for the same base model explicitly heads MTP-B145D-2A2VEF and links the same front image. Both files viewed: blue dial, steel bracelet, date at 3; front and wrist views. This is depiction identity only, not proof of a merchant selection, price or exact regional packaging.",
+  "assets": [
+    {
+      "filename": "casio-front.png",
+      "source_url": "https://www.casio.com/content/dam/casio/product-info/locales/europe/en-gb/timepiece/product/watch/M/MT/MTP/mtp-b145d-2a2v/assets/MTP-B145D-2A2V.png.transform/main-visual-sp/image.png",
+      "sha256": "7b08987197241afdbb3d6b31f3510736006b1e87c1455960de6a94e79d34eb04",
+      "media_type": "image/png",
+      "local_url": "/api/offline-watch-images/7b08987197241afdbb3d6b31f3510736006b1e87c1455960de6a94e79d34eb04.png",
+      "depiction": "Casio MTP-B145D-2A2VEF blue dial on steel bracelet",
+      "width": 1200,
+      "height": 1200
+    },
+    {
+      "filename": "casio-context.jpg",
+      "source_url": "https://www.casio.com/content/dam/casio/product-info/locales/europe/en-gb/timepiece/product/watch/M/MT/MTP/mtp-b145d-2a2v/assets/MTP-B145D-2A2V_model_free_wrist.jpg.transform/main-visual-sp/image.jpg",
+      "sha256": "77f6010e321236106af886c82a50c7147d1e2c41689bd49193e1bb306aa54ff3",
+      "media_type": "image/jpeg",
+      "local_url": "/api/offline-watch-images/77f6010e321236106af886c82a50c7147d1e2c41689bd49193e1bb306aa54ff3.jpg",
+      "depiction": "Casio MTP-B145D-2A2VEF blue dial on steel bracelet",
+      "width": 1200,
+      "height": 1200
+    }
+  ],
+  "image_context_url": "https://www.casio.com/europe/watches/casio/product.MTP-B145D-2A2V/"
+}
