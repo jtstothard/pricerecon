@@ -8,7 +8,7 @@ import Exports from './pages/Exports'
 import Settings from './pages/Settings'
 import Events from './pages/Events'
 import Connectors from './pages/Connectors'
-import Discovery from './pages/Discovery'
+import Discovery, { ProductDetail } from './pages/Discovery'
 import { OfflineImages } from './components/discovery/OfflineImages'
 import { DataProvider } from './context/DataContext'
 import './App.css'
@@ -20,11 +20,23 @@ function App() {
         <AppShell>
           <Routes>
             <Route path="/" element={<WatchList />} />
-            <Route path="/discover" element={<OfflineImages><Discovery /></OfflineImages>} />
             <Route
-              path="/watch/:id"
-              element={<WatchDetail />}
+              path="/discover/product/:id"
+              element={
+                <OfflineImages>
+                  <ProductDetail />
+                </OfflineImages>
+              }
             />
+            <Route
+              path="/discover"
+              element={
+                <OfflineImages>
+                  <Discovery />
+                </OfflineImages>
+              }
+            />
+            <Route path="/watch/:id" element={<WatchDetail />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/runs" element={<Runs />} />
             <Route path="/exports" element={<Exports />} />

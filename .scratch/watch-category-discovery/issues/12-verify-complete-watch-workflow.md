@@ -391,3 +391,13 @@ Ticket12 remains open, pending buyer retest of expanded comprehension, actual
 narrow/keyboard use, target/crossing, correction and complete acceptance. Parent
 owns worktree cleanup and rebuilding the running walkthrough. Source/rendered
 proof does not establish buyer acceptance.
+
+### Buyer overload correction, comparison/product split — 2026-10-28
+
+Actual feedback supersedes the previous accordion treatment: too much simultaneous data, inconsistent cards/subcards, unacceptable nesting, and too much manual form entry. Implemented an image-led single-structure comparison and directly reloadable `/discover/product/:id` page with peer Overview/Costs/History/Tracking/Correction/Technical navigation. Curated views replace the old nested dump; raw retained candidate/history evidence remains on Technical. No backend qualification policy changed. Preset/custom controls retain arbitrary values, explicit reason selection and required buyer attribution.
+
+See [design contract](../../../docs/product/category-discovery/comparison-redesign.md) and updated [buyer guide](../../../docs/testing/watch-workflow-buyer-guide.md). Component tests cover direct route/API selection, missing products/API failure, flat views, choices/custom values, correction attribution/dispute state, preference/target writes and rejection. Guarded existing API/execution regressions cover discovery, tracking and correction using marked temporary storage and controlled edges. No browser, server, live/network, account, push, PR or deploy was used.
+
+**Disposition: redesign implemented; buyer retest pending. Ticket12 remains open.** Neither deterministic tests nor a production build prove buyer usability, source freshness, live readiness or shopping acceptance.
+
+Local verification for this correction: **85 frontend tests / 8 files**, TypeScript/production build, **47 guarded backend regressions**, offline dependency installation and diff whitespace check passed. Vite's large-chunk advisory remains. Integration checkout was left clean at `46d39e5f840528195a4f359729ec94ea9ae0e270`; implementation lives on the isolated branch.

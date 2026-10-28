@@ -383,3 +383,15 @@ Ticket12 remains open, pending buyer retest of expanded comprehension, actual
 narrow/keyboard use, target/crossing, correction and complete acceptance. Parent
 owns worktree cleanup and rebuilding the running walkthrough. Source/rendered
 proof does not establish buyer acceptance.
+
+## Comparison/product-page correction — 2026-10-28
+
+The buyer rejected the earlier overload treatment: it still showed too much, used inconsistent cards/subcards and nested disclosures, and required too much manual typing. The new [design contract](../product/category-discovery/comparison-redesign.md) replaces that treatment. This is implemented locally, pending buyer retest; earlier acceptance claims do not establish acceptance of this redesign.
+
+Start at `/discover`. Compare imagery, model, a few evidenced specs and delivered-price state. Choose **Product details** for `/discover/product/:id`; reload or paste that URL to verify direct loading. Overview, Costs, History, Tracking, Correction and Technical are peer navigation links. No nested disclosure controls are used in these views. Full retained provenance and history remain accessible in Technical. Missing/remote-reference imagery stays labelled honestly.
+
+Try **Preferences** with preset budget/size/colour choices and an arbitrary custom value. Try **Track this watch** with a target preset, then a custom target. In Correction, select a common field/value/state/reason; also try Other/custom and supply your own rationale and attribution. Verify a rejected/stale write is shown and does not claim success. No field is attributed to an invented actor, and no explanation is silently supplied.
+
+Retest whether the repeated comparison fields make a decision easier, whether the product sections contain the right information, whether presets reduce effort without hiding arbitrary values, and whether keyboard/mobile use is comfortable. This retest has not happened. Technical records are intentionally detailed; they are separated from the buyer's comparison and curated sections.
+
+Local validation: `cd frontend && npm ci --offline --ignore-scripts && npm test -- --run && npm run build` (the build includes TypeScript). The pinned jsdom dependency supports actual mounted component tests; these are distinct from browser/visual acceptance. Guarded backend regressions: `python -m pytest tests/test_correction_workflow.py tests/test_tracking_workflow.py tests/test_discovery_workflow.py -q` using the project Python environment and isolated harness storage.
