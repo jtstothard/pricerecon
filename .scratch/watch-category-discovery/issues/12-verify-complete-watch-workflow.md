@@ -361,3 +361,33 @@ Parent owns merge and walkthrough refresh. Let the buyer choose a watch, open on
 relevant group, and locate the result, conditions and supporting evidence without
 a narrated data dump. Expanded comprehension, actual narrow/keyboard usability,
 target/crossing, correction and full acceptance remain pending. Ticket12 stays open.
+
+
+## Sole merger expanded-hierarchy review — 2026-10-28
+
+Candidate `bb054bacf3647e8fa29383ec50f06181e6a30dbe`, checkout
+`/Users/jay/.t3/worktrees/pricerecon/t3-a9f0e260`, reviewed against expected
+integration `b77e4beba6831ec0e6ccd1a72d19e99d06d4671c`; merged with `--no-ff`
+as `26066381b2eaf2a46f5b715733fc8ab7841ab38f`.
+
+Standards: zero blockers against CONTRIBUTING.md and docs/engineering-standard.md.
+No new unchecked escapes, backend changes or source-boundary behavior changes.
+Spec: zero blockers. Simplified default preserved; expanded groups put results,
+conditions and missing data before technical provenance. Unknown, conditional,
+withdrawn and observation-only costs, excluded cashback, source gaps, history,
+correction/dispute controls and original evidence remain accessible. No fabricated
+values found. Native details/summary semantics, focus-visible rules and heading
+nesting have no obvious source-level regression; responsive rows stack below
+480px. Rendered tests provide bounded markup proof, not actual keyboard/mobile QA.
+
+Independent candidate checks: 67 frontend tests across 6 files, TypeScript noEmit,
+production build and diff check passed. Existing bundle-size advisory remains.
+Merge tree exactly equals candidate tree before this receipt; merge diff check
+passed. Integration started clean with no untracked files; prior receipt contents
+were preserved. Backend tests were not repeated for this presentation-only change.
+No browser, preview, server, network/live/account, push, PR or sibling edits.
+
+Ticket12 remains open, pending buyer retest of expanded comprehension, actual
+narrow/keyboard use, target/crossing, correction and complete acceptance. Parent
+owns worktree cleanup and rebuilding the running walkthrough. Source/rendered
+proof does not establish buyer acceptance.
