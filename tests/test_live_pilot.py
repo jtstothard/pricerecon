@@ -5,6 +5,8 @@ import json
 import subprocess
 import sys
 
+import pytest
+
 from pricerecon.pilot import preflight
 
 
@@ -44,7 +46,10 @@ def test_transport_rejects_unapproved_route_before_external_edge():
     asyncio.run(scenario())
 
 
-def test_pilot_connector_uses_memory_auth_five_leads_and_two_exact_details(tmp_path, monkeypatch):
+@pytest.mark.parametrize("malformed", ["none", "summary", "detail", "mismatch"])
+def test_pilot_connector_uses_memory_auth_five_leads_and_two_exact_details(
+    tmp_path, monkeypatch, malformed
+):
     import httpx
 
     from pricerecon.connectors.ebay import eBayConnector
@@ -78,8 +83,38 @@ def test_pilot_connector_uses_memory_auth_five_leads_and_two_exact_details(tmp_p
         if "oauth2" in request.url.path:
             return httpx.Response(200, json={"access_token": "sensitive-token", "expires_in": 3600})
         if request.url.path.endswith("search"):
-            return httpx.Response(200, json={"itemSummaries": [item]})
-        return httpx.Response(200, json=item)
+            return httpx.Response(
+                200,
+                json={
+                    "itemSummaries": (
+                        [item, {}]
+                        if malformed == "summary"
+                        else (
+                            [item, {**item, "itemId": "v1|456|0"}]
+                            if malformed in {"detail", "mismatch"}
+                            else [item]
+                        )
+                    )
+                },
+            )
+        if "456" in request.url.path:
+            return httpx.Response(200, json={} if malformed == "detail" else item)
+        return httpx.Response(
+            200,
+            json={
+                **item,
+                "title": QUERIES[0] + " Mint Green detail description",
+                "localizedAspects": [{"name": "Reference Number", "value": "AD2066"}],
+                "seller": {"username": "detail-seller"},
+                "shippingOptions": [
+                    {
+                        "shippingCostType": "FIXED",
+                        "shippingCost": {"value": "2.50", "currency": "GBP"},
+                    }
+                ],
+                "shipToLocationUsedForEstimate": {"country": "GB"},
+            },
+        )
 
     async def scenario():
         bounds = PilotBounds()
@@ -107,10 +142,28 @@ def test_pilot_connector_uses_memory_auth_five_leads_and_two_exact_details(tmp_p
                 finally:
                     active_admission.reset(admission_token)
             assert len(report.listings) == 1
+            assert report.listings[0].title_raw.endswith("Mint Green detail description")
             assert report.listings[0].total_landed_cost is None
             assert report.listings[0].exact_variant_confirmed is not True
-            assert bounds.details == 1
-            assert bounds.requests == 3
+            assert bounds.details == (2 if malformed in {"detail", "mismatch"} else 1)
+            assert bounds.requests == (4 if malformed in {"detail", "mismatch"} else 3)
+            assert report.source_evidence.inspected_count == 1
+            evidence = report.evidence[0]
+            assert evidence.source_evidence.shipping_claim == "FIXED GBP 2.50"
+            assert evidence.source_evidence.destination == "GB"
+            seller = next(c for c in evidence.claims if c.field == "seller")
+            assert seller.value == "detail-seller"
+            assert seller.route == "ebay_browse_item_v1"
+            reference = next(c for c in evidence.claims if c.field == "reference")
+            assert reference.value == "AD2066"
+            assert reference.issuer_kind == "seller"
+            assert reference.locator.endswith("localizedAspects[0]")
+            assert seller.locator.startswith("itemDetails[")
+            assert seller.pointer.startswith("https://api.ebay.com/buy/browse/v1/item/")
+            if malformed != "none":
+                assert report.acquisition_state == "partial"
+                assert report.source_evidence.completeness == "partial"
+                assert any(issue.startswith("invalid_") for issue in report.source_evidence.issues)
             assert report.source_evidence.item_limit == 5
         finally:
             await connector.cleanup()
@@ -334,3 +387,51 @@ def test_transient_ui_reads_normal_discovery_feed_and_denies_mutations(tmp_path)
     assert receipt["ui_checked"] is True
     assert receipt["requests"] == 5
     assert receipt["cleanup"] is True
+
+
+def test_second_query_terminal_stop_never_opens_ui_and_deletes_run(tmp_path):
+    # Drive the worker CLI, controlling only provider transport and UI serving.
+    script = """
+import sys
+from unittest.mock import patch
+import httpx
+import pricerecon.pilot_worker as worker
+import pricerecon.pilot_ui as ui
+from pricerecon.pilot_bounds import QUERIES
+calls = []
+def edge(request):
+    calls.append(request)
+    if 'oauth2' in request.url.path:
+        return httpx.Response(200, json={'access_token':'fixture-token'})
+    query = request.url.params.get('q', '')
+    if query == QUERIES[1]:
+        return httpx.Response(200, content=b'x' * (2 * 1024 * 1024 + 1)) if STATUS == 200 else httpx.Response(STATUS, json={})
+    item = {'itemId':'v1|111|0','title':QUERIES[0],'itemWebUrl':'https://www.ebay.co.uk/itm/111','price':{'value':'10','currency':'GBP'},'conditionId':'1000','buyingOptions':['FIXED_PRICE']}
+    return httpx.Response(200, json={'itemSummaries':[item]} if query else item)
+def forbidden_ui(**kwargs):
+    raise AssertionError('terminal stop exposed retained data to UI')
+actual = worker.acquire_once
+async def run(*args, **kwargs):
+    kwargs['ui_port'] = 8878
+    return await actual(httpx.MockTransport(edge), *args[1:], **kwargs)
+sys.argv = ['worker','--synthetic',sys.argv[1]]
+with patch.object(worker, 'acquire_once', run), patch.object(ui, 'create_ui', forbidden_ui):
+    worker.main()
+assert len(calls) == 4
+"""
+    for status in (403, 429, 500, 200):
+        root = tmp_path / str(status)
+        result = subprocess.run(
+            [sys.executable, "-c", script.replace("STATUS", str(status)), str(root)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+        assert result.returncode == 0, result.stderr
+        receipt = json.loads(result.stdout)
+        assert receipt["state"] in {"blocked", "failed", "capped"}
+        assert receipt["cleanup"] is True
+        assert receipt["ui_checked"] is False
+        assert not root.exists()
+        assert "fixture-token" not in result.stdout

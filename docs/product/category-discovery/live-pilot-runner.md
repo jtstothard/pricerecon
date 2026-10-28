@@ -18,16 +18,14 @@ PYTHONPATH=src python -m pricerecon.pilot --execute
 # Synthetic supervised normal acquisition; choose a NEW /tmp directory.
 PYTHONPATH=src python -m pricerecon.pilot --offline-check /tmp/pricerecon-pilot-offline-UNIQUE
 
-# Validate independent review, credential presence and build without executing.
+# Validate session evidence review, credential presence and build without executing.
 PYTHONPATH=src python -m pricerecon.pilot \
-  --review /external/review.json --reviewer-key /external/reviewer.pem \
-  --reviewer-key-sha256 TRUSTED_INDEPENDENT_PEM_SHA256
+  --review /external/review.json
 
 # PARENT ONLY after review: existing authorized secret route injects the documented
 # EBAY_APP_ID and EBAY_CERT_ID environment variables in memory. No values in argv.
 PYTHONPATH=src python -m pricerecon.pilot --execute \
-  --review /external/review.json --reviewer-key /external/reviewer.pem \
-  --reviewer-key-sha256 TRUSTED_INDEPENDENT_PEM_SHA256
+  --review /external/review.json
 ```
 
 The last command performs macOS exclusion checks before consuming the grant or
@@ -45,15 +43,14 @@ Responses are `no-store`; the session script clears the page at deadline or serv
 loss. A blocked preflight starts no server. Stop with Ctrl-C or let the bounded
 session expire; the independent supervisor removes the entire marked run directory.
 
-## Independent review interface
+## Active-session evidence review
 
-There is **no trusted key bundled in this repo**. The parent must establish the
-reviewer's public-key SHA256 through its independent review channel, not copy a pin
-from the manifest. The reviewer must examine genuine app-specific eBay approval
-and transient-use/retention evidence. A signature authenticates that review; it
-cannot create eBay entitlement. Do not sign a locally written assertion as if it
-were provider approval. The implementation creates no review, signing key or
-entitlement artifact. The controlled tests use explicitly fictional documents.
+The parent reviews genuine app-specific eBay approval and transient-use/retention
+source content in the approved active session, then supplies the review manifest
+and exact document files. No outside reviewer or signing infrastructure is needed.
+The manifest is an auditable review record, never provider permission itself.
+Buyer approval of the pilot does not establish eBay entitlement. Generic policy
+URLs alone cannot demonstrate app approval. Tests use fictional evidence only.
 
 External `review.json` is strict JSON with these fields:
 
@@ -63,23 +60,22 @@ External `review.json` is strict JSON with these fields:
 | `app_sha256` | SHA256 of the exact existing app ID supplied by the secret route |
 | `purpose` | `watch-pilot-2026-10-28-once` |
 | `envelope_sha256` | SHA256 of the exact approved `live-pilot-plan.md` bytes |
-| `expires_at` | Timezone-aware expiry of this independent review/source permission |
+| `reviewer` | Non-secret parent/session review reference |
+| `reviewed_at` | Timezone-aware actual review time, not in the future |
+| `source_use` | `eBay Browse UK transient comparison display` |
+| `expires_at` | Timezone-aware expiry of this session review/source permission |
 | `operator_started_at` | Actual attended execution/review start; timezone-aware, no future timestamp |
 | `retention_seconds` | Source-permitted session retention, integer 1–1200; never inferred from buyer approval |
 | `documents` | Exactly two entries, kinds `app_approval` and `transient_use` |
 
-Each document has `file` (relative to the external manifest directory), `sha256`
+Each document has `reviewed_scope` (what the source content actually permits), `file` (relative to the external manifest directory), `sha256`
 (exact reviewed bytes), and `issuer` (the actual `https://developer.ebay.com/…`
 source reference). The app approval evidence must bind the app and intended Browse
 UK use; transient-use evidence must cover capture, required normalized fields,
 session display, deletion, and the minimal permanent receipt. An issuer URL alone
 is not evidence. Missing, changed, oversized or escaping document paths fail.
 
-`review.json.sig` is an external reviewer's RSA/SHA256 signature of the exact raw
-manifest bytes, verifiable with `openssl dgst -sha256 -verify reviewer.pem
--signature review.json.sig review.json`. No private review key enters the runner.
-Manifest is capped at 16KiB, public key/signature at 8KiB, each reviewed document
-at 2MiB. App, purpose, exact envelope, expiry, source retention and operator budget
+Manifest is capped at 16KiB and each reviewed document at 2MiB. App, purpose, exact envelope, expiry, source retention and operator budget
 are checked again in the supervisor/worker before acquisition. Absent or invalid
 review never triggers credential acquisition or provider calls. The ordinary
 source/policy receipt carries the review digest rather than an invented authority.
@@ -125,33 +121,35 @@ Host failure/SIGKILL of the cleanup owner cannot establish deletion or restart r
 
 ## Actual remaining external prerequisites
 
-1. Genuine app-specific approval/use/retention documents and independently trusted
-   reviewer signature/pin have not been supplied. No entitlement is claimed.
-2. Existing local/dev environment presence inspection returned `EBAY_APP_ID=false`,
-   `EBAY_CERT_ID=false`. Parent must use the existing documented authorized secret
-   route; if needed, parent uses T3 `request_secret`, never raw chat. No production
-   commands or production DB reads were used to look for credentials.
-3. Parent review and one attended execution under the shared grant remain pending.
+1. Parent review of genuine app-specific approval/use/retention source documents,
+   recorded through the active-session interface above. No provider grant has
+   been supplied or established by this source-only fix.
+2. Existing authorized `EBAY_APP_ID` and `EBAY_CERT_ID` credentials, supplied via
+   the documented secret route. The runner checks presence only during preflight;
+   no production DB or credential discovery is required. Parent uses T3
+   `request_secret` if needed, never raw chat.
+3. A frontend build and supported macOS temporary-storage/exclusion checks at
+   activation, plus an unconsumed one-off grant and an attended execution.
    Real provider behavior and buyer usefulness remain unproven until that run.
 
-Backup/temp containment has a working, locally checked path; it is rechecked at
-execution. Missing external evidence does not leave activation code unwired.
+Missing evidence returns a blocked preflight; it cannot be bypassed with a force
+flag. Source-only verification does not satisfy these live prerequisites.
 
 ## Offline verification
 
-TDD red results preceded review resolver and UI implementation. Tests exercise
-signed eligible and absent/mismatched/expired/changed evidence, normal connector
-and discovery projection, actual macOS exclusion, controlled eligible worker CLI,
-read-only UI feed/product route, denied mutation/export/foreign host, memory-only
-token, shared non-refilling grant, physical/body limits, cleanup and supervisor
-expiry. Controlled eligible flow uses five attempts (token, two searches, two
-details); it does not spend the live grant. No live provider calls, push, PR,
-deployment, account action or production mutation occurred.
+Review-fix TDD reproduced the session-review gate, terminal UI exposure,
+discarded detail evidence, and per-item failures before changing implementation.
+Tests use normal acquisition/public CLI and read-only API seams with controlled
+provider transports. The eligible worker test controls the platform-exclusion
+edge; it does not claim native exclusion acceptance. It exercises actual loopback
+UI startup and normal feed/product reads without spending the live grant.
 
-Final checks: **92 passed** in the affected pilot/collection/shared-grant/discovery/
-source-evidence/secret-logging regression run. After the final activation/deadline
-additions, **19 passed** in both pilot test modules (including a real loopback
-server startup under the guard and refusal to reuse the live fixture grant).
-Ruff passes all changed Python files; mypy passes all 15 changed source modules;
-frontend TypeScript/Vite build and `git diff --check` pass. Existing Pydantic
-deprecation warnings remain. No live-source acceptance is inferred.
+Second-query 403, 429, HTTP failure and response cap controls follow a successful
+first capture and prohibit UI creation, then verify the entire run directory is
+removed. Malformed summary/detail and mismatched-detail controls preserve valid
+siblings, mark receipt completeness partial, and count only accepted detail
+evidence. Detail item specifics retain seller provenance and cannot establish a
+manufacturer definition, selected variation or delivered total.
+
+See `docs/testing/artifacts/live-pilot-review-fixes/verification.json` for the
+current source-only checks. No live-source acceptance is inferred.

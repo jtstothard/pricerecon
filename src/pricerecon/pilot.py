@@ -1,4 +1,4 @@
-"""One approved watch pilot: independently reviewed activation, no force switch."""
+"""One approved watch pilot: session-reviewed activation, no force switch."""
 
 import argparse
 import json
@@ -16,11 +16,9 @@ from pricerecon.pilot_activation import (
 )
 
 
-def preflight(
-    manifest: Path | None = None, public_key: Path | None = None, trusted_sha256: str | None = None
-) -> dict[str, object]:
+def preflight(manifest: Path | None = None) -> dict[str, object]:
     """No provider calls or DB reads; secret presence only until review is supplied."""
-    if not all((manifest, public_key, trusted_sha256)):
+    if manifest is None:
         return {
             "schema": "pricerecon.watch-pilot.v1",
             "state": "blocked",
@@ -32,9 +30,8 @@ def preflight(
             "requests": 0,
         }
     gates: list[str] = []
-    assert manifest is not None and public_key is not None and trusted_sha256 is not None
     try:
-        resolve_review(manifest, public_key, trusted_sha256, os.environ.get("EBAY_APP_ID", ""))
+        resolve_review(manifest, os.environ.get("EBAY_APP_ID", ""))
     except ReviewError as exc:
         gates.append(str(exc))
     if not all(credential_metadata().values()):
@@ -61,8 +58,6 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--review", type=Path)
-    parser.add_argument("--reviewer-key", type=Path)
-    parser.add_argument("--reviewer-key-sha256")
     parser.add_argument("--offline-check", type=Path)
     args = parser.parse_args()
     if args.offline_check and args.execute:
@@ -70,7 +65,7 @@ def main() -> None:
     if args.offline_check:
         command = ["--synthetic", str(args.offline_check)]
     else:
-        receipt = preflight(args.review, args.reviewer_key, args.reviewer_key_sha256)
+        receipt = preflight(args.review)
         if not args.execute or receipt["state"] != "ready_for_exclusion_check":
             print(json.dumps(receipt, sort_keys=True))
             return
@@ -79,10 +74,6 @@ def main() -> None:
             "--execute",
             "--review",
             str(args.review.resolve()),
-            "--reviewer-key",
-            str(args.reviewer_key.resolve()),
-            "--reviewer-key-sha256",
-            args.reviewer_key_sha256,
             str(root),
         ]
     result = subprocess.run(

@@ -1,0 +1,75 @@
+{
+  "schema": "pricerecon.pilot-review-fixes.v1",
+  "candidate": "5f231e013ae21d0ac9e0bfe929a2c144387ebdc1",
+  "integration_input": "5e26693cbe3f088392f4ed0727ee69c1ccdf3c3f",
+  "source_only": true,
+  "live_requests": 0,
+  "provider_documentation_requests": 0,
+  "provider_grant_established": false,
+  "parent_fresh_two_axis_review": "pending",
+  "findings": {
+    "spec_P1_PKI_and_standards_P2_gate": {
+      "disposition": "fixed",
+      "source": [
+        "src/pricerecon/pilot_activation.py:28-106",
+        "src/pricerecon/pilot.py:19-82"
+      ],
+      "behavior": "Active-session parent evidence review binds app, source use, exact plan/document bytes, scope, retention and expiry. No keys, signatures or force override. Review is not provider entitlement."
+    },
+    "spec_P1_terminal_retention": {
+      "disposition": "fixed",
+      "source": [
+        "src/pricerecon/pilot_worker.py:135-153"
+      ],
+      "behavior": "Terminal outcomes skip UI and unwind into whole-directory cleanup. Controlled first-success second-403/429/500/body-cap CLI controls forbid UI creation and verify deletion."
+    },
+    "spec_P2_detail_evidence": {
+      "disposition": "fixed",
+      "source": [
+        "src/pricerecon/connectors/ebay.py:436-446",
+        "src/pricerecon/connectors/ebay_evidence.py:82-169"
+      ],
+      "behavior": "Validated matching detail payload enters normalizer with detail route/pointer/locator. Seller item specifics remain seller claims; shipping/destination survive without qualified delivered total."
+    },
+    "standards_P2_item_isolation": {
+      "disposition": "fixed",
+      "source": [
+        "src/pricerecon/connectors/ebay.py:416-444",
+        "src/pricerecon/connectors/ebay_evidence.py:230-247"
+      ],
+      "standard": "docs/engineering-standard.md:15-19",
+      "behavior": "Invalid summaries/details and mismatched details cannot erase valid siblings. Rejected detail never silently falls back; partial issues and accepted detail counts remain explicit."
+    }
+  },
+  "red_controls": [
+    "Session-review interface rejected by old mandatory PKI implementation: 5 failed, 1 passed.",
+    "Second-query terminal control failed because old worker attempted UI creation.",
+    "Sparse detail and malformed sibling controls: 4 failed before fix, then 4 passed.",
+    "localizedAspects reference control failed with missing claim before fix."
+  ],
+  "verification": {
+    "final_pilot_tests": 17,
+    "final_activation_tests": 7,
+    "source_evidence_and_pilot_tests": 35,
+    "mypy": "127 source files passed",
+    "ruff": "No added findings across changed files; ebay.py baseline/current 23/23; other changed Python files 0/0",
+    "diff_check": "passed",
+    "frontend": "Existing candidate dist copied to ignored local frontend/dist for API/UI tests; no frontend source change or new build claim",
+    "legacy_and_cross_core_regression_tests": 101
+  },
+  "initial_failure": "Initial broad run: 66 passed, one restart harness rejected default macOS temp path. Rerun with documented TMPDIR=/tmp passed source-evidence/pilot 35 tests.",
+  "python": "/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python",
+  "external_prerequisites": [
+    "Parent reviews genuine app-specific provider approval and transient source-use/retention content; supplies exact documents and non-secret review manifest.",
+    "Existing authorized credentials through documented secret route.",
+    "Frontend build, supported macOS exclusion checks, unconsumed one-off grant and attended bounded execution."
+  ],
+  "cli": "PYTHONPATH=src python -m pricerecon.pilot --review /external/review.json; add --execute only for parent-authorized live activation; default is zero-request blocked without evidence.",
+  "commands": {
+    "pilot": "TMPDIR=/tmp PYTHONPATH=src python -m pytest tests/test_live_pilot.py -q --disable-warnings",
+    "activation": "TMPDIR=/tmp PYTHONPATH=src python -m pytest tests/test_pilot_activation.py -q --disable-warnings",
+    "source": "TMPDIR=/tmp PYTHONPATH=src python -m pytest tests/test_source_evidence_workflow.py tests/test_live_pilot.py -q --disable-warnings",
+    "legacy_and_cross_core": "PYTHONPATH=src python -m pytest tests/test_live_pilot.py tests/test_pilot_activation.py tests/test_ebay_oauth.py tests/test_ebay_startup_burst.py tests/test_ebay_secret_logging.py tests/test_shared_grant_workflow.py tests/test_discovery_workflow.py tests/test_rate_limiter.py -q --disable-warnings",
+    "collection": "Initial broad run included tests/test_collection_workflow.py; all collection checks passed (66 total passed, one source restart harness failure subsequently corrected)."
+  }
+}

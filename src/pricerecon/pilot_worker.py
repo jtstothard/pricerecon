@@ -1,7 +1,7 @@
 """Isolated worker: verified activation or explicitly synthetic offline proof.
 
 Run in a fresh process: storage audit guards intentionally cannot be removed.
-Live startup independently rechecks external review and local exclusion before
+Live startup rechecks session evidence review and local exclusion before
 consuming the one shared grant or entering the normal acquisition seam.
 """
 
@@ -104,7 +104,7 @@ async def acquire_once(
     """Run the normal lifecycle, connector and normalizer under one grant.
 
     The caller supplies a source and transport only after eligibility review.
-    Live CLI resolves independent review; offline check supplies synthetic values.
+    Live CLI resolves session evidence review; offline check supplies synthetic values.
     No source content or credential values cross this receipt boundary.
     """
     from pricerecon.core.collection_policy import operating_policy
@@ -117,6 +117,8 @@ async def acquire_once(
     token = active_pilot.set(bounds)
     transport_token = pilot_transport.set(transport)
     states: list[str] = []
+    terminal = False
+    ui_checked = False
     try:
         with operating_policy(policy):
             async with asyncio.timeout(duration):
@@ -134,14 +136,18 @@ async def acquire_once(
                     if any(
                         state not in {"success", "success_empty", "partial"} for state in states
                     ):
+                        terminal = True
+                        del result
                         break
                     del result
-                if ui_port or ui_check:
+                if not terminal and (ui_port or ui_check):
+                    bounds.check()
                     from pricerecon.pilot_ui import check_ui, create_ui, serve_ui
 
                     app = create_ui(deadline=started + duration)
                     if ui_check:
                         await check_ui(app)
+                        ui_checked = True
                     if ui_port:
                         await serve_ui(
                             app, ui_port, max(0, started + duration - time.monotonic() - 2)
@@ -164,7 +170,7 @@ async def acquire_once(
             "log_bytes": 0,
             "duration_seconds": round(time.monotonic() - started, 3),
             "live_eligible": live_eligible,
-            "ui_checked": ui_check,
+            "ui_checked": ui_checked,
         }
     finally:
         bounds.token = None
@@ -178,8 +184,6 @@ def main() -> None:
     mode.add_argument("--synthetic", action="store_true")
     mode.add_argument("--execute", action="store_true")
     parser.add_argument("--review", type=Path)
-    parser.add_argument("--reviewer-key", type=Path)
-    parser.add_argument("--reviewer-key-sha256")
     parser.add_argument("--ui-check", action="store_true")
     parser.add_argument("--deadline-monotonic", type=float)
     parser.add_argument(
@@ -213,12 +217,10 @@ def main() -> None:
         if args.execute:
             from pricerecon.pilot_activation import GRANT, prepare_excluded_root, resolve_review
 
-            if not all((args.review, args.reviewer_key, args.reviewer_key_sha256)):
-                raise RuntimeError("independent_review_required")
+            if args.review is None:
+                raise RuntimeError("session_evidence_review_required")
             review = resolve_review(
                 args.review,
-                args.reviewer_key,
-                args.reviewer_key_sha256,
                 os.environ.get("EBAY_APP_ID", ""),
             )
             permission_reference = (

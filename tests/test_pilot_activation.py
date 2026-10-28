@@ -11,27 +11,7 @@ import pytest
 from pricerecon.pilot_activation import ReviewError, resolve_review
 
 
-def signed_review(tmp_path):
-    key, public = tmp_path / "private.pem", tmp_path / "reviewer.pem"
-    subprocess.run(
-        [
-            "openssl",
-            "genpkey",
-            "-algorithm",
-            "RSA",
-            "-pkeyopt",
-            "rsa_keygen_bits:2048",
-            "-out",
-            str(key),
-        ],
-        capture_output=True,
-        check=True,
-    )
-    subprocess.run(
-        ["openssl", "pkey", "-in", str(key), "-pubout", "-out", str(public)],
-        capture_output=True,
-        check=True,
-    )
+def session_review(tmp_path):
     from pricerecon.pilot_activation import envelope_digest
 
     documents = []
@@ -44,6 +24,11 @@ def signed_review(tmp_path):
                 "file": artifact.name,
                 "sha256": hashlib.sha256(artifact.read_bytes()).hexdigest(),
                 "issuer": "https://developer.ebay.com/fixture",
+                "reviewed_scope": (
+                    "fixture app-specific approval"
+                    if kind == "app_approval"
+                    else "fixture transient display and deletion within retention_seconds"
+                ),
             }
         )
     review = {
@@ -55,60 +40,51 @@ def signed_review(tmp_path):
         "operator_started_at": datetime.now(UTC).isoformat(),
         "retention_seconds": 1200,
         "documents": documents,
+        "reviewer": "parent active session fixture",
+        "source_use": "eBay Browse UK transient comparison display",
+        "reviewed_at": datetime.now(UTC).isoformat(),
     }
     manifest = tmp_path / "review.json"
 
-    def sign():
+    def save():
         manifest.write_text(json.dumps(review))
-        subprocess.run(
-            [
-                "openssl",
-                "dgst",
-                "-sha256",
-                "-sign",
-                str(key),
-                "-out",
-                str(manifest) + ".sig",
-                str(manifest),
-            ],
-            capture_output=True,
-            check=True,
-        )
 
-    sign()
-    return manifest, public, hashlib.sha256(public.read_bytes()).hexdigest(), review, sign
+    save()
+    return manifest, review, save
 
 
-def test_independently_signed_review_binds_external_bytes_app_purpose_envelope_and_expiry(tmp_path):
-    manifest, public, pin, review, sign = signed_review(tmp_path)
-    assert resolve_review(manifest, public, pin, "fixture-app").retention_seconds == 1200
+def test_session_review_binds_external_bytes_app_purpose_envelope_and_expiry(tmp_path):
+    manifest, review, save = session_review(tmp_path)
+    assert resolve_review(manifest, "fixture-app").retention_seconds == 1200
     for field, value in [
         ("app_sha256", "0" * 64),
         ("purpose", "another-purpose"),
         ("expires_at", "2020-01-01T00:00:00Z"),
         ("envelope_sha256", "0" * 64),
+        ("source_use", "buyer approved"),
+        ("retention_seconds", 1201),
+        ("reviewed_at", "2099-01-01T00:00:00Z"),
     ]:
         old = review[field]
         review[field] = value
-        sign()
+        save()
         with pytest.raises(ReviewError):
-            resolve_review(manifest, public, pin, "fixture-app")
+            resolve_review(manifest, "fixture-app")
         review[field] = old
-    sign()
+    save()
     (tmp_path / "app_approval.txt").write_text("replacement assertion")
     with pytest.raises(ReviewError):
-        resolve_review(manifest, public, pin, "fixture-app")
+        resolve_review(manifest, "fixture-app")
 
 
-def test_unsigned_self_authored_or_wrong_reviewer_evidence_is_rejected(tmp_path):
-    manifest, public, pin, _review, _sign = signed_review(tmp_path)
+def test_absent_or_incomplete_evidence_is_rejected(tmp_path):
+    manifest, review, save = session_review(tmp_path)
+    review["documents"] = []
+    save()
     with pytest.raises(ReviewError):
-        resolve_review(manifest, public, "0" * 64, "fixture-app")
-    manifest.write_text('{"approved":true}')
+        resolve_review(manifest, "fixture-app")
     with pytest.raises(ReviewError):
-        resolve_review(manifest, public, pin, "fixture-app")
-    with pytest.raises(ReviewError):
-        resolve_review(tmp_path / "missing", public, pin, "fixture-app")
+        resolve_review(tmp_path / "missing", "fixture-app")
 
 
 def test_eligible_worker_cli_uses_review_normal_acquisition_ui_and_cleanup(tmp_path):
@@ -116,10 +92,10 @@ def test_eligible_worker_cli_uses_review_normal_acquisition_ui_and_cleanup(tmp_p
     import sys
     from uuid import uuid4
 
-    manifest, public, pin, _review, _sign = signed_review(tmp_path)
+    manifest, _review, _sign = session_review(tmp_path)
     root = Path("/private/tmp") / ("pricerecon-pilot-" + uuid4().hex + ".noindex")
     # Only the network transport and the UI lifetime are controlled. CLI parsing,
-    # signed review, actual macOS exclusions, grant, guard, normal connector,
+    # session review, controlled macOS exclusions, grant, guard, normal connector,
     # projection, SQL and read-only HTTP routes all execute normally.
     script = """
 import asyncio, os, sys
@@ -145,8 +121,8 @@ async def review_ui(app, port, seconds):
     await ui.check_ui(app)
     await serve_actual(app, port, 0.2)
 activation.GRANT = Path(sys.argv[1])
-sys.argv = ['pilot_worker', '--execute', '--review', sys.argv[2], '--reviewer-key', sys.argv[3], '--reviewer-key-sha256', sys.argv[4], sys.argv[5]]
-with patch.object(httpx, 'AsyncHTTPTransport', lambda **kw: httpx.MockTransport(edge)), patch.object(worker.socket, 'getaddrinfo', return_value=[]), patch.object(ui, 'serve_ui', review_ui):
+sys.argv = ['pilot_worker', '--execute', '--review', sys.argv[2], sys.argv[3]]
+with patch.object(httpx, 'AsyncHTTPTransport', lambda **kw: httpx.MockTransport(edge)), patch.object(worker.socket, 'getaddrinfo', return_value=[]), patch.object(activation, 'prepare_excluded_root', return_value={}), patch.object(ui, 'serve_ui', review_ui):
     try:
         worker.main()
     except FileExistsError:
@@ -162,8 +138,6 @@ assert len(calls) == 5
             script,
             str(tmp_path / "live.consumed"),
             str(manifest),
-            str(public),
-            pin,
             str(root),
         ],
         env=env,
@@ -189,8 +163,6 @@ assert len(calls) == 5
             script,
             str(tmp_path / "live.consumed"),
             str(manifest),
-            str(public),
-            pin,
             str(root),
         ],
         env=env,
@@ -227,14 +199,14 @@ def test_current_platform_exclusion_is_checked_and_active_backup_tool_blocks(tmp
 
 
 def test_shorter_external_retention_and_elapsed_operator_budget_bound_runtime(tmp_path):
-    manifest, public, pin, review, sign = signed_review(tmp_path)
+    manifest, review, save = session_review(tmp_path)
     review["retention_seconds"] = 3
-    sign()
-    assert 0 < resolve_review(manifest, public, pin, "fixture-app").remaining_seconds() <= 3
+    save()
+    assert 0 < resolve_review(manifest, "fixture-app").remaining_seconds() <= 3
     review["operator_started_at"] = (datetime.now(UTC) - timedelta(minutes=31)).isoformat()
-    sign()
+    save()
     with pytest.raises(ReviewError):
-        resolve_review(manifest, public, pin, "fixture-app")
+        resolve_review(manifest, "fixture-app")
 
 
 def test_supervisor_activation_applies_external_shorter_deadline(tmp_path, monkeypatch, capsys):
@@ -243,9 +215,9 @@ def test_supervisor_activation_applies_external_shorter_deadline(tmp_path, monke
 
     import pricerecon.pilot_supervisor as supervisor
 
-    manifest, public, pin, review, sign = signed_review(tmp_path)
+    manifest, review, save = session_review(tmp_path)
     review["retention_seconds"] = 3
-    sign()
+    save()
     monkeypatch.setenv("EBAY_APP_ID", "fixture-app")
     monkeypatch.setattr(
         sys,
@@ -255,10 +227,6 @@ def test_supervisor_activation_applies_external_shorter_deadline(tmp_path, monke
             "--execute",
             "--review",
             str(manifest),
-            "--reviewer-key",
-            str(public),
-            "--reviewer-key-sha256",
-            pin,
             str(tmp_path / "run"),
         ],
     )
@@ -276,3 +244,24 @@ def test_supervisor_activation_applies_external_shorter_deadline(tmp_path, monke
     deadline = float(command[command.index("--deadline-monotonic") + 1])
     assert before < deadline <= time.monotonic() + 3
     assert json.loads(capsys.readouterr().out)["state"] == "controlled_no_execution"
+
+
+def test_public_cli_accepts_session_review_without_keys_and_blocks_changed_documents(tmp_path):
+    import os
+    import sys
+
+    manifest, _review, _save = session_review(tmp_path)
+    env = {**os.environ, "EBAY_APP_ID": "fixture-app", "EBAY_CERT_ID": "fixture-cert"}
+    command = [sys.executable, "-m", "pricerecon.pilot", "--review", str(manifest)]
+    ready = subprocess.run(command, env=env, capture_output=True, text=True, check=False)
+    assert ready.returncode == 0, ready.stderr
+    assert json.loads(ready.stdout)["state"] == "ready_for_exclusion_check"
+    (tmp_path / "transient_use.txt").unlink()
+    blocked = subprocess.run(command, env=env, capture_output=True, text=True, check=False)
+    receipt = json.loads(blocked.stdout)
+    assert receipt["state"] == "blocked"
+    assert receipt["requests"] == 0
+    force = subprocess.run(
+        command + ["--force"], env=env, capture_output=True, text=True, check=False
+    )
+    assert force.returncode != 0

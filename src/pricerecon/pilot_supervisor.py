@@ -128,8 +128,6 @@ def main() -> None:
     mode.add_argument("--synthetic", action="store_true")
     mode.add_argument("--execute", action="store_true")
     parser.add_argument("--review", type=Path)
-    parser.add_argument("--reviewer-key", type=Path)
-    parser.add_argument("--reviewer-key-sha256")
     parser.add_argument("directory", type=Path)
     args = parser.parse_args()
     signal.signal(signal.SIGHUP, signal.SIG_IGN)
@@ -145,8 +143,6 @@ def main() -> None:
 
         review = resolve_review(
             args.review,
-            args.reviewer_key,
-            args.reviewer_key_sha256,
             os.environ.get("EBAY_APP_ID", ""),
         )
         duration = review.remaining_seconds()
@@ -157,10 +153,6 @@ def main() -> None:
                 str(time.monotonic() + duration),
                 "--review",
                 str(args.review),
-                "--reviewer-key",
-                str(args.reviewer_key),
-                "--reviewer-key-sha256",
-                args.reviewer_key_sha256,
             ]
         )
     else:

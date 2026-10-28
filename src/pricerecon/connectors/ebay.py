@@ -387,6 +387,8 @@ class eBayConnector(BaseConnector):
         """
         from urllib.parse import quote
 
+        from pydantic import ValidationError
+
         from pricerecon.connectors.ebay_evidence import BrowseItem, BrowsePage, browse_evidence
         from pricerecon.pilot_bounds import QUERIES, active_pilot
 
@@ -398,36 +400,55 @@ class eBayConnector(BaseConnector):
         token = await self.ensure_token()
         headers = {"Authorization": f"Bearer {token}", "X-EBAY-C-MARKETPLACE-ID": "EBAY_GB"}
         response = await self._client.get(
-            "https://api.ebay.com/buy/browse/v1/item_summary/search", headers=headers,
-            params={"q": query, "limit": "5", "filter": "conditions:{NEW},buyingOptions:{FIXED_PRICE},deliveryCountry:GB"},
+            "https://api.ebay.com/buy/browse/v1/item_summary/search",
+            headers=headers,
+            params={
+                "q": query,
+                "limit": "5",
+                "filter": "conditions:{NEW},buyingOptions:{FIXED_PRICE},deliveryCountry:GB",
+            },
         )
         page = BrowsePage.model_validate(response.json())
         if len(page.itemSummaries) > 5:
             bounds.deny("pilot_lead_cap")
-        inspected = 0
-        for raw in page.itemSummaries:
-            item = BrowseItem.model_validate(raw)
-            if (query.casefold() not in item.title.casefold()
-                    or item.conditionId != "1000" or item.buyingOptions != ["FIXED_PRICE"]):
+        attempted = 0
+        details: dict[int, object] = {}
+        for index, raw in enumerate(page.itemSummaries):
+            try:
+                item = BrowseItem.model_validate(raw)
+            except ValidationError:
+                # The shared normalizer records the rejected summary per item.
                 continue
-            if inspected == 2:
+            if (
+                query.casefold() not in item.title.casefold()
+                or item.conditionId != "1000"
+                or item.buyingOptions != ["FIXED_PRICE"]
+            ):
+                continue
+            if attempted == 2:
                 break
+            attempted += 1
             bounds.candidates[item.itemId] = query
             detail = await self._client.get(
                 "https://api.ebay.com/buy/browse/v1/item/" + quote(item.itemId, safe=""),
                 headers=headers,
             )
-            parsed = BrowseItem.model_validate(detail.json())
-            if parsed.itemId != item.itemId:
-                bounds.deny("pilot_detail_identity_ambiguous")
-            inspected += 1
-        report = browse_evidence(page.model_dump(), self.evidence_receipt)
+            try:
+                parsed = BrowseItem.model_validate(detail.json())
+                if parsed.itemId != item.itemId:
+                    raise ValueError("detail identity mismatch")
+            except (ValidationError, ValueError):
+                self.evidence_receipt.issues.append(f"invalid_detail:{index}")
+                # Never silently fall back to the summary after a bad detail.
+                details[index] = None
+                continue
+            details[index] = parsed.model_dump()
+        report = browse_evidence(page.model_dump(), self.evidence_receipt, details=details)
         if report.source_evidence is None:
             bounds.deny("pilot_receipt_missing")
             raise RuntimeError("Pilot receipt unavailable")
         report.source_evidence.item_limit = 5
         report.source_evidence.detail_limit = 2
-        report.source_evidence.inspected_count = inspected
         bounds.normalized(len(report.model_dump_json().encode()))
         return report
 
