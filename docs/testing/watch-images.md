@@ -109,3 +109,63 @@ push, PR, live access, production action or browser run were performed.
 
 Final local merge of `integration/watch-category-discovery` at
 `dd43df3a4575c426465fcfcb408d13e3167f4c02` reported already up to date.
+
+## Independent merger recheck and acceptance — 2026-10-28
+
+Reviewed candidate `6741d4aba823d8bfe8b198ac6a435714503511cb` against
+`dd43df3a4575c426465fcfcb408d13e3167f4c02` in the clean, pinned candidate
+checkout `/Users/jay/.t3/worktrees/pricerecon/t3-e17dc593`. Read this receipt,
+the engineering standard and CONTRIBUTING, ticket12 and the 2026-10-28 buyer
+research. No delegation, browser, network, live source, account, production,
+push or PR work was performed.
+
+**Standards:** zero blocking findings. Depiction validation isolates failures at
+the image boundary; no new unchecked typing escape or qualification bypass was
+found. Focused Ruff passes. Including `models/listings.py` reports 22 existing
+findings; independently linting its base content produces the same 22 findings.
+These baseline findings were not silently presented as a clean whole-file pass.
+
+**Spec:** zero blocking findings for this bounded contract/rendering slice.
+Valid photo/illustration attribution and identity/permission references persist;
+invalid reports preserve leads and valid siblings. The UI labels illustration,
+photo and unavailable imagery. No asset or buyer-acceptance claim follows.
+
+Independently reran the supplied `/tmp/pricerecon-image-review/probe.py` with
+only its output redirected to `recheck-feed.json`, preserving the original
+reproducer/feed. Both leads now publish placeholders. A separate decoder check
+against the candidate consumed that API feed successfully, injected malformed
+persisted image metadata without losing either lead, and confirmed that setting
+`alert_eligible=true` still throws `Unsupported qualified discovery claim`.
+The candidate regression controls cover valid photo and illustration metadata,
+14-lead API survival/restart, malformed URL cases and strict qualification.
+
+Verification used the retained project Python environment and Node 24.14.1:
+
+- `python -m pytest -q tests/test_discovery_workflow.py tests/test_watch_workflow.py tests/test_final_review_workflow.py tests/test_correction_workflow.py tests/test_correction_target_ownership.py`: **63 passed in 68.03s**.
+- `npm test -- --run`: **40 passed**; `npm run build`: passed (includes TypeScript).
+- `python -m mypy --no-incremental src/pricerecon/models/discovery_images.py src/pricerecon/models/discovery.py src/pricerecon/core/discovery.py`: three source files passed; existing unused-override note.
+- `python -m ruff check src/pricerecon/core/discovery.py src/pricerecon/models/discovery.py src/pricerecon/models/discovery_images.py tests/monitoring/discovery_workflows.py tests/test_discovery_workflow.py`: passed.
+- `git diff --check dd43df3...HEAD`: passed.
+
+An initial concurrent build/API run had 62 passes and one import failure when
+Vite temporarily removed `frontend/dist/assets`. This was a reviewer scheduling
+error, not an image assertion failure. The complete 63-test run above was repeated
+after the build finished, with no build or checkout changes during the run.
+Candidate HEAD stayed pinned and its tracked/untracked status remained clean.
+
+Merged with `--no-ff` in the initially clean sole integration checkout, creating
+`2abafb0b1a630efcde45fe5f5643a6e08f7588ef`, first parent
+`dd43df3a4575c426465fcfcb408d13e3167f4c02`, second parent the full candidate SHA.
+Merged tree `29370fa0437e27f7922b10008bccb5e5968010dc` exactly equals the
+candidate tree (`git diff --exit-code candidate HEAD` passed). On that stable
+merged checkout, all seven guarded discovery workflows, all 40 frontend tests,
+frontend build/types, focused Ruff, uncached three-file mypy and whitespace
+checks passed. Build retains the existing large-chunk advisory. API checks
+finished before the merged frontend build began.
+
+**Ticket12 remains open:** actual meaningful permitted exact-watch assets,
+remote-load/browser usability and buyer visual-first/remaining-task retesting
+are not established. No rights adjudication, live acquisition or activation
+acceptance is implied. Original and sibling worktrees were not edited or cleaned;
+parent retains cleanup ownership. This receipt and tracker update are a separate
+local documentation commit after the history-preserving merge.

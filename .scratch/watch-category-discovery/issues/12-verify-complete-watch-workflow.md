@@ -127,3 +127,14 @@ product depiction or asset approval was invented. See the
 **12 remains open.** Meaningful permitted assets, actual buyer visual-first retest
 and remaining walkthrough acceptance are still required. No live retrieval,
 source onboarding, activation or deployment was performed.
+
+## Independent image merger recheck — 2026-10-28
+
+Repaired candidate `6741d4aba823d8bfe8b198ac6a435714503511cb` accepted for
+bounded offline technical scope and merged with `--no-ff` in
+`2abafb0b1a630efcde45fe5f5643a6e08f7588ef`. Independent Standards and Spec
+reviews found no blockers; 63 guarded candidate workflows and 40 frontend tests
+passed, with merged-tree/API/frontend/types/static checks repeated successfully.
+See the [dated merger receipt](../../../docs/testing/watch-images.md#independent-merger-recheck-and-acceptance--2026-10-28).
+**12 stays open** for meaningful permitted exact-watch assets and actual buyer
+visual-first/remaining-task retest. No live, rights, browser or release acceptance.

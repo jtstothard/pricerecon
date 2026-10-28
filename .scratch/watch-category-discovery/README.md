@@ -332,3 +332,9 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   photo/illustration/placeholder API and rendering contracts. No justified retained
   exact-watch assets were found. **12 stays open for assets and actual buyer
   retest.** [Bounded receipt](../../docs/testing/watch-images.md).
+
+- 2026-10-28: Independent repaired-image recheck accepted and history-preserving
+  merge `2abafb0b1a630efcde45fe5f5643a6e08f7588ef` completed. Standards/Spec:
+  no blockers; 63 guarded candidate workflows and 40 frontend tests pass.
+  [Merger receipt](../../docs/testing/watch-images.md#independent-merger-recheck-and-acceptance--2026-10-28).
+  **12 remains open for permitted assets and actual buyer retest.**
