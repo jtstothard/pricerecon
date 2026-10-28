@@ -63,3 +63,24 @@ it('withholds remote imagery when private local assets are missing or still load
   expect(html).not.toContain('<img')
   expect(html).toContain('Product image unavailable')
 })
+
+it('loads original URLs in remote walkthrough mode and keeps local-only mode closed', async () => {
+  const { vi } = await import('vitest')
+  const { OfflineImages } = await import('../discovery/OfflineImages')
+  const card = createElement(DiscoveryImage, { image: {
+    kind: 'remote_reference' as const, url: 'https://assets.invalid/reference.jpg?width=800',
+    attribution: 'Original author', provenance: 'Private remote reference', permission_reference: null,
+    identity_reference: null, source_context_url: 'https://example.org/review', configuration_note: 'Target unresolved',
+  } })
+  try {
+    vi.stubGlobal('window', { location: { search: '?walkthrough=ticket12' } })
+    const remote = renderToStaticMarkup(createElement(OfflineImages, null, card))
+    expect(remote).toContain('src="https://assets.invalid/reference.jpg?width=800"')
+    expect(remote).toContain('Target unresolved')
+    vi.stubGlobal('window', { location: { search: '?walkthrough=ticket12-local' } })
+    const local = renderToStaticMarkup(createElement(OfflineImages, null, card))
+    expect(local).not.toContain('<img')
+    expect(local).toContain('Product image unavailable')
+    expect(local).toContain('href="https://example.org/review"')
+  } finally { vi.unstubAllGlobals() }
+})

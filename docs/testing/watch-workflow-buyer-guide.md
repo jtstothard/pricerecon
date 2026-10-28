@@ -10,8 +10,9 @@ Ticket12 remains open for follow-up design, retesting and acceptance/closure. Th
 This is the implemented application running against invented watch evidence in
 temporary SQLite. It has no production data, live collection, merchant sessions,
 accounts or real notification transport. All five names remain in the feed;
-Militado and Merkur remain unresolved. Casio now has two real manufacturer reference photographs for solely private use;
-the other four cases retain explicit generic placeholders. See the
+Militado and Merkur remain unresolved. The default private mode displays original remote
+Casio, Addiesdive mint, ML05 blue and San Martin review images. ML05B and San Martin
+target configurations remain unresolved; Merkur retains an explicit missing image. See the
 [image rights and missing-case record](../../tests/fixtures/watch-images/README.md).
 The real photo never qualifies the synthetic price or merchant configuration. Positive dimensions and prices are fictional test inputs.
 
@@ -46,13 +47,14 @@ local browser session. Before edits, the parent must verify
 `ticket12-connected-ui-v1`, `temporary_storage=true`, `automatic_checks=false`,
 `blocked_edges=[]` and zero initial notifications. Also check `images` identifies
 `ticket12-private-images-v1`. The image manifest at `/api/offline-watch-images`
-must list two registered files. The query flag enables local image resolution;
-without it the ordinary application uses original HTTPS image URLs. In private
-mode a missing/invalid manifest withholds images and never falls back to remote
-image requests. If the port is occupied or the
+lists two registered local Casio files for the optional local-only mode.
+`?walkthrough=ticket12` displays original remote URLs directly (outbound browser
+image requests, no backend proxy/download). `?walkthrough=ticket12-local` selects
+the old local-only resolver, which withholds unmapped images even on failure.
+The query flag does not activate collection or change qualification. If the port is occupied or the
 marker differs, stop; do not use an existing backend as a fallback. The fixture
-binds only 127.0.0.1; outbound application edges stay audit-guarded. Avoid merchant
-links: all review interactions belong to this synthetic local application.
+binds only 127.0.0.1; outbound application edges stay audit-guarded. Source links are attribution/reference
+context; prices seen there must not be blended into this synthetic walkthrough.
 
 The parent advances deterministic time/prices between buyer tasks, from a second
 terminal in the same directory. This helper verifies the fixture marker and
@@ -76,15 +78,19 @@ persisted buyer state to clean from another checkout.
 ## Image retest scope
 
 This is a private personal session for Jay, not a publishable asset pack. The
-Casio card displays the retained front photo; “View both Casio reference photos”
-opens the front and wrist views with copyright notices. All image bytes come from
-the loopback fixture; no image proxy, remote collection or merchant access is
-needed. Four explicit missing cases remain; their source/permission findings and
-minimum decisions are in the [rights record](../../tests/fixtures/watch-images/README.md).
-The parent can test whether the real Casio depiction supports visual interest,
-then whether its details explain the still-unknown synthetic delivered total.
-Record the buyer's words. Do not mark five-case visual browsing accepted based
-on this one photographed model. Retest desktop/narrow layout, load failure and
+Casio card uses its original manufacturer URL in remote mode. Addiesdive displays
+the Mint Green reference; Militado shows original ML05 blue VH31 with the unresolved
+ML05B warning; San Martin shows the 39mm blue review reference with target warning.
+Each remote reference has attribution, original image and source-context links.
+No licence, merchant selection or payable-price claim follows. Merkur has no
+identified original image and stays missing; no salmon substitute is used.
+Remote servers can refuse requests or disappear: load errors show the unavailable
+placeholder while retaining reference context. Optional local-only mode retains
+the two Casio views and blocks all other remote requests.
+The parent can now retest visual interest across the four references and verify
+that unresolved configurations and synthetic/unknown delivered totals are understood.
+Record the buyer's words. Do not mark five-case visual browsing accepted
+without task-level buyer feedback. Retest desktop/narrow layout, load failure and
 keyboard interaction with the buyer; this revision has build/static UI/API proof,
 not a new browser session. Earlier screenshot receipts remain historical only.
 

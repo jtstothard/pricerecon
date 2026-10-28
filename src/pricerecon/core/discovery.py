@@ -23,7 +23,7 @@ from pricerecon.models.discovery import (
     DiscoveryRequest,
     LeadEvidence,
 )
-from pricerecon.models.discovery_images import PermittedImage
+from pricerecon.models.discovery_images import PermittedImage, RemoteReferenceImage
 from pricerecon.models.qualification import MerchantEvidenceReport, safe_pointer
 from pricerecon.models.tracking import TrackingPolicy
 
@@ -123,7 +123,11 @@ async def execute_discovery(
             )
             if listing.discovery_image is not None:
                 try:
-                    image = PermittedImage.model_validate(listing.discovery_image)
+                    image = (
+                        RemoteReferenceImage.model_validate(listing.discovery_image)
+                        if listing.discovery_image.get("kind") == "remote_reference"
+                        else PermittedImage.model_validate(listing.discovery_image)
+                    )
                     if image.source_listing_id == listing.source_listing_id:
                         candidate.image = image
                 except (ValidationError, ValueError):

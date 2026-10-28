@@ -254,10 +254,33 @@ function coupon(value: unknown) {
 
 export type DiscoveryCoupon = ReturnType<typeof coupon>
 
+function remoteReferenceUrl(value: unknown): string {
+  const raw = text(value), url = new URL(raw)
+  const patterns: Record<string, RegExp> = { v: /^[0-9]{1,20}$/, width: /^[1-9][0-9]{0,4}$/,
+    format: /^(?:[1-9][0-9]{0,4}w|webp|jpg|jpeg|png|avif)$/, variant: /^[0-9]{1,30}$/ }
+  const keys = new Set<string>()
+  if (url.protocol !== 'https:' || !raw.startsWith('https://') || url.username || url.password || url.hash || /[\s\\\x00-\x1f\x7f]/.test(raw)) throw new Error('Unsafe reference URL')
+  url.searchParams.forEach((value, key) => {
+    if (keys.has(key) || !patterns[key]?.test(value)) throw new Error('Unsafe reference query')
+    keys.add(key)
+  })
+  if (url.search && keys.size === 0) throw new Error("Empty reference query")
+  return raw
+}
+
 function parseImage(value: unknown, sourceListingId: unknown) {
   try {
     const image = record(value)
-    const imageKind = choice(image.kind, ['original_placeholder', 'photo', 'illustration'])
+    const imageKind = choice(image.kind, ['original_placeholder', 'photo', 'illustration', 'remote_reference'])
+    if (imageKind === 'remote_reference') {
+      if (image.depicts_exact_watch !== false || image.source_listing_id !== sourceListingId || 'permission_reference' in image || 'identity_reference' in image) throw new Error('Invalid reference claim')
+      for (const key of ['attribution', 'provenance', 'configuration_note']) {
+        if (!text(image[key]).trim()) throw new Error('Missing reference context')
+      }
+      return { kind: imageKind, url: remoteReferenceUrl(image.url), attribution: text(image.attribution), provenance: text(image.provenance),
+        configuration_note: text(image.configuration_note), source_context_url: remoteReferenceUrl(image.source_context_url),
+        permission_reference: null, identity_reference: null }
+    }
     let imageUrl: string | null = null
     if (imageKind === 'original_placeholder') choice(image.permission, ['original_artwork'])
     else {

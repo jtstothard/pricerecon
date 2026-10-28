@@ -389,3 +389,74 @@ account, live collection, production, push/PR or worktree cleanup occurred.
 Ticket12 remains open for already-permitted exact imagery, necessary target
 selection and remaining buyer retests. “Looks good” remains positive feedback
 on the presented Casio slice only.
+
+## User-approved remote references — 2026-10-28
+
+Implementation branch merged integration `2cae6f65c623e8e45bf18df0080cedfb2d8898b8`
+before editing. The latest explicit user decision permits direct original remote
+image URLs with attribution/source links for the private walkthrough. This
+supersedes the earlier licence gate for remote display only. No new third-party
+image bodies were downloaded or committed; the two existing Casio files and
+manifest remain unchanged. No licence is asserted for remote references.
+
+A distinct `remote_reference` contract requires nonblank attribution/provenance,
+source-context URL, configuration note, matching source listing and explicit
+`depicts_exact_watch=false`; permission/identity assertions are forbidden extra
+fields. Existing permitted exact photo/illustration validation is unchanged.
+Remote URLs require HTTPS and valid host/port syntax, without credentials,
+whitespace, controls, backslashes or fragments. Only bounded `v`, `width`,
+`format` and numeric page `variant` queries are accepted. Duplicate, unknown,
+credential, token and signed query parameters fail closed. Frontend decoding
+uses the same narrow query rules and isolates malformed image metadata while
+qualification decoding remains strict. No image fields enter buying identity,
+cost, assessment, history or alert calculations.
+
+The fixture registry now carries Addiesdive's selected Mint Green AD2066 image,
+original ML05 blue VH31 lineage with unresolved ML05B warning, and the original
+Ben’s Watch Club 39mm blue SN0144-GX review image with unresolved target warning.
+Casio retains its existing exact-depiction evidence and loads its original URL.
+Merkur stays explicitly missing, with no unrelated salmon substitute. Public
+page reads found the first two actual gallery links; Ben’s review identifies
+39mm. All four image URLs returned 200/image content types in HEAD-only checks;
+see [source check receipt](artifacts/watch-remote-images/source-head-checks.json).
+This is availability/context evidence, not successful browser loading or licence.
+
+`/discover?walkthrough=ticket12` now loads original HTTPS image URLs directly.
+`?walkthrough=ticket12-local` retains the explicit local-only resolver, which
+withholds unmapped/loading/failed assets. Remote reference captions expose source
+context and original-image links, unresolved configurations and the absence of
+licence/buying qualification claims, including when the image is unavailable.
+The existing lazy/no-referrer image load/error fallback remains in place.
+
+Approved TDD seams: real API plus normal discovery execution under the existing
+marked-temp-SQLite MonitoringHarness (controlled connector/time edges, scheduler
+paused, notifications captured), and frontend decode/render. First API red
+rejected the new kind; green retained reference metadata and unknown delivered
+cost/alert abstention through restart. The extended negative API matrix preserves
+11 leads, rejecting malformed hosts/ports, token/signed/duplicate/invalid queries,
+missing context and false exact/permission claims. First frontend red rejected
+the kind; green renders attribution/source/unresolved warnings. Mode rendering
+verifies original URL loading in remote mode and unavailable fallback with source
+links under local-only withholding. No browser preview or server was started.
+An intermediate API assertion incorrectly selected the first row after restart;
+it was corrected to select the source listing ID, and verification repeated.
+
+Verification logs: [remote image checks](artifacts/watch-remote-images/).
+Ticket12 remains open for actual buyer visual-first and remaining-task feedback,
+exact Militado/San Martin target selections, Merkur identity/original image,
+and browser loading/failure/narrow/keyboard checks by the parent. Source market
+prices, licences, ongoing collection, operating approval, production and release
+acceptance are not established by this implementation. Parent owns integration;
+no push, PR, deployment, outreach, account or production DB operation occurred.
+
+Final checks on the stable candidate:
+
+- `python -m pytest -q tests/test_discovery_workflow.py tests/test_watch_workflow.py tests/test_final_review_workflow.py tests/test_correction_workflow.py tests/test_correction_target_ownership.py`: **65 passed in 114.47s**.
+- `npm test -- --run`: **53 passed**; `npm run build`: passed (TypeScript plus Vite; existing large-chunk advisory).
+- Focused eight-file Ruff: passed; uncached three-source mypy: passed (existing unused-section note).
+- `git diff --check`: passed; existing two image files/manifest have no changes.
+- Final merge from integration at `2cae6f65c623e8e45bf18df0080cedfb2d8898b8`: already up to date.
+
+A final frontend red/green query control aligns rejection of a nonempty query
+with no parameters (`?&&`) with the backend. Browser loading remains untested;
+HEAD success and rendered `src` are the precise availability/rendering proof.

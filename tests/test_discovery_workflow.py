@@ -55,3 +55,7 @@ def test_permitted_exact_depiction_survives_execution_api_and_restart():
 
 def test_invalid_or_unmatched_images_fall_back_without_losing_leads():
     run_discovery("image_rejections")
+
+
+def test_remote_reference_preserves_unresolved_target_without_price_qualification():
+    run_discovery("remote_reference")

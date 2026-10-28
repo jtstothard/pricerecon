@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pricerecon.models.assessments import PriceAssessment
 from pricerecon.models.corrections import CorrectionHistory
 from pricerecon.models.costs import PublicCostSummary
-from pricerecon.models.discovery_images import PermittedImage
+from pricerecon.models.discovery_images import PermittedImage, RemoteReferenceImage
 from pricerecon.models.history import HistorySummary
 from pricerecon.models.qualification import Configuration, MerchantOffer, SelectionBinding
 from pricerecon.models.source_evidence import SourceReceipt
@@ -200,7 +200,9 @@ class DiscoveryCandidate(DiscoveryModel):
     capture_id: str
     captured_at: datetime
     evidence: list[LeadEvidence]
-    image: PermittedImage | PlaceholderImage = Field(default_factory=PlaceholderImage)
+    image: PermittedImage | RemoteReferenceImage | PlaceholderImage = Field(
+        default_factory=PlaceholderImage
+    )
     advertised_item_price: Decimal | None
     reported_currency: str | None
     price_caveat: str = (
