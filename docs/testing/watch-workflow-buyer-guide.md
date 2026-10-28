@@ -395,3 +395,9 @@ Try **Preferences** with preset budget/size/colour choices and an arbitrary cust
 Retest whether the repeated comparison fields make a decision easier, whether the product sections contain the right information, whether presets reduce effort without hiding arbitrary values, and whether keyboard/mobile use is comfortable. This retest has not happened. Technical records are intentionally detailed; they are separated from the buyer's comparison and curated sections.
 
 Local validation: `cd frontend && npm ci --offline --ignore-scripts && npm test -- --run && npm run build` (the build includes TypeScript). The pinned jsdom dependency supports actual mounted component tests; these are distinct from browser/visual acceptance. Guarded backend regressions: `python -m pytest tests/test_correction_workflow.py tests/test_tracking_workflow.py tests/test_discovery_workflow.py -q` using the project Python environment and isolated harness storage.
+
+## Product page hierarchy retest — 2026-10-28
+
+Latest buyer feedback: comparison is better; product pages need fixing and good visual hierarchy. The [product refinement receipt](../product/category-discovery/product-page-refinement.md) records the pre-edit plan and critique. Product pages now lead with the watch image, model, essential supported specs, delivered price/condition and Track action; peer navigation opens ranked detail views with readable rows. Comparison remains unchanged. Reference, synthetic, conditional, unknown and withdrawn states remain explicit. Technical holds full attribution and retained records.
+
+Parent should rebuild after review/merge, then ask the buyer to identify the model, price status, condition and tracking action; inspect Costs and Technical separately at desktop/narrow widths and with keyboard. No new browser session or visual acceptance is claimed. Tracking/correction attribution and full task-level acceptance remain pending; ticket12 stays open.

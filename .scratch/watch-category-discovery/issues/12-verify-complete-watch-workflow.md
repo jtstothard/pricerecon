@@ -443,3 +443,7 @@ complete acceptance. Source/component proof does not establish buyer acceptance,
 source freshness or live readiness. Parent owns checkout cleanup and rebuilding
 the walkthrough. No browser/preview/server/network/live/account/push/PR work,
 subagents, reset/clean or sibling mutations were performed.
+
+## Product hierarchy refinement — 2026-10-28
+
+Buyer feedback: comparison is better; product pages still need good visual hierarchy. Focused product-only refinement introduces an image-led buying brief, primary tracking link, essential specs and condition, ranked view titles and flat fact rows for offers/charges/capture lineage. Comparison is preserved. See [plan, pre-edit critique and verification receipt](../../../docs/product/category-discovery/product-page-refinement.md). No backend semantics changed; presets, arbitrary custom values and required correction actor/reason remain intact. Parent review/merge/rebuild follows. Buyer retest, actual narrow/keyboard usability and complete acceptance remain pending. Ticket12 remains OPEN.
