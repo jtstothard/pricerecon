@@ -76,6 +76,12 @@ async def capture(harness, client, reports, *, leads=False, sources=("cex",), co
             harness.outcomes[source] += [
                 listing(harness, source, key, CASES[key], "1") for key in ("militado", "merkur")
             ]
+        from .watch_images import remote_depiction
+
+        for item in harness.outcomes[source]:
+            reference = remote_depiction(item.source_listing_id)
+            if reference is not None:
+                item.discovery_image = reference
     result = await execute_discovery(
         DiscoveryRequest(
             query="compact colourful wristwatch", sources=[{"connector": s} for s in sources]

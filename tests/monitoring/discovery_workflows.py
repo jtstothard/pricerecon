@@ -90,6 +90,78 @@ async def permitted_image():
         assert harness.deliveries == []
 
 
+async def remote_reference():
+    with MonitoringHarness() as harness:
+        from pricerecon.core.discovery import execute_discovery
+        from pricerecon.models.discovery import DiscoveryAdmission, DiscoveryRequest
+
+        item = listing(harness, "cex", "image-control", "Synthetic image contract control")
+        item.discovery_image = {
+            "kind": "remote_reference",
+            "url": "HTTPS://assets.invalid/control.jpg?v=123&width=800&format=webp",
+            "attribution": "Offline fixture author",
+            "provenance": "Synthetic contract metadata only",
+            "source_context_url": "HtTpS://example.org/review",
+            "configuration_note": "Blue ML05 reference; ML05B target unresolved",
+            "source_listing_id": "image-control",
+            "depicts_exact_watch": False,
+        }
+        rejected = []
+        for index, change in enumerate(
+            [
+                {"url": "https://assets.invalid:999999/a.jpg"},
+                {"url": "https://%zz/a.jpg"},
+                {"url": "https://assets.invalid/a.jpg?token=secret"},
+                {"url": "https://assets.invalid/a.jpg?width=800&X-Amz-Signature=secret"},
+                {"url": "https://assets.invalid/a.jpg?v=abc"},
+                {"url": "https://assets.invalid/a.jpg?width=800&width=900"},
+                {"source_context_url": "javascript:alert(1)"},
+                {"configuration_note": " "},
+                {"permission_reference": "invented"},
+                {"depicts_exact_watch": True},
+            ]
+        ):
+            bad = listing(harness, "cex", str(index), "Rejected remote reference")
+            bad.discovery_image = {
+                **item.discovery_image,
+                "source_listing_id": str(index),
+                **change,
+            }
+            rejected.append(bad)
+        harness.outcomes["cex"] = [item, *rejected]
+        async with harness.session() as (client, _):
+            await execute_discovery(
+                DiscoveryRequest(query="control", sources=[{"connector": "cex"}]),
+                admission=DiscoveryAdmission(
+                    mode="offline_verification",
+                    policy_reference="fixture",
+                    permission_reference="fixture",
+                    activation_reference="harness",
+                ),
+            )
+            feed = (await get(client, "/api/discovery/watches"))["candidates"]
+            assert len(feed) == 11
+            assert all(
+                c["image"]["kind"] == "original_placeholder"
+                for c in feed
+                if c["source_listing_id"] != "image-control"
+            )
+            image = next(c["image"] for c in feed if c["source_listing_id"] == "image-control")
+            assert image["kind"] == "remote_reference"
+            assert image["attribution"] == "Offline fixture author"
+            assert "permission_reference" not in image
+            assert image["depicts_exact_watch"] is False
+            assert image["configuration_note"] == "Blue ML05 reference; ML05B target unresolved"
+            candidate = next(c for c in feed if c["source_listing_id"] == "image-control")
+            assert not candidate["alert_eligible"]
+            assert candidate["public_delivered_total"]["state"] == "unknown"
+        async with harness.session() as (client, _):
+            feed = (await get(client, "/api/discovery/watches"))["candidates"]
+            assert next(c["image"] for c in feed if c["source_listing_id"] == "image-control") == image
+        assert harness.blocked_edges == []
+        assert harness.deliveries == []
+
+
 async def image_rejections():
     with MonitoringHarness() as harness:
         from pricerecon.core.discovery import execute_discovery

@@ -1,3 +1,23 @@
+# Current remote-display decision — 2026-10-28
+
+The latest user approval supersedes the historical reuse-only gate below **for
+direct remote display** in this private walkthrough. No licence is claimed.
+No additional image bytes are downloaded or committed. Original URL records are
+in `tests/monitoring/watch_images.py`: Addiesdive selected Mint Green variant
+(`AD2066-green_600x.jpg`, linked by the selected page), original ML05 blue VH31
+lineage (not ML05B), and Ben’s 39mm SN0144-GX blue review reference (target unresolved).
+Casio also loads its original URL in remote mode. Merkur remains missing because
+its exact identity/original image is unknown. Do not replace it with another salmon model.
+
+The renderer labels references, preserves attribution/source links even on load
+failure, and makes no exact-watch or permission assertion for remote references.
+The existing permitted exact-depiction contract and local Casio manifest remain
+separate. Use `?walkthrough=ticket12` for remote images, `ticket12-local` for
+local-only mapping. Source servers may block hotlinks; browser loading and actual
+buyer task/viewport/keyboard acceptance remain parent-run checks. No source prices
+are ingested or used to qualify synthetic evidence. Historical rights research
+below describes earlier scope, not a current remote-display implementation blocker.
+
 # Private walkthrough image rights and identity record — 2026-10-28
 
 These two unchanged files are third-party copyrighted content, **not covered by

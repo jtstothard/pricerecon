@@ -57,3 +57,38 @@ def install_images(app: FastAPI):
         return Response(content, media_type=media_type, headers={"Cache-Control": "no-store"})
 
     app.router.routes[0:0] = router.routes
+
+
+REMOTE_REFERENCES = {
+    "addies": {
+        "url": "https://www.addiesdivewatches.com/cdn/shop/files/AD2066-green_600x.jpg?v=1776245650",
+        "source_context_url": "https://www.addiesdivewatches.com/products/addiesdive-36mm-luxury-vh31-quartz-watch-ad2066?variant=44195491578021",
+        "attribution": "ADDIESDIVE manufacturer product photography",
+        "configuration_note": "AD2066 Mint Green / VH31 manufacturer reference; merchant selection and delivered cost independently unverified.",
+    },
+    "militado": {
+        "url": "https://www.militadowatch.com/cdn/shop/files/1_eea45bf9-f2de-43c1-b41e-78eaccbcb327.jpg?v=1773631826&width=800",
+        "source_context_url": "https://www.militadowatch.com/products/militado-vh31-vintage-military-watch-ml05-blue-dial",
+        "attribution": "Militado manufacturer product photography",
+        "configuration_note": "Original ML05 blue VH31 reference; ML05B Miyota target/configuration unresolved. These are not interchangeable.",
+    },
+    "san": {
+        "url": "https://images.squarespace-cdn.com/content/v1/5c9cb86ec46f6d68c6b63267/900e9538-ee8c-461b-bd02-ed7c41712017/san-martin-new-gada-watch.jpg?format=1500w",
+        "source_context_url": "https://www.benswatchclub.com/blog/san-martin-jian-zhan-review",
+        "attribution": "Ben’s Watch Club — San Martin Jian Zhan review photography",
+        "configuration_note": "39mm blue SN0144-GX / Miyota 9015 review reference. Buyer target size/dial/revision unresolved; not the 42mm Green FKM offer.",
+    },
+}
+
+
+def remote_depiction(key):
+    reference = REMOTE_REFERENCES.get(key)
+    if reference is None:
+        return None
+    return {
+        **reference,
+        "kind": "remote_reference",
+        "source_listing_id": key,
+        "depicts_exact_watch": False,
+        "provenance": "Original public source URL displayed directly by user approval for private walkthrough; no image licence asserted. Not price or configuration qualification evidence.",
+    }

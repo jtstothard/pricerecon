@@ -22,10 +22,15 @@ async def verify():
             assert "CASIO COMPUTER CO., LTD." in image["attribution"]
             assert by["casio"]["public_delivered_total"]["amount"] is None
             assert not by["casio"]["alert_eligible"]
-            assert all(
-                by[key]["image"]["kind"] == "original_placeholder"
-                for key in ("militado", "addies", "san", "merkur")
-            )
+            assert all(by[key]["image"]["kind"] == "original_placeholder" for key in ("merkur",))
+            for key in ("militado", "addies", "san"):
+                reference = by[key]["image"]
+                assert reference["kind"] == "remote_reference"
+                assert reference["depicts_exact_watch"] is False
+                assert "permission_reference" not in reference
+                assert reference["source_context_url"].startswith("https://")
+            assert by["militado"]["identity_state"] == "unresolved"
+            assert not by["militado"]["alert_eligible"]
             manifest = await get(client, "/api/offline-watch-images")
             assert manifest["fixture"] == "ticket12-private-images-v1"
             assert len(manifest["assets"]) == 2

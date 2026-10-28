@@ -18,7 +18,8 @@ export function parseOfflineImages(value: unknown): ReadonlyMap<string, string> 
 }
 
 export function OfflineImages({ children }: { children: ReactNode }) {
-  const [enabled] = useState(() => new URLSearchParams(window.location.search).get('walkthrough') === 'ticket12')
+  const [mode] = useState(() => new URLSearchParams(window.location.search).get('walkthrough'))
+  const enabled = mode === 'ticket12-local'
   const [assets, setAssets] = useState<ReadonlyMap<string, string>>(new Map())
   const [error, setError] = useState('')
   useEffect(() => {
@@ -31,8 +32,11 @@ export function OfflineImages({ children }: { children: ReactNode }) {
     return () => controller.abort()
   }, [enabled])
   return <OfflineImageContext.Provider value={enabled ? assets : null}>
+    {mode === 'ticket12' && <aside aria-label="Remote reference walkthrough">
+      <p>Private personal walkthrough. Remote reference images load directly from original public sources; no licence claimed. Exact Militado/San Martin target configurations remain unresolved. Merkur image missing: exact identity unknown. All prices and buying evidence are synthetic.</p>
+    </aside>}
     {enabled && <aside aria-label="Private image walkthrough">
-      <p>Private personal walkthrough. Real Casio reference photos; all prices and buying evidence are synthetic. Four watch images remain unavailable.</p>
+      <p>Local-only private walkthrough (remote images disabled). Real Casio reference photos; all prices and buying evidence are synthetic. Four watch images remain unavailable.</p>
       {error && <p role="alert">{error}</p>}
       {assets.size > 0 && <details><summary>View both Casio reference photos</summary>
         <p>All Rights Reserved, Copyright © CASIO COMPUTER CO., LTD. CASIO is a registered trademark of CASIO COMPUTER CO., LTD. Personal non-commercial use only.</p>
