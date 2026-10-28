@@ -460,3 +460,20 @@ Final checks on the stable candidate:
 A final frontend red/green query control aligns rejection of a nonempty query
 with no parameters (`?&&`) with the backend. Browser loading remains untested;
 HEAD success and rendered `src` are the precise availability/rendering proof.
+
+
+## Parent scheme-alignment repair — 2026-10-28
+
+Reproduced the reviewer's uppercase-HTTPS mismatch with two failing frontend
+feed-decoder tests (`HTTPS` and `HtTpS`, including source-context URLs). Changed
+the explicit HTTPS authority-prefix check to case-insensitive matching while
+retaining parsed-protocol, credential, query allowlist and malformed-input checks.
+The guarded execution/API/restart remote-reference case now uses uppercase image
+and mixed-case source URLs; it remains a reference, with unresolved configuration,
+unknown delivered total and no alert eligibility. Valid siblings remain visible.
+
+Verification after build completed: all eight guarded discovery workflows passed
+in 16.84s; all 55 frontend tests and TypeScript/build passed. Existing chunk advisory
+remains. Removed trailing whitespace/EOF blank lines in the two retained candidate
+logs; `git diff --check 2cae6f6` passes. Prior 65-workflow evidence is retained as
+candidate evidence, not claimed as a new full run for this one-line repair.

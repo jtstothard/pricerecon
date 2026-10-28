@@ -98,10 +98,10 @@ async def remote_reference():
         item = listing(harness, "cex", "image-control", "Synthetic image contract control")
         item.discovery_image = {
             "kind": "remote_reference",
-            "url": "https://assets.invalid/control.jpg?v=123&width=800&format=webp",
+            "url": "HTTPS://assets.invalid/control.jpg?v=123&width=800&format=webp",
             "attribution": "Offline fixture author",
             "provenance": "Synthetic contract metadata only",
-            "source_context_url": "https://example.org/review",
+            "source_context_url": "HtTpS://example.org/review",
             "configuration_note": "Blue ML05 reference; ML05B target unresolved",
             "source_listing_id": "image-control",
             "depicts_exact_watch": False,

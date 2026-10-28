@@ -70,3 +70,11 @@ it.each(['https://assets.invalid:999999/a', 'https://%zz/a', 'https://assets.inv
   expect(parseDiscoveryFeed(feedWith({ ...referenceImage, url })).candidates).toHaveLength(2)
   expect(parseDiscoveryFeed(feedWith({ ...referenceImage, url })).candidates[0].image.kind).toBe('original_placeholder')
 })
+
+it.each(['HTTPS', 'HtTpS'])('retains case-insensitive %s references and source context', scheme => {
+  const url = `${scheme}://assets.invalid/control.jpg?v=123&width=800&format=webp`
+  const source_context_url = `${scheme}://example.org/review`
+  const feed = parseDiscoveryFeed(feedWith({ ...referenceImage, url, source_context_url }))
+  expect(feed.candidates).toHaveLength(2)
+  expect(feed.candidates[0].image).toMatchObject({ kind: 'remote_reference', url, source_context_url })
+})

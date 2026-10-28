@@ -259,7 +259,7 @@ function remoteReferenceUrl(value: unknown): string {
   const patterns: Record<string, RegExp> = { v: /^[0-9]{1,20}$/, width: /^[1-9][0-9]{0,4}$/,
     format: /^(?:[1-9][0-9]{0,4}w|webp|jpg|jpeg|png|avif)$/, variant: /^[0-9]{1,30}$/ }
   const keys = new Set<string>()
-  if (url.protocol !== 'https:' || !raw.startsWith('https://') || url.username || url.password || url.hash || /[\s\\\x00-\x1f\x7f]/.test(raw)) throw new Error('Unsafe reference URL')
+  if (url.protocol !== 'https:' || !/^https:\/\//i.test(raw) || url.username || url.password || url.hash || /[\s\\\x00-\x1f\x7f]/.test(raw)) throw new Error('Unsafe reference URL')
   url.searchParams.forEach((value, key) => {
     if (keys.has(key) || !patterns[key]?.test(value)) throw new Error('Unsafe reference query')
     keys.add(key)
