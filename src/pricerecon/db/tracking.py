@@ -4,6 +4,7 @@ import sqlite3
 from contextlib import closing
 from datetime import UTC, datetime
 
+from pricerecon.db.connection import connect
 from pricerecon.db.schema import DB_PATH
 from pricerecon.models.qualification import Configuration
 from pricerecon.models.tracking import (
@@ -102,7 +103,7 @@ def store(connection: sqlite3.Connection, intent: ExactTracking) -> None:
 
 
 def create_tracking(request: TrackingCreate) -> ExactTracking:
-    with closing(sqlite3.connect(DB_PATH)) as connection, connection:
+    with closing(connect(DB_PATH)) as connection, connection:
         connection.execute("BEGIN IMMEDIATE")
         row = connection.execute(
             "SELECT c.payload_json FROM discovery_configurations c "
@@ -154,12 +155,12 @@ def create_tracking(request: TrackingCreate) -> ExactTracking:
 
 
 def get_tracking(tracking_id: int) -> ExactTracking:
-    with closing(sqlite3.connect(DB_PATH)) as connection:
+    with closing(connect(DB_PATH)) as connection:
         return project_tracking(connection, _load(connection, tracking_id))
 
 
 def list_tracking() -> TrackingList:
-    with closing(sqlite3.connect(DB_PATH)) as connection:
+    with closing(connect(DB_PATH)) as connection:
         return TrackingList(
             items=[
                 project_tracking(connection, ExactTracking.model_validate_json(row[0]))
@@ -209,7 +210,7 @@ def project_tracking(connection: sqlite3.Connection, intent: ExactTracking) -> E
 
 
 def update_tracking(tracking_id: int, request: TrackingUpdate) -> ExactTracking:
-    with closing(sqlite3.connect(DB_PATH)) as connection, connection:
+    with closing(connect(DB_PATH)) as connection, connection:
         connection.execute("BEGIN IMMEDIATE")
         intent = _load(connection, tracking_id)
         if intent.revision != request.expected_revision:
@@ -237,7 +238,7 @@ def has_delivery_claim(connection: sqlite3.Connection, tracking_id: int) -> bool
 
 
 def list_deliveries(tracking_id: int) -> TrackingDeliveries:
-    with closing(sqlite3.connect(DB_PATH)) as connection:
+    with closing(connect(DB_PATH)) as connection:
         _load(connection, tracking_id)
         deliveries = []
         for row in connection.execute(
@@ -288,7 +289,7 @@ def list_deliveries(tracking_id: int) -> TrackingDeliveries:
 
 
 def resolve_delivery(tracking_id: int, event_id: int, request: DeliveryResolution) -> ExactTracking:
-    with closing(sqlite3.connect(DB_PATH)) as connection, connection:
+    with closing(connect(DB_PATH)) as connection, connection:
         connection.execute("BEGIN IMMEDIATE")
         intent = _load(connection, tracking_id)
         if intent.revision != request.expected_revision:

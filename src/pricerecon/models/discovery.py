@@ -70,14 +70,20 @@ class SourceCoverage(DiscoveryModel):
 class DiscoveryAdmission(DiscoveryModel):
     """Staged programmatic execution only; never exposed as an activation API."""
 
-    mode: Literal["staged", "offline_verification"] = "staged"
+    mode: Literal["staged", "offline_verification", "pilot_session"] = "staged"
     policy_reference: str | None = Field(default=None, min_length=1)
     permission_reference: str | None = Field(default=None, min_length=1)
     activation_reference: str | None = Field(default=None, min_length=1)
 
     @property
     def admitted(self) -> bool:
-        return self.mode == "offline_verification" and all(
+        from pricerecon.pilot_bounds import active_pilot
+
+        pilot = active_pilot.get()
+        allowed = self.mode == "offline_verification" or (
+            self.mode == "pilot_session" and pilot is not None and pilot.live_eligible
+        )
+        return allowed and all(
             value and value.strip()
             for value in (
                 self.policy_reference,

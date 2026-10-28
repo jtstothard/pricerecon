@@ -80,7 +80,7 @@ def supervise(
             shutil.rmtree(root)
     receipt: dict[str, object] = {
         "schema": "pricerecon.watch-pilot.v1",
-        "code_version": "bounded-pilot-v1",
+        "code_version": "bounded-pilot-v2",
         "policy_version": "live-pilot-plan-2026-10-28-v1",
         "state": state,
         "cleanup": not root.exists(),
@@ -96,6 +96,9 @@ def supervise(
             receipt["state"] = "invalid_receipt"
         else:
             if isinstance(parsed, dict):
+                for field in ("review_verified", "exclusion_verified"):
+                    if isinstance(parsed.get(field), bool):
+                        receipt[field] = parsed[field]
                 for field in (
                     "requests",
                     "pages",
@@ -121,7 +124,12 @@ def supervise(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--synthetic", action="store_true", required=True)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--synthetic", action="store_true")
+    mode.add_argument("--execute", action="store_true")
+    parser.add_argument("--review", type=Path)
+    parser.add_argument("--reviewer-key", type=Path)
+    parser.add_argument("--reviewer-key-sha256")
     parser.add_argument("directory", type=Path)
     args = parser.parse_args()
     signal.signal(signal.SIGHUP, signal.SIG_IGN)
@@ -130,10 +138,39 @@ def main() -> None:
         raise KeyboardInterrupt
 
     signal.signal(signal.SIGTERM, interrupted)
+    command = [sys.executable, "-m", "pricerecon.pilot_worker"]
+    duration = 1200.0
+    if args.execute:
+        from pricerecon.pilot_activation import resolve_review
+
+        review = resolve_review(
+            args.review,
+            args.reviewer_key,
+            args.reviewer_key_sha256,
+            os.environ.get("EBAY_APP_ID", ""),
+        )
+        duration = review.remaining_seconds()
+        command.extend(
+            [
+                "--execute",
+                "--deadline-monotonic",
+                str(time.monotonic() + duration),
+                "--review",
+                str(args.review),
+                "--reviewer-key",
+                str(args.reviewer_key),
+                "--reviewer-key-sha256",
+                args.reviewer_key_sha256,
+            ]
+        )
+    else:
+        command.append("--synthetic")
+    command.append(str(args.directory))
     receipt = supervise(
-        [sys.executable, "-m", "pricerecon.pilot_worker", "--synthetic", str(args.directory)],
+        command,
         args.directory,
         owner_pid=os.getppid(),
+        timeout=duration,
     )
     print(json.dumps(receipt, sort_keys=True))
 

@@ -8,6 +8,7 @@ from decimal import Decimal
 
 from pricerecon.core.comparisons import assess_observation, claim, cohort_for
 from pricerecon.core.qualification import identity_key
+from pricerecon.db.connection import connect
 from pricerecon.db.history import get_history
 from pricerecon.db.schema import DB_PATH
 from pricerecon.models.assessments import (
@@ -39,7 +40,7 @@ def evaluate_comparisons(policy: ComparisonPolicy | None, now: datetime) -> None
     from pricerecon.core.collection_policy import current_policy
     from pricerecon.db.collection import storage_size
 
-    with closing(sqlite3.connect(DB_PATH)) as connection, connection:
+    with closing(connect(DB_PATH)) as connection, connection:
         connection.execute("BEGIN IMMEDIATE")
         operating = current_policy(connection)
         before = storage_size(connection) if operating else 0
@@ -235,7 +236,7 @@ def evaluate_comparisons(policy: ComparisonPolicy | None, now: datetime) -> None
 
 def get_assessments(connection: sqlite3.Connection | None = None) -> AssessmentList:
     if connection is None:
-        with closing(sqlite3.connect(DB_PATH)) as opened, opened:
+        with closing(connect(DB_PATH)) as opened, opened:
             opened.execute("BEGIN")
             return get_assessments(opened)
     items = [

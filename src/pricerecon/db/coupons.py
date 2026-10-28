@@ -4,6 +4,7 @@ import sqlite3
 from contextlib import closing
 
 from pricerecon.core.coupons import assess_application, assess_coupon
+from pricerecon.db.connection import connect
 from pricerecon.db.schema import DB_PATH
 from pricerecon.models.coupons import CouponAssessment, CouponHistory, CouponInput
 from pricerecon.models.qualification import MerchantOffer, SelectionBinding, safe_pointer
@@ -167,7 +168,7 @@ def project_lineage(connection: sqlite3.Connection, coupon: CouponAssessment) ->
 
 
 def get_coupon_history(offer_id: str) -> CouponHistory:
-    with closing(sqlite3.connect(DB_PATH)) as connection:
+    with closing(connect(DB_PATH)) as connection:
         rows = connection.execute(
             "SELECT payload_json FROM discovery_coupons WHERE offer_id = ? ORDER BY rowid",
             (offer_id,),

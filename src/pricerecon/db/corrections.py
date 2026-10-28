@@ -9,6 +9,7 @@ from uuid import uuid4
 if TYPE_CHECKING:
     from pricerecon.models.discovery import DiscoveryCandidate, DiscoveryCapture
 
+from pricerecon.db.connection import connect
 from pricerecon.db.history import append_history_invalidation
 from pricerecon.db.schema import DB_PATH
 from pricerecon.db.tracking import invalidate_configuration_tracking, store
@@ -118,7 +119,7 @@ def read_corrections(
 
 
 def get_corrections(candidate_id: str, configuration_id: str) -> CorrectionHistory:
-    with closing(sqlite3.connect(DB_PATH)) as connection, connection:
+    with closing(connect(DB_PATH)) as connection, connection:
         connection.execute("BEGIN")
         return read_corrections(connection, candidate_id, configuration_id)
 
@@ -146,7 +147,7 @@ def save_correction(
     configuration_id: str,
     request: CorrectionWrite,
 ) -> CorrectionHistory:
-    with closing(sqlite3.connect(DB_PATH)) as connection, connection:
+    with closing(connect(DB_PATH)) as connection, connection:
         connection.execute("BEGIN IMMEDIATE")
         history = read_corrections(connection, candidate_id, configuration_id)
         latest = connection.execute(
@@ -284,7 +285,7 @@ def correction_revision(connection: sqlite3.Connection) -> int:
 
 
 def input_revision() -> int:
-    with closing(sqlite3.connect(DB_PATH)) as connection:
+    with closing(connect(DB_PATH)) as connection:
         return correction_revision(connection)
 
 

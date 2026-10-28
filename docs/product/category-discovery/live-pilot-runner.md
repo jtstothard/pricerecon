@@ -1,118 +1,157 @@
-# Bounded pilot runner — implementation receipt, 2026-10-28
+# Bounded pilot runner — executable activation, 2026-10-28
 
-Status: offline containment prepared for parent review. Live acquisition is blocked.
-The buyer-approved numerical plan is [live-pilot-plan.md](live-pilot-plan.md).
-Integration input: `5e26693cbe3f088392f4ed0727ee69c1ccdf3c3f`.
-No live provider documentation, credential, token, search, detail, browser, production,
-VM, notification, account or purchase requests were made by this implementation.
-No push, PR or deployment was performed.
+The eligible path is implemented for parent review. No live token, search or detail
+request has been made. Candidate input is `c8e745c245a0fe0535b1023fafc30367c9d4f605`;
+parent integration is `5e26693cbe3f088392f4ed0727ee69c1ccdf3c3f`. Both histories
+are retained. The approved [plan](live-pilot-plan.md) remains the envelope.
 
 ## Commands
 
-Use an existing Python environment with the repository dependencies; set
-`PYTHONPATH` to this checkout's absolute `src` directory when running elsewhere.
+Use the existing dependency environment and this checkout's absolute `src` on
+`PYTHONPATH`. Build the unchanged frontend first (`npm run build --prefix frontend`).
 
 ```sh
+# Zero provider calls; missing evidence yields blocked, requests:0.
 PYTHONPATH=src python -m pricerecon.pilot
 PYTHONPATH=src python -m pricerecon.pilot --execute
+
+# Synthetic supervised normal acquisition; choose a NEW /tmp directory.
 PYTHONPATH=src python -m pricerecon.pilot --offline-check /tmp/pricerecon-pilot-offline-UNIQUE
+
+# Validate independent review, credential presence and build without executing.
+PYTHONPATH=src python -m pricerecon.pilot \
+  --review /external/review.json --reviewer-key /external/reviewer.pem \
+  --reviewer-key-sha256 TRUSTED_INDEPENDENT_PEM_SHA256
+
+# PARENT ONLY after review: existing authorized secret route injects the documented
+# EBAY_APP_ID and EBAY_CERT_ID environment variables in memory. No values in argv.
+PYTHONPATH=src python -m pricerecon.pilot --execute \
+  --review /external/review.json --reviewer-key /external/reviewer.pem \
+  --reviewer-key-sha256 TRUSTED_INDEPENDENT_PEM_SHA256
 ```
 
-Default and `--execute` currently return the same zero-request blocked preflight.
-They do not load credentials, create storage, or spend the shared live grant.
-`--offline-check` is explicitly synthetic. It starts a separate deadline/cleanup
-owner and exercises the ordinary `acquire_sources` lifecycle, eBay connector,
-Browse evidence normalizer and OperatingPolicy/DurableAdmission ledger. It is
-not live evidence or a replacement raw API probe. A consumed tombstone survives
-outside the deleted run directory; the same run path cannot be resumed/refilled.
-Different synthetic test directories are independent offline fixtures, not new
-live grants. The production scheduler and buyer walkthrough fixture are untouched.
+The last command performs macOS exclusion checks before consuming the grant or
+making provider calls, then invokes `acquire_once` with the real HTTPX transport.
+`acquire_once` invokes ordinary `execute_discovery` → `acquire_sources` → eBay
+connector/evidence normalizer → normal identity/cost projection and SQLite capture.
+No synthetic data enters that path. There is no force flag or alternative source.
 
-## Enforced offline
+During execution open **http://127.0.0.1:8878/discover**; the existing comparison and
+product UI reads only the temporary database. Port 8878 must be free. No application
+lifespan, scheduler, watch executor or notification transport is started. Only GET
+routes are mounted; mutation/export/acquisition routes are unavailable. Host and
+Origin checks reject foreign origins. CSP blocks remote images and connections.
+Responses are `no-store`; the session script clears the page at deadline or server
+loss. A blocked preflight starts no server. Stop with Ctrl-C or let the bounded
+session expire; the independent supervisor removes the entire marked run directory.
 
-- Exact queries: `Addiesdive AD2066 Mint Green`, `Casio MTP-B145D-2A2VEF`.
-  One search page of five leads each; up to two details per subject selected by
-  exact query text, new condition and fixed-price evidence, never price ranking.
-  Search text does not prove selected variation. Details validate the same item;
-  neither detail presence nor GBP display upgrades identity or UK delivered cost.
-- One memory-only token shared by both connector lifecycles; seven eBay attempts,
-  two pages, four details, zero retries/fallbacks, parallel requests, browsers,
-  AI routes, notifications or recurring refresh. HTTP redirects/non-2xx stop the
-  lane. Only HTTPS api.ebay.com token, exact search and admitted item routes pass.
-  Environment proxies are disabled. No production connector config is inherited.
-- Response bodies are streamed in 64KiB chunks, limited to 2MiB per response and
-  8MiB aggregate. Non-identity content encodings are rejected before decoding to
-  avoid decompression amplification. An over-limit chunk is counted as observed
-  bytes and refused before accumulation; no retry follows. Normalized report
-  bytes are limited to 2MiB aggregate before release to acquisition callers.
-- The isolated SQLite boundary limits the only database to 32MiB (8192 4KiB
-  pages), uses memory journals/temp tables and rejects ATTACH or storage pragma
-  changes. Python file writes/new directories/links/renames and external process
-  creation are denied after setup. The marked run directory therefore has one
-  capped DB plus its small marker, below the 50MiB ceiling; no disk logs, token
-  store, WAL, exports or raw response archives. Audit guards reject alternate DB
-  paths and direct SQLite connections outside the bounded connection boundary.
-- Each sequential source attempt reserves 600 seconds in the existing ledger;
-  the whole process is bounded to 1200 seconds by a separate supervisor even if
-  the event loop stalls. The supervisor kills the worker process group and
-  removes marked DB/WAL/temp storage at expiry/failure. It stops when its invoking
-  CLI process disappears. Host failure/SIGKILL of the cleanup owner cannot prove
-  deletion and never establishes permission to restart.
-- Worker logs are disabled. Supervisor output is capped to 1MiB in memory and
-  only known receipt states and nonnegative aggregate counters are forwarded.
-  No arbitrary exception/provider text crosses the permanent receipt boundary.
+## Independent review interface
 
-## Prerequisites still absent
+There is **no trusted key bundled in this repo**. The parent must establish the
+reviewer's public-key SHA256 through its independent review channel, not copy a pin
+from the manifest. The reviewer must examine genuine app-specific eBay approval
+and transient-use/retention evidence. A signature authenticates that review; it
+cannot create eBay entitlement. Do not sign a locally written assertion as if it
+were provider approval. The implementation creates no review, signing key or
+entitlement artifact. The controlled tests use explicitly fictional documents.
 
-The repository records requirements and previous source checks, not app-specific
-entitlement. Preflight truthfully returns:
+External `review.json` is strict JSON with these fields:
 
-```json
-{"schema":"pricerecon.watch-pilot.v1","state":"blocked","gates":["ebay_app_approval_unproven","ebay_transient_retention_unproven","backup_exclusion_unproven"],"requests":0}
-```
-
-Parent must independently establish all of the following before live activation:
-
-| Required evidence | What must be established |
+| Field | Required binding |
 | --- | --- |
-| Existing app identity and approval/contract pointer | The existing production app is approved for this Browse UK intended use; prior HTTP success is insufficient |
-| Source-specific transient use/retention pointer | Capture, session display, necessary normalized fields, permitted duration, deletion and minimal permanent receipt are covered; 20 minutes is only the buyer ceiling |
-| Actual backup/export/index exclusion proof | The eventual marked temporary path is excluded from every applicable repository/backup/export/index pipeline; `gitignore` or Time Machine alone is insufficient |
-| Active owner and elapsed operator effort | Session remains attended and execution/review stay within the 30-minute allowance |
-| One shared live grant | Durable consumed marker/receipt and fixed scope survive deletion; no parallel parent/child run or second grant after interruption |
+| `schema` | `pricerecon.pilot-review.v1` |
+| `app_sha256` | SHA256 of the exact existing app ID supplied by the secret route |
+| `purpose` | `watch-pilot-2026-10-28-once` |
+| `envelope_sha256` | SHA256 of the exact approved `live-pilot-plan.md` bytes |
+| `expires_at` | Timezone-aware expiry of this independent review/source permission |
+| `operator_started_at` | Actual attended execution/review start; timezone-aware, no future timestamp |
+| `retention_seconds` | Source-permitted session retention, integer 1–1200; never inferred from buyer approval |
+| `documents` | Exactly two entries, kinds `app_approval` and `transient_use` |
 
-There is deliberately no local approval JSON, evidence string, boolean or CLI
-force switch that can turn these unknowns green. The checked-in CLI has no live
-activation resolver yet: its only executable worker entry is the controlled
-synthetic proof. `acquire_once` accepts an explicit source, transport and policy
-and uses the real application seam, but is not itself a live authorization API.
-After actual source evidence is reviewed, the parent must wire/verify the eligible
-live activation to that seam, bind credential acquisition through the existing
-secret route, and establish backup/session/grant evidence. Do not call the worker
-with a live transport to bypass preflight. This remaining activation work is
-**blocked**, not complete, and the pilot has not acquired or displayed offers.
-No local private offer UI or buyer/live usefulness proof is claimed.
+Each document has `file` (relative to the external manifest directory), `sha256`
+(exact reviewed bytes), and `issuer` (the actual `https://developer.ebay.com/…`
+source reference). The app approval evidence must bind the app and intended Browse
+UK use; transient-use evidence must cover capture, required normalized fields,
+session display, deletion, and the minimal permanent receipt. An issuer URL alone
+is not evidence. Missing, changed, oversized or escaping document paths fail.
 
-## Verification
+`review.json.sig` is an external reviewer's RSA/SHA256 signature of the exact raw
+manifest bytes, verifiable with `openssl dgst -sha256 -verify reviewer.pem
+-signature review.json.sig review.json`. No private review key enters the runner.
+Manifest is capped at 16KiB, public key/signature at 8KiB, each reviewed document
+at 2MiB. App, purpose, exact envelope, expiry, source retention and operator budget
+are checked again in the supervisor/worker before acquisition. Absent or invalid
+review never triggers credential acquisition or provider calls. The ordinary
+source/policy receipt carries the review digest rather than an invented authority.
 
-Public test seams: blocked CLI/preflight, controlled HTTP transport, public eBay
-connector lifecycle, ordinary acquisition lifecycle with marked temporary SQLite,
-SQLite connection boundary, and process supervisor. These implement the seams
-explicitly requested in the task. The TDD skill and engineering standard were read;
-red results were observed before implementing the missing boundaries.
+## Concrete current-platform containment
 
-Validation: **108 passed** across pilot, collection, shared-grant, discovery,
-source-evidence, eBay secret-logging and rate-limiter modules with `TMPDIR=/tmp`.
-The final expanded pilot module separately passed **12 tests**, including the
-exact documented `/tmp` CLI command. The single earlier sanitized-temp mismatch
-passed its targeted rerun; no assertion or safety check was weakened. Mypy passes
-all 11 changed source files. New files/tests pass Ruff and Black; existing touched
-files retain **34 baseline Ruff findings, zero added**. Whitespace checks pass.
+Only macOS `/private/tmp/pricerecon-pilot-<unique>.noindex` is supported for live
+storage. It sits outside this repository, home/cloud-sync roots and repo artifact
+pipelines. Before any merchant data exists, the worker applies the Time Machine
+exclusion xattr and verifies `/usr/bin/tmutil isexcluded` reports `[Excluded]`.
+Spotlight exclusion uses macOS's `.noindex` directory convention. The worker checks
+actual running process executable names, configured user/system launchd jobs and user crontab for restic, borg, rclone, Arq, Backblaze,
+Dropbox, OneDrive, Syncthing, Duplicati and Carbonite. A detected tool blocks until
+its applicable exclusion is implemented; hypothetical pipelines are not blockers.
+This scope does not claim omniscience about unknown custom backup jobs. The parent
+must not execute under an additional known exporter/indexer outside this scope.
+No confidential data is written outside the temporary root.
 
-Minimal retained receipts: [blocked preflight](../../testing/artifacts/live-pilot-runner/preflight.json),
-[controlled supervised run](../../testing/artifacts/live-pilot-runner/offline-receipt.json),
-and [verification summary](../../testing/artifacts/live-pilot-runner/verification.json).
-These contain no merchant data or credentials. The regression run's macOS temporary-directory mismatch was
-rechecked with `TMPDIR=/tmp`, matching the child harness's sanitized environment.
-Source terms, actual backup exclusions, real auth/normalization, UI usefulness and
-operator-time observation remain unproven by these controlled tests.
+Current-machine verification applied/queried the exclusion on a new empty temp
+directory and removed it: Time Machine excluded; `.noindex` path; no listed
+third-party backup/sync process or configured launchd/cron job detected. `tmutil addexclusion` initially timed out;
+the implementation instead writes the standard exclusion xattr using `/usr/bin/xattr`
+and verifies with `tmutil isexcluded`. It makes no infrastructure changes.
+
+All original caps remain: two exact queries, five leads per page, two details per
+subject, seven eBay attempts including one memory-only token, no retry/fallback,
+redirect, concurrent request, browser acquisition, AI, paid route, scheduler or
+notification. Streaming bodies: 2MiB/response and 8MiB aggregate; normalized reports:
+2MiB; logs: 1MiB; DB: 32MiB; physical run directory: below 50MiB. SQLite routes use
+the bounded connection boundary, memory journals/temp tables, capped pages, denied
+ATTACH/storage pragmas. The audit guard denies other writes, subprocesses and
+network egress except resolved api.ebay.com:443 and the loopback UI listener.
+Raw responses and credentials stay in memory. Production DB/config is never read.
+
+The shorter of 1200 seconds, external retention, review expiry and remaining
+1800-second operator window bounds the worker and independent supervisor. Session
+loss stops the process group. The durable exclusive, fsynced consumed marker is
+`~/.local/state/pricerecon/watch-pilot-2026-10-28.consumed`, contains no merchant or
+secret data, survives run cleanup, and is shared across directories and restarts.
+No CLI override/refill is available. Interruption or failure after consumption
+requires the parent to report the consumed grant, never delete it to retry.
+Host failure/SIGKILL of the cleanup owner cannot establish deletion or restart rights.
+
+## Actual remaining external prerequisites
+
+1. Genuine app-specific approval/use/retention documents and independently trusted
+   reviewer signature/pin have not been supplied. No entitlement is claimed.
+2. Existing local/dev environment presence inspection returned `EBAY_APP_ID=false`,
+   `EBAY_CERT_ID=false`. Parent must use the existing documented authorized secret
+   route; if needed, parent uses T3 `request_secret`, never raw chat. No production
+   commands or production DB reads were used to look for credentials.
+3. Parent review and one attended execution under the shared grant remain pending.
+   Real provider behavior and buyer usefulness remain unproven until that run.
+
+Backup/temp containment has a working, locally checked path; it is rechecked at
+execution. Missing external evidence does not leave activation code unwired.
+
+## Offline verification
+
+TDD red results preceded review resolver and UI implementation. Tests exercise
+signed eligible and absent/mismatched/expired/changed evidence, normal connector
+and discovery projection, actual macOS exclusion, controlled eligible worker CLI,
+read-only UI feed/product route, denied mutation/export/foreign host, memory-only
+token, shared non-refilling grant, physical/body limits, cleanup and supervisor
+expiry. Controlled eligible flow uses five attempts (token, two searches, two
+details); it does not spend the live grant. No live provider calls, push, PR,
+deployment, account action or production mutation occurred.
+
+Final checks: **92 passed** in the affected pilot/collection/shared-grant/discovery/
+source-evidence/secret-logging regression run. After the final activation/deadline
+additions, **19 passed** in both pilot test modules (including a real loopback
+server startup under the guard and refusal to reuse the live fixture grant).
+Ruff passes all changed Python files; mypy passes all 15 changed source modules;
+frontend TypeScript/Vite build and `git diff --check` pass. Existing Pydantic
+deprecation warnings remain. No live-source acceptance is inferred.

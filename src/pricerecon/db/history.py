@@ -6,6 +6,7 @@ from contextlib import closing
 from datetime import UTC, datetime
 from itertools import pairwise
 
+from pricerecon.db.connection import connect
 from pricerecon.db.history_lineage import CaptureLineage
 from pricerecon.db.schema import DB_PATH
 from pricerecon.models.costs import CostScenario
@@ -62,7 +63,7 @@ def get_history(
     connection: sqlite3.Connection | None = None,
 ) -> ObservationHistory | None:
     if connection is None:
-        with closing(sqlite3.connect(DB_PATH)) as opened, opened:
+        with closing(connect(DB_PATH)) as opened, opened:
             opened.execute("BEGIN")
             return get_history(candidate_id, as_of=as_of, connection=opened)
     from pricerecon.db.discovery import hydrate_candidate

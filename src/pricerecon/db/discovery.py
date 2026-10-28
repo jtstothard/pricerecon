@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from pricerecon.categories.watches import configuration_preference_fit, interpret, resolve_watch
 from pricerecon.core.costs import public_summary
 from pricerecon.core.qualification import qualify_offer
+from pricerecon.db.connection import connect
 from pricerecon.db.coupons import init_coupon_tables, read_coupons, save_coupons
 from pricerecon.db.schema import DB_PATH
 from pricerecon.models.costs import CostHistory, CostScenario
@@ -97,7 +98,7 @@ def init_discovery_tables(connection: sqlite3.Connection) -> None:
 
 
 def save_capture(capture: DiscoveryCapture, candidates: list[DiscoveryCandidate]) -> None:
-    with closing(sqlite3.connect(DB_PATH)) as connection, connection:
+    with closing(connect(DB_PATH)) as connection, connection:
         connection.execute("PRAGMA foreign_keys = ON")
         connection.execute("BEGIN IMMEDIATE")
         from pricerecon.core.collection_policy import current_policy
@@ -284,7 +285,7 @@ def hydrate_candidate(connection: sqlite3.Connection, candidate: DiscoveryCandid
 def get_feed() -> DiscoveryFeed:
     from pricerecon.db.history import get_history
 
-    with closing(sqlite3.connect(DB_PATH)) as connection, connection:
+    with closing(connect(DB_PATH)) as connection, connection:
         connection.execute("BEGIN")
         captures = [
             DiscoveryCapture.model_validate_json(row[0])
@@ -375,7 +376,7 @@ class PreferenceConflict(Exception):
 
 
 def get_preferences() -> PreferenceProfile:
-    with closing(sqlite3.connect(DB_PATH)) as connection:
+    with closing(connect(DB_PATH)) as connection:
         row = connection.execute(
             "SELECT payload_json FROM discovery_preferences WHERE category = 'watches'"
         ).fetchone()
@@ -390,7 +391,7 @@ def save_preferences(update: PreferenceUpdate) -> PreferenceProfile:
         values=update.values,
         interpretation=interpret(update.values),
     )
-    with closing(sqlite3.connect(DB_PATH)) as connection, connection:
+    with closing(connect(DB_PATH)) as connection, connection:
         connection.execute("BEGIN IMMEDIATE")
         row = connection.execute(
             "SELECT revision FROM discovery_preferences WHERE category = 'watches'"
@@ -406,7 +407,7 @@ def save_preferences(update: PreferenceUpdate) -> PreferenceProfile:
 
 
 def get_cost_history(offer_id: str) -> CostHistory:
-    with closing(sqlite3.connect(DB_PATH)) as connection:
+    with closing(connect(DB_PATH)) as connection:
         scenarios = [
             CostScenario.model_validate_json(row[0])
             for row in connection.execute(

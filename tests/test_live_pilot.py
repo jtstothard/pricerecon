@@ -309,3 +309,28 @@ def test_documented_offline_cli_uses_tmp_and_supervised_application_seam():
         assert receipt["state"] == "success_empty"
         assert receipt["requests"] == 3
         assert receipt["cleanup"] is True
+
+
+def test_transient_ui_reads_normal_discovery_feed_and_denies_mutations(tmp_path):
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pricerecon.pilot_worker",
+            "--synthetic",
+            "--synthetic-outcome",
+            "offer",
+            "--ui-check",
+            str(tmp_path / "ui-run"),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    receipt = json.loads(result.stdout)
+    assert receipt["state"] == "success"
+    assert receipt["ui_checked"] is True
+    assert receipt["requests"] == 5
+    assert receipt["cleanup"] is True

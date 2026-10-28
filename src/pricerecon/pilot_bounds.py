@@ -23,6 +23,7 @@ class PilotBounds:
     pages: int = 0
     details: int = 0
     token: str | None = field(default=None, repr=False)
+    live_eligible: bool = False
     stopped: bool = False
     busy: bool = False
     seen: set[str] = field(default_factory=set)
