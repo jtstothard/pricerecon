@@ -200,3 +200,20 @@ whitespace/tree-equality checks passed; no public research or runtime tests were
 repeated. See the [review receipt](../../../docs/testing/watch-images.md#sole-merger-reuse-only-documentation-review--2026-10-28).
 **Ticket12 remains open.** Reuse-only authority supplies no photo licence,
 Militado/San Martin selection, Merkur identity or full buyer acceptance.
+
+
+## Fresh remote-reference merger recheck — 2026-10-28
+
+Candidate `dbcc80918df5e0f296407a6ab7d68c7d7373dfef` passed independent
+Standards and Spec review with zero blockers, including the uppercase/mixed-case
+HTTPS repair. Merged locally with `--no-ff` in
+`cb0ed2d3b20f375315da7298f5048406f1cdd7b0`; merged tree exactly equals candidate.
+Candidate and merged checks each passed 11 guarded discovery/watch workflows,
+55 frontend tests, build/types, focused Ruff, uncached three-source mypy and
+whitespace checks. See the [fresh merger receipt](../../../docs/testing/watch-images.md#fresh-sole-merger-remote-reference-recheck--2026-10-28).
+
+**Ticket12 stays open.** User-approved remote references establish no licence or
+buying qualification. Militado/San Martin targets and Merkur identity remain
+unresolved; browser loading/failure/narrow/keyboard and actual buyer remaining-task
+acceptance remain unproven. Parent owns launch/retest and cleanup. No browser,
+live collection, outreach, production, push or PR work occurred in this recheck.

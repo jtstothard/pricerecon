@@ -477,3 +477,49 @@ in 16.84s; all 55 frontend tests and TypeScript/build passed. Existing chunk adv
 remains. Removed trailing whitespace/EOF blank lines in the two retained candidate
 logs; `git diff --check 2cae6f6` passes. Prior 65-workflow evidence is retained as
 candidate evidence, not claimed as a new full run for this one-line repair.
+
+
+## Fresh sole-merger remote-reference recheck — 2026-10-28
+
+Reviewed full candidate `dbcc80918df5e0f296407a6ab7d68c7d7373dfef`, including
+repair since `21fe46ca62907d0b70d487ae4528793035c1ddf6`, against integration
+`2cae6f65c623e8e45bf18df0080cedfb2d8898b8`. Both checkouts began clean.
+Read CONTRIBUTING, engineering-standard, ticket12, this receipt and the launch
+and image-context records. Standards: zero blockers. Spec: zero blockers for the
+user-approved private remote-display scope. The case-insensitive authority-prefix
+check agrees with parsed HTTPS protocol validation without relaxing credentials,
+malformed URL, query or qualification checks. Four source references retain
+attribution/context; unresolved configurations, missing Merkur and absence of
+licence/qualification claims remain explicit. Local-only mode remains closed to
+unmapped remote URLs; existing image bytes and manifest are unchanged.
+
+Independent verification on the stable candidate, then repeated on the stable
+merged checkout (Node 24.14.1 and retained project Python environment):
+
+- `python -m pytest -q tests/test_discovery_workflow.py tests/test_watch_workflow.py`:
+  **11 passed**, candidate 24.33s, merged 24.15s. Includes all eight discovery
+  workflows, uppercase image/mixed-case source context through API/restart,
+  rejection controls and the private-image workflow.
+- `npm test -- --run`: **55 passed** on each checkout, including both HTTPS/HtTpS
+  decoder repro cases, sibling survival, strict qualification and mode rendering.
+- `npm run build`: passed on each (TypeScript plus Vite; existing chunk advisory).
+- Ruff passed on core/discovery, models/discovery, models/discovery_images,
+  monitoring/discovery_workflows, monitoring/watch_image_workflow,
+  monitoring/watch_images, monitoring/watch_workflow and test_discovery_workflow.
+- Uncached mypy on the three changed discovery source files passed on each;
+  existing unused-section note remains. Candidate and merged diff checks passed.
+
+No code-tree switching occurred during tests. API checks completed before builds.
+No broader 65-workflow rerun is claimed by this recheck. Merge `--no-ff` created
+`cb0ed2d3b20f375315da7298f5048406f1cdd7b0`, first parent the integration SHA
+above and second parent the full candidate. Its tree
+`6779530c35f57f04f88391a10aa4d0ee5a3b61a6` exactly equals the candidate tree.
+This receipt/tracker update is a separate local documentation commit.
+
+Launch after the documented build/guarded server steps:
+`http://127.0.0.1:8892/discover?walkthrough=ticket12` for direct remote references;
+`http://127.0.0.1:8892/discover?walkthrough=ticket12-local` for local-only mode.
+No server/browser was launched in this recheck. Ticket12 remains open for actual
+remote loading/failure/narrow/keyboard and buyer visual-first/remaining-task
+acceptance, target selections and Merkur identity. No live collection, contact,
+production, push, PR, sibling edits or cleanup occurred; parent owns cleanup.
