@@ -299,3 +299,34 @@ available. No backend or legacy Watch behavior changes.
 No browser/server/live/network/account work occurred. Parent must review/merge and
 retest the actual simpler flow one task at a time. Ticket12 stays open; buyer
 comprehension, narrow/keyboard use and complete acceptance are pending.
+
+
+## Sole merger visual-first review — 2026-10-28
+
+Candidate `9d3a5db31ab4374e184e346d814deb86820b0379`, checkout
+`/Users/jay/.t3/worktrees/pricerecon/t3-7a0a4f50`, reviewed against expected
+integration `907c9625ed696777891998507a0e01bef76c7cc7`; merged with `--no-ff`
+as `6597cc4a894ac7ad836f3addda36f340001fab24`.
+
+Standards: zero blockers against CONTRIBUTING.md and docs/engineering-standard.md.
+No new unchecked escapes, source boundaries or backend changes. Native details
+and rendered regressions provide bounded presentation proof.
+Spec: zero blockers against the latest buyer guide, ticket12 and overload brief.
+Default copy is substantially reduced around image/title/price, supported essential
+specs and Track. Evidence and attribution remain accessible in native details;
+material unknown/conditional, withdrawn and stale states remain visible. One
+Wrong watch details? path retains required, empty-by-default actor/rationale,
+original/intended values and dispute/history controls. Exact-target save behavior
+and correction payloads are unchanged. Synthetic buying evidence is labelled once
+at session level; unresolved/reference image labels remain accessible.
+
+Independent candidate checks: all 61 frontend tests, TypeScript/production build,
+and diff check passed (existing bundle-size advisory). Merged checks: 6 focused
+clarity/correction tests, TypeScript noEmit, diff check and exact candidate tree
+equality passed before this documentation receipt. Integration was clean before
+merge and after checks; no untracked files existed to preserve. Existing receipts
+were retained. Backend tests were not repeated for this presentation-only diff.
+No browser, server, live/network/account, push, PR or sibling edits performed.
+Parent owns cleanup and actual walkthrough refresh. Ticket12 remains open:
+buyer comprehension, narrow/keyboard use, target/crossing and full acceptance
+remain pending; source/rendered proof is not buyer acceptance.
