@@ -493,3 +493,17 @@ repeat suppression, not captured transport delivery. Channels were not changed
 without the buyer choosing them. Buyer observation of the resulting screen and
 remaining correction/narrow/keyboard tasks remain pending. No live notification
 or market observation occurred.
+
+
+## Buyer-authorized correction demonstration — 2026-10-28
+
+Buyer asked the parent to perform the mint-to-salmon correction. Parent submitted
+it through the application correction API in temporary fixture run
+`e94f6a6651dd49d788aafe9ac415c6fa`, attributed to “Codex, at Jay’s request”,
+with a rationale explicitly identifying this as synthetic walkthrough data.
+API readback confirms salmon intended dial, original mint in retained lineage,
+requalification required, public delivered amount withdrawn (unknown), target
+GBP60 retained and alert assessment withheld. Zero blocked edges remain.
+No real product claim or notification was introduced. Buyer screen comprehension
+and narrow/keyboard usability remain separate; parent API action is not buyer UI
+interaction proof.
