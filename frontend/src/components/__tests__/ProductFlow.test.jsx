@@ -291,3 +291,22 @@ it('shows an arbitrary externally revised value instead of a blank preset', asyn
   expect(container.querySelector('select').value).toBe('__custom')
   expect(container.querySelector('input').value).toBe('157.65')
 })
+
+it('puts the watch and buying action before flat detail navigation and keeps attribution in Technical', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => captured }))
+  const id = captured.candidates[0].id
+  await mount(<MemoryRouter initialEntries={[`/discover/product/${id}`]}><Routes><Route path="/discover/product/:id" element={<ProductDetail />} /></Routes></MemoryRouter>)
+  const brief = container.querySelector('[aria-label="Watch buying summary"]')
+  expect(brief).not.toBeNull()
+  expect(brief.compareDocumentPosition(container.querySelector('nav')) & dom.window.Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(brief.querySelector('h1').textContent).toBe(captured.candidates[0].title)
+  const track = Array.from(brief.querySelectorAll('a')).find(a => /Track this watch|Edit delivered target/.test(a.textContent))
+  expect(track.getAttribute('href')).toContain('view=tracking')
+  expect(brief.textContent).toContain('Condition')
+  expect(container.querySelectorAll('figure')).toHaveLength(1)
+  expect(container.querySelector('.product-content h2').textContent).toBe('Watch specifications')
+  expect(container.querySelector('details')).toBeNull()
+  await act(async () => container.querySelector('nav a[href*="technical"]').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true, button: 0 })))
+  expect(container.querySelector('.product-content').textContent).toContain('Image source and attribution')
+  expect(container.querySelector('.product-content').textContent).toContain('Capture lineage')
+})

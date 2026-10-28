@@ -205,14 +205,10 @@ function Costs({ costs }: { costs: Cost[] }) {
             ))}
           </ul>
           <h4>Charges</h4>
-          <ul>
-            {cost.components.map((part, i) => (
-              <li key={i}>
-                {part.kind.replace(/_/g, ' ')}: {part.currency ?? ''} {part.amount ?? 'unknown'};{' '}
-                {part.state}. {part.reason}
-              </li>
-            ))}
-          </ul>
+          <DetailRows rows={cost.components.map((part, i) => [
+            `${part.kind.replace(/_/g, ' ')} (${i + 1})`,
+            `${part.currency ?? ''} ${part.amount ?? 'unknown'}; ${part.state}. ${part.reason}`,
+          ])} />
           <h4>Benefits excluded from payable</h4>
           {cost.benefits.map((benefit, i) => (
             <p key={i}>
@@ -318,10 +314,9 @@ export function ProductContent({
   view: string
 }) {
   return (
-    <div className="product-content">
+    <div className={`product-content product-view-${view}`}>
       {view === 'overview' && (
         <>
-          <DiscoveryImage image={candidate.image} />
           <h2>Watch specifications</h2>
           <p>Identity {candidate.identity_state}. Unknown specifications remain unresolved.</p>
           {candidate.configurations.map((config) => (
@@ -339,18 +334,23 @@ export function ProductContent({
               />
             </section>
           ))}
-          <h2>Preference fit</h2>
+          <h3>Preference fit</h3>
           <ul>
             {candidate.preference_fit.map((fit) => (
               <li key={fit.field}>{fit.reason}</li>
             ))}
           </ul>
-          <h2>Offers</h2>
+          <h3>Offers</h3>
           {candidate.offers.map((offer) => (
-            <p key={offer.id}>
-              {offer.seller ?? 'Seller unknown'}: {offer.qualification.state}; comparison{' '}
-              {offer.comparison.state}. Availability {offer.availability ?? 'unknown'}.
-            </p>
+            <section key={offer.id} aria-label={offer.seller ?? 'Seller unknown'}>
+              <h4>{offer.seller ?? 'Seller unknown'}</h4>
+              <DetailRows rows={[
+                ['Condition', offer.condition ?? 'Unknown'],
+                ['Availability', offer.availability ?? 'Unknown'],
+                ['Qualification', offer.qualification.state],
+                ['Comparison', offer.comparison.state],
+              ]} />
+            </section>
           ))}
           <p>{candidate.missing_data.join('; ')}</p>
         </>
@@ -358,7 +358,7 @@ export function ProductContent({
       {view === 'costs' && (
         <>
           {' '}
-          <h3>UK delivered price</h3>
+          <h2>UK delivered price</h2>
           <dl>
             <div>
               <dt>Public total, no coupon</dt>
@@ -468,7 +468,8 @@ export function ProductContent({
       )}
       {view === 'technical' && (
         <>
-          {' '}
+          <h2>Technical evidence</h2>
+          <DiscoveryImage image={candidate.image} />
           <dl>
             <div>
               <dt>Source</dt>
@@ -491,35 +492,25 @@ export function ProductContent({
             </p>
           )}
           <section>
-            <h3>Technical evidence: capture lineage</h3>
-            <p>
-              Capture: <code>{candidate.capture_id}</code>. Source listing:{' '}
-              {candidate.source_listing_id}. Connector-reported source: {candidate.reported_source}.
-            </p>
-            <ul>
-              {candidate.evidence.map((evidence) => (
-                <li key={evidence.id}>
-                  <strong>
-                    {evidence.field === 'title' ? 'Reported title' : 'Reported item price'}:
-                  </strong>{' '}
-                  {evidence.value}
-                  <p>
-                    {evidence.issuer_kind} from {evidence.issuer}; extracted by {evidence.extractor}{' '}
-                    via {evidence.route}.
-                  </p>
-                  <p>
-                    Retrieved {new Date(evidence.captured_at).toLocaleString()}; source observation{' '}
-                    {evidence.source_observed_at
-                      ? new Date(evidence.source_observed_at).toLocaleString()
-                      : 'unknown'}
-                    . {evidence.validity_context}.
-                  </p>
-                  <p>
-                    Derived from: <code>{evidence.derived_from.join(', ')}</code>
-                  </p>
-                </li>
-              ))}
-            </ul>
+            <h3>Capture lineage</h3>
+            <DetailRows rows={[
+              ['Capture', candidate.capture_id],
+              ['Source listing', candidate.source_listing_id],
+              ['Reported source', candidate.reported_source],
+            ]} />
+            {candidate.evidence.map((evidence) => (
+              <section key={evidence.id}>
+                <h4>{evidence.field === 'title' ? 'Reported title' : 'Reported item price'}: {evidence.value}</h4>
+                <DetailRows rows={[
+                  ['Issuer', `${evidence.issuer_kind} from ${evidence.issuer}`],
+                  ['Extraction', `${evidence.extractor} via ${evidence.route}`],
+                  ['Retrieved', evidence.captured_at],
+                  ['Source observation', evidence.source_observed_at ?? 'Unknown'],
+                  ['Validity', evidence.validity_context],
+                  ['Derived from', evidence.derived_from.join(', ') || 'No parent evidence supplied'],
+                ]} />
+              </section>
+            ))}
           </section>
           <ObservationHistory candidateId={candidate.id} technical />
           <h3>Complete retained record</h3>
@@ -530,9 +521,11 @@ export function ProductContent({
           <pre>{JSON.stringify(candidate, null, 2)}</pre>
         </>
       )}
-      {view === 'correction' && <IdentityCorrection candidate={candidate} onSaved={onSaved} />}
+      {view === 'correction' && <><h2>Correct watch details</h2><IdentityCorrection candidate={candidate} onSaved={onSaved} /></>}
       {view === 'tracking' && (
         <>
+          <h2>Track this exact watch</h2>
+          <p>Choose a delivered target. Alerts wait for fresh, qualified evidence for your selected configuration.</p>
           {candidate.configurations.length === 0 && (
             <p>Exact identity unresolved. Resolve watch details before tracking.</p>
           )}
@@ -589,18 +582,30 @@ export function ProductDetail() {
       )}
       {candidate && (
         <>
-          <h1>{candidate.title}</h1>
-          {feed?.captures.some((capture) => capture.mode === 'offline_verification') && (
-            <p className="discovery-caution">
-              Synthetic session · prices and buying evidence are test data.
-            </p>
-          )}
-          <p>
-            {candidate.public_total.amount === null
-              ? 'Total unknown'
-              : `${candidate.public_total.currency} ${candidate.public_total.amount}`}{' '}
-            · {costStateLabel[candidate.public_total.state]} · freshness unvalidated
-          </p>
+          <header className="product-hero" aria-label="Watch buying summary">
+            <DiscoveryImage image={candidate.image} compact />
+            <div className="product-buying-brief">
+              <h1>{candidate.title}</h1>
+              {candidate.image.kind === 'remote_reference' && <p className="discovery-caution">{candidate.image.configuration_note}</p>}
+              <p className={candidate.identity_state === 'supported' ? 'discovery-quiet' : 'discovery-caution'}>
+                Identity {candidate.identity_state}
+              </p>
+              {candidate.configurations.filter(c => c.state === 'supported').slice(0, 1).map(config => (
+                <DetailRows key={config.id} rows={Object.entries(config.values).filter(([field]) => ['dial', 'case_width_mm', 'movement', 'strap'].includes(field)).map(([field, value]) => [field.replace(/_/g, ' '), value])} />
+              ))}
+              <div className="product-price-summary">
+                <p className="product-delivered-label">UK delivered · no coupon</p>
+                <p className="product-delivered-price">{candidate.public_total.amount === null ? 'Total unknown' : `${candidate.public_total.currency} ${candidate.public_total.amount}`}</p>
+                <p>{costStateLabel[candidate.public_total.state]}. Freshness unvalidated. Cashback excluded.</p>
+                <p>Condition: {[...new Set(candidate.offers.map(offer => offer.condition ?? 'Unknown'))].join(', ') || 'Unknown'}</p>
+                {candidate.corrections.some(c => c.requalification === 'required') && <p className="discovery-caution">Old prices withdrawn; matching offer needed.</p>}
+              </div>
+              <Link className="product-track-action" to={productNavigation(`/discover/product/${encodeURIComponent(candidate.id)}`, 'tracking')}>
+                {feed?.tracking.some(t => t.candidate_id === candidate.id) ? 'Edit delivered target' : 'Track this watch'}
+              </Link>
+              {feed?.captures.some(capture => capture.mode === 'offline_verification') && <p className="discovery-caution product-session-note">Synthetic session · prices and buying evidence are test data.</p>}
+            </div>
+          </header>
           <nav aria-label="Product sections">
             {views.map((item) => (
               <Link
