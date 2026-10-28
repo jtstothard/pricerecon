@@ -121,35 +121,41 @@ function Costs({ costs }: { costs: Cost[] }) {
   </details>
 }
 
-function Candidate({ candidate, tracking, onSaved }: { candidate: DiscoveryCandidate; tracking: ExactTracking[]; onSaved: () => Promise<void> }) {
+export function Candidate({ candidate, tracking, onSaved }: { candidate: DiscoveryCandidate; tracking: ExactTracking[]; onSaved: () => Promise<void> }) {
   return <article className="discovery-row" data-candidate={candidate.id}>
     <DiscoveryImage key={candidate.image.url} image={candidate.image} />
     <div className="discovery-description">
-      <p className="discovery-quiet">Category discovery from {candidate.source}</p>
       <h2>{candidate.title}</h2>
-      <p className="discovery-caution">Configuration {candidate.identity_state}</p>
-      <p>Merchant selection and comparison are assessed separately.</p>
-      {candidate.offers.map(offer => <p key={offer.id}>{offer.seller ?? 'Seller unknown'} · {offer.condition ?? 'condition unknown'} · {offer.purchase_mode ?? 'purchase mode unknown'}</p>)}
-      <ul className="discovery-fit">{candidate.preference_fit.filter(fit => fit.state !== 'unset').map(fit => <li key={fit.field}>
-        <strong>{strengthLabel[fit.strength]}:</strong> {fit.reason}
-      </li>)}</ul>
+      {candidate.identity_state !== 'supported' && <p className="discovery-caution">Identity {candidate.identity_state}</p>}
+      {candidate.preference_fit.some(fit => fit.state === 'outside') ? <p className="discovery-caution">Outside preferences</p> : candidate.preference_fit.some(fit => fit.state === 'unknown') && <p className="discovery-quiet">Preference fit unknown</p>}
+      {candidate.corrections.some(c => c.requalification === 'required') && <p className="discovery-caution">Old prices withdrawn · matching offer needed</p>}
+      {candidate.configurations.filter(config => config.state === 'supported').map(config => <p className="discovery-specs" key={config.id}>
+        {[config.values.case_material, config.values.case_width_mm && `${config.values.case_width_mm} mm`, config.values.movement].filter(Boolean).join(' · ')}
+      </p>)}
     </div>
     <div className="discovery-price">
       <div className="discovery-total">{candidate.public_total.amount === null ? 'Total unknown' : `${candidate.public_total.currency} ${candidate.public_total.amount}`}</div>
       {candidate.public_total.amount !== null && <p className="discovery-cost-state">{costStateLabel[candidate.public_total.state]} · freshness unvalidated</p>}
+      <p className="discovery-quiet">UK delivered · no coupon · cashback excluded</p>
+    </div>
+    <div className="discovery-tracking">{candidate.configurations.map(configuration => <ExactTrackingControl key={configuration.id} candidate={candidate} configuration={configuration}
+      intent={tracking.find(intent => intent.configuration_id === configuration.id || (intent.candidate_id === candidate.id && candidate.corrections.some(c => c.configuration_id === intent.configuration_id)))} onSaved={onSaved} />)}</div>
+    <div className="discovery-correction"><IdentityCorrection candidate={candidate} onSaved={onSaved} /></div>
+    <details className="discovery-evidence">
+      <summary>Price and evidence</summary>
+      <p>Category discovery from {candidate.source}. Merchant selection and comparison are assessed separately.</p>
+      {candidate.offers.map(offer => <p key={offer.id}>{offer.seller ?? 'Seller unknown'} · {offer.condition ?? 'condition unknown'} · {offer.purchase_mode ?? 'purchase mode unknown'}</p>)}
+      <ul className="discovery-fit">{candidate.preference_fit.filter(fit => fit.state !== 'unset').map(fit => <li key={fit.field}>
+        <strong>{strengthLabel[fit.strength]}:</strong> {fit.reason}
+      </li>)}</ul>
       <p>Public UK delivered price (no coupon)</p>
       {candidate.advertised_item_price !== null && <p className="discovery-item-price">
         {candidate.corrections.some(c => c.requalification === 'required') ? 'Historical item lead (withdrawn)' : 'Item lead'}: {candidate.reported_currency ?? 'currency unknown'} {candidate.advertised_item_price}
       </p>}
       <p className="discovery-quiet">Usual price unavailable</p>
       {!tracking.some(intent => candidate.configurations.some(config => config.id === intent.configuration_id)) && <p className="discovery-quiet">No bargain alerts until exact tracking and qualification.</p>}
-    </div>
-    <div className="discovery-tracking">{candidate.configurations.map(configuration => <ExactTrackingControl key={configuration.id} candidate={candidate} configuration={configuration}
-      intent={tracking.find(intent => intent.configuration_id === configuration.id || (intent.candidate_id === candidate.id && candidate.corrections.some(c => c.configuration_id === intent.configuration_id)))} onSaved={onSaved} />)}</div>
-    <details className="discovery-evidence">
-      <summary>Price and evidence</summary>
       <PriceAssessments assessments={candidate.price_assessments} />
-      <IdentityCorrection candidate={candidate} onSaved={onSaved} />
+
       <ObservationHistory key={`${candidate.capture_id}:${candidate.corrections.map(c => c.revision).join('-')}`} candidateId={candidate.id} />
       <div className="discovery-qualification">
         {candidate.configurations.length === 0 && <p>Configuration unresolved: no typed evidence supplied.</p>}
@@ -229,11 +235,7 @@ export default function Discovery() {
     {error && <p role="alert">{error}</p>}
     {!feed && !error && <p role="status">Loading watch discovery…</p>}
     {feed && <>
-      <p className="discovery-collection">{feed.collection_reason}</p>
-      <CollectionCoverage />
-      <SourceCoverage feed={feed} />
-      {feed.captures.some(capture => capture.mode === 'offline_verification') && <p className="discovery-caution">Offline verification data. These are test leads, not live merchant evidence.</p>}
-      {feed.captures.length > 0 && <p className="discovery-quiet">Latest attempt: {feed.captures[0].outcomes.map(outcome => `${outcome.source} ${outcome.state.replace(/_/g, ' ')}`).join('; ')}. Source completeness unknown. Earlier candidates retain their capture dates.</p>}
+      {feed.captures.some(capture => capture.mode === 'offline_verification') && <p className="discovery-caution">Synthetic session · prices and buying evidence are test data.</p>}
       <Preferences profile={feed.preferences} onSaved={reload} />
       <div className="discovery-feed" aria-label="Watch candidates">
         {feed.candidates.length === 0 && <p className="discovery-empty">No category candidates collected yet. You can save preferences now; collection remains staged.</p>}
@@ -242,7 +244,10 @@ export default function Discovery() {
       {feed.tracking.filter(intent => !feed.candidates.some(candidate => candidate.configurations.some(config => config.id === intent.configuration_id))).map(intent => <section key={intent.id}>
         <h2>Retained exact tracking</h2><p>Configuration {intent.configuration_id}; original intent retained while source identity needs review.</p><TrackingStatus intent={intent} />
       </section>)}
-      <details className="discovery-coverage"><summary>Checked coverage and collection attempts</summary>
+      <details className="discovery-coverage"><summary>Source coverage and collection details</summary>
+        <p>{feed.collection_reason}</p>
+        <CollectionCoverage />
+        <SourceCoverage feed={feed} />
         <p>Attempts are retained separately from candidates and preferences. A failed check does not refresh an earlier capture or establish that a watch disappeared.</p>
         {feed.captures.length === 0 && <p>No collection attempts recorded.</p>}
         {feed.captures.map(capture => <section key={capture.capture_id}>

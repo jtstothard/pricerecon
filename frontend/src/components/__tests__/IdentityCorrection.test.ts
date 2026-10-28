@@ -5,18 +5,18 @@ import { IdentityCorrection } from '../discovery/IdentityCorrection'
 import { parseDiscoveryFeed } from '../../lib/discovery'
 import captured from './image-feed.json'
 
-it('explains a wrong-variant correction and buying consequences before the form', () => {
+it('offers one concise correction path with required attribution and advanced dispute controls', () => {
   const candidate = parseDiscoveryFeed(captured).candidates[0]
   const html = renderToStaticMarkup(createElement(IdentityCorrection, { candidate, onSaved: async () => {} }))
-  const explanation = html.slice(0, html.indexOf('<form'))
-  expect(explanation).toContain('Correct a wrong watch match')
-  expect(explanation).toContain('For example, if the app recorded a blue dial but the watch you meant has a green dial')
-  expect(explanation).toContain('Old blue-dial prices do not prove the green-dial price.')
-  expect(explanation).toContain('Your saved price target stays. Price alerts pause until fresh evidence matches the corrected watch.')
-  expect(explanation).toContain('Choosing another option in a shop or editing a reference photo is a different action.')
-  expect(explanation).toContain('Saving does not fetch a new price, refresh the source or change the reference image.')
+  expect(html).toContain('<summary>Wrong watch details?</summary>')
+  expect(html).toContain('Old prices stop applying. Your target stays; alerts wait for a matching offer.')
+  expect(html).not.toContain('For example,')
   expect(html).toContain('Original acquired dial:')
   expect(html).toContain('Intended value:')
+  expect(html).toContain('name="correction_actor"')
+  expect(html).toContain('name="correction_rationale"')
+  expect(html).toContain('<details><summary>Advanced: dispute this identity</summary>')
+  expect(html).not.toContain('<details open')
 })
 
 it('explains withdrawn buying evidence beside the saved intended value', () => {
@@ -30,7 +30,6 @@ it('explains withdrawn buying evidence beside the saved intended value', () => {
   }]
   const html = renderToStaticMarkup(createElement(IdentityCorrection, { candidate, onSaved: async () => {} }))
   expect(html).toContain('Intended dial</dt><dd>green')
-  expect(html).toContain('Your saved price target stays, but old prices, coupons and buying assessments no longer apply to this watch.')
-  expect(html).toContain('Price alerts are paused until fresh matching evidence supports the corrected watch.')
-  expect(html).toContain('Saving alone does not fetch a new price or change the reference image.')
+  expect(html).toContain('Old prices stop applying. Your target stays; alerts wait for a matching offer.')
+  expect(html).toContain('<summary>Correction history and provenance</summary>')
 })

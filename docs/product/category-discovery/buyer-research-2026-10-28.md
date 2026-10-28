@@ -155,3 +155,19 @@ from the interview or activate any external delivery.
 No implementation, live acquisition, source onboarding, account connection,
 production migration, purchasing or notification activation was performed while
 recording this research. Existing local commit authority covers this documentation.
+
+
+## Information overload feedback — 2026-10-28
+
+Buyer: “It's just too much text, i cant comprehend it all”, after repeated
+correction explanations. Added explanation did not establish comprehension.
+The bounded UI repair reduces the default feed to visual browsing, concise price
+state, supported specs and tracking. Native closed details retain qualification,
+coverage and provenance. One secondary **Wrong watch details?** path keeps the
+field/value, required name/reason and brief consequence; disputes/history remain
+available. No backend or legacy Watch behavior changes.
+
+61 frontend tests and production build pass; existing bundle-size advisory remains.
+No browser/server/live/network/account work occurred. Parent must review/merge and
+retest the actual simpler flow one task at a time. Ticket12 stays open; buyer
+comprehension, narrow/keyboard use and complete acceptance are pending.

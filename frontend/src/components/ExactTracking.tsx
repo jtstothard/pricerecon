@@ -34,9 +34,13 @@ export function TrackingStatus({ intent }: { intent: ExactTracking }) {
   return <div className="exact-tracking-state" role="status">
     <strong>{states[intent.assessment.state]} · target £{intent.target_gbp} delivered</strong>
     {intent.assessment.delivered_gbp !== null && <p>Assessed delivered total £{intent.assessment.delivered_gbp}.</p>}
+    {intent.assessment.reasons.some(reason => reason.includes('stale') || reason.includes('expired')) && <p className="discovery-caution">Stale evidence · alerts wait for a fresh offer</p>}
+    {intent.assessment.reasons.some(reason => reason.includes('invalidated') || reason.includes('withdrawn')) && <p className="discovery-caution">Evidence withdrawn · target retained</p>}
+    <details><summary>Alert eligibility details</summary>
     <ul>{intent.assessment.reasons.map(reason => <li key={reason}>{reasons[reason] ?? reason.replace(/_/g, ' ')}</li>)}</ul>
     {intent.assessment.assessed_at && <p>Assessed {new Date(intent.assessment.assessed_at).toLocaleString()}; policy {intent.assessment.policy_version ?? 'not supplied'}.</p>}
     {intent.assessment.valid_until && <p>Evidence limit: {new Date(intent.assessment.valid_until).toLocaleString()}.</p>}
+    </details>
   </div>
 }
 
@@ -98,7 +102,7 @@ export default function ExactTrackingControl({ candidate, configuration, intent,
   return <div className="exact-tracking" data-configuration={configuration.id}>
     {intent && <TrackingStatus intent={intent} />}
     <details className="exact-tracking-editor">
-      <summary>{intent ? 'Edit delivered target' : 'Track exact configuration'}</summary>
+      <summary>{intent ? 'Edit delivered target' : 'Track this watch'}</summary>
       <p>{configuration.values.reference ?? 'Reference unresolved'} · {configuration.values.dial ?? 'dial unresolved'} · {configuration.values.movement ?? 'movement unresolved'} · {configuration.values.strap ?? 'strap unresolved'}</p>
       <p>Saving keeps this exact intent. Collection remains staged. A supplied policy and fresh qualified evidence are required before verified delivered alerts.</p>
       {configuration.state !== 'supported' && <p>Exact identity must be resolved before starting exact tracking.</p>}
