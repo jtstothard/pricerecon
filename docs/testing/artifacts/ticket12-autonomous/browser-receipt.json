@@ -1,0 +1,264 @@
+{
+  "base_sha": "a8b1599e8c45cf19fa820ea5096bc671c76a8272",
+  "layout": [
+    {
+      "view": "overview",
+      "width": 1280,
+      "observed": {
+        "clientWidth": 958,
+        "contentWidth": 958,
+        "height": 900,
+        "scrollWidth": 1280,
+        "width": 1280
+      }
+    },
+    {
+      "view": "costs",
+      "width": 1280,
+      "observed": {
+        "clientWidth": 958,
+        "contentWidth": 958,
+        "height": 900,
+        "scrollWidth": 1280,
+        "width": 1280
+      }
+    },
+    {
+      "view": "history",
+      "width": 1280,
+      "observed": {
+        "clientWidth": 958,
+        "contentWidth": 958,
+        "height": 900,
+        "scrollWidth": 1280,
+        "width": 1280
+      }
+    },
+    {
+      "view": "tracking",
+      "width": 1280,
+      "observed": {
+        "clientWidth": 958,
+        "contentWidth": 958,
+        "height": 900,
+        "scrollWidth": 1280,
+        "width": 1280
+      }
+    },
+    {
+      "view": "correction",
+      "width": 1280,
+      "observed": {
+        "clientWidth": 958,
+        "contentWidth": 958,
+        "height": 900,
+        "scrollWidth": 1280,
+        "width": 1280
+      }
+    },
+    {
+      "view": "technical",
+      "width": 1280,
+      "observed": {
+        "clientWidth": 958,
+        "contentWidth": 958,
+        "height": 900,
+        "scrollWidth": 1280,
+        "width": 1280
+      }
+    },
+    {
+      "view": "overview",
+      "width": 375,
+      "observed": {
+        "clientWidth": 343,
+        "contentWidth": 343,
+        "height": 812,
+        "scrollWidth": 375,
+        "width": 375
+      }
+    },
+    {
+      "view": "costs",
+      "width": 375,
+      "observed": {
+        "clientWidth": 343,
+        "contentWidth": 343,
+        "height": 812,
+        "scrollWidth": 375,
+        "width": 375
+      }
+    },
+    {
+      "view": "history",
+      "width": 375,
+      "observed": {
+        "clientWidth": 343,
+        "contentWidth": 343,
+        "height": 812,
+        "scrollWidth": 375,
+        "width": 375
+      }
+    },
+    {
+      "view": "tracking",
+      "width": 375,
+      "observed": {
+        "clientWidth": 343,
+        "contentWidth": 343,
+        "height": 812,
+        "scrollWidth": 375,
+        "width": 375
+      }
+    },
+    {
+      "view": "correction",
+      "width": 375,
+      "observed": {
+        "clientWidth": 343,
+        "contentWidth": 343,
+        "height": 812,
+        "scrollWidth": 375,
+        "width": 375
+      }
+    },
+    {
+      "view": "technical",
+      "width": 375,
+      "observed": {
+        "clientWidth": 343,
+        "contentWidth": 343,
+        "height": 812,
+        "scrollWidth": 375,
+        "width": 375
+      }
+    }
+  ],
+  "keyboard": [
+    {
+      "expected": "history",
+      "focus": {
+        "outline": "rgb(135, 150, 255) solid 3px",
+        "text": "History",
+        "visible": true
+      },
+      "url": "http://127.0.0.1:8897/discover/product/04e336378c628c261d5c11b75d77064d393b96ef3f10764901d758ef596f0f87?walkthrough=ticket12&view=history"
+    },
+    {
+      "expected": "tracking",
+      "focus": {
+        "outline": "rgb(135, 150, 255) solid 3px",
+        "text": "Tracking",
+        "visible": true
+      },
+      "url": "http://127.0.0.1:8897/discover/product/04e336378c628c261d5c11b75d77064d393b96ef3f10764901d758ef596f0f87?walkthrough=ticket12&view=tracking"
+    },
+    {
+      "expected": "correction",
+      "focus": {
+        "outline": "rgb(135, 150, 255) solid 3px",
+        "text": "Correction",
+        "visible": true
+      },
+      "url": "http://127.0.0.1:8897/discover/product/04e336378c628c261d5c11b75d77064d393b96ef3f10764901d758ef596f0f87?walkthrough=ticket12&view=correction"
+    },
+    {
+      "expected": "technical",
+      "focus": {
+        "outline": "rgb(135, 150, 255) solid 3px",
+        "text": "Technical",
+        "visible": true
+      },
+      "url": "http://127.0.0.1:8897/discover/product/04e336378c628c261d5c11b75d77064d393b96ef3f10764901d758ef596f0f87?walkthrough=ticket12&view=technical"
+    }
+  ],
+  "after_correction": {
+    "content": "Track this exact watch\n\nChoose a delivered target. Alerts wait for fresh, qualified evidence for your selected configuration.\n\nAlert withheld · target £60 delivered\n\nEvidence withdrawn · target retained\n\nAlert eligibility details\nEvidence was withdrawn or corrected; intent retained.\nTechnical evidence\n\nPolicy: not supplied\n\nEdit delivered target\nTracked watch\nreference\nAD2066\ndial\nmint\nmovement\nVH31\nstrap\nsteel\n\nSaving keeps this exact intent. Collection remains staged. A supplied policy and fresh qualified evidence are required before verified delivered alerts.\n\nExact identity must be resolved before starting exact tracking.\n\nUK delivered target (£)\nNot set\n100\n125\n150\n200\n300\nOther / custom\nNotification channels\nwebhook\ntelegram\ndiscord\n\nUses your existing notification configuration. With no selected channels, no target message is sent.\n\nSave delivered target\n\nLoad records\nNotification delivery records\n\nExternal send/ack crashes can leave delivery unknown. Ambiguous attempts are not retried automatically; exactly-once delivery is not guaranteed.\n\nNo target notifications recorded.",
+    "marker": {
+      "actions": [
+        "baseline",
+        "cross",
+        "duplicate",
+        "drop",
+        "coupon",
+        "costs",
+        "stale"
+      ],
+      "automatic_checks": false,
+      "blocked_edges": [],
+      "clock": "2026-10-27T15:02:24+00:00",
+      "fixture": "ticket12-connected-ui-v1",
+      "fixture_id": "9f867996c0474c759a46a1746afcf254",
+      "images": "ticket12-private-images-v1; Casio only; four explicit gaps",
+      "limitations": "synthetic only; actual buyer feedback unproven; all collection staged",
+      "notifications_sent": 0,
+      "temporary_storage": true
+    },
+    "tracking": [
+      {
+        "assessment": {
+          "assessed_at": null,
+          "base_scenario_id": null,
+          "base_scenario_revision": null,
+          "binding_revision": null,
+          "capture_id": null,
+          "configuration_id": null,
+          "configuration_revision": null,
+          "coupon_fingerprint": null,
+          "coupon_id": null,
+          "coupon_revision": null,
+          "delivered_gbp": null,
+          "intent_revision": null,
+          "offer_id": null,
+          "offer_revision": null,
+          "policy_fingerprint": null,
+          "policy_version": null,
+          "preference_revision": null,
+          "reasons": [
+            "evidence_invalidated"
+          ],
+          "scenario_id": null,
+          "scenario_revision": null,
+          "state": "withheld",
+          "valid_until": null
+        },
+        "candidate_id": "04e336378c628c261d5c11b75d77064d393b96ef3f10764901d758ef596f0f87",
+        "capture_id": "07937f80-843e-414a-af9c-7ede155d81e2",
+        "collection_state": "staged",
+        "configuration_id": "59c72dc2203cb6fc29b450eddc15b7660654da5d87012c6e32cbccb1973f5ab7",
+        "configuration_revision": 1,
+        "created_at": "2026-10-27T12:00:00Z",
+        "id": 1,
+        "intended_values": {
+          "case_width_mm": "36",
+          "date_display": "no_date",
+          "dial": "salmon",
+          "generation": "synthetic-revision-1",
+          "maker": "Addiesdive",
+          "movement": "VH31",
+          "product_kind": "complete_watch",
+          "reference": "AD2066",
+          "strap": "steel"
+        },
+        "invalidation_reason": "Identity corrected: dial; correction 1e5bbcb0-2470-40c7-9dbe-953444b7be61",
+        "invalidation_revision": 1,
+        "notifications": {
+          "channels": [
+            "webhook"
+          ]
+        },
+        "revision": 2,
+        "target_gbp": "60",
+        "updated_at": "2026-10-27T12:00:00Z"
+      }
+    ]
+  },
+  "red": {
+    "caption": "rgb(41, 65, 79)",
+    "screenshot": "1280-technical.png"
+  },
+  "green": {
+    "caption": "rgb(203, 213, 225)",
+    "screenshot": "technical-contrast-green.png"
+  }
+}

@@ -4,7 +4,7 @@
 
 **Blocked by:** [08: Compare qualified offers and explain price claims](08-compare-qualified-offers.md), [09: Evaluate public coupons without assuming stacks](09-evaluate-public-coupons.md), [11: Carry source evidence and access limits through acquisition](11-carry-source-evidence.md)
 
-**Status:** open — buyer interview recorded 2026-10-28; visual discovery blocked and follow-up acceptance required
+**Status:** offline autonomous technical acceptance complete — 2026-10-28; parent review/merge pending. Live/release gates remain unproven.
 
 **Assignee:** Codex implementer (isolated worktree)
 
@@ -13,7 +13,7 @@
 - [x] Run the accepted application seam across the five named watch cases: Militado ML05/ML05B, Addiesdive AD2066 mint, San Martin SN0144, Merkur Lightning salmon and Casio MTP-B145D-2A2VEF. Missing evidence remains abstention, not substitute-product success.
 - [x] Verify discovery independent of existing Watches, selected-variation traps, UK cost, no-coupon/coupon states, retained history/gaps, comparisons, correction invalidation and qualified alert deduplication together.
 - [x] Exercise legacy migration on isolated copies, saved settings, enabled/disabled schedules, restart, overlap, partial-source failure and cap recovery; provide recovery/rollback evidence before later migration approval.
-- [ ] Complete desktop and narrow-width keyboard/browser checks for feed, expandable evidence, preference editing, tracking and corrections; obtain and record actual buyer walkthrough feedback without inventing usability acceptance.
+- [x] Complete desktop and narrow-width keyboard/browser checks for feed, expandable evidence, preference editing, tracking and corrections; obtain and record actual buyer walkthrough feedback without inventing usability acceptance. Prior design approval plus explicit delegation of remaining mechanical checks supplies the bounded offline acceptance; task-by-task human comprehension is not claimed.
 - [x] Produce versioned deterministic receipts with expected/observed results and passed/failed/blocked/unproven gates. Separate no-coupon completion from live coupon success and fixture history from real retained history.
 - [x] Hand off source rights/access, retention/deletion/backup, finite numerical limits, duration/spend/operator-time ceilings, freshness and named maintenance/stop-resume ownership as explicit prerequisites for separately authorised live study/activation.
 - [x] No full-coverage, current market-best, usual-price calibration, live workflow proof or release readiness claim follows from offline success; PC/pens and personal-benefit execution remain later scope.
@@ -507,3 +507,18 @@ GBP60 retained and alert assessment withheld. Zero blocked edges remain.
 No real product claim or notification was introduced. Buyer screen comprehension
 and narrow/keyboard usability remain separate; parent API action is not buyer UI
 interaction proof.
+
+## Delegated autonomous technical acceptance — 2026-10-28
+
+Buyer approved the current design and explicitly delegated remaining checks to
+Codex. See [current QA receipt](../../../docs/testing/ticket12-autonomous-qa.md)
+for 86 frontend tests, 50 guarded regressions, actual 1280×900/375×812 browser
+checks, keyboard/forms/reload, captured alerts, correction and image behavior.
+One reproduced Technical-attribution contrast defect was repaired and verified
+in the rebuilt browser. These supersede historical pending mechanical checks;
+prior unchecked task-by-task buyer-comprehension research is not newly claimed.
+
+Offline autonomous technical scope is accepted, subject to parent independent
+review/merge. Historical buyer quotations/approvals are recorded separately from
+agent observations. Source/live/history/calibration/operating/migration/release
+prerequisites remain unresolved. Merkur remains deliberate unresolved abstention.

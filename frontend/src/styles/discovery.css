@@ -177,6 +177,7 @@
 .product-page .product-content dl > div { padding-block: 12px; grid-template-columns: minmax(130px, 1fr) minmax(0, 2fr); }
 .product-content dt { color: var(--text-secondary); }
 .product-view-technical > .discovery-picture { max-width: 42rem; }
+.product-view-technical > .discovery-picture figcaption { color: var(--text-secondary); font-size: .875rem; text-align: left; }
 .product-view-technical > .discovery-picture img { display: none; }
 .product-view-technical pre { padding: 16px; border-left: 2px solid var(--border-strong); }
 @media (max-width: 700px) {
