@@ -472,3 +472,24 @@ reload were separately confirmed earlier. Narrow-screen/keyboard testing and the
 complete tracking/alert/correction workflow are not established by this design
 approval; ticket12 remains open for those remaining checks. No live activation,
 production migration, push or publication is authorized by design acceptance.
+
+
+## Buyer-assisted target crossing — 2026-10-28
+
+Buyer reported saving the target (“done”). Parent verified through the running
+fixture API: Addiesdive tracking ID1, target GBP60, no notification channels
+selected. Fixture run `e94f6a6651dd49d788aafe9ac415c6fa` remained temporary,
+automatic checks disabled and zero blocked edges. Parent advanced the authorized
+synthetic baseline/cross/duplicate actions through the run-bound fixture endpoint.
+
+| Step | Delivered GBP | Assessment | Retained alert events | Captured sends |
+| --- | --- | --- | --- | --- |
+| Baseline | 70.10 | Above target | 0 | 0 |
+| Crossing | 58.10 | Eligible | 1, target_crossing | 0 |
+| Duplicate | 58.10 | Eligible | Same event1, no duplicate | 0 |
+
+Event1 is `channels_unset`; this demonstrates one persisted crossing event and
+repeat suppression, not captured transport delivery. Channels were not changed
+without the buyer choosing them. Buyer observation of the resulting screen and
+remaining correction/narrow/keyboard tasks remain pending. No live notification
+or market observation occurred.
