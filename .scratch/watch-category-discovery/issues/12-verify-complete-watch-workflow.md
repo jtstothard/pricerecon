@@ -217,3 +217,16 @@ buying qualification. Militado/San Martin targets and Merkur identity remain
 unresolved; browser loading/failure/narrow/keyboard and actual buyer remaining-task
 acceptance remain unproven. Parent owns launch/retest and cleanup. No browser,
 live collection, outreach, production, push or PR work occurred in this recheck.
+
+
+## Buyer walkthrough feedback — 2026-10-28, remote-image revision
+
+After the parent proposed three checks, the buyer replied:
+1. “confirm” to editing preferences and persistence after reload — confirmed.
+2. “GBP 70.10” to the tracking demonstration — observed current displayed price;
+   saving a GBP60 target and crossing/deduplication are not yet confirmed.
+3. “this is not clear” to payable/conditional costs and correction consequences —
+   comprehension blocker; clarification requested on costs, correction, or both.
+
+Do not treat this as complete task acceptance. Ticket12 stays open; preserve the
+positive visual feedback and the newly confirmed preference/reload result.

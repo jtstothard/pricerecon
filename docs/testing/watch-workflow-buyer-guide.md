@@ -201,3 +201,16 @@ activation gate is resolved by this walkthrough.
 The initial interview is requirements/usability feedback, not completed acceptance
 of all rows above. The unchanged “Pending” rows mean task-level outcomes were not
 established, rather than that no buyer conversation occurred.
+
+
+## Buyer walkthrough feedback — 2026-10-28, remote-image revision
+
+After the parent proposed three checks, the buyer replied:
+1. “confirm” to editing preferences and persistence after reload — confirmed.
+2. “GBP 70.10” to the tracking demonstration — observed current displayed price;
+   saving a GBP60 target and crossing/deduplication are not yet confirmed.
+3. “this is not clear” to payable/conditional costs and correction consequences —
+   comprehension blocker; clarification requested on costs, correction, or both.
+
+Do not treat this as complete task acceptance. Ticket12 stays open; preserve the
+positive visual feedback and the newly confirmed preference/reload result.
