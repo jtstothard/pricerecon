@@ -1,3 +1,4 @@
+import { DetailRows } from './discovery/DetailRows'
 import { useEffect, useState, type FormEvent } from 'react'
 import { channels, loadDeliveries, resolveDelivery, saveTracking, type Delivery, type ExactTracking, type TrackingChannel } from '../lib/tracking'
 import type { DiscoveryCandidate } from '../lib/discovery'
@@ -38,8 +39,9 @@ export function TrackingStatus({ intent }: { intent: ExactTracking }) {
     {intent.assessment.reasons.some(reason => reason.includes('invalidated') || reason.includes('withdrawn')) && <p className="discovery-caution">Evidence withdrawn · target retained</p>}
     <details><summary>Alert eligibility details</summary>
     <ul>{intent.assessment.reasons.map(reason => <li key={reason}>{reasons[reason] ?? reason.replace(/_/g, ' ')}</li>)}</ul>
-    {intent.assessment.assessed_at && <p>Assessed {new Date(intent.assessment.assessed_at).toLocaleString()}; policy {intent.assessment.policy_version ?? 'not supplied'}.</p>}
+    {intent.assessment.assessed_at && <p>Assessed {new Date(intent.assessment.assessed_at).toLocaleString()}.</p>}
     {intent.assessment.valid_until && <p>Evidence limit: {new Date(intent.assessment.valid_until).toLocaleString()}.</p>}
+    <details><summary>Technical evidence</summary><p>Policy: {intent.assessment.policy_version ?? 'not supplied'}</p></details>
     </details>
   </div>
 }
@@ -103,7 +105,7 @@ export default function ExactTrackingControl({ candidate, configuration, intent,
     {intent && <TrackingStatus intent={intent} />}
     <details className="exact-tracking-editor">
       <summary>{intent ? 'Edit delivered target' : 'Track this watch'}</summary>
-      <p>{configuration.values.reference ?? 'Reference unresolved'} · {configuration.values.dial ?? 'dial unresolved'} · {configuration.values.movement ?? 'movement unresolved'} · {configuration.values.strap ?? 'strap unresolved'}</p>
+      <h3>Tracked watch</h3><DetailRows rows={['reference', 'dial', 'movement', 'strap'].map(field => [field, configuration.values[field] ?? 'Unresolved'])} />
       <p>Saving keeps this exact intent. Collection remains staged. A supplied policy and fresh qualified evidence are required before verified delivered alerts.</p>
       {configuration.state !== 'supported' && <p>Exact identity must be resolved before starting exact tracking.</p>}
       <form onSubmit={submit}>
