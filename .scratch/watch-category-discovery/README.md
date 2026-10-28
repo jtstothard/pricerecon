@@ -338,3 +338,13 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   no blockers; 63 guarded candidate workflows and 40 frontend tests pass.
   [Merger receipt](../../docs/testing/watch-images.md#independent-merger-recheck-and-acceptance--2026-10-28).
   **12 remains open for permitted assets and actual buyer retest.**
+
+
+- 2026-10-28: Sole merger accepted docs-only reuse provenance candidate
+  `319f726fa179d9af93d1394d4d3e5d2d7e2c9e03` with no Standards/Spec blockers;
+  `--no-ff` merge `f28fa16192b2fc6b5ab793be78dd758dfe4dec68` exactly matches
+  its tree. Local corpus pointer/hash checks and diff whitespace passed. No new
+  asset, public research, outreach or runtime action. **12 remains open** for
+  permitted exact imagery, unresolved selections/reference and remaining buyer
+  retests; Casio “looks good” feedback is bounded to that slice.
+  [Review receipt](../../docs/testing/watch-images.md#sole-merger-reuse-only-documentation-review--2026-10-28).

@@ -360,3 +360,32 @@ follow-up; `git diff --check` passed. No browser/server, account, collection,
 price ingestion, production, push or PR action occurred. Ticket12 remains open
 for permitted exact imagery, unresolved target selections and remaining buyer
 retests. Casio-only positive feedback does not close those gates.
+
+
+## Sole-merger reuse-only documentation review — 2026-10-28
+
+Reviewed candidate `319f726fa179d9af93d1394d4d3e5d2d7e2c9e03` against
+integration `4a3fc9b4d7f3a60ee7f4a3db2518e48ae64cb833`. Standards and Spec
+review found no blockers. Both checkouts were clean; the candidate changes only
+two Markdown files. Conflict-free `--no-ff` merge
+`f28fa16192b2fc6b5ab793be78dd758dfe4dec68` has the exact candidate tree.
+
+Targeted local reads independently matched watch-32's Militado source and two
+image pointers, watch-1's Ben’s attribution/image pointer, and watch-80's empty
+images and manufacturer-homepage source. The sources guide leaves ML05
+configuration open; the shortlist distinguishes ML05B Miyota from ML05 VH31
+and the 42mm Green FKM offer from the 39mm GX target. Supplement/shortlist notes
+retain Merkur's unresolved video nickname, and the named unresolved file is
+absent from the specified outputs directory. The catalogue currently hashes to
+`e93632cf6738e248177c29919add1900690b91b861ed2af0c186e8a18d4a3af7`.
+This corroborates the reported drift observation; it does not establish the
+contents or provenance of the earlier `7376a087…` snapshot. Public permission
+checks are retained as candidate observations, without repeating public research.
+
+Candidate and merged diff whitespace checks passed; merged-tree equality passed.
+No runtime tests were needed for this documentation-only change. No code, assets,
+manifest, buyer state or external corpus was changed. No outreach, browser,
+account, live collection, production, push/PR or worktree cleanup occurred.
+Ticket12 remains open for already-permitted exact imagery, necessary target
+selection and remaining buyer retests. “Looks good” remains positive feedback
+on the presented Casio slice only.

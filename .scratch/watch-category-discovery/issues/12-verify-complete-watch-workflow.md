@@ -189,3 +189,14 @@ Viewport, keyboard use, image-load failure behavior and completion/understanding
 of the remaining tasks were not reported. Four missing image cases and their
 permission/variant/reference decisions remain unresolved. Ticket12 stays open;
 no production, live-market or full five-watch acceptance follows from this feedback.
+
+
+## Reuse-only documentation integration — 2026-10-28
+
+Candidate `319f726fa179d9af93d1394d4d3e5d2d7e2c9e03` passed sole-merger
+Standards/Spec review and was merged with `--no-ff` as
+`f28fa16192b2fc6b5ab793be78dd758dfe4dec68`. Targeted local lineage checks and
+whitespace/tree-equality checks passed; no public research or runtime tests were
+repeated. See the [review receipt](../../../docs/testing/watch-images.md#sole-merger-reuse-only-documentation-review--2026-10-28).
+**Ticket12 remains open.** Reuse-only authority supplies no photo licence,
+Militado/San Martin selection, Merkur identity or full buyer acceptance.
