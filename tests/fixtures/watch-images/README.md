@@ -78,3 +78,66 @@ The official links above can be viewed in their original context as a separate
 manual research aid. They are not offline fixture assets, and their real prices
 must not be blended into the synthetic walkthrough. Linking context is not a
 substitute for in-feed visual acceptance or permission to hotlink/rehost images.
+
+## Reuse-only follow-up and original corpus lineage — 2026-10-28
+
+User decision: **“Use only sources already permitting reuse.”** No original
+Merkur link or exact Militado/San Martin selection was supplied. No contact or
+permission-request draft is authorized or needed; none was sent or prepared.
+The earlier contact option above is historical, superseded by this decision.
+
+Targeted reads used only the named corpus files in
+`docs/product/category-discovery/watch-research-context.md`: catalogue JSON,
+catalogue sources, supplement notes and original shortlist. The catalogue now hashes to
+`e93632cf6738e248177c29919add1900690b91b861ed2af0c186e8a18d4a3af7`,
+which differs from that document's earlier `7376a087…` receipt. Its current
+contents are research leads, not a reproduction of the earlier snapshot.
+Recovered pointers are provenance leads, not image licences or buyer selections:
+
+- `watch-32`, Militado ML05: original source is
+  <https://www.militadowatch.com/products/militado-vh31-vintage-military-watch-ml05-blue-dial>.
+  Original image pointers are
+  <https://www.militadowatch.com/cdn/shop/files/1_eea45bf9-f2de-43c1-b41e-78eaccbcb327.jpg?v=1773631826&width=800>
+  and <https://www.militadowatch.com/cdn/shop/files/2_b3b87348-b9f6-4ffe-b9ae-72b82374116a.jpg?v=1773631826&width=1600>.
+  The sources guide explicitly leaves colour/configuration to choose. The
+  shortlist separately distinguishes ML05B Miyota from ML05 VH31; these are not
+  interchangeable. Existing manufacturer restrictions still prevent acquisition.
+- `watch-1`, San Martin: original image attribution is
+  [Ben’s Watch Club review](https://www.benswatchclub.com/blog/san-martin-jian-zhan-review),
+  with image pointer
+  <https://images.squarespace-cdn.com/content/v1/5c9cb86ec46f6d68c6b63267/900e9538-ee8c-461b-bd02-ed7c41712017/san-martin-new-gada-watch.jpg?format=1500w>.
+  The corpus describes blue textured SN0144-GX, date at six, Miyota 9015.
+  The freshly read review identifies its sample as 39mm SN0144-GX with 9015.
+  This improves reference lineage; it does not select the buyer's target or
+  bridge the separately recorded 42mm Green FKM offer. No photo was downloaded
+  or newly visually verified in this follow-up.
+- `watch-80`, Merkur Lightning salmon: `images=[]`, no image source, only the
+  manufacturer homepage. Supplement notes also say video research lead only;
+  shortlist says video nickname and points to `unresolved_94_2026-10-26.md`.
+  That file is absent at the named `outputs/` location. No broader folder scan
+  was performed. The named original files recover neither an exact reference,
+  video URL nor matching photo. Other salmon Merkurs remain excluded.
+
+Finite alternative-source check: read the original Ben’s review above and
+[WristyBizzle’s original ML05 review](https://wristybizzle.com/militado-ml05-in-depth-review/).
+The latter explicitly describes a black-dial, grey-strap, sandblasted Ronda 515
+sample, so it cannot silently represent the blue listing or ML05B. Neither
+review supplied a reuse grant in the readable content. Guessed terms URLs for
+both sites were inaccessible to the web reader; Ben’s privacy URL was also
+inaccessible, and a direct review fetch returned HTTP 403 (no bypass attempted).
+[WristyBizzle’s privacy policy](https://wristybizzle.com/privacy-policy/) governs
+personal data and supplies no photo-reuse grant. A Ben’s contact page was read
+before the user's reuse-only steering was received; no form/message was used,
+and no contact details or request draft are retained. These outcomes establish
+**permission not demonstrated**, not a claim that either site's full terms
+prohibit private use. Stop this finite search here; do not retry these sources
+indefinitely or infer a licence from public availability.
+
+Result: no additional justified asset. Manifest and two Casio files unchanged;
+four placeholders and unresolved examples retained. Addiesdive mint still lacks
+a demonstrated reuse grant; Militado/San Martin additionally lack buyer-selected
+variants; Merkur additionally lacks exact identity and original photo lineage.
+Next gate under the current decision is a demonstrably already-permitted exact
+photo (or user-owned photo with display/retention rights) and, where necessary,
+explicit target selection. Ticket12 stays open. “Looks good” remains bounded to
+the Casio visual slice; no five-watch or remaining-task acceptance is inferred.

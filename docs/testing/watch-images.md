@@ -342,3 +342,21 @@ Viewport, keyboard use, image-load failure behavior and completion/understanding
 of the remaining tasks were not reported. Four missing image cases and their
 permission/variant/reference decisions remain unresolved. Ticket12 stays open;
 no production, live-market or full five-watch acceptance follows from this feedback.
+
+
+## Remaining four images: bounded reuse-only follow-up — 2026-10-28
+
+Merged integration `4a3fc9b4d7f3a60ee7f4a3db2518e48ae64cb833` into the
+isolated implementation branch before work. The user's subsequent instruction
+was to use only sources already permitting reuse, with no exact Militado/San
+Martin variant or original Merkur link supplied. No contact or request draft
+was made. The [rights record](../../tests/fixtures/watch-images/README.md#reuse-only-follow-up-and-original-corpus-lineage--2026-10-28)
+now retains recovered original image/source pointers, current corpus hash drift,
+review-sample distinctions and finite unsuccessful permission checks.
+
+No additional asset was justified. No code, fixture manifest, image bytes or
+buyer state changed. No runtime tests were run for this documentation-only
+follow-up; `git diff --check` passed. No browser/server, account, collection,
+price ingestion, production, push or PR action occurred. Ticket12 remains open
+for permitted exact imagery, unresolved target selections and remaining buyer
+retests. Casio-only positive feedback does not close those gates.
