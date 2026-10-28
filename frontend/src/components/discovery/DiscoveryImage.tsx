@@ -23,14 +23,17 @@ export default function DiscoveryImage({ image }: { image: Image }) {
       loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} /> :
       <p>Product image unavailable. Generic placeholder; does not depict this watch.</p>}
     <figcaption>{available ? reference ? 'Remote reference image; exact configuration not established' : image.kind === 'photo' ? 'Photograph' : 'Product illustration; not a photograph' : 'Placeholder'}
-      <br />{image.attribution}<br />{image.provenance}
-      {reference && <p>{image.configuration_note}<br />Remote display only; no licence or buying qualification claimed.<br />
+      {reference && <p>{image.configuration_note}</p>}
+      <details><summary>Image source and attribution</summary>
+      <p>{image.attribution}</p><p>{image.provenance}</p>
+      {reference && <p>Remote display only; no licence or buying qualification claimed.<br />
         <a href={image.source_context_url} target="_blank" rel="noreferrer">Original source and attribution context</a>{' · '}
         <a href={image.url ?? undefined} target="_blank" rel="noreferrer">Original image</a></p>}
       {available && !reference && <details><summary>Image evidence</summary>
         <p><a href={image.url ?? undefined} target="_blank" rel="noreferrer">Original image</a></p>
         <p>Permission: {image.permission_reference}</p><p>Depiction: {image.identity_reference}</p>
       </details>}
+      </details>
     </figcaption>
   </figure>
 }

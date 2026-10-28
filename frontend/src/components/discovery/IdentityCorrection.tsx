@@ -27,17 +27,17 @@ export function IdentityCorrection({ candidate, onSaved }: { candidate: Discover
         field, value, actor, rationale, state,
       })
       await onSaved()
-      setMessage('Correction saved. Your saved price target stays. Old prices and buying assessments no longer apply to the corrected watch. Price alerts pause until fresh matching evidence supports it. Saving does not fetch a new price or change the reference image.')
+      setMessage('Correction saved. Old prices stop applying. Your target stays; alerts wait for a matching offer.')
       setValue(''); setRationale('')
     } catch (failure: unknown) {
       setError(failure instanceof Error ? failure.message : 'Correction could not be saved.')
     } finally { setSaving(false) }
   }
   return <details className="identity-correction">
-    <summary>Correct a wrong watch match</summary>
-    <p>Use this when the app has identified the watch incorrectly. For example, if the app recorded a blue dial but the watch you meant has a green dial, correct the dial here. Old blue-dial prices do not prove the green-dial price.</p>
-    <p>Choosing another option in a shop or editing a reference photo is a different action. Saving does not fetch a new price, refresh the source or change the reference image.</p>
-    <p>Your saved price target stays. Price alerts pause until fresh evidence matches the corrected watch. Old prices, coupons and buying assessments are kept as history, but cannot support buying the corrected watch. Already sent alerts stay in delivery history.</p>
+    <summary>Wrong watch details?</summary>
+    <p>Old prices stop applying. Your target stays; alerts wait for a matching offer.</p>
+    <details><summary>Correction history and provenance</summary>
+    <p>Original prices, coupons, assessments and sent alerts remain history. Saving does not fetch a price or change the reference image.</p>
     {candidate.corrections.map(item => <section className="correction-state" key={item.configuration_id}>
       <h3>Identity {item.state} · {label(item.requalification)}</h3>
       <p>Correction revision {item.revision}. {item.requalification === 'required' ? 'Your saved price target stays, but old prices, coupons and buying assessments no longer apply to this watch. Price alerts are paused until fresh matching evidence supports the corrected watch. Saving alone does not fetch a new price or change the reference image.' : 'Fresh matching evidence now supports the corrected watch. Prices for the original watch remain history; they are not prices for the corrected watch.'}</p>
@@ -48,6 +48,7 @@ export function IdentityCorrection({ candidate, onSaved }: { candidate: Discover
         <p>{entry.actor} · {new Date(entry.recorded_at).toLocaleString()} · revision {entry.revision}. {entry.rationale}</p>
       </li>)}</ol>
     </section>)}
+    </details>
     <form onSubmit={submit}>
       {candidate.configurations.length > 1 && <label>Observed configuration<select value={configuration?.id ?? ''} onChange={event => setSelectedId(event.target.value)}>{candidate.configurations.map(c => <option key={c.id} value={c.id}>{c.id}</option>)}</select></label>}
       <label>Identity field<select name="correction_field" value={field} onChange={event => {
@@ -56,10 +57,12 @@ export function IdentityCorrection({ candidate, onSaved }: { candidate: Discover
       }}>{identityFields.map(option => <option key={option} value={option}>{label(option)}</option>)}</select></label>
       <p>Original acquired {label(field)}: {original?.values[field] ?? 'unknown'}. Intended value: {correction?.values[field] ?? original?.values[field] ?? 'unknown'}.</p>
       <label>Correct value<input required maxLength={500} name="correction_value" value={value} onChange={event => setValue(event.target.value)} /></label>
+      <details><summary>Advanced: dispute this identity</summary>
       <label>Identity state<select name="correction_state" value={state} onChange={event => setState(event.target.value === 'disputed' ? 'disputed' : 'corrected')}><option value="corrected">Corrected; fresh evidence required</option><option value="disputed">Disputed; withhold qualification</option></select></label>
+      </details>
       <label>Your name<input required maxLength={250} name="correction_actor" autoComplete="name" value={actor} onChange={event => setActor(event.target.value)} /></label>
       <label>Reason<textarea required maxLength={1000} name="correction_rationale" value={rationale} onChange={event => setRationale(event.target.value)} /></label>
-      <button type="submit" disabled={saving || !configuration}>{saving ? 'Saving correction…' : 'Save corrected watch match'}</button>
+      <button type="submit" disabled={saving || !configuration}>{saving ? 'Saving correction…' : 'Save watch details'}</button>
     </form>
     {error && <p role="alert">{error} Reload the feed before retrying.</p>}
     {message && <p role="status">{message}</p>}

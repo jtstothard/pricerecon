@@ -127,7 +127,7 @@ form with automated observations.
    savings absent. Expand coverage: sixteen source lanes, unchecked real routes
    and synthetic dates do not establish a complete market or a usual price.
    Ask the buyer to explain current-best versus dated-low versus usual price.
-5. **Correct identity and inspect consequences.** Correct Addiesdive dial from
+5. **Correct identity and inspect consequences.** Open **Wrong watch details?**. Correct Addiesdive dial from
    mint to salmon with an attributed rationale. Reload. Target£60 remains;
    prior prices/coupon/assessments are historical or withdrawn; alerts are withheld
    until independent fresh compatible evidence exists. Expand original evidence
@@ -190,7 +190,7 @@ record future task completion, viewport and assistance explicitly.
 | Missing baseline/current-best/dated-low | Task outcome not yet established | Pending |
 | Source coverage and age | Task outcome not yet established | Pending |
 | Preferences and unknown dimensions | Requests fuzzy search, brand/category facets and similarity; visual-first browsing blocked without meaningful images | Follow-up needed |
-| Correction and preserved target | Buyer: “What correcting the dial changes” was unclear; copy repair implemented | Pending buyer retest |
+| Correction and preserved target | Buyer: “What correcting the dial changes” was unclear; later rejected the added text as overwhelming; progressive disclosure repair implemented | Pending buyer retest |
 | Alert eligibility/noise and errors | Wants target/restock/significant-bargain alerts and configurable in-app/Telegram/Discord routing; live UI task not confirmed | Follow-up needed |
 | Desktop/narrow/keyboard usability | Task outcome not yet established | Pending |
 
@@ -267,3 +267,27 @@ No browser/live/network/account/contact/push/PR or sibling mutation occurred.
 Integration was clean before merge and after merged checks. Parent owns fixture
 restart, candidate-worktree cleanup and actual buyer retest before/after saving.
 **Ticket12 remains open; actual buyer comprehension and full acceptance are pending.**
+
+
+## Information overload repair — 2026-10-28; retest pending
+
+Actual follow-up: “It's just too much text, i cant comprehend it all”. The earlier
+explanation additions did not establish comprehension. The default feed now puts
+images/title, short payable state, supported size/movement/material and tracking
+first. Source coverage, collection/capture context, image provenance and technical
+evidence use closed native details. Unknown/conditional/observation-verified totals,
+identity gaps, withdrawn prices and stale alert evidence remain visible when material.
+
+Parent retest: let the buyer browse first, then choose one watch and inspect price
+or specs only as needed. Open **Wrong watch details?** only for a correction task:
+“Old prices stop applying. Your target stays; alerts wait for a matching offer.”
+Name and reason remain required; dispute state and history are secondary controls.
+Ask the buyer to perform one task at a time; do not precede each task with the old
+explanation paragraphs. Record the actual response before advancing. Existing image
+and preference confirmations stand; target/correction/full acceptance remain pending.
+
+Verification: 61 frontend tests and production build pass (existing bundle-size
+advisory); rendered tests cover closed controls and all three payable states.
+No backend/API behavior changed, so no guarded API regressions were rerun. No
+browser/server/live/account/network actions were performed. Narrow CSS and native
+keyboard controls have source/rendered proof only; parent owns actual walkthrough.

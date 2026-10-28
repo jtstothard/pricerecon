@@ -33,10 +33,10 @@ export function OfflineImages({ children }: { children: ReactNode }) {
   }, [enabled])
   return <OfflineImageContext.Provider value={enabled ? assets : null}>
     {mode === 'ticket12' && <aside aria-label="Remote reference walkthrough">
-      <p>Private personal walkthrough. Remote reference images load directly from original public sources; no licence claimed. Exact Militado/San Martin target configurations remain unresolved. Merkur image missing: exact identity unknown. All prices and buying evidence are synthetic.</p>
+      <details><summary>Private reference image session</summary><p>Images load from original public sources; no licence claimed. Militado/San Martin targets remain unresolved; Merkur image missing. References do not qualify prices.</p></details>
     </aside>}
     {enabled && <aside aria-label="Private image walkthrough">
-      <p>Local-only private walkthrough (remote images disabled). Real Casio reference photos; all prices and buying evidence are synthetic. Four watch images remain unavailable.</p>
+      <p>Local-only private walkthrough (remote images disabled). Real Casio reference photos. Four watch images remain unavailable.</p>
       {error && <p role="alert">{error}</p>}
       {assets.size > 0 && <details><summary>View both Casio reference photos</summary>
         <p>All Rights Reserved, Copyright © CASIO COMPUTER CO., LTD. CASIO is a registered trademark of CASIO COMPUTER CO., LTD. Personal non-commercial use only.</p>
