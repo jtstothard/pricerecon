@@ -401,3 +401,45 @@ See [design contract](../../../docs/product/category-discovery/comparison-redesi
 **Disposition: redesign implemented; buyer retest pending. Ticket12 remains open.** Neither deterministic tests nor a production build prove buyer usability, source freshness, live readiness or shopping acceptance.
 
 Local verification for this correction: **85 frontend tests / 8 files**, TypeScript/production build, **47 guarded backend regressions**, offline dependency installation and diff whitespace check passed. Vite's large-chunk advisory remains. Integration checkout was left clean at `46d39e5f840528195a4f359729ec94ea9ae0e270`; implementation lives on the isolated branch.
+
+
+## Sole merger comparison/product review — 2026-10-28
+
+Candidate `d4dc3fccf6c3035a072b457ff177f5de861c780c`, checkout
+`/Users/jay/.t3/worktrees/pricerecon/t3-a7823c3b`, reviewed against integration
+`46d39e5f840528195a4f359729ec94ea9ae0e270`; merged with `--no-ff` as
+`423bf17fd9f3ed5deb182db02db5ae4b2e0a9390`.
+
+Standards: zero blockers against CONTRIBUTING.md and docs/engineering-standard.md.
+Existing typed API validation and guarded backend boundaries remain unchanged;
+no new unchecked escape hatches found. Mounted deterministic tests cover the
+changed navigation, choice/custom forms, attribution and rejection behavior.
+
+Spec: zero blockers against the latest buyer feedback, comparison-redesign.md,
+buyer guide and ticket12. Minimal repeated comparison structure links to flat
+Overview/Costs/History/Tracking/Correction/Technical product views. Direct product
+loading fetches the retained feed; the existing app SPA fallback supports reload.
+Missing candidates, empty feed and API failure have explicit states. Recognized
+walkthrough query modes persist across product/back links, including local-only
+image abstention. Arbitrary saved/custom values and explicit buyer name/reason
+remain supported. Unknown/conditional/observation-only and withdrawn evidence
+stay distinguished; source, price, history and correction provenance remains
+accessible. Raw records are confined to Technical, alongside curated user views.
+No details/summary controls remain in the touched rendered flows. Responsive grid,
+focus-visible styling and native controls provide source-level evidence only.
+
+Independent candidate checks: 85 frontend tests across 8 files, TypeScript/Vite
+production build and diff check passed. Merged checks: 20 focused product-flow,
+comparison and correction tests across 3 files, TypeScript/production build and
+diff check passed. Existing large-bundle advisory remains. The merged focused DOM
+tests used the candidate's installed jsdom via WATCH_DOM_MODULE; no dependencies
+were installed. Backend unchanged; the reported 47 guarded regressions were not
+rerun. Merge tree exactly matched candidate before this receipt. Integration
+started clean with no untracked files; existing tracked receipts were preserved.
+
+Ticket12 remains OPEN pending buyer/browser retest: actual narrow viewport and
+keyboard usability, comparison comprehension, tracking/correction walkthrough and
+complete acceptance. Source/component proof does not establish buyer acceptance,
+source freshness or live readiness. Parent owns checkout cleanup and rebuilding
+the walkthrough. No browser/preview/server/network/live/account/push/PR work,
+subagents, reset/clean or sibling mutations were performed.
