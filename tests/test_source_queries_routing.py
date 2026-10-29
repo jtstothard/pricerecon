@@ -187,8 +187,15 @@ async def test_source_queries_override_per_connector(monkeypatch: Any) -> None:
     # Mock connector health
     health_records: list[tuple[str, str, str | None, dict[str, object] | None]] = []
     monkeypatch.setattr(
-        watch_executor,
-        "upsert_connector_health",
+        "pricerecon.core.connector_health.list_connector_health",
+        lambda path=None: {},
+    )
+    monkeypatch.setattr(
+        "pricerecon.core.collection_policy.current_policy",
+        lambda connection=None: None,
+    )
+    monkeypatch.setattr(
+        "pricerecon.core.acquisition.upsert_connector_health",
         lambda connector_id, status, last_error=None, details=None: health_records.append(
             (connector_id, status, last_error, details)
         ),
@@ -288,8 +295,15 @@ async def test_source_queries_fallback_to_default(monkeypatch: Any) -> None:
 
     health_records: list[tuple[str, str, str | None, dict[str, object] | None]] = []
     monkeypatch.setattr(
-        watch_executor,
-        "upsert_connector_health",
+        "pricerecon.core.connector_health.list_connector_health",
+        lambda path=None: {},
+    )
+    monkeypatch.setattr(
+        "pricerecon.core.collection_policy.current_policy",
+        lambda connection=None: None,
+    )
+    monkeypatch.setattr(
+        "pricerecon.core.acquisition.upsert_connector_health",
         lambda connector_id, status, last_error=None, details=None: health_records.append(
             (connector_id, status, last_error, details)
         ),
@@ -385,8 +399,15 @@ async def test_source_queries_no_overrides_all_fallback(monkeypatch: Any) -> Non
 
     health_records: list[tuple[str, str, str | None, dict[str, object] | None]] = []
     monkeypatch.setattr(
-        watch_executor,
-        "upsert_connector_health",
+        "pricerecon.core.connector_health.list_connector_health",
+        lambda path=None: {},
+    )
+    monkeypatch.setattr(
+        "pricerecon.core.collection_policy.current_policy",
+        lambda connection=None: None,
+    )
+    monkeypatch.setattr(
+        "pricerecon.core.acquisition.upsert_connector_health",
         lambda connector_id, status, last_error=None, details=None: health_records.append(
             (connector_id, status, last_error, details)
         ),
@@ -487,8 +508,15 @@ async def test_source_queries_mixed_connectors(monkeypatch: Any) -> None:
 
     health_records: list[tuple[str, str, str | None, dict[str, object] | None]] = []
     monkeypatch.setattr(
-        watch_executor,
-        "upsert_connector_health",
+        "pricerecon.core.connector_health.list_connector_health",
+        lambda path=None: {},
+    )
+    monkeypatch.setattr(
+        "pricerecon.core.collection_policy.current_policy",
+        lambda connection=None: None,
+    )
+    monkeypatch.setattr(
+        "pricerecon.core.acquisition.upsert_connector_health",
         lambda connector_id, status, last_error=None, details=None: health_records.append(
             (connector_id, status, last_error, details)
         ),
@@ -590,8 +618,15 @@ async def test_source_queries_raw_strings_passed_unchanged(monkeypatch: Any) -> 
 
     health_records: list[tuple[str, str, str | None, dict[str, object] | None]] = []
     monkeypatch.setattr(
-        watch_executor,
-        "upsert_connector_health",
+        "pricerecon.core.connector_health.list_connector_health",
+        lambda path=None: {},
+    )
+    monkeypatch.setattr(
+        "pricerecon.core.collection_policy.current_policy",
+        lambda connection=None: None,
+    )
+    monkeypatch.setattr(
+        "pricerecon.core.acquisition.upsert_connector_health",
         lambda connector_id, status, last_error=None, details=None: health_records.append(
             (connector_id, status, last_error, details)
         ),
@@ -687,8 +722,15 @@ async def test_source_queries_with_price_max_filter(monkeypatch: Any) -> None:
 
     health_records: list[tuple[str, str, str | None, dict[str, object] | None]] = []
     monkeypatch.setattr(
-        watch_executor,
-        "upsert_connector_health",
+        "pricerecon.core.connector_health.list_connector_health",
+        lambda path=None: {},
+    )
+    monkeypatch.setattr(
+        "pricerecon.core.collection_policy.current_policy",
+        lambda connection=None: None,
+    )
+    monkeypatch.setattr(
+        "pricerecon.core.acquisition.upsert_connector_health",
         lambda connector_id, status, last_error=None, details=None: health_records.append(
             (connector_id, status, last_error, details)
         ),
