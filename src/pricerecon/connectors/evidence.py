@@ -45,6 +45,12 @@ def claim(
     locator: str,
     context: EvidenceContext,
 ) -> FieldEvidence:
+    """Build an adapter claim whose issuer kind the caller can self-assert.
+
+    `manufacturer` is deliberately not accepted here: manufacturer provenance
+    is conferred only by the operator-registry gate inside
+    `connectors/manufacturer_spec.py`, never by a caller-supplied string.
+    """
     if capture.use is None:
         raise ValueError("Evidence use missing")
     return FieldEvidence(

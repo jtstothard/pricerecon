@@ -56,6 +56,26 @@ class PriceClaim(TrackingModel):
     reason: str
     observation_count: int = 0
     paths: list[ComparablePath] = Field(default_factory=list)
+    # Envelope-level provenance: true when the claimed amount is decided by at
+    # least one synthetic (fixture/offline-proof) path. Offline proof must never
+    # be presented as a live market fact, and this marker is the API contract
+    # that lets a consumer refuse it without reading per-path entries.
+    synthetic: bool = False
+
+    @model_validator(mode="after")
+    def fail_closed_on_unknown_provenance(self) -> Self:
+        """Stored payloads pre-dating the marker must not present as live.
+
+        `synthetic` defaults to False, so a payload written before the
+        envelope marker existed (or by any writer that omits it) would
+        re-serve a fixture-decided amount as a live market fact. Re-derive
+        from the retained paths on every read: unknown provenance fails
+        closed. A stored `synthetic=True` is never downgraded — only the
+        marker-less case is upgraded, never the reverse.
+        """
+        if not self.synthetic and any(path.synthetic for path in self.paths):
+            self.synthetic = True
+        return self
 
 
 class AssessmentCoverage(TrackingModel):

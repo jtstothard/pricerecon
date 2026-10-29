@@ -67,9 +67,11 @@ weakened, skipped or suppressed.
 - **24 focused regressions passed**: five coupon conflict/control cases; four fresh/
   reused/stale/untimed definition cases with replay; seven real-adapter numeric/text/
   final-report-bound/control cases; eight credential-query/SKU cases.
-- Full cleared-environment suite: **215 passed in 198.98s**, all 191 retained plus 24
-  regressions, no skips/xfails. Add `tests/test_final_review_workflow.py` to the
-  fourteen-module command in [the workflow receipt](watch-workflow.md).
+- Scoped fourteen-module guarded-workflow command (not the repository suite):
+  **215 passed in 198.98s**, all 191 retained plus 24 regressions, no skips/xfails.
+  Add `tests/test_final_review_workflow.py` to the fourteen-module command in
+  [the workflow receipt](watch-workflow.md). Repository-wide counts are recorded
+  in that receipt's full-suite section.
 - **37 limiter/browser contracts passed**, ten inherited warnings. Uncached mypy
   passes the five changed application modules. Focused Ruff passes those five and
   both new test modules with **zero findings** against the same zero-finding baseline.
@@ -84,6 +86,12 @@ weakened, skipped or suppressed.
   tests/build and 19 inspected desktop/narrow screenshots are reused; no UI/response
   schema change. Existing ESLint missing-config, bundle and raw-log whitespace
   limitations remain recorded; no global lint/type claim is made.
+- 2026-10-29 (#149) correction: #149 changes the response schema (envelope
+  `PriceClaim.synthetic`, `ObservationHistory.market_history_eligible_count`) and
+  the frontend that renders assessments, so the reuse statement above described
+  only the #142 tree. On the #149 tree the full frontend suite (**88 vitest
+  tests**) and the production build were re-run and pass; the 19 screenshots
+  predate the #149 rendering change.
 - All **77** original dirty files retain their initial bytes and lengths. No live
   acquisition, credentials/accounts, production DB, install/download, push/PR,
   migration approval or activation occurred. Local commits remain authorized.

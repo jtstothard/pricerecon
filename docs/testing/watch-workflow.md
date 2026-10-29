@@ -254,9 +254,10 @@ env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
   /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python
 ```
 
-The full suite appended `-m pytest -q` and exactly the 14 modules listed above,
-in that order. No full-repository pytest or `tests/test_api.py` ran. Exact command
-arrays/environment/results are also retained in
+The scoped guarded-workflow command appended `-m pytest -q` and exactly the 14
+modules listed above, in that order. This is a scoped command, not the full
+repository suite: no full-repository pytest or `tests/test_api.py` ran. Exact
+command arrays/environment/results are also retained in
 [merger/check-results.json](artifacts/watch-workflow/merger/check-results.json).
 
 | Gate | Independently observed result |
@@ -370,10 +371,77 @@ unrelated cleanup occurred; the original 77 dirty files and source are preserved
 The final independent Standards and Spec reviews found four concrete defects;
 parent repaired all four. [Separate review reports and remediation proof](watch-final-review.md)
 record two Standards P2 findings and Spec P1/P2 findings without cross-axis reranking.
-The full suite now passes **215 guarded workflows** (191 retained plus 24 new),
-37 contracts and seven original reviewer script runs. Uncached five-file types
-and focused zero-finding Ruff pass. Frontend 25-test/build and 19-screenshot evidence
-is reused because UI/schema did not change. Original 77 dirty files remain unchanged.
+The scoped fourteen-module command now passes **215 guarded workflows** (191
+retained plus 24 new), 37 contracts and seven original reviewer script runs.
+Uncached five-file types and focused zero-finding Ruff pass. Frontend 25-test/build
+and 19-screenshot evidence is reused because UI/schema did not change. Original
+77 dirty files remain unchanged.
+
+That reuse claim was scoped to #142 and no longer holds for #149: this change
+adds fields to the assessment API schema (envelope `PriceClaim.synthetic`,
+`ObservationHistory.market_history_eligible_count`) and changes the frontend
+that renders them, so the frontend suite and production build were re-run on
+the #149 tree (**88 vitest tests passed, clean build**); the 19-screenshot
+evidence predates the #149 rendering change.
+
+## Full repository suite vs the scoped 215 figure
+
+The 215-pass figures above come from the **scoped fourteen-module
+guarded-workflow command**; they are not full-suite counts.
+
+Full-suite figures recorded earlier in this file — "854 collected: 828
+passed, 15 failed, 11 skipped" at reviewed head `42e7f984`, repeated as the
+#149 baseline — **do not reproduce**. Neither the #149 review environment
+nor the fix-run environment below produced the 15-failure/11-skip split on
+any interpreter; in both re-measures the only failure mode was the missing
+frontend build (10 failures of the `pilot_frontend_build_required` family,
+0 once `frontend/dist` exists). Treat the earlier figures as records of the
+machine that wrote them, not reproducible facts.
+
+Measured on the #149 fix tree (PR branch merged with `origin/main` at
+`fbf2d6e`, frontend built from the tree under test, macOS, sequential runs
+of `PYTHONPATH=src python -m pytest -q --disable-warnings` from the repo
+root):
+
+| Tree | Interpreter | TMPDIR | collected | passed | failed | skipped |
+|---|---|---|---|---|---|---|
+| #149 fix tree | Py3.14.7 | native (`/var/folders/…`) | 885 | 875 | 0 | 10 |
+| #149 fix tree | Py3.14.7 | `/tmp` | 885 | 875 | 0 | 10 |
+| #149 fix tree | Py3.13.18 | native | 885 | 875 | 0 | 10 |
+| #149 fix tree | Py3.13.18 | `/tmp` | 885 | 875 | 0 | 10 |
+| `origin/main` @ `fbf2d6e` | Py3.14.7 | native | 865 | 855 | 0 | 10 |
+| `origin/main` @ `fbf2d6e` | Py3.13.18 | native | 865 | 855 | 0 | 10 |
+
+The branch adds 20 collected tests over its base (12 from the original #149
+work plus 8 review-fix tests) and changes no outcome: every test that passes
+on the base passes on the branch. The three TMPDIR-sensitive workflow
+modules also pass with `TMPDIR` unset.
+
+Preconditions for reproducing a full-suite run:
+
+- **Build the frontend from the tree under test** (`npm ci --prefix frontend`
+  and `npm run build --prefix frontend`); the pilot UI tests serve
+  `frontend/dist` and fail with `pilot_frontend_build_required` when it is
+  absent. That single missing precondition accounts for every failure
+  observed in either re-measure.
+- **The macOS-only private-temp gate**: pilot activation asserts the macOS
+  `/var/folders` private temp directory (`macos_private_tmp_required`,
+  `src/pricerecon/pilot.py`). Runs above were macOS; non-macOS hosts are
+  expected to fail that assertion by design.
+- **Run against a clean environment for the checkout under test**
+  (`PYTHONPATH=src` from the repo root, or a fresh editable install of it).
+  A stale install can register connector entry points from a different tree;
+  the environment used here registers 36 `pricerecon.connectors` entry
+  points, none named `aria`, and no entry-point failure occurred — the
+  earlier "aria" failure record is an artifact of that machine's install,
+  not a property of this tree.
+- **Quality-tool provenance**: the CI workflow force-installs
+  `ruff==0.15.21` and `black==26.5.1` (`.github/workflows/ci.yml`), and
+  those pins formatted and linted this tree (`black --check` and
+  `ruff check` clean over `src/pricerecon tests`; `mypy` clean in both
+  interpreters above). The `pyproject.toml` dev-dependency list separately
+  carries `black==26.10.1`; cite the enforcing CI pin, not the dev list,
+  when stating formatting provenance.
 
 The buyer guide now targets the retained integration checkout for use after
 implementation-worktree cleanup. Actual buyer feedback remains pending; no

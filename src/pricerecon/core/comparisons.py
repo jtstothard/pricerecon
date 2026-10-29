@@ -137,14 +137,39 @@ def assess_observation(
     )
 
 
-def claim(paths: list[ComparablePath], reason: str) -> PriceClaim:
+def claim(paths: list[ComparablePath], reason: str, *, require_live: bool = False) -> PriceClaim:
+    """Claim the lowest payable among qualifying paths with visible provenance.
+
+    `require_live=True` is the live-fact call-site contract: synthetic
+    (fixture/offline-proof) paths are excluded before any amount is computed,
+    and a fixture-only candidate set yields an explicit refusal instead of a
+    number. The default keeps offline-verification claims available but marks
+    them `synthetic` on the envelope so a caller can refuse them there too.
+
+    Capability note: no production call site passes `require_live=True` yet.
+    The production publishers (`db/assessments.evaluate_comparisons`, which
+    serves `current_best`/`observed_low`) deliberately mark rather than
+    filter, and market-history eligibility is enforced by its own exclusion
+    in `db/history.get_history`. The flag exists for a future call site that
+    must publish a live market fact; until one exists it is exercised only
+    by tests.
+    """
     if not paths:
         return PriceClaim(reason="No qualifying comparable observations in the disclosed scope.")
+    if require_live:
+        live = [p for p in paths if not p.synthetic]
+        if not live:
+            return PriceClaim(
+                reason="Only synthetic fixture paths qualify; no live market fact is claimed."
+            )
+        paths = live
     amount = min(p.amount for p in paths)
+    winners = [p for p in paths if p.amount == amount]
     return PriceClaim(
         state="supported",
         amount=amount,
         reason=reason,
         observation_count=len({p.observation_id for p in paths}),
-        paths=[p for p in paths if p.amount == amount],
+        paths=winners,
+        synthetic=any(p.synthetic for p in winners),
     )

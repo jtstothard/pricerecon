@@ -4,6 +4,7 @@ import { PriceAssessment } from '../../lib/assessments'
 function Price({ label, value }: { label: string; value: PriceAssessment['current_best'] }) {
   return <div><p><strong>{label}:</strong> {value.state === 'supported' ? `GBP ${value.amount}` : value.state.replace(/_/g, ' ')}.</p>
     <p>{value.reason} Retained observations: {value.observation_count}.</p>
+    {value.synthetic && <p>Synthetic verification data: the claimed amount is decided by fixture evidence, not a live market fact.</p>}
     {value.paths.map((path, i) => <details key={i}><summary>Observed {new Date(path.observed_at).toLocaleString()} · {path.scenario_kind.replace(/_/g, ' ')}</summary>
       {value.state !== 'supported' && <p>Historical quoted amount: GBP {value.amount}; unavailable as a current buying claim.</p>}
       {path.synthetic && <p>Synthetic verification data; no real market history.</p>}

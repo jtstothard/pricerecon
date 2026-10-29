@@ -43,7 +43,12 @@ async def account_request(request: httpx.Request) -> None:
     previous = admission.requests.get(key, 0)
     path = request.url.path
     costs: dict[Resource, int] = {"requests": 1}
-    if "search" in path or "item_summary" in path or path.endswith("/products.json"):
+    if (
+        "search" in path
+        or "item_summary" in path
+        or path.endswith("/products.json")
+        or path.endswith("/specifications.json")
+    ):
         costs["pages"] = 1
     elif (
         "/item/" in path or "/item.get" in path or ("/products/" in path and path.endswith(".json"))

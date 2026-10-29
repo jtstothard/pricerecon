@@ -34,6 +34,7 @@ it('shows comparison outcome and gaps before optional method and revision detail
     amount: '65.00',
     reason: 'Identity corrected',
     observation_count: 1,
+    synthetic: true,
     paths: [
       {
         observed_at: '2026-10-27T12:00:00Z',
@@ -77,6 +78,76 @@ it('shows comparison outcome and gaps before optional method and revision detail
   expect(html).toContain('<summary>Technical evidence</summary>')
   expect(html.indexOf('Only one source checked')).toBeLessThan(html.indexOf('technical-method'))
   expect(html).not.toMatch(/<summary>[^<]*revision 8/)
+})
+
+import { parsePriceAssessment } from '../../lib/assessments'
+
+function capturedClaim(synthetic: boolean, pathSynthetic: boolean) {
+  return {
+    state: 'supported',
+    amount: '45.10',
+    reason: 'Lowest verified total among the offers checked.',
+    observation_count: 1,
+    synthetic,
+    paths: [
+      {
+        observed_at: '2026-10-27T12:00:00Z',
+        scenario_kind: 'public_no_coupon',
+        synthetic: pathSynthetic,
+        offer_key: 'offer-key',
+        evidence_ids: ['claim-1'],
+        dependencies: [],
+      },
+    ],
+  }
+}
+
+function capturedAssessment(currentBest: object) {
+  return {
+    id: 'assessment-envelope',
+    revision: 1,
+    historical: false,
+    savings: null,
+    assessed_at: '2026-10-27T12:00:00Z',
+    cohort: { condition: 'new', quantity: '1' },
+    invalidation_reasons: [],
+    current_best: currentBest,
+    observed_low: capturedClaim(false, false),
+    usual_price: { state: 'unavailable', amount: null, reason: 'No calibration.', observation_count: 0, synthetic: false, paths: [] },
+    personal_price: { state: 'unavailable', amount: null, reason: 'No personal history.', observation_count: 0, synthetic: false, paths: [] },
+    window_start: '2026-10-26T12:00:00Z',
+    window_end: '2026-10-27T12:00:00Z',
+    policy: {
+      version: 'policy-v1',
+      max_evidence_age_seconds: 3600,
+      allowed_scenario_kinds: ['public_no_coupon'],
+    },
+    coverage: { sources: ['shop'], unchecked_sources: [], gaps: [], reason: 'Declared scope' },
+    method: 'qualified-payable-minimum-v1',
+    policy_fingerprint: 'fingerprint',
+    gaps: [],
+    exclusions: [],
+  }
+}
+
+it('carries the envelope synthetic marker through the parser and warns beside the amount', () => {
+  const assessment = parsePriceAssessment(capturedAssessment(capturedClaim(true, false)))
+  expect(assessment.current_best.synthetic).toBe(true)
+  // The envelope warning must render even when no individual path warns.
+  expect(assessment.current_best.paths[0].synthetic).toBe(false)
+  const html = renderToStaticMarkup(
+    createElement(PriceAssessments, { assessments: [assessment] })
+  )
+  expect(html).toContain('decided by fixture evidence, not a live market fact')
+  expect(html).not.toContain('no real market history')
+})
+
+it('keeps a live envelope claim live and refuses a payload without an explicit marker', () => {
+  const live = parsePriceAssessment(capturedAssessment(capturedClaim(false, false)))
+  expect(live.current_best.synthetic).toBe(false)
+  const unmarked = capturedAssessment(capturedClaim(true, false))
+  delete (unmarked.current_best as Record<string, unknown>).synthetic
+  expect(() => parsePriceAssessment(unmarked)).toThrow()
 })
 
 import { SourceCoverage } from '../discovery/SourceCoverage'

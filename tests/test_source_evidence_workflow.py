@@ -112,3 +112,11 @@ def test_truncated_discovery_is_a_failed_capture_with_explicit_limits_not_an_emp
 
 def test_merged_assessments_cannot_promote_reviewed_adapter_leads_to_price_claims():
     run_source("assessment_interaction")
+
+
+def test_captured_manufacturer_document_reaches_supported_identity_through_acquisition():
+    run_source("manufacturer_document")
+
+
+def test_unregistered_manufacturer_host_never_serves_manufacturer_provenance():
+    run_source("manufacturer_host_gate")
