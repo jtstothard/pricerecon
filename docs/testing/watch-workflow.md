@@ -254,9 +254,10 @@ env -i PATH=/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin \
   /Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python
 ```
 
-The full suite appended `-m pytest -q` and exactly the 14 modules listed above,
-in that order. No full-repository pytest or `tests/test_api.py` ran. Exact command
-arrays/environment/results are also retained in
+The scoped guarded-workflow command appended `-m pytest -q` and exactly the 14
+modules listed above, in that order. This is a scoped command, not the full
+repository suite: no full-repository pytest or `tests/test_api.py` ran. Exact
+command arrays/environment/results are also retained in
 [merger/check-results.json](artifacts/watch-workflow/merger/check-results.json).
 
 | Gate | Independently observed result |
@@ -370,10 +371,34 @@ unrelated cleanup occurred; the original 77 dirty files and source are preserved
 The final independent Standards and Spec reviews found four concrete defects;
 parent repaired all four. [Separate review reports and remediation proof](watch-final-review.md)
 record two Standards P2 findings and Spec P1/P2 findings without cross-axis reranking.
-The full suite now passes **215 guarded workflows** (191 retained plus 24 new),
-37 contracts and seven original reviewer script runs. Uncached five-file types
-and focused zero-finding Ruff pass. Frontend 25-test/build and 19-screenshot evidence
-is reused because UI/schema did not change. Original 77 dirty files remain unchanged.
+The scoped fourteen-module command now passes **215 guarded workflows** (191
+retained plus 24 new), 37 contracts and seven original reviewer script runs.
+Uncached five-file types and focused zero-finding Ruff pass. Frontend 25-test/build
+and 19-screenshot evidence is reused because UI/schema did not change. Original
+77 dirty files remain unchanged.
+
+## Full repository suite vs the scoped 215 figure
+
+The 215-pass figures above come from the **scoped fourteen-module
+guarded-workflow command**; they are not full-suite counts. The repository-wide
+suite, measured separately at reviewed head `42e7f984`, collected **854 tests:
+828 passed, 15 failed, 11 skipped** in 278.69s. All 15 failures were
+environmental gates, not spec defects.
+
+Preconditions for reproducing a full-suite run:
+
+- **Build the frontend first** (`npm ci` and `npm --prefix frontend run build`);
+  the pilot UI tests serve `frontend/dist` and fail with
+  `pilot_frontend_build_required` when it is absent.
+- **The macOS-only private-temp gate**: pilot activation requires the macOS
+  `/var/folders` private temp directory, so the gate-list assertion
+  (`macos_private_tmp_required`, `src/pricerecon/pilot.py`) fails by design on
+  non-macOS hosts.
+- **Run without a stale `src` checkout on `PYTHONPATH`**, from a clean editable
+  install of the checkout under test (`pip install -e ".[dev]"`, then plain
+  `python -m pytest`). An earlier checkout's install registers connector entry
+  points (e.g. `aria`) that do not exist in this tree and fails the entry-point
+  export test before its assertion runs.
 
 The buyer guide now targets the retained integration checkout for use after
 implementation-worktree cleanup. Actual buyer feedback remains pending; no

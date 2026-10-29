@@ -76,6 +76,9 @@ async def observations():
             assert data["usual_price"]["amount"] is data["savings"] is None
             assert data["history_state"] == "limited"
             assert data["legacy_events_included"] is False
+            # Every observation here is synthetic fixture data, so the market
+            # history eligibility signal must read zero on the envelope.
+            assert data["market_history_eligible_count"] == 0
             assert scheduler.list_watches() == []
             assert harness.deliveries == harness.blocked_edges == []
 
@@ -726,6 +729,26 @@ async def retained_definitions():
             assert data["observations"][1]["change"] == "increased"
             assert data["observations"][1]["validity"] == "supported_at_capture"
             assert data["last_good"]["age_seconds"] == 0
+            assert harness.deliveries == harness.blocked_edges == []
+
+
+async def retained_eligibility():
+    """Non-synthetic retained observations are market-history eligible."""
+    with MonitoringHarness() as harness:
+        async with harness.session() as (client, _):
+            report = priced_report(harness)
+            for entry in report.claims:
+                entry.retention = "minimal_fields"
+            for scenario in report.cost_scenarios:
+                for entry in scenario.context_evidence + [
+                    e for part in scenario.components for e in part.evidence
+                ]:
+                    entry.retention = "minimal_fields"
+            candidate = (await read_capture(harness, client, [report]))["candidates"][0]
+            data = await history(client, candidate)
+            assert data["observations"][0]["evidence_kind"] == "retained"
+            assert data["observations"][0]["market_history_eligible"] is True
+            assert data["market_history_eligible_count"] == len(data["observations"])
             assert harness.deliveries == harness.blocked_edges == []
 
 

@@ -126,6 +126,11 @@ class ObservationHistory(HistoryModel):
     attempts: list[HistoryAttempt]
     gaps: list[HistoryGap]
     last_good: LastGood | None
+    # Count of observations whose retained evidence is eligible to serve as
+    # real market history (supported at capture AND not synthetic). The envelope
+    # surfaces the eligibility signal so consumers can distinguish a history
+    # built from live acquisitions from one backed by offline fixtures.
+    market_history_eligible_count: int = 0
     usual_price: UnavailableHistoryPrice = Field(default_factory=UnavailableHistoryPrice)
     savings: None = None
     legacy_events_included: Literal[False] = False

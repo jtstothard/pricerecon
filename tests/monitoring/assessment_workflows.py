@@ -66,6 +66,10 @@ async def scoped():
             assert result["current_best"]["amount"] == "70.10", result
             assert result["observed_low"]["amount"] == "70.10"
             assert result["observed_low"]["observation_count"] == 1
+            # Offline fixture data is served only with its provenance marker;
+            # a consumer reading the envelope can refuse it as a live fact.
+            assert result["current_best"]["synthetic"] is True, result
+            assert result["observed_low"]["synthetic"] is True, result
             assert result["usual_price"]["state"] == "unavailable"
             assert result["personal_price"]["state"] == "unavailable"
             assert result["savings"] is None

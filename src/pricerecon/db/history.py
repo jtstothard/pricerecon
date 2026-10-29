@@ -370,4 +370,5 @@ def get_history(
         attempts=attempts,
         gaps=gaps,
         last_good=last_good,
+        market_history_eligible_count=sum(1 for o in observations if o.market_history_eligible),
     )

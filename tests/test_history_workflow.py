@@ -5,6 +5,10 @@ def test_history_retains_initial_unchanged_rising_and_falling_exact_revisions():
     run_cost_history("observations")
 
 
+def test_non_synthetic_retained_observations_count_as_market_history_eligible():
+    run_cost_history("retained_eligibility")
+
+
 def run_cost_history(name, storage=None):
     import os
     import subprocess

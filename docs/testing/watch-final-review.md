@@ -67,9 +67,11 @@ weakened, skipped or suppressed.
 - **24 focused regressions passed**: five coupon conflict/control cases; four fresh/
   reused/stale/untimed definition cases with replay; seven real-adapter numeric/text/
   final-report-bound/control cases; eight credential-query/SKU cases.
-- Full cleared-environment suite: **215 passed in 198.98s**, all 191 retained plus 24
-  regressions, no skips/xfails. Add `tests/test_final_review_workflow.py` to the
-  fourteen-module command in [the workflow receipt](watch-workflow.md).
+- Scoped fourteen-module guarded-workflow command (not the repository suite):
+  **215 passed in 198.98s**, all 191 retained plus 24 regressions, no skips/xfails.
+  Add `tests/test_final_review_workflow.py` to the fourteen-module command in
+  [the workflow receipt](watch-workflow.md). Repository-wide counts are recorded
+  in that receipt's full-suite section.
 - **37 limiter/browser contracts passed**, ten inherited warnings. Uncached mypy
   passes the five changed application modules. Focused Ruff passes those five and
   both new test modules with **zero findings** against the same zero-finding baseline.

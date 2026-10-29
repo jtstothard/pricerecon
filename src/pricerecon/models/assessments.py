@@ -56,6 +56,11 @@ class PriceClaim(TrackingModel):
     reason: str
     observation_count: int = 0
     paths: list[ComparablePath] = Field(default_factory=list)
+    # Envelope-level provenance: true when the claimed amount is decided by at
+    # least one synthetic (fixture/offline-proof) path. Offline proof must never
+    # be presented as a live market fact, and this marker is the API contract
+    # that lets a consumer refuse it without reading per-path entries.
+    synthetic: bool = False
 
 
 class AssessmentCoverage(TrackingModel):

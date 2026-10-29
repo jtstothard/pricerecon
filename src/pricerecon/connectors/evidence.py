@@ -40,7 +40,7 @@ def claim(
     field: IdentityField | OfferField,
     value: str,
     issuer: str,
-    issuer_kind: Literal["seller", "visible_observation"],
+    issuer_kind: Literal["manufacturer", "seller", "visible_observation"],
     pointer: str,
     locator: str,
     context: EvidenceContext,
