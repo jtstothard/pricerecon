@@ -4,6 +4,9 @@ Reviewed integration: `e4eeccb8eb65b224c52e32522b7680cb93470a70`.
 User-approved envelope and autonomous continuation are retained in
 [live-pilot-plan.md](../product/category-discovery/live-pilot-plan.md).
 
+> Historical receipt: the app-specific approval/human-intervention conclusion below
+> is superseded by the 2026-10-29 correction at the end. Counts remain historical.
+
 ## Actual result
 
 Parent invoked the merged executable with existing project Python and
@@ -86,3 +89,19 @@ approved envelope. If the existing application lacks the required provider
 approval, that provider/account step belongs to the owner; no outreach/account
 changes were made or implied here. All live request counters remain zero and
 the shared grant remains unconsumed.
+
+
+## Superseding primary-evidence correction — 2026-10-29
+
+The earlier request to locate an app-specific approval/account/email record was
+overbroad for standard search and single getItem. The exact eBay staff replies and
+API licence now support a concrete external evidence review, as documented in the
+[current plan](../product/category-discovery/live-pilot-plan.md#corrected-endpointuse-interpretation--2026-10-29)
+and [manifest contract](../product/category-discovery/live-pilot-runner.md).
+No additional buyer/provider approval ceremony is required for those endpoints.
+This does not grant restricted getItems/watchCount access, history or aggregates.
+
+Child changed only local source/tests/docs. Public documentation reads are separate
+from the pilot budget; no token/search/detail calls, credentials, production reads
+or modifications, accounts/outreach, fallback, push or PR occurred in this child.
+The parent retains the actual app fingerprint/session review and live execution.

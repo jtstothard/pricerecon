@@ -15,14 +15,22 @@ def test_missing_provider_authority_is_a_useful_zero_request_receipt():
     assert receipt["state"] == "blocked"
     assert receipt["requests"] == 0
     assert receipt["gates"] == [
-        "ebay_app_approval_unproven",
+        "ebay_endpoint_access_unreviewed",
         "ebay_transient_retention_unproven",
         "backup_exclusion_unproven",
     ]
     assert set(receipt) == {"schema", "state", "gates", "requests"}
 
 
-def test_transport_rejects_unapproved_route_before_external_edge():
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://api.ebay.com/sell/account/v1/privilege",
+        "https://api.ebay.com/buy/browse/v1/item?item_ids=v1%7C111%7C0",
+        "https://api.ebay.com/buy/browse/v1/item/v1%7C111%7C0?fieldgroups=WATCH_COUNT",
+    ],
+)
+def test_transport_rejects_unapproved_route_before_external_edge(url):
     import httpx
     import pytest
 
@@ -40,7 +48,7 @@ def test_transport_rejects_unapproved_route_before_external_edge():
             transport=PilotTransport(httpx.MockTransport(external), PilotBounds())
         ) as client:
             with pytest.raises(AdmissionDenied, match="pilot_route_denied"):
-                await client.get("https://api.ebay.com/sell/account/v1/privilege")
+                await client.get(url)
         assert seen == []
 
     asyncio.run(scenario())

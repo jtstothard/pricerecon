@@ -1,4 +1,4 @@
-"""Auditable parent-session review of app-specific provider evidence.
+"""Auditable parent-session review of endpoint-access and transient-use provider evidence.
 
 This records a review, never creates provider permission. The parent reviews
 source document content and supplies the manifest through the approved session.
@@ -25,13 +25,23 @@ class ReviewError(ValueError):
     """Sanitized fail-closed external prerequisite."""
 
 
+# Exact reviewed primary sources only; this is not trust in arbitrary forum posts.
+ENDPOINT_ACCESS_SOURCES = frozenset(
+    {
+        "https://community.ebay.com/forum/browse-57957/topic/browse-api-468324/",
+        "https://community.ebay.com/forum/search-api-57966/topic/request-app-check-access-for-account-in-browse-prod-467069/",
+    }
+)
+TRANSIENT_USE_SOURCE = "https://developer.ebay.com/join/api-license-agreement"
+
+
 class Document(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    kind: Literal["app_approval", "transient_use"]
+    kind: Literal["endpoint_access", "transient_use"]
     file: str = Field(min_length=1, max_length=200)
     sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     reviewed_scope: str = Field(min_length=1, max_length=2000)
-    issuer: str = Field(pattern=r"^https://developer\.ebay\.com/", max_length=1000)
+    issuer: str = Field(min_length=1, max_length=1000)
 
 
 class ReviewedEvidence(BaseModel):
@@ -74,8 +84,9 @@ def resolve_review(manifest: Path, app_id: str) -> ReviewedEvidence:
     """Bind the session review to exact documents, app, purpose and finite use.
 
     Hashes establish document integrity, not entitlement. The reviewer must
-    assess actual app approval and transient display/retention terms; a buyer's
-    pilot approval or a generic policy page is not an app-specific provider grant.
+    assess the staff guidance for standard search/getItem and licence terms for
+    necessary intermediate copies/private display with prompt deletion. This is
+    not app-specific approval, restricted endpoint access or a history grant.
     """
     try:
         raw = bounded_read(manifest, 16384)
@@ -92,10 +103,17 @@ def resolve_review(manifest: Path, app_id: str) -> ReviewedEvidence:
             or review.operator_started_at.tzinfo is None
             or review.operator_started_at > now
             or review.remaining_seconds() <= 0
-            or {doc.kind for doc in review.documents} != {"app_approval", "transient_use"}
+            or {doc.kind for doc in review.documents} != {"endpoint_access", "transient_use"}
         ):
             raise ReviewError("review_binding_or_expiry_invalid")
         for doc in review.documents:
+            allowed = (
+                ENDPOINT_ACCESS_SOURCES
+                if doc.kind == "endpoint_access"
+                else frozenset({TRANSIENT_USE_SOURCE})
+            )
+            if doc.issuer not in allowed:
+                raise ReviewError("review_document_source_invalid")
             path = (manifest.parent / doc.file).resolve()
             if not path.is_relative_to(manifest.parent.resolve()) or path == manifest.resolve():
                 raise ReviewError("review_document_path_invalid")

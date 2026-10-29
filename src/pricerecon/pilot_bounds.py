@@ -150,7 +150,7 @@ def pilot_policy() -> OperatingPolicy:
             "scope_id": "watch-pilot-2026-10-28-once",
             "version": "live-pilot-plan-2026-10-28-v1",
             "owner_reference": "Codex active session; Jay approval 2026-10-28",
-            "permission_reference": "external approval evidence required before live use",
+            "permission_reference": "reviewed standard search/getItem endpoint-access evidence required before live use",
             "retention_reference": "external transient retention evidence required before live use",
             "starts_at": now,
             "stops_at": now + timedelta(seconds=1200),

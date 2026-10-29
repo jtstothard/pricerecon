@@ -23,7 +23,7 @@ def preflight(manifest: Path | None = None) -> dict[str, object]:
             "schema": "pricerecon.watch-pilot.v1",
             "state": "blocked",
             "gates": [
-                "ebay_app_approval_unproven",
+                "ebay_endpoint_access_unreviewed",
                 "ebay_transient_retention_unproven",
                 "backup_exclusion_unproven",
             ],

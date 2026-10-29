@@ -45,12 +45,13 @@ session expire; the independent supervisor removes the entire marked run directo
 
 ## Active-session evidence review
 
-The parent reviews genuine app-specific eBay approval and transient-use/retention
+The parent reviews endpoint-specific eBay staff guidance and API licence transient-use/retention
 source content in the approved active session, then supplies the review manifest
 and exact document files. No outside reviewer or signing infrastructure is needed.
 The manifest is an auditable review record, never provider permission itself.
-Buyer approval of the pilot does not establish eBay entitlement. Generic policy
-URLs alone cannot demonstrate app approval. Tests use fictional evidence only.
+Buyer approval of the pilot does not establish eBay entitlement. Standard search and single getItem need no separate app approval under the exact
+staff guidance below. Restricted getItems/watchCount are excluded. Tests use
+fictional document bytes and credentials, never provider permission.
 
 External `review.json` is strict JSON with these fields:
 
@@ -66,14 +67,36 @@ External `review.json` is strict JSON with these fields:
 | `expires_at` | Timezone-aware expiry of this session review/source permission |
 | `operator_started_at` | Actual attended execution/review start; timezone-aware, no future timestamp |
 | `retention_seconds` | Source-permitted session retention, integer 1–1200; never inferred from buyer approval |
-| `documents` | Exactly two entries, kinds `app_approval` and `transient_use` |
+| `documents` | Exactly two entries, kinds `endpoint_access` and `transient_use` |
 
 Each document has `reviewed_scope` (what the source content actually permits), `file` (relative to the external manifest directory), `sha256`
-(exact reviewed bytes), and `issuer` (the actual `https://developer.ebay.com/…`
-source reference). The app approval evidence must bind the app and intended Browse
-UK use; transient-use evidence must cover capture, required normalized fields,
-session display, deletion, and the minimal permanent receipt. An issuer URL alone
-is not evidence. Missing, changed, oversized or escaping document paths fail.
+(exact reviewed bytes), and `issuer` (the exact reviewed public source URL).
+For `endpoint_access`, only these eBay Developer Support staff replies are accepted:
+
+- https://community.ebay.com/forum/browse-57957/topic/browse-api-468324/
+- https://community.ebay.com/forum/search-api-57966/topic/request-app-check-access-for-account-in-browse-prod-467069/
+
+For `transient_use`, only https://developer.ebay.com/join/api-license-agreement
+is accepted. No arbitrary forum post, generic Buy requirement, URL prefix or
+app-specific approval assertion substitutes for those documents. An issuer URL
+alone is not evidence: the exact reviewed bytes must exist and match their hashes.
+Missing, changed, oversized or escaping document paths fail.
+
+`reviewed_scope` records the parent's interpretation, not a provider grant:
+standard search/single getItem with client-credentials OAuth only; necessary
+limited intermediate copies under licence §3.1; private one-off display and deletion
+when no longer needed, bounded by 1200 seconds and the shorter session deadline.
+No category averages/aggregates, history, public commingling, getItems or watchCount.
+Listing display must stay within the six-hour freshness rule (§8.1.3); this is not
+an archive licence. The minimal durable receipt contains no merchant content.
+
+A concrete external manifest can now use saved copies of those actual public
+documents: `endpoint_access` points to either staff page, `transient_use` to the
+licence, each with its exact file SHA256. Bind `app_sha256` to the actual existing
+app in the parent's authorized credential route (not a sample fingerprint), and
+`envelope_sha256` to the current plan bytes. Supply actual attended session times,
+reviewer reference, expiry and retention. No email/account approval or extra review
+service is required. Do not reuse fictional test bytes as public evidence.
 
 Manifest is capped at 16KiB and each reviewed document at 2MiB. App, purpose, exact envelope, expiry, source retention and operator budget
 are checked again in the supervisor/worker before acquisition. Absent or invalid
@@ -121,9 +144,9 @@ Host failure/SIGKILL of the cleanup owner cannot establish deletion or restart r
 
 ## Actual remaining external prerequisites
 
-1. Parent review of genuine app-specific approval/use/retention source documents,
-   recorded through the active-session interface above. No provider grant has
-   been supplied or established by this source-only fix.
+1. Parent records review of the actual allowlisted staff guidance and API licence
+   through the existing active-session manifest. This records standard endpoint
+   access and bounded use interpretation, not a new app-specific grant.
 2. Existing authorized `EBAY_APP_ID` and `EBAY_CERT_ID` credentials, supplied via
    the documented secret route. The runner checks presence only during preflight;
    no production DB or credential discovery is required. Parent uses T3

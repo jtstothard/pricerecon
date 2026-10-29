@@ -22,7 +22,7 @@ queries for the two subjects. One page of at most five leads each; at most two
 candidate details per query, chosen by exact-reference evidence, not cheapest
 price. Do not follow next pages or use auction/used/near-reference substitutes.
 
-Preflight must establish the existing app's approval/intended use and permitted
+Preflight must establish the standard search/getItem endpoint access and intended use and permitted
 transient retention before any token/query/detail requests. Prior successful
 API calls are not sufficient proof. No new account, credential scope, affiliate
 registration, service or purchase is proposed. Reuse existing authorized secret
@@ -37,7 +37,7 @@ If eBay prerequisites cannot be demonstrated, return a blocked preflight receipt
 do not spend the remaining request allowance on another route.
 
 Current primary references checked during preparation:
-- [eBay Buy requirements](https://developer.ebay.com/api-docs/buy/static/buy-requirements.html): production approval/contract prerequisites.
+- [eBay Buy requirements](https://developer.ebay.com/api-docs/buy/static/buy-requirements.html): generic Buy guidance; endpoint-specific staff clarification below governs this pilot.
 - [eBay API licence](https://developer.ebay.com/join/api-license-agreement): displayed listing age, limited copies and derivation constraints; do not create category averages or infer an archive grant.
 - [Addiesdive terms](https://www.addiesdivewatches.com/policies/terms-of-service), section12: automated scraping restriction.
 - [Casio UK terms](https://www.casio.com/uk/legal/terms-of-use/): source context only; no new general reuse grant asserted.
@@ -115,7 +115,7 @@ its deadline even if orchestration disconnects. Cleanup belongs to the runner's
 finally/expiry path; verify it offline before authorizing live startup.
 
 1. Prove bounded runner and containment offline against controlled transports.
-2. Reconcile existing app approval and transient use/retention; record only
+2. Review standard endpoint-access guidance and transient use/retention; record only
    non-secret evidence pointers. No new account access or message is implied.
 3. Start isolated grant/ledger; execute each exact-reference query once and only
    supported details. Preserve source outcomes: blocked/capped/empty/partial differ.
@@ -177,3 +177,29 @@ Local credential presence is false; live grant unconsumed. See
 [parent preflight receipt](../../testing/live-pilot-parent-preflight.md).
 This does not reopen the twelve accepted offline implementation tickets or
 claim successful live acquisition. Source-provider evidence remains external.
+
+
+## Corrected endpoint/use interpretation — 2026-10-29
+
+This supersedes the earlier app-specific approval and human-intervention blockers
+for this exact bounded pilot. [eBay Developer Support staff](https://community.ebay.com/forum/browse-57957/topic/browse-api-468324/)
+explicitly confirms standard search and single getItem need no additional approval;
+[a second staff reply](https://community.ebay.com/forum/search-api-57966/topic/request-app-check-access-for-account-in-browse-prod-467069/)
+confirms standard access while distinguishing restricted watchCount. getItems and
+watchCount are excluded. Generic Buy requirements were over-applied; no separate
+email/account approval is needed or claimed for these standard endpoints.
+
+[API licence §3.1](https://developer.ebay.com/join/api-license-agreement) permits
+necessary limited intermediate copies deleted when no longer needed and consistent
+display. We interpret this as supporting the approved private one-off display with
+prompt deletion, at most 1200 seconds, no retained merchant history, category
+aggregates/average statistics or public commingling. The six-hour listing freshness
+limit is not a history/storage grant. No new provider permission is invented.
+
+The existing external review now binds `endpoint_access` to either exact staff URL
+and `transient_use` to the licence, saved reviewed bytes/hashes, actual app
+fingerprint, this revised envelope hash and current attended session/expiry.
+See [manifest contract](live-pilot-runner.md). Existing caps, exclusions, no-force,
+one-off grant and cleanup remain unchanged. Actual deployed credential presence
+was parent-verified; this child did not access credentials or production.
+Parent alone executes using the existing authorized credential route after merger.

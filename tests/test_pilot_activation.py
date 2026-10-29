@@ -15,7 +15,7 @@ def session_review(tmp_path):
     from pricerecon.pilot_activation import envelope_digest
 
     documents = []
-    for kind in ("app_approval", "transient_use"):
+    for kind in ("endpoint_access", "transient_use"):
         artifact = tmp_path / (kind + ".txt")
         artifact.write_text("Independent synthetic external evidence fixture: " + kind)
         documents.append(
@@ -23,10 +23,14 @@ def session_review(tmp_path):
                 "kind": kind,
                 "file": artifact.name,
                 "sha256": hashlib.sha256(artifact.read_bytes()).hexdigest(),
-                "issuer": "https://developer.ebay.com/fixture",
+                "issuer": (
+                    "https://community.ebay.com/forum/browse-57957/topic/browse-api-468324/"
+                    if kind == "endpoint_access"
+                    else "https://developer.ebay.com/join/api-license-agreement"
+                ),
                 "reviewed_scope": (
-                    "fixture app-specific approval"
-                    if kind == "app_approval"
+                    "fixture standard search/getItem access; no additional approval"
+                    if kind == "endpoint_access"
                     else "fixture transient display and deletion within retention_seconds"
                 ),
             }
@@ -72,7 +76,7 @@ def test_session_review_binds_external_bytes_app_purpose_envelope_and_expiry(tmp
             resolve_review(manifest, "fixture-app")
         review[field] = old
     save()
-    (tmp_path / "app_approval.txt").write_text("replacement assertion")
+    (tmp_path / "endpoint_access.txt").write_text("replacement assertion")
     with pytest.raises(ReviewError):
         resolve_review(manifest, "fixture-app")
 
@@ -265,3 +269,50 @@ def test_public_cli_accepts_session_review_without_keys_and_blocks_changed_docum
         command + ["--force"], env=env, capture_output=True, text=True, check=False
     )
     assert force.returncode != 0
+
+
+@pytest.mark.parametrize(
+    "issuer",
+    [
+        "https://community.ebay.com/forum/search-api-57966/topic/request-app-check-access-for-account-in-browse-prod-467069/",
+    ],
+)
+def test_second_staff_guidance_also_establishes_standard_endpoint_access(tmp_path, issuer):
+    manifest, review, save = session_review(tmp_path)
+    review["documents"][0]["issuer"] = issuer
+    save()
+    assert resolve_review(manifest, "fixture-app").documents[0].kind == "endpoint_access"
+
+
+@pytest.mark.parametrize(
+    "kind,issuer",
+    [
+        ("endpoint_access", "https://community.ebay.com/forum/browse-57957/topic/unknown/"),
+        ("endpoint_access", "https://developer.ebay.com/api-docs/buy/static/buy-requirements.html"),
+        (
+            "endpoint_access",
+            "https://community.ebay.com/forum/browse-57957/topic/browse-api-468324/?approval=yes",
+        ),
+        (
+            "endpoint_access",
+            "https://community.ebay.com.evil.example/forum/browse-57957/topic/browse-api-468324/",
+        ),
+        ("endpoint_access", "https://developer.ebay.com/join/api-license-agreement"),
+        ("transient_use", "https://community.ebay.com/forum/browse-57957/topic/browse-api-468324/"),
+    ],
+)
+def test_only_exact_reviewed_sources_for_each_evidence_kind_are_accepted(tmp_path, kind, issuer):
+    manifest, review, save = session_review(tmp_path)
+    document = next(doc for doc in review["documents"] if doc["kind"] == kind)
+    document["issuer"] = issuer
+    save()
+    with pytest.raises(ReviewError, match="review_document_source_invalid"):
+        resolve_review(manifest, "fixture-app")
+
+
+def test_historical_app_approval_assertion_is_not_endpoint_evidence(tmp_path):
+    manifest, review, save = session_review(tmp_path)
+    review["documents"][0]["kind"] = "app_approval"
+    save()
+    with pytest.raises(ReviewError):
+        resolve_review(manifest, "fixture-app")
