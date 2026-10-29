@@ -337,9 +337,18 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
     filtered_listings = apply_post_normalization_filters(
         all_listings, watch.filters, watch.synonym_groups if watch.synonym_groups else None
     )
-    # ADR 0001: raw connector queries never replace title matching. Watches
-    # without synonym groups retain the legacy all-query-terms safety net.
-    if not watch.synonym_groups and not watch.filters.spec_match.synonym_groups:
+    # ADR 0001: raw connector queries never replace title matching. The
+    # all-query-terms safety net exists to re-precise the recall that
+    # per-connector ``source_queries`` overrides widen, so it fires only for
+    # watches with such overrides. Plain watches without overrides (and
+    # without synonym groups) keep the pre-ADR watch-path behavior of
+    # origin/main: no query-term title gate (gate scoping decision,
+    # 2026-10-29).
+    if (
+        watch.source_queries
+        and not watch.synonym_groups
+        and not watch.filters.spec_match.synonym_groups
+    ):
         from pricerecon.core.title_matching import legacy_query_match
 
         filtered_listings = [

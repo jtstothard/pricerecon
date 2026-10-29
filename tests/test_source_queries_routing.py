@@ -747,3 +747,146 @@ async def test_source_queries_with_price_max_filter(monkeypatch: Any) -> None:
     # Verify price_max filters were passed
     assert connector_instances["ebay"].filters_received == [{"price_max": Decimal("1000.00")}]
     assert connector_instances["aliexpress"].filters_received == [{"price_max": Decimal("1000.00")}]
+
+
+def titled_listing(source: str, listing_id: str, title: str) -> NormalizedListing:
+    return NormalizedListing(
+        source=source,
+        source_type=SourceType.MARKETPLACE,
+        source_listing_id=listing_id,
+        title_raw=title,
+        price=Decimal("99.99"),
+        currency="GBP",
+        url=f"https://example.com/{source}/{listing_id}",
+        timestamp_seen=datetime.now(timezone.utc),
+        in_stock=True,
+    )
+
+
+def _scoped_gate_watch(watch_id: int, name: str, source_queries: dict[str, str]) -> Watch:
+    now = datetime.now(timezone.utc)
+    return Watch(
+        id=watch_id,
+        name=name,
+        query="laptop",
+        display_title=None,
+        category="laptop",
+        synonym_groups=[],
+        source_queries=source_queries,
+        sources=[SourceConfig(connector="ebay", config={})],
+        filters=WatchFilters(
+            price_max=None,
+            spec_match=SpecMatch(ram_gb=None),
+            min_seller_feedback=None,
+            min_seller_feedback_pct=None,
+        ),
+        schedule=WatchSchedule(time_window=None),
+        grouping=WatchGrouping(product_key=None),
+        notifications=WatchNotification(
+            webhook_url=None,
+            telegram_bot_token=None,
+            telegram_chat_id=None,
+            discord_webhook_url=None,
+        ),
+        enabled=True,
+        created_at=now,
+        updated_at=now,
+        last_check_at=None,
+        status="active",
+    )
+
+
+def _patch_scoped_gate_seams(
+    monkeypatch: Any, watch: Watch, listings: list[NormalizedListing]
+) -> list[str]:
+    """Patch the executor seams the retargeted watch tests rely on."""
+
+    queries: list[str] = []
+
+    class EbayConnectorClass:
+        async def initialize(self) -> Any:
+            return None
+
+        async def search(self, query: Any, connector_filters: Any) -> Any:
+            queries.append(query)
+            return listings
+
+        async def cleanup(self) -> Any:
+            return None
+
+    monkeypatch.setattr(watch_executor, "get_watch", lambda watch_id: watch)
+    monkeypatch.setattr(
+        watch_executor, "run_check", lambda *_args, **_kwargs: (True, FakeDiffResult(), [])
+    )
+    monkeypatch.setattr(watch_executor, "get_db", lambda: FakeConn())
+    monkeypatch.setattr(
+        "pricerecon.connectors.discover_connectors",
+        lambda: {"ebay": EbayConnectorClass},
+    )
+    monkeypatch.setattr(
+        "pricerecon.core.connector_health.list_connector_health",
+        lambda path=None: {},
+    )
+    monkeypatch.setattr(
+        "pricerecon.core.collection_policy.current_policy",
+        lambda connection=None: None,
+    )
+    monkeypatch.setattr(
+        "pricerecon.core.acquisition.upsert_connector_health",
+        lambda connector_id, status, last_error=None, details=None: None,
+    )
+    return queries
+
+
+@pytest.mark.asyncio
+async def test_plain_watch_without_source_queries_keeps_titles_lacking_query_terms(
+    monkeypatch: Any,
+) -> None:
+    """Gate scoping decision, 2026-10-29 (PR #142 review finding M1).
+
+    The all-query-terms title gate backs raw per-connector query overrides
+    (ADR-0001: raw connector queries never replace title matching). A plain
+    watch — no synonym groups and no ``source_queries`` — keeps the
+    pre-ADR watch-path behavior of origin/main: listings whose titles lack
+    the watch query terms are not dropped.
+    """
+    watch = _scoped_gate_watch(7, "Plain watch", source_queries={})
+    listings = [
+        titled_listing("ebay", "1", "Lenovo ThinkPad T14 16GB RAM 512GB SSD"),
+        titled_listing("ebay", "2", "ASUS TUF Gaming A15 Notebook"),
+    ]
+    _patch_scoped_gate_seams(monkeypatch, watch, listings)
+
+    result = await watch_executor.execute_watch(7)
+
+    assert result["success"] is True
+    # Neither title contains "laptop"; a plain watch keeps both anyway.
+    assert result["listings_found"] == 2
+
+
+@pytest.mark.asyncio
+async def test_source_queries_watch_still_drops_titles_lacking_watch_query_terms(
+    monkeypatch: Any,
+) -> None:
+    """Retained contract: with source_queries overrides the gate still fires.
+
+    Raw connector queries widen recall (this eBay override matches ThinkPads
+    that never say "laptop"), so the watch query terms remain the precision
+    safety net: titles lacking them are dropped.
+    """
+    watch = _scoped_gate_watch(
+        8, "Raw query watch", source_queries={"ebay": "thinkpad t14 (16gb, 32gb)"}
+    )
+    listings = [
+        titled_listing("ebay", "1", "Lenovo ThinkPad T14 16GB RAM 512GB SSD"),
+        titled_listing("ebay", "2", "Laptop stand"),
+    ]
+    queries = _patch_scoped_gate_seams(monkeypatch, watch, listings)
+
+    result = await watch_executor.execute_watch(8)
+
+    assert result["success"] is True
+    # The raw override reached the connector unchanged...
+    assert queries == ["thinkpad t14 (16gb, 32gb)"]
+    # ...and only the title containing the watch query term survived.
+    assert result["listings_found"] == 1

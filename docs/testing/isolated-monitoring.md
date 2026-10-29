@@ -80,12 +80,17 @@ emit normal changes. A successful empty source removes its old rows and emits
 semantics; failure preservation is limited to enabled failed/skipped acquisition.
 No schema, second scheduler, history engine or notification service was added.
 
-Simple Watches use the existing `legacy_query_match`: every fallback-query term
-must appear in the title. Raw source overrides pass to connectors unchanged and
-do not replace the title filter. Watch-level synonym groups, or existing nested
-spec groups, replace fallback-query matching with existing token/phrase rules.
-Exclusions and the other filters remain active. Display titles do not affect
-matching. This implements ADR 0001 without a new DSL or hardcoded category routes.
+Simple Watches use the existing `legacy_query_match` only when the watch carries
+per-connector `source_queries` overrides: every fallback-query term must then
+appear in the title, so the raw connector queries supply recall while the watch
+query terms remain the precision safety net. Plain watches — no synonym groups
+and no `source_queries` — keep the pre-ADR watch-path behavior of `origin/main`
+and run no query-term title gate (gate scoping decision, 2026-10-29). Raw
+source overrides pass to connectors unchanged and do not replace the title
+filter. Watch-level synonym groups, or existing nested spec groups, replace
+fallback-query matching with existing token/phrase rules. Exclusions and the
+other filters remain active. Display titles do not affect matching. This
+implements ADR 0001 without a new DSL or hardcoded category routes.
 
 ## Red/green evidence
 
@@ -279,6 +284,10 @@ product decision on how existing synonym-less watches should behave is made
 separately in the follow-up; this note records the change and does not
 adjudicate it.**
 
+**Resolution (same day):** resolved by scoping the gate to raw-query overrides
+per the product decision of 2026-10-29 (see "Gate scoping decision —
+2026-10-29" below); the fixture is restored to its original form.
+
 Environment preconditions for the recorded full-suite runs: the **842 passed,
 10 skipped, 0 failed twice back-to-back** result was obtained with
 `TMPDIR=/tmp` in effect (Linux CI and the normalized local shell agree there;
@@ -294,3 +303,46 @@ env now carries the parent's resolved temporary root as `TMPDIR`, and the full
 suite passes in a plain shell, under `TMPDIR=/tmp` and with `TMPDIR` unset, in
 both project venvs (Python 3.14 and 3.13). Pinned Black and Ruff, mypy
 (baseline unchanged) and `git diff --check` pass. No push occurred.
+
+## Gate scoping decision — 2026-10-29
+
+**Decision.** The all-query-terms title gate in `watch_executor.execute_watch`
+fires only when the watch carries per-connector `source_queries` overrides.
+Plain watches — no `source_queries`, no synonym groups — keep the watch-path
+behavior of `origin/main` and run no query-term gate.
+
+**Rationale.** ADR-0001 states the gate's purpose as a safety net against raw
+connector queries replacing title matching: overrides widen recall, so the
+watch query terms re-supply precision after collection. A plain watch sends its
+own query to every connector and needs no such net. The unscoped gate
+introduced by this branch's 9312871 silently emptied result sets for existing
+plain watches (query `"laptop"` dropped `Lenovo ThinkPad T14 …` titles) — an
+upgrade regression contradicting ADR-0001's own "Non-GLM watches are
+unaffected" and spec US2's "upgrades retain my intent", and a behavior
+`origin/main` never had (`legacy_query_match` had no callers in `src/` there;
+the watch path ran from `apply_post_normalization_filters` straight to the
+component-pattern and price-floor filters).
+
+**What changed.** The gate condition in `src/pricerecon/core/watch_executor.py`
+now also requires non-empty `watch.source_queries` (the synonym-group
+exclusions are unchanged); the ADR-0001 comment above it states the scoped
+contract. Two regression tests pin the behavior in
+`tests/test_source_queries_routing.py`: a plain watch keeps titles lacking the
+query terms, and a watch with overrides still drops them. The f50d273 fixture
+adaptation in `tests/test_connectors.py::test_watch_executor_filters_by_spec_match_ram`
+is reverted byte-for-byte to its pre-f50d273 form; with the scoped gate the
+watch reaches the RAM floor and `listings_found == 1` holds exactly as on
+`origin/main`. No other test encoded the unscoped behavior — the full suites
+confirm: **844 passed, 10 skipped, 0 failed** (842 prior + the two new
+regression tests) in both project venvs (Python 3.14 and 3.13), each in a
+plain native shell and under `TMPDIR=/tmp`; the three TMPDIR-sensitive
+fresh-process tests also pass with `TMPDIR` unset. Pinned Black and Ruff,
+mypy (baseline unchanged) and `git diff --check` pass. ADR-0001 itself is
+untouched (historical decision record on main).
+
+**Post-merge backlog** (adversarial-review findings deliberately deferred):
+m1 schema-init hardening for `DurableAdmission` owned-connection paths, m2
+tokenizing the `legacy_query_match` fallback ("395" must not match "3950X"), m3
+health-record seams in acquisition run-timeout/cleanup-failure paths, m4
+seeding the `events` AUTOINCREMENT sequence on legacy migrations, n1 pilot
+signal-handling races, n2 offline-check tombstone cleanup.
