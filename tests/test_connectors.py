@@ -1576,4 +1576,9 @@ async def test_cleanup_failure_under_policy_rewrites_stale_success_health(
     assert result.listings == []
     # The success row is recorded first, then the outcome flip rewrites it.
     assert recorded[0] == ("ebay", "ok", None, {"listing_count": 2, "inference_source": "watch"})
-    assert recorded[-1] == ("ebay", "unknown_error", "cleanup_failed", {"inference_source": "watch"})
+    assert recorded[-1] == (
+        "ebay",
+        "unknown_error",
+        "cleanup_failed",
+        {"inference_source": "watch"},
+    )

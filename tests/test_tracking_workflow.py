@@ -135,13 +135,13 @@ def test_migration_seeds_events_sequence_for_empty_sequenced_legacy_tables(tmp_p
             [()] * 30,
         )
         connection.execute(
-            "INSERT INTO notifications(event_id, channel, status)"
-            " VALUES (30, 'webhook', 'sent')"
+            "INSERT INTO notifications(event_id, channel, status)" " VALUES (30, 'webhook', 'sent')"
         )
         connection.execute("DELETE FROM events")
-        assert connection.execute(
-            "SELECT seq FROM sqlite_sequence WHERE name='events'"
-        ).fetchone()[0] == 30
+        assert (
+            connection.execute("SELECT seq FROM sqlite_sequence WHERE name='events'").fetchone()[0]
+            == 30
+        )
 
         init_tracking_tables(connection)
 
@@ -156,9 +156,12 @@ def test_migration_seeds_events_sequence_for_empty_sequenced_legacy_tables(tmp_p
         )
         assert cursor.lastrowid == 31
         # The orphan still points at its dead event; it cannot mis-join a new one.
-        assert connection.execute(
-            "SELECT COUNT(*) FROM notifications n JOIN events e ON n.event_id = e.id"
-        ).fetchone()[0] == 0
+        assert (
+            connection.execute(
+                "SELECT COUNT(*) FROM notifications n JOIN events e ON n.event_id = e.id"
+            ).fetchone()[0]
+            == 0
+        )
         # The migration stays idempotent for a second init pass.
         init_tracking_tables(connection)
     finally:

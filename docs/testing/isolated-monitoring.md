@@ -340,9 +340,56 @@ fresh-process tests also pass with `TMPDIR` unset. Pinned Black and Ruff,
 mypy (baseline unchanged) and `git diff --check` pass. ADR-0001 itself is
 untouched (historical decision record on main).
 
+**Fallback semantics addendum — 2026-10-29 (post-merge hardening, finding m2).**
+The fallback behind the scoped gate, `legacy_query_match`, previously used
+substring semantics (`term in haystack`), which made the safety net loose
+where ADR-0001 demands strictness — query `"395"` matched the title
+`Ryzen 3950X`, the exact trap the token contract bans for synonym groups —
+and strict where it should be loose (`"128gb laptop"` rejected a
+`128 GB Laptop` title because the capacity never collapsed). The fallback now
+tokenizes with the same rules as synonym matching: each whitespace-separated
+query term matches as a complete token, or as a contiguous phrase when the
+term itself normalizes to multiple tokens (hyphenated compounds); empty and
+punctuation-only queries keep the historical allow-all shape. **Behavior delta,
+scoped exactly like the gate itself:** this changes matching only for watches
+that carry `source_queries` overrides and no synonym groups. For those
+watches, titles that satisfied a query term only as a substring are now
+dropped (e.g. `"395"` no longer passes `Ryzen 3950X`), and titles whose
+spaced/case capacity variants previously failed the substring check now pass
+(`"128gb"` matches `128 GB`). Plain watches without overrides run no gate at
+all and are unaffected. Pinned in `tests/test_title_matching.py`
+(`test_legacy_query_match_respects_token_boundaries`,
+`test_legacy_query_match_accepts_word_variants`).
+
 **Post-merge backlog** (adversarial-review findings deliberately deferred):
-m1 schema-init hardening for `DurableAdmission` owned-connection paths, m2
-tokenizing the `legacy_query_match` fallback ("395" must not match "3950X"), m3
-health-record seams in acquisition run-timeout/cleanup-failure paths, m4
-seeding the `events` AUTOINCREMENT sequence on legacy migrations, n1 pilot
-signal-handling races, n2 offline-check tombstone cleanup.
+
+- m1 — **resolved 2026-10-29**: `DurableAdmission.debit/begin/finish` owned
+  connections (and an idle caller-supplied connection) now run
+  `init_collection_tables` before their first statement via a shared
+  `_ensure_collection_schema` helper; mid-transaction callers are untouched.
+  Pinned in `tests/test_rate_limiter.py::TestDurableAdmissionFreshDatabase`.
+- m2 — **resolved 2026-10-29**: `legacy_query_match` tokenized per the
+  ADR-0001 token contract; behavior delta documented in the addendum above.
+- m3 — **resolved 2026-10-29**: the run-timeout path records a `timeout`
+  health row and a policy-budget cleanup failure (or cleanup-time admission
+  denial) rewrites the stale `ok` row instead of advertising the pre-drop
+  listing count. Pinned by admission-enabled tests in
+  `tests/test_connectors.py` (the retargeted legacy tests mock
+  `current_policy → None` and never exercised these paths).
+- m4 — **resolved 2026-10-29**: the events migration seeds the renamed
+  table's AUTOINCREMENT row unconditionally (insert-if-missing plus
+  MAX(old, new)), so an empty-but-sequenced legacy `events` table can no
+  longer restart ids at 1 and mis-join orphaned `notifications` rows. Pinned
+  in `tests/test_tracking_workflow.py`
+  (`test_migration_seeds_events_sequence_for_empty_sequenced_legacy_tables`).
+- n1 — **resolved 2026-10-29**: `pilot.operator_stop` guards
+  `ProcessLookupError` when forwarding into an exited supervisor, and the
+  supervisor arms its stop handlers before `Popen` (restoring them on every
+  exit path, including spawn failure). Pinned in `tests/test_live_pilot.py`.
+- n2 — **resolved 2026-10-29**: the synthetic offline-check tombstone is
+  deleted with its run root by the worker's own finally; the one-off live
+  grant remains undeletable by construction. Repeated offline checks leave
+  the temp directory empty. Pinned in `tests/test_live_pilot.py`.
+- n3 — **open**: `check_public_markers.py` fixture exemption narrowing
+  (`tests/fixtures/` exempt from the public-marker scan); deliberately not
+  addressed in this pass.

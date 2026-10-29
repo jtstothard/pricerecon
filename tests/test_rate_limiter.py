@@ -12,7 +12,7 @@ from pricerecon.core.rate_limiter import (
     get_rate_limiter,
     init_rate_limiter,
 )
-from pricerecon.models.collection import OperatingPolicy
+from pricerecon.models.collection import OperatingPolicy, ResourceCap
 from pricerecon.models.rate_limit import (
     RateLimitConfig,
     RateLimitWindow,
@@ -266,18 +266,15 @@ def _fresh_install_policy(source: str) -> OperatingPolicy:
         stops_at=now + timedelta(hours=1),
         recovery_spacing_seconds=0,
         run_timeout_seconds=60,
-        provider_request_caps={source: {"limit": 100, "tracking_reserve": 0}},
+        provider_request_caps={source: ResourceCap(limit=100, tracking_reserve=0)},
         caps={
-            name: {"limit": amount, "tracking_reserve": 0}
-            for name, amount in (
-                ("requests", 100),
-                ("pages", 100),
-                ("details", 100),
-                ("retries", 100),
-                ("fallbacks", 100),
-                ("storage_bytes", 10_000_000),
-                ("elapsed_seconds", 10_000),
-            )
+            "requests": ResourceCap(limit=100, tracking_reserve=0),
+            "pages": ResourceCap(limit=100, tracking_reserve=0),
+            "details": ResourceCap(limit=100, tracking_reserve=0),
+            "retries": ResourceCap(limit=100, tracking_reserve=0),
+            "fallbacks": ResourceCap(limit=100, tracking_reserve=0),
+            "storage_bytes": ResourceCap(limit=10_000_000, tracking_reserve=0),
+            "elapsed_seconds": ResourceCap(limit=10_000, tracking_reserve=0),
         },
     )
 
@@ -313,7 +310,9 @@ class TestDurableAdmissionFreshDatabase:
             states = connection.execute("SELECT state FROM collection_attempts").fetchall()
         assert states == [("success_empty",)]
 
-    def test_select_policy_with_supplied_fresh_connection_initializes(self, tmp_path, monkeypatch) -> None:
+    def test_select_policy_with_supplied_fresh_connection_initializes(
+        self, tmp_path, monkeypatch
+    ) -> None:
         from pricerecon.core.collection_policy import operating_policy
         from pricerecon.db import schema
         from pricerecon.db.connection import connect
