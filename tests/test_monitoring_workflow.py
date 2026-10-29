@@ -40,17 +40,44 @@ def test_form_title_edits_retain_saved_intent_through_api_and_restart():
     from tests.monitoring.workflows import LEGACY
 
     root = Path(__file__).resolve().parents[1]
-    payload_module = (root / "frontend/src/lib/watchPayload.ts").as_uri()
     # Generate the real UI payload before the guarded application child starts.
-    # Node's installed type stripping needs no frontend install or network.
-    result = subprocess.run(
-        [
-            "node",
-            "--input-type=module",
-            "-e",
-            f"""
+    # Node only strips TypeScript natively from v23.6 (CI runs Node 20), so the
+    # module is transpiled with the repo's pinned tsc from the frontend install
+    # (npm ci runs before the suite) and imported as emitted JavaScript. The
+    # emitted module keeps the assertion on the real payload source, unchanged.
+    with TemporaryDirectory(prefix="watch-payload-") as build_dir:
+        payload_source = root / "frontend/src/lib/watchPayload.ts"
+        compiled = subprocess.run(
+            [
+                str(root / "frontend/node_modules/.bin/tsc"),
+                str(payload_source),
+                "--outDir",
+                build_dir,
+                "--module",
+                "es2020",
+                "--target",
+                "es2020",
+                "--skipLibCheck",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+        assert compiled.returncode == 0, compiled.stdout + compiled.stderr
+        # tsc mirrors the common source root of the compiled graph, so locate
+        # the single emitted module instead of assuming a flat output layout.
+        emitted_js = next(iter(sorted(Path(build_dir).rglob("watchPayload.js"))))
+        emitted = emitted_js.with_suffix(".mjs")
+        emitted_js.rename(emitted)
+        result = subprocess.run(
+            [
+                "node",
+                "--input-type=module",
+                "-e",
+                f"""
 import {{ readFileSync }} from 'node:fs';
-import {{ formDataFromWatch, buildWatchEditPayload }} from {json.dumps(payload_module)};
+import {{ formDataFromWatch, buildWatchEditPayload }} from {json.dumps(emitted.as_uri())};
 const legacy = JSON.parse(readFileSync(0, 'utf8'));
 const payloads = [true, false].map(enabled => {{
   const saved = {{ ...legacy, id: enabled ? 7 : 8, name: enabled ? legacy.name : 'Paused saved search', category: null, last_check_at: null, enabled }};
@@ -58,15 +85,15 @@ const payloads = [true, false].map(enabled => {{
 }});
 process.stdout.write(JSON.stringify(payloads));
 """,
-        ],
-        input=json.dumps(LEGACY),
-        capture_output=True,
-        text=True,
-        timeout=10,
-        check=False,
-    )
-    assert result.returncode == 0, result.stderr
-    run_scenario("form_edit", input_data=result.stdout)
+            ],
+            input=json.dumps(LEGACY),
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        assert result.returncode == 0, result.stderr
+        run_scenario("form_edit", input_data=result.stdout)
 
 
 def test_partial_source_failure_retains_last_good_evidence_without_recovery_alerts():

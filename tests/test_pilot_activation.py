@@ -97,7 +97,12 @@ def test_eligible_worker_cli_uses_review_normal_acquisition_ui_and_cleanup(tmp_p
     from uuid import uuid4
 
     manifest, _review, _sign = session_review(tmp_path)
-    root = Path("/private/tmp") / ("pricerecon-pilot-" + uuid4().hex + ".noindex")
+    # Keep the run directory genuinely temporary and inside the platform's temp
+    # base so the worker CLI's own "run directory must be temporary" guard
+    # still executes and passes on every platform. The macOS-only
+    # /private/tmp location belongs to prepare_excluded_root, which this test
+    # controls separately, not to the worker seam exercised here.
+    root = tmp_path / ("pricerecon-pilot-" + uuid4().hex + ".noindex")
     # Only the network transport and the UI lifetime are controlled. CLI parsing,
     # session review, controlled macOS exclusions, grant, guard, normal connector,
     # projection, SQL and read-only HTTP routes all execute normally.
@@ -265,7 +270,18 @@ def test_public_cli_accepts_session_review_without_keys_and_blocks_changed_docum
     command = [sys.executable, "-c", launcher, "--review", str(manifest)]
     ready = subprocess.run(command, env=env, capture_output=True, text=True, check=False)
     assert ready.returncode == 0, ready.stderr
-    assert json.loads(ready.stdout)["state"] == "ready_for_exclusion_check"
+    receipt = json.loads(ready.stdout)
+    # The one-off pilot's private-TMP storage and Time-Machine exclusion are a
+    # macOS capability by design: pilot.preflight appends the exact gate
+    # "macos_private_tmp_required" on non-darwin platforms (enforced again by
+    # pilot_activation.prepare_excluded_root). Linux therefore can never reach
+    # ready_for_exclusion_check; assert the exact blocked state and gate there
+    # instead, keeping the unchanged ready assertion where the capability exists.
+    if sys.platform == "darwin":
+        assert receipt["state"] == "ready_for_exclusion_check"
+    else:
+        assert receipt["state"] == "blocked"
+        assert receipt["gates"] == ["macos_private_tmp_required"]
     (tmp_path / "transient_use.txt").unlink()
     blocked = subprocess.run(command, env=env, capture_output=True, text=True, check=False)
     receipt = json.loads(blocked.stdout)

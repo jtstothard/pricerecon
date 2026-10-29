@@ -337,9 +337,16 @@ class DurableAdmission:
         from pricerecon.db.schema import DB_PATH
 
         if connection is None:
-            with closing(connect(DB_PATH)) as owned, owned:
-                owned.execute("BEGIN IMMEDIATE")
-                return DurableAdmission.select_policy(owned)
+            from pricerecon.db.collection import init_collection_tables
+
+            with closing(connect(DB_PATH)) as owned:
+                # A connector's first admission check can be the first database
+                # touch of a fresh install; durable accounting must not depend
+                # on init_db having run earlier in this process or checkout.
+                init_collection_tables(owned)
+                with owned:
+                    owned.execute("BEGIN IMMEDIATE")
+                    return DurableAdmission.select_policy(owned)
         supplied = supplied_policy()
         selected = connection.execute(
             "SELECT scope_id, reason FROM collection_policy_selection WHERE singleton=1"

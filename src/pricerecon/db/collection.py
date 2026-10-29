@@ -16,7 +16,19 @@ from pricerecon.models.discovery import DiscoveryRequest
 
 
 def init_collection_tables(connection: sqlite3.Connection) -> None:
+    """Idempotent durable-accounting schema, self-sufficient on a fresh database.
+
+    Besides init_db, the admission boundary itself calls this before its first
+    query (rate_limiter.DurableAdmission.select_policy), so it must not assume
+    any other initializer ran: schema_migrations is created here if missing.
+    """
     connection.executescript("""
+        CREATE TABLE IF NOT EXISTS schema_migrations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            version TEXT NOT NULL UNIQUE,
+            applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            description TEXT
+        );
         CREATE TABLE IF NOT EXISTS collection_policies (
             scope_id TEXT PRIMARY KEY, payload_json TEXT NOT NULL
         );
