@@ -319,6 +319,20 @@ class PolicySelection:
     reason: str | None = None
 
 
+def _ensure_collection_schema(connection: sqlite3.Connection) -> None:
+    """Idempotent collection-table init for admission-owned connections.
+
+    A connector's first admission action can be the first database touch of a
+    fresh install; durable accounting must not depend on init_db having run
+    earlier in this process or checkout. Only call this on a connection whose
+    transaction lifecycle this boundary owns (or a caller-supplied idle
+    connection): executescript commits any transaction the caller holds.
+    """
+    from pricerecon.db.collection import init_collection_tables
+
+    init_collection_tables(connection)
+
+
 class DurableAdmission:
     """Native limiter's explicit, durable collection-accounting boundary."""
 
@@ -347,6 +361,11 @@ class DurableAdmission:
                 with owned:
                     owned.execute("BEGIN IMMEDIATE")
                     return DurableAdmission.select_policy(owned)
+        elif not connection.in_transaction:
+            # A caller-supplied idle connection can also be a fresh install's
+            # first database touch. Mid-transaction callers are left untouched:
+            # the schema script would commit their transaction (m1, 2026-10-29).
+            _ensure_collection_schema(connection)
         supplied = supplied_policy()
         selected = connection.execute(
             "SELECT scope_id, reason FROM collection_policy_selection WHERE singleton=1"
@@ -427,6 +446,10 @@ class DurableAdmission:
             raise AdmissionDenied("operating_policy_expired", state="blocked")
         if connection is None:
             with closing(connect(DB_PATH)) as owned, owned:
+                # Same fresh-install guarantee as select_policy's owned path:
+                # the first debit of a fresh install must not require an
+                # earlier init_db (m1, 2026-10-29).
+                _ensure_collection_schema(owned)
                 owned.execute("BEGIN IMMEDIATE")
                 self.debit(costs, connection=owned)
             return
@@ -487,6 +510,9 @@ class DurableAdmission:
         attempt_id = str(uuid4())
         reason = None
         with closing(connect(DB_PATH)) as connection, connection:
+            # Owned connection on a possibly fresh install: ensure the
+            # collection tables before the first attempt query (m1, 2026-10-29).
+            _ensure_collection_schema(connection)
             connection.execute("BEGIN IMMEDIATE")
             rows = connection.execute(
                 """SELECT id, state, next_eligible_at FROM collection_attempts
@@ -544,6 +570,9 @@ class DurableAdmission:
             return
         now = datetime.now(UTC)
         with closing(connect(DB_PATH)) as connection, connection:
+            # Owned connection on a possibly fresh install: ensure the
+            # collection tables before the attempt update (m1, 2026-10-29).
+            _ensure_collection_schema(connection)
             # A denied overlap cannot extend the existing source lease.
             connection.execute(
                 """UPDATE collection_attempts SET state=?, reason=?,
