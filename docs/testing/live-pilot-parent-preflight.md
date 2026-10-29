@@ -58,7 +58,7 @@ checkouts are retained. Integration is clean after this receipt commit.
 
 Buyer explicitly requested continuing until human intervention is necessary.
 Read-only investigation followed the documented deployed PriceRecon route.
-Direct SSH via configured `docker-app-vm` (192.168.10.251:22) timed out; no
+Direct SSH via configured `docker-app-vm` (<private-host>:22) timed out; no
 authentication/config changes or host scan followed. Existing `proxmox` alias
 worked; VM101 status running and QEMU guest-agent ping succeeded. Guest-agent
 Python performed bounded Docker metadata/file-name inspection, not app startup.

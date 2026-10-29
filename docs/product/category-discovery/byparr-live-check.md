@@ -11,7 +11,7 @@ Byparr container identity:
 - Name: `byparr`.
 - Image reference: `ghcr.io/thephaseless/byparr@sha256:874f719518f617d03a60e03411fc5d090647e1a877041e81f8dc965927c7deb6`.
 - Local image ID: `sha256:c6dc8e0e49d7d2668aee1879dedade605d50afe322164ee70f1e22f3d6b3695f`.
-- Network: `media_back`; port published at `192.168.10.251:8191`.
+- Network: `media_back`; port published at `<private-host>:8191`.
 
 PriceRecon's deployed environment sets `PRICERECON_FLARESOLVERR_URL=http://byparr:8191/v1`. Its mounted configuration separately contains `http://localhost:8191/v1`; do not confuse that file value or the worktree's localhost setting with the endpoint used in this probe. The probe explicitly used the deployed environment endpoint through the existing client; it does not prove every connector resolves configuration identically.
 

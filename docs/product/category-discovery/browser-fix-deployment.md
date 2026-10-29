@@ -60,7 +60,7 @@ After cutover, the existing deployed PriceRecon connector configuration interfac
 | UTC | Backend | Result |
 | --- | --- | --- |
 | **10:27:03.065609** | CloakBrowser through `http://gluetun:9378` | `degradation=none`, expected control marker, **1,989 HTML characters**, main status **200**, final URL `https://example.com/`, interception explicitly false. |
-| **10:27:03.761234** | Camofox through `http://192.168.10.252:9377` | `degradation=none`, expected owned PriceRecon-page marker, **4,725 snapshot characters**, connector-scoped anonymous identity. No HTML, status or final-URL metadata is claimed for this snapshot-only route. |
+| **10:27:03.761234** | Camofox through `http://<private-host>:9377` | `degradation=none`, expected owned PriceRecon-page marker, **4,725 snapshot characters**, connector-scoped anonymous identity. No HTML, status or final-URL metadata is claimed for this snapshot-only route. |
 
 CloakBrowser health reported `activeSessions=0` after its post-deployment probe. All other Camofox test-only contexts were then closed by their exact generated IDs; Camofox health reported `ok=true`, browser connected and `activeSessions=0`. The temporary staged wrapper container was removed. No existing account session was selected or deleted.
 
