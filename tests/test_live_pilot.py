@@ -54,9 +54,24 @@ def test_transport_rejects_unapproved_route_before_external_edge(url):
     asyncio.run(scenario())
 
 
-@pytest.mark.parametrize("malformed", ["none", "summary", "detail", "mismatch"])
+@pytest.mark.parametrize(
+    "query_index,title,selected",
+    [
+        (0, "Addiesdive green mint watch AD2066", True),
+        (0, "ADDIESDIVE AD2066 Mint-Green", True),
+        (0, "Addiesdive AD20660 Mint Green", False),
+        (0, "Addiesdive AD2066 Mint Green strap", False),
+        (0, "Other AD2066 Mint Green", False),
+        (0, "Addiesdive AD2066 Blue", False),
+        (1, "Watch MTP B145D 2A2VEF by CASIO", True),
+        (1, "Casio MTP-B145D-2A2VEF watch", True),
+        (1, "Casio MTP-B145D-2A1VEF", False),
+        (1, "Casio MTP-B145D-2A2VEFX", False),
+    ],
+)
+@pytest.mark.parametrize("malformed", ["none", "summary", "detail", "mismatch", "cap"])
 def test_pilot_connector_uses_memory_auth_five_leads_and_two_exact_details(
-    tmp_path, monkeypatch, malformed
+    tmp_path, monkeypatch, malformed, query_index, title, selected
 ):
     import httpx
 
@@ -79,7 +94,7 @@ def test_pilot_connector_uses_memory_auth_five_leads_and_two_exact_details(
     calls = []
     item = {
         "itemId": "v1|123|0",
-        "title": QUERIES[0],
+        "title": title,
         "itemWebUrl": "https://www.ebay.co.uk/itm/123",
         "price": {"value": "10", "currency": "GBP"},
         "conditionId": "1000",
@@ -98,9 +113,13 @@ def test_pilot_connector_uses_memory_auth_five_leads_and_two_exact_details(
                         [item, {}]
                         if malformed == "summary"
                         else (
-                            [item, {**item, "itemId": "v1|456|0"}]
-                            if malformed in {"detail", "mismatch"}
-                            else [item]
+                            [{**item, "itemId": f"v1|{123 + i}|0"} for i in range(5)]
+                            if malformed == "cap"
+                            else (
+                                [item, {**item, "itemId": "v1|456|0"}]
+                                if malformed in {"detail", "mismatch"}
+                                else [item]
+                            )
                         )
                     )
                 },
@@ -111,6 +130,7 @@ def test_pilot_connector_uses_memory_auth_five_leads_and_two_exact_details(
             200,
             json={
                 **item,
+                "itemId": request.url.path.rsplit("/", 1)[1],
                 "title": QUERIES[0] + " Mint Green detail description",
                 "localizedAspects": [{"name": "Reference Number", "value": "AD2066"}],
                 "seller": {"username": "detail-seller"},
@@ -146,16 +166,21 @@ def test_pilot_connector_uses_memory_auth_five_leads_and_two_exact_details(
                 admission_token = active_admission.set(admission)
                 try:
                     await connector.initialize()
-                    report = await connector.search_with_evidence(QUERIES[0])
+                    report = await connector.search_with_evidence(QUERIES[query_index])
                 finally:
                     active_admission.reset(admission_token)
-            assert len(report.listings) == 1
+            if not selected:
+                assert bounds.details == 0
+                assert bounds.requests == 2
+                assert report.source_evidence.inspected_count == 0
+                return
+            assert len(report.listings) == (5 if malformed == "cap" else 1)
             assert report.listings[0].title_raw.endswith("Mint Green detail description")
             assert report.listings[0].total_landed_cost is None
             assert report.listings[0].exact_variant_confirmed is not True
-            assert bounds.details == (2 if malformed in {"detail", "mismatch"} else 1)
-            assert bounds.requests == (4 if malformed in {"detail", "mismatch"} else 3)
-            assert report.source_evidence.inspected_count == 1
+            assert bounds.details == (2 if malformed in {"detail", "mismatch", "cap"} else 1)
+            assert bounds.requests == (4 if malformed in {"detail", "mismatch", "cap"} else 3)
+            assert report.source_evidence.inspected_count == (2 if malformed == "cap" else 1)
             evidence = report.evidence[0]
             assert evidence.source_evidence.shipping_claim == "FIXED GBP 2.50"
             assert evidence.source_evidence.destination == "GB"
@@ -168,7 +193,7 @@ def test_pilot_connector_uses_memory_auth_five_leads_and_two_exact_details(
             assert reference.locator.endswith("localizedAspects[0]")
             assert seller.locator.startswith("itemDetails[")
             assert seller.pointer.startswith("https://api.ebay.com/buy/browse/v1/item/")
-            if malformed != "none":
+            if malformed not in {"none", "cap"}:
                 assert report.acquisition_state == "partial"
                 assert report.source_evidence.completeness == "partial"
                 assert any(issue.startswith("invalid_") for issue in report.source_evidence.issues)
@@ -201,7 +226,8 @@ def test_controlled_runner_crosses_normal_acquisition_and_cleans_all_storage(tmp
     assert not (tmp_path / "run").exists()
 
 
-def test_supervisor_expires_child_and_removes_sidecars(tmp_path):
+@pytest.mark.parametrize("disconnected", [False, True])
+def test_supervisor_expires_child_and_removes_sidecars(tmp_path, disconnected):
     from pricerecon.pilot_supervisor import supervise
 
     root = tmp_path / "pricerecon-pilot"
@@ -211,8 +237,10 @@ def test_supervisor_expires_child_and_removes_sidecars(tmp_path):
         "(r/'.pilot-run').write_text('pricerecon-one-off-pilot-v1\\n'); "
         "(r/'pricerecon.db-wal').write_bytes(b'synthetic-only'); time.sleep(20)"
     )
-    receipt = supervise([sys.executable, "-c", child], root, timeout=0.3)
-    assert receipt["state"] == "deadline"
+    receipt = supervise(
+        [sys.executable, "-c", child], root, timeout=0.3, owner_pid=-1 if disconnected else None
+    )
+    assert receipt["state"] == ("session_lost" if disconnected else "deadline")
     assert receipt["cleanup"] is True
     assert not root.exists()
 
@@ -443,3 +471,93 @@ assert len(calls) == 4
         assert receipt["ui_checked"] is False
         assert not root.exists()
         assert "fixture-token" not in result.stdout
+
+
+@pytest.mark.parametrize("supervised", [False, True, "cli"])
+@pytest.mark.parametrize("stop_signal", ["SIGINT", "SIGTERM"])
+def test_worker_operator_stop_preserves_terminal_counters_and_consumption(
+    tmp_path, stop_signal, supervised
+):
+    # Public worker CLI, controlled transport and UI edge. Signal the exact owner
+    # after normal acquisition; no live eligibility/grant is touched.
+    script = """
+import asyncio, os, signal, sys
+from unittest.mock import patch
+import pricerecon.pilot_worker as worker
+import pricerecon.pilot_ui as ui
+actual_serve = ui.serve_ui
+async def serve(app, port, seconds):
+    asyncio.get_running_loop().call_later(.5, os.kill, os.getpid(), getattr(signal, sys.argv[2]))
+    await actual_serve(app, port, seconds)
+actual_guard = worker.install_storage_guard
+def guard(root, **kwargs):
+    kwargs['ui_port'] = 8878
+    actual_guard(root, **kwargs)
+actual = worker.acquire_once
+async def acquire(*args, **kwargs):
+    kwargs['ui_port'] = 8878
+    return await actual(*args, **kwargs)
+root = sys.argv[1]
+sys.argv = ['worker', '--synthetic', root]
+with patch.object(worker, 'acquire_once', acquire), patch.object(ui, 'serve_ui', serve), patch.object(worker, 'install_storage_guard', guard):
+    worker.main()
+""".replace("getattr(signal, sys.argv[2])", f"signal.{stop_signal}")
+    root = tmp_path / "stop"
+    command = [sys.executable, "-c", script, str(root)]
+    if supervised:
+        wrapper = (
+            "import json; from pathlib import Path; "
+            "from pricerecon.pilot_supervisor import supervise; "
+            f"print(json.dumps(supervise({command!r}, Path({str(root)!r}), timeout=10)))"
+        )
+        if supervised == "cli":
+            # Enter the outer public CLI; replace only its subprocess launch
+            # with the same synthetic supervised worker, preserving signals.
+            child_script = script.replace(
+                "os.getpid(), signal.", "int(os.environ['PILOT_TEST_OWNER_PID']), signal."
+            )
+            child_command = [sys.executable, "-c", child_script, str(root)]
+            supervisor_script = (
+                "import json; from pathlib import Path; "
+                "from pricerecon.pilot_supervisor import supervise; "
+                f"print(json.dumps(supervise({child_command!r}, Path({str(root)!r}), timeout=10)))"
+            )
+            wrapper = (
+                "import os, sys; from unittest.mock import patch; "
+                "import pricerecon.pilot as pilot; "
+                "os.environ['PILOT_TEST_OWNER_PID'] = str(os.getpid()); "
+                "original = pilot.subprocess.Popen; "
+                f"replacement = lambda command, **kwargs: original([sys.executable, '-c', {supervisor_script!r}], **kwargs); "
+                f"sys.argv = ['pilot', '--offline-check', {str(root)!r}]; "
+                "\nwith patch.object(pilot.subprocess, 'Popen', replacement): pilot.main()"
+            )
+        run_command = [sys.executable, "-c", wrapper]
+    else:
+        run_command = command
+    result = subprocess.run(run_command, capture_output=True, text=True, timeout=30, check=False)
+    assert result.returncode == 0, result.stderr
+    receipt = json.loads(result.stdout)
+    assert receipt["state"] == "operator_stopped"
+    assert receipt["requests"] == 3
+    assert receipt["pages"] == 2
+    assert receipt["details"] == 0
+    assert receipt["cleanup"] is True
+    import socket
+
+    with socket.socket() as probe:
+        assert probe.connect_ex(("127.0.0.1", 8878)) != 0
+    assert not root.exists()
+    assert root.with_suffix(".consumed").read_text() == "synthetic pilot consumed\n"
+    again = subprocess.run(command, capture_output=True, text=True, timeout=30, check=False)
+    assert again.returncode != 0
+    assert "synthetic-memory-only" not in result.stdout
+
+
+def test_abnormal_worker_exit_cannot_promote_receipt_to_success(tmp_path):
+    from pricerecon.pilot_supervisor import supervise
+
+    child = 'import sys; print(\'{"state":"success","requests":7}\'); sys.exit(1)'
+    receipt = supervise([sys.executable, "-c", child], tmp_path / "failed", timeout=2)
+    assert receipt["state"] == "failed"
+    assert "requests" not in receipt
+    assert receipt["cleanup"] is True

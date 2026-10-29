@@ -256,7 +256,13 @@ def test_public_cli_accepts_session_review_without_keys_and_blocks_changed_docum
 
     manifest, _review, _save = session_review(tmp_path)
     env = {**os.environ, "EBAY_APP_ID": "fixture-app", "EBAY_CERT_ID": "fixture-cert"}
-    command = [sys.executable, "-m", "pricerecon.pilot", "--review", str(manifest)]
+    # Control the grant edge: the real one-off grant may already be consumed.
+    # Never reset it or make this source-only test depend on machine authority.
+    launcher = (
+        "from pathlib import Path; import pricerecon.pilot as pilot; "
+        f"pilot.GRANT = Path({str(tmp_path / 'fixture.consumed')!r}); pilot.main()"
+    )
+    command = [sys.executable, "-c", launcher, "--review", str(manifest)]
     ready = subprocess.run(command, env=env, capture_output=True, text=True, check=False)
     assert ready.returncode == 0, ready.stderr
     assert json.loads(ready.stdout)["state"] == "ready_for_exclusion_check"

@@ -13,6 +13,7 @@ import logging
 import math
 import os
 import shutil
+import signal
 import socket
 import sys
 import time
@@ -119,39 +120,57 @@ async def acquire_once(
     states: list[str] = []
     terminal = False
     ui_checked = False
-    try:
-        with operating_policy(policy):
-            async with asyncio.timeout(duration):
-                for query in QUERIES:
-                    result = await execute_discovery(
-                        DiscoveryRequest(query=query, sources=[source]),
-                        admission=DiscoveryAdmission(
-                            mode="pilot_session" if live_eligible else "offline_verification",
-                            policy_reference=policy.version,
-                            permission_reference=policy.permission_reference,
-                            activation_reference=policy.scope_id,
-                        ),
-                    )
-                    states.extend(outcome.state for outcome in result.outcomes)
-                    if any(
-                        state not in {"success", "success_empty", "partial"} for state in states
-                    ):
-                        terminal = True
-                        del result
-                        break
-                    del result
-                if not terminal and (ui_port or ui_check):
-                    bounds.check()
-                    from pricerecon.pilot_ui import check_ui, create_ui, serve_ui
+    loop = asyncio.get_running_loop()
+    task = asyncio.current_task()
+    stopped = False
+    previous_handlers = {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
 
-                    app = create_ui(deadline=started + duration)
-                    if ui_check:
-                        await check_ui(app)
-                        ui_checked = True
-                    if ui_port:
-                        await serve_ui(
-                            app, ui_port, max(0, started + duration - time.monotonic() - 2)
+    def operator_stop() -> None:
+        nonlocal stopped
+        if not stopped and task is not None:
+            stopped = True
+            bounds.stopped = True
+            task.cancel()
+
+    for sig in previous_handlers:
+        loop.add_signal_handler(sig, operator_stop)
+    try:
+        try:
+            with operating_policy(policy):
+                async with asyncio.timeout(duration):
+                    for query in QUERIES:
+                        result = await execute_discovery(
+                            DiscoveryRequest(query=query, sources=[source]),
+                            admission=DiscoveryAdmission(
+                                mode="pilot_session" if live_eligible else "offline_verification",
+                                policy_reference=policy.version,
+                                permission_reference=policy.permission_reference,
+                                activation_reference=policy.scope_id,
+                            ),
                         )
+                        states.extend(outcome.state for outcome in result.outcomes)
+                        if any(
+                            state not in {"success", "success_empty", "partial"} for state in states
+                        ):
+                            terminal = True
+                            del result
+                            break
+                        del result
+                    if not terminal and (ui_port or ui_check):
+                        bounds.check()
+                        from pricerecon.pilot_ui import check_ui, create_ui, serve_ui
+
+                        app = create_ui(deadline=started + duration)
+                        if ui_check:
+                            await check_ui(app)
+                            ui_checked = True
+                        if ui_port:
+                            await serve_ui(
+                                app, ui_port, max(0, started + duration - time.monotonic() - 2)
+                            )
+        except asyncio.CancelledError:
+            if not stopped:
+                raise
         state = next(
             (value for value in ("blocked", "capped", "failed", "partial") if value in states),
             "success_empty" if states == ["success_empty", "success_empty"] else "success",
@@ -160,7 +179,7 @@ async def acquire_once(
             "schema": "pricerecon.watch-pilot.v1",
             "code_version": "bounded-pilot-v2",
             "policy_version": policy.version,
-            "state": state,
+            "state": "operator_stopped" if stopped else state,
             "outcomes": states,
             "requests": bounds.requests,
             "pages": bounds.pages,
@@ -173,6 +192,9 @@ async def acquire_once(
             "ui_checked": ui_checked,
         }
     finally:
+        for sig, handler in previous_handlers.items():
+            loop.remove_signal_handler(sig)
+            signal.signal(sig, handler)
         bounds.token = None
         active_pilot.reset(token)
         pilot_transport.reset(transport_token)

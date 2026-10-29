@@ -2,7 +2,8 @@
 
 import asyncio
 import time
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Iterator
+from contextlib import contextmanager
 from pathlib import Path
 
 import httpx
@@ -118,7 +119,14 @@ async def check_ui(app: FastAPI) -> None:
 async def serve_ui(app: FastAPI, port: int, seconds: float) -> None:
     import uvicorn
 
-    server = uvicorn.Server(
+    class OwnedServer(uvicorn.Server):
+        @contextmanager
+        def capture_signals(self) -> Iterator[None]:
+            # The worker owns signals and terminal receipt emission. Uvicorn
+            # must not re-raise SIGINT after closing its listener.
+            yield
+
+    server = OwnedServer(
         uvicorn.Config(
             app,
             host="127.0.0.1",
@@ -127,6 +135,7 @@ async def serve_ui(app: FastAPI, port: int, seconds: float) -> None:
             lifespan="off",
             access_log=False,
             log_config=None,
+            timeout_graceful_shutdown=1,
         )
     )
 
@@ -137,6 +146,11 @@ async def serve_ui(app: FastAPI, port: int, seconds: float) -> None:
     timer = asyncio.create_task(stop())
     try:
         await server.serve()
+    except asyncio.CancelledError:
+        server.should_exit = True
+        if server.started:
+            await server.shutdown()
+        raise
     finally:
         timer.cancel()
         await asyncio.gather(timer, return_exceptions=True)

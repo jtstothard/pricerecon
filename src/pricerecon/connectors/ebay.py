@@ -381,7 +381,7 @@ class eBayConnector(BaseConnector):
     async def _pilot_search(self, query: str) -> EvidenceSearchReport:
         """Same Browse normalizer, restricted acquisition; no identity upgrades.
 
-        Exact query text chooses detail candidates, never establishes a selected
+        Reference-led title hints choose detail candidates, never establish a selected
         variation or UK delivered total. Detail payloads must validate and match
         the searched item, and remain bounded transient memory only.
         """
@@ -390,7 +390,7 @@ class eBayConnector(BaseConnector):
         from pydantic import ValidationError
 
         from pricerecon.connectors.ebay_evidence import BrowseItem, BrowsePage, browse_evidence
-        from pricerecon.pilot_bounds import QUERIES, active_pilot
+        from pricerecon.pilot_bounds import QUERIES, active_pilot, detail_candidate
 
         bounds = active_pilot.get()
         if bounds is None or self._client is None or query not in QUERIES:
@@ -420,7 +420,7 @@ class eBayConnector(BaseConnector):
                 # The shared normalizer records the rejected summary per item.
                 continue
             if (
-                query.casefold() not in item.title.casefold()
+                not detail_candidate(query, item.title)
                 or item.conditionId != "1000"
                 or item.buyingOptions != ["FIXED_PRICE"]
             ):
