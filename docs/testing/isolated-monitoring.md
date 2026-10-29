@@ -238,18 +238,59 @@ post-fix browser session and does not claim UI acceptance. Separate merger owns
 integration; ticket 01 stays open. No push/PR, live source access, credentials,
 production database, deployment or activation occurred.
 
-## Legacy fixture reconciliation — 2026-10-29
+## Legacy fixture reconciliation — 2026-10-29 (causal claim corrected same day)
 
 The CI quality gate's full-pytest step surfaced one full-suite failure on this
-branch: `test_watch_executor_filters_by_spec_match_ram`. Its fixture predates
-the matching model — f78204e (2026-07-12) added the watch execution path and
-26de71e (2026-07-23) later added configurable matching, including the ADR-0001
-fallback in which every fallback-query term must appear in the title — and was
-never adapted to that contract. The accepted ADR-0001 behavior stands; the
-fixture was adapted instead: both fixture titles now contain the watch query
-term ("Laptop"), so the RAM(32) floor remains the discriminating filter. The
-assertion was not edited, weakened, skipped or xfailed, and no production code
-changed. After the fixture edit the module pair runs **36 passed**, and the
-full suite runs **842 passed, 10 skipped, 0 failed** twice back-to-back; pinned
-Black and Ruff, mypy (baseline unchanged) and `git diff --check` pass. No push
-occurred.
+branch: `test_watch_executor_filters_by_spec_match_ram`. An earlier version of
+this note attributed the failure to a fixture that had drifted from a
+2026-07-23 contract. That causal claim was wrong. The verified facts, each
+checked against `origin/main`:
+
+- The fixture predates the matching model entirely — f78204e (2026-07-12)
+  added the watch execution path it exercises.
+- 26de71e (2026-07-23) added `legacy_query_match` as a function plus a unit
+  test (`tests/test_title_matching.py`), but on `origin/main` it has **no
+  callers in `src/`**. The watch path there (`execute_watch`) ran from
+  `apply_post_normalization_filters` through the component-pattern and
+  price-floor filters to `run_check` with **no query-term title gate at all**;
+  the old fixture (laptop-less titles, query `"laptop"`) passes on `origin/main`.
+- Watch-path enforcement of the all-query-terms fallback began with **this
+  branch's commit 9312871** (2026-10-27), which wires `legacy_query_match`
+  into `watch_executor` for watches without synonym groups. That enforcement —
+  not a stale fixture — is why the test went red on this branch.
+
+The fixture was then adapted in f50d273: both fixture titles now contain the
+watch query term ("Laptop"), so the RAM(32) floor remains the discriminating
+filter. The assertion was not edited, weakened, skipped or xfailed, and no
+production code changed. After the fixture edit the module pair
+(`tests/test_connectors.py` + `tests/test_source_queries_routing.py`) runs
+**36 passed**.
+
+What the fixture edit does not settle: **this branch changes matching behavior
+for existing watches without `synonym_groups`.** A watch with query `"laptop"`
+that previously surfaced `Lenovo ThinkPad T14 16GB RAM 512GB SSD` now returns
+no such listing, because the title does not contain the word "laptop", and no
+migration provisions synonym groups for existing watches. ADR-0001 both
+mandates that fallback ("Watches without `synonym_groups` fall back to the
+existing `_filter_listings_by_query` behavior") and states "Non-GLM watches
+are unaffected" — an internal tension, since the "existing" behavior it cites
+lived only in `connectors/reddit.py`, never in the watch executor. **The
+product decision on how existing synonym-less watches should behave is made
+separately in the follow-up; this note records the change and does not
+adjudicate it.**
+
+Environment preconditions for the recorded full-suite runs: the **842 passed,
+10 skipped, 0 failed twice back-to-back** result was obtained with
+`TMPDIR=/tmp` in effect (Linux CI and the normalized local shell agree there;
+the recorded runs did not use a plain macOS shell). In a plain macOS shell
+(`TMPDIR=/var/folders/…`), three fresh-process tests —
+`test_cost_history_survives_restart_quantity_basket_changes_and_repeated_capture`,
+`test_coupon_history_survives_restart_and_changed_evidence_invalidates_old_application`
+and `test_adapter_evidence_and_limits_survive_fresh_process_without_refresh` —
+would have failed because the parent's temp root and the env-scrubbed child's
+`gettempdir()` resolve differently, tripping the harness's shared-storage
+guard. That launch-env fragility has since been removed test-side: the child
+env now carries the parent's resolved temporary root as `TMPDIR`, and the full
+suite passes in a plain shell, under `TMPDIR=/tmp` and with `TMPDIR` unset, in
+both project venvs (Python 3.14 and 3.13). Pinned Black and Ruff, mypy
+(baseline unchanged) and `git diff --check` pass. No push occurred.

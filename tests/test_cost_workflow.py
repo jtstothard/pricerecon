@@ -4,6 +4,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from tempfile import gettempdir
 
 
 def run_cost(name, storage=None):
@@ -15,6 +16,10 @@ def run_cost(name, storage=None):
         env={
             "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
             "PYTHONDONTWRITEBYTECODE": "1",
+            # Keep the child's temporary root aligned with the parent's so the
+            # harness guard (shared storage under the child's gettempdir())
+            # holds in every shell, instead of only where TMPDIR is normalized.
+            "TMPDIR": str(Path(gettempdir()).resolve()),
         },
         capture_output=True,
         text=True,
