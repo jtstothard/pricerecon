@@ -7,6 +7,9 @@ function claim(value: unknown) {
   if (amount !== null && !/^\d+(?:\.\d+)?$/.test(amount)) throw new Error('Invalid assessment amount')
   if (state === 'supported' && amount === null) throw new Error('Missing qualified amount')
   return { state, amount, reason: text(item.reason), observation_count: integer(item.observation_count),
+    // Envelope provenance: fail closed like every other parsed field — a
+    // payload without an explicit marker is refused rather than read as live.
+    synthetic: choice(String(item.synthetic), ['true', 'false']) === 'true',
     paths: list(item.paths, value => {
       const path = record(value)
       return { observed_at: date(path.observed_at), offer_key: text(path.offer_key),
