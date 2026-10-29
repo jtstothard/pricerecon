@@ -176,3 +176,11 @@ manufacturer definition, selected variation or delivered total.
 
 See `docs/testing/artifacts/live-pilot-review-fixes/verification.json` for the
 current source-only checks. No live-source acceptance is inferred.
+
+## First-run follow-up — 2026-10-29
+
+The [actual first-run receipt](../../testing/live-pilot-first-run.md) supersedes
+historical unconsumed/not-started status above. The grant is consumed; these
+commands do not authorize another live run. See the
+[offline selector and operator-stop repair](../../testing/live-pilot-offline-repair.md)
+for source verification and remaining live limitations.

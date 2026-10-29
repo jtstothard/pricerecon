@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -76,17 +77,29 @@ def main() -> None:
             str(args.review.resolve()),
             str(root),
         ]
-    result = subprocess.run(
+    with subprocess.Popen(
         [sys.executable, "-m", "pricerecon.pilot_supervisor", *command],
-        capture_output=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
         text=True,
         start_new_session=True,
-        check=False,
-    )
-    if result.returncode == 0:
-        print(result.stdout.strip())
-    else:
-        print(json.dumps({"schema": "pricerecon.watch-pilot.v1", "state": "supervisor_failed"}))
+    ) as owner:
+        previous_handlers = {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
+
+        def operator_stop(signum: int, frame: object) -> None:
+            owner.send_signal(signum)
+
+        try:
+            for sig in previous_handlers:
+                signal.signal(sig, operator_stop)
+            output, _ = owner.communicate()
+        finally:
+            for sig, handler in previous_handlers.items():
+                signal.signal(sig, handler)
+        if owner.returncode == 0:
+            print(output.strip())
+        else:
+            print(json.dumps({"schema": "pricerecon.watch-pilot.v1", "state": "supervisor_failed"}))
 
 
 if __name__ == "__main__":

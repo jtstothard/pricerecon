@@ -1,5 +1,6 @@
 """Additional containment for the finite pilot, layered on DurableAdmission."""
 
+import re
 import time
 from contextvars import ContextVar
 from dataclasses import dataclass, field
@@ -11,6 +12,24 @@ from pricerecon.core.rate_limiter import AdmissionDenied
 from pricerecon.models.collection import OperatingPolicy
 
 QUERIES = ("Addiesdive AD2066 Mint Green", "Casio MTP-B145D-2A2VEF")
+
+
+def detail_candidate(query: str, title: str) -> bool:
+    """Select bounded inspections only; identity remains the normalizer's job."""
+    tokens = re.findall(r"[a-z0-9]+", title.casefold())
+    if any(token in tokens for token in ("strap", "straps", "parts", "accessory", "accessories")):
+        return False
+    if query == QUERIES[0]:
+        return {"addiesdive", "ad2066", "mint", "green"}.issubset(tokens)
+    if query == QUERIES[1]:
+        return (
+            "casio" in tokens
+            and re.search(r"(?<![a-z0-9])mtp[\s-]*b145d[\s-]*2a2vef(?![a-z0-9])", title.casefold())
+            is not None
+        )
+    return False
+
+
 MIB = 1024 * 1024
 
 

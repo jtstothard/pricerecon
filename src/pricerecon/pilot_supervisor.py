@@ -35,6 +35,16 @@ def supervise(
     child = subprocess.Popen(
         command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, start_new_session=True
     )
+    stop_requested = False
+    stop_deadline: float | None = None
+    previous_handlers = {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
+
+    def operator_stop(signum: int, frame: object) -> None:
+        nonlocal stop_requested
+        stop_requested = True
+
+    for sig in previous_handlers:
+        signal.signal(sig, operator_stop)
     state = "failed"
     output = bytearray()
     try:
@@ -46,9 +56,17 @@ def supervise(
                 if owner_pid is not None and os.getppid() != owner_pid:
                     state = "session_lost"
                     break
+                if stop_requested and stop_deadline is None:
+                    stop_deadline = time.monotonic() + 2
+                    try:
+                        os.killpg(child.pid, signal.SIGINT)
+                    except ProcessLookupError:
+                        pass
                 remaining = timeout - (time.monotonic() - started)
+                if stop_deadline is not None:
+                    remaining = min(remaining, stop_deadline - time.monotonic())
                 if remaining <= 0:
-                    state = "deadline"
+                    state = "operator_stop_failed" if stop_requested else "deadline"
                     break
                 for key, _ in selector.select(min(remaining, 0.2)):
                     chunk = os.read(key.fd, 65536)
@@ -62,11 +80,16 @@ def supervise(
                 if state == "log_cap":
                     break
             if not selector.get_map():
-                child.wait(timeout=max(0.001, timeout - (time.monotonic() - started)))
+                wait_seconds = timeout - (time.monotonic() - started)
+                if stop_deadline is not None:
+                    wait_seconds = min(wait_seconds, stop_deadline - time.monotonic())
+                child.wait(timeout=max(0.001, wait_seconds))
                 state = "completed" if child.returncode == 0 else "failed"
     except subprocess.TimeoutExpired:
-        state = "deadline"
+        state = "operator_stop_failed" if stop_requested else "deadline"
     finally:
+        for sig, handler in previous_handlers.items():
+            signal.signal(sig, handler)
         try:
             os.killpg(child.pid, signal.SIGKILL)
         except ProcessLookupError:
@@ -113,6 +136,7 @@ def supervise(
                 if parsed.get("state") in {
                     "success",
                     "success_empty",
+                    "operator_stopped",
                     "partial",
                     "failed",
                     "blocked",
@@ -132,10 +156,6 @@ def main() -> None:
     args = parser.parse_args()
     signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
-    def interrupted(signum: int, frame: object) -> None:
-        raise KeyboardInterrupt
-
-    signal.signal(signal.SIGTERM, interrupted)
     command = [sys.executable, "-m", "pricerecon.pilot_worker"]
     duration = 1200.0
     if args.execute:
