@@ -78,9 +78,7 @@ def test_cheaper_fixture_winner_keeps_the_synthetic_marker():
 
 
 def test_live_fact_call_site_refuses_a_fixture_only_candidate_set():
-    result = claim(
-        [path("obs-1", "45.10", synthetic=True)], "live reason", require_live=True
-    )
+    result = claim([path("obs-1", "45.10", synthetic=True)], "live reason", require_live=True)
 
     assert result.state == "unavailable"
     assert result.amount is None

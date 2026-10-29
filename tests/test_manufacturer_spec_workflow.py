@@ -34,9 +34,7 @@ def test_compiled_manufacturer_document_reaches_supported_configuration():
     assert report.claims
     assert all(claim.issuer_kind == "manufacturer" for claim in report.claims)
     assert {claim.field for claim in report.claims} == set(IDENTITY_FIELDS)
-    assert all(
-        claim.acquisition_capture_id == capture.capture_id for claim in report.claims
-    )
+    assert all(claim.acquisition_capture_id == capture.capture_id for claim in report.claims)
 
     configuration, binding = resolve_watch(
         report, capture.retrieved_at, "fixture:manufacturer:vx-9", "manufacturer_spec"
