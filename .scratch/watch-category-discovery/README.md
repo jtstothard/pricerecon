@@ -20,7 +20,7 @@ This is the implementation tracker. The planning decisions under `docs/product/c
 | [10: Shared limits](issues/10-prioritise-tracking.md) | 05 | Closed |
 | [11: Source evidence](issues/11-carry-source-evidence.md) | 03, 10 | Closed |
 | [12: Integrated verification](issues/12-verify-complete-watch-workflow.md) | 08, 09, 11 | Completed in accepted offline scope; human/live/release gates unproven |
-| [Follow-on: finite live pilot](../../docs/product/category-discovery/live-pilot-runner.md) | Buyer-approved live-pilot plan; source prerequisites | Offline containment prepared; parent review and live activation blocked/pending |
+| [Follow-on: finite live pilot](../../docs/product/category-discovery/live-pilot-runner.md) | Buyer-approved live-pilot plan; source prerequisites | Closed in bounded one-run scope: one bounded live run 2026-10-29 (ten leads, zero qualified UK delivered totals, partial outcomes, no completeness claim); grant consumed and not restartable; both observed defects repaired offline in `346e751`; no further live run authorized |
 
 ## Authority and acceptance
 
@@ -382,3 +382,24 @@ Actual buyer walkthrough feedback, current source rights, live offer/history/cos
   **Source/offline scope complete; live follow-on unexecuted and gated on genuine
   provider evidence, authorized secret handling and actual exclusion preflight.**
   Parent owns genuine preflight and worktree cleanup; no live acceptance claimed.
+
+- 2026-10-29: The one bounded live pilot ran under the shared grant: ten page
+  leads, partial outcomes, all candidate identities unresolved, zero qualified
+  UK delivered totals, no completeness claim; the operator SIGINT stop left the
+  receipt incomplete (`state=failed`, no terminal counters). See the
+  [first-run receipt](../../docs/testing/live-pilot-first-run.md). Independent
+  merger review of offline repair `346e751bfa4404cd7ec82cca96a7af5e902e312d`
+  found no Standards or Spec blockers: reference-led detail-candidate selection
+  with reference-boundary and strap/parts/accessory rejection (inspection hint
+  only — the existing normalizer keeps identity/delivered-cost authority) and
+  worker-owned SIGINT/SIGTERM producing complete sanitized terminal receipts,
+  with abnormal worker exits unable to promote counters. Rerun on the
+  candidate: **195 focused tests passed**, mypy 127 sources clean, focused
+  Ruff clean with the eBay adapter's 23 baseline findings unchanged; merged
+  focused pilot rerun **88 passed**. `--no-ff` merge
+  `3dddbc88ff961a6b1bc65246a8f279ed10d2fd26` exactly matches the candidate
+  tree. [Merger receipt](../../docs/testing/live-pilot-offline-repair.md#merger-review--2026-10-29).
+  The shared grant is consumed and not restartable; this repair restores no
+  grant and authorizes no further live run. Live usefulness (provider title
+  coverage, identity, obtainable UK offer, delivered total, coupon success,
+  history, savings) remains unproven.
