@@ -9,6 +9,10 @@ def test_non_synthetic_retained_observations_count_as_market_history_eligible():
     run_cost_history("retained_eligibility")
 
 
+def test_retained_offer_with_synthetic_coupon_stays_out_of_market_history():
+    run_cost_history("retained_offer_with_synthetic_coupon_is_not_market_history")
+
+
 def run_cost_history(name, storage=None):
     import os
     import subprocess

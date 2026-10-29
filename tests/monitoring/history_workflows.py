@@ -752,5 +752,58 @@ async def retained_eligibility():
             assert harness.deliveries == harness.blocked_edges == []
 
 
+async def retained_offer_with_synthetic_coupon_is_not_market_history():
+    """A fixture-decided coupon amount on a retained offer stays synthetic.
+
+    When a reproduced coupon's checkout chain is synthetic fixture evidence,
+    the coupon can decide the claimed amount (its `resulting_cost`) even
+    though the offer and its public cost evidence are fully retained. The
+    synthetic derivation must scan the coupon chain, not only offer and
+    cost-scenario evidence.
+    """
+    with MonitoringHarness() as harness:
+        async with harness.session() as (client, _):
+            from .coupon_workflows import reproduced_report
+
+            report = reproduced_report(harness, "coupon-hybrid")
+            # Establish direct temporal acquisition at the controlled external
+            # edge, exactly like the assessment coupon workflow does, so the
+            # observation is a qualified supported capture.
+            for entry in report.claims:
+                entry.acquisition_capture_id = entry.capture_id
+            for scenario in report.cost_scenarios:
+                for entry in scenario.context_evidence + [
+                    e for part in scenario.components for e in part.evidence
+                ]:
+                    entry.acquisition_capture_id = entry.capture_id
+            # Retain every offer and cost claim; the coupon chain was copied
+            # from the fixture payload before this flip and stays synthetic.
+            for entry in report.claims:
+                entry.retention = "minimal_fields"
+            for scenario in report.cost_scenarios:
+                for entry in scenario.context_evidence + [
+                    e for part in scenario.components for e in part.evidence
+                ]:
+                    entry.retention = "minimal_fields"
+            coupon = report.coupons[0]
+            assert coupon.application is not None
+            assert all(
+                entry.retention == "synthetic"
+                for entry in coupon.opportunity_evidence
+                + coupon.application.evidence
+                + ([coupon.application.receipt] if coupon.application.receipt else [])
+            )
+            candidate = (await read_capture(harness, client, [report]))["candidates"][0]
+            reproduced = candidate["offers"][0]["coupons"][0]
+            assert reproduced["state"] == "reproduced_at_observation", reproduced
+            assert reproduced["resulting_cost"] is not None
+            data = await history(client, candidate)
+            observation = data["observations"][0]
+            assert observation["evidence_kind"] == "synthetic", observation
+            assert observation["market_history_eligible"] is False
+            assert data["market_history_eligible_count"] == 0
+            assert harness.deliveries == harness.blocked_edges == []
+
+
 if __name__ == "__main__":
     asyncio.run(globals()[sys.argv[1]]())

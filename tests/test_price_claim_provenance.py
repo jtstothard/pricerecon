@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 
 from pricerecon.core.comparisons import claim
-from pricerecon.models.assessments import ComparablePath
+from pricerecon.models.assessments import ComparablePath, PriceClaim
 from pricerecon.models.costs import CostContext
 
 NOW = datetime(2026, 1, 15, 12, 0, tzinfo=UTC)
@@ -108,3 +108,71 @@ def test_empty_candidate_set_carries_no_amount_and_no_marker():
     assert result.state == "unavailable"
     assert result.amount is None
     assert result.synthetic is False
+
+
+def test_stored_payload_with_synthetic_paths_fails_closed_on_read():
+    """A payload stored before the envelope marker must not present as live.
+
+    Pre-marker rows in `discovery_price_assessments` carry synthetic paths
+    with no envelope key; `PriceClaim.synthetic` defaulting to False would
+    re-serve a fixture-decided amount as a live market fact.
+    """
+    legacy = {
+        "state": "supported",
+        "amount": "45.10",
+        "reason": "Stored before the envelope marker existed",
+        "observation_count": 1,
+        "paths": [
+            {
+                "candidate_id": "candidate",
+                "capture_id": "capture:obs-1",
+                "observation_id": "obs-1",
+                "observed_at": NOW.isoformat(),
+                "amount": "45.10",
+                "scenario_kind": "public_no_coupon",
+                "offer_key": "offer:obs-1",
+                "dependencies": [],
+                "policies": {"identity": "watch-identity-v1"},
+                "valid_until": None,
+                "evidence_ids": [],
+                "synthetic": True,
+                "context": {},
+            }
+        ],
+    }
+
+    restored = PriceClaim.model_validate(legacy)
+
+    assert restored.synthetic is True
+    # Stored markers are never downgraded by re-derivation: only unknown
+    # provenance fails closed, a recorded live claim stays live.
+    explicit = PriceClaim.model_validate({**legacy, "synthetic": True})
+    assert explicit.synthetic is True
+
+
+def test_stored_live_payload_keeps_its_live_marker_on_read():
+    legacy = {
+        "state": "supported",
+        "amount": "45.10",
+        "reason": "Retained observations only",
+        "observation_count": 1,
+        "paths": [
+            {
+                "candidate_id": "candidate",
+                "capture_id": "capture:obs-1",
+                "observation_id": "obs-1",
+                "observed_at": NOW.isoformat(),
+                "amount": "45.10",
+                "scenario_kind": "public_no_coupon",
+                "offer_key": "offer:obs-1",
+                "dependencies": [],
+                "policies": {"identity": "watch-identity-v1"},
+                "valid_until": None,
+                "evidence_ids": [],
+                "synthetic": False,
+                "context": {},
+            }
+        ],
+    }
+
+    assert PriceClaim.model_validate(legacy).synthetic is False

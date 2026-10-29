@@ -145,6 +145,14 @@ def claim(paths: list[ComparablePath], reason: str, *, require_live: bool = Fals
     and a fixture-only candidate set yields an explicit refusal instead of a
     number. The default keeps offline-verification claims available but marks
     them `synthetic` on the envelope so a caller can refuse them there too.
+
+    Capability note: no production call site passes `require_live=True` yet.
+    The production publishers (`db/assessments.evaluate_comparisons`, which
+    serves `current_best`/`observed_low`) deliberately mark rather than
+    filter, and market-history eligibility is enforced by its own exclusion
+    in `db/history.get_history`. The flag exists for a future call site that
+    must publish a live market fact; until one exists it is exercised only
+    by tests.
     """
     if not paths:
         return PriceClaim(reason="No qualifying comparable observations in the disclosed scope.")

@@ -9,7 +9,8 @@ from itertools import pairwise
 from pricerecon.db.connection import connect
 from pricerecon.db.history_lineage import CaptureLineage
 from pricerecon.db.schema import DB_PATH
-from pricerecon.models.costs import CostScenario
+from pricerecon.models.costs import CostEvidence, CostScenario
+from pricerecon.models.coupons import CouponAssessment
 from pricerecon.models.discovery import DiscoveryCandidate, DiscoveryCapture
 from pricerecon.models.history import (
     HistoryAttempt,
@@ -23,6 +24,28 @@ from pricerecon.models.history import (
     RevisionReference,
 )
 from pricerecon.models.qualification import MerchantOffer
+
+
+def coupon_evidence(coupon: CouponAssessment) -> list[CostEvidence]:
+    """Every evidence entry in a coupon's chain, including its payable proof.
+
+    Covers the opportunity, terms, eligibility, application (receipt, lines)
+    and the reproduced `resulting_cost` scenario the coupon owns.
+    """
+    chain = list(coupon.opportunity_evidence)
+    if coupon.terms is not None:
+        chain += coupon.terms.evidence + coupon.terms.compatibility_evidence
+    if coupon.eligibility is not None:
+        chain += coupon.eligibility.evidence
+    if coupon.application is not None:
+        chain += coupon.application.evidence
+        if coupon.application.receipt is not None:
+            chain.append(coupon.application.receipt)
+        chain += [e for line in coupon.application.lines for e in line.evidence]
+    if coupon.resulting_cost is not None:
+        chain += coupon.resulting_cost.context_evidence
+        chain += [e for part in coupon.resulting_cost.components for e in part.evidence]
+    return chain
 
 
 def init_history_tables(connection: sqlite3.Connection) -> None:
@@ -92,6 +115,12 @@ def get_history(
     ):
         cost = CostScenario.model_validate_json(row[0])
         costs_by_offer.setdefault((cost.offer_id, cost.offer_revision), []).append(cost)
+    coupons_by_offer: dict[tuple[str, int], list[CouponAssessment]] = {}
+    for row in connection.execute(
+        "SELECT offer_id, offer_revision, payload_json FROM discovery_coupons ORDER BY rowid"
+    ):
+        coupon = CouponAssessment.model_validate_json(row[2])
+        coupons_by_offer.setdefault((row[0], row[1]), []).append(coupon)
     retained = []
     for row in connection.execute(
         "SELECT capture_id, payload_json FROM discovery_offers ORDER BY rowid"
@@ -156,6 +185,21 @@ def get_history(
                 for c in offer.cost_scenarios
                 for e in c.context_evidence + [e for part in c.components for e in part.evidence]
             ]
+            # A reproduced coupon can decide the claimed amount through its
+            # own `resulting_cost` (`core/comparisons.assess_observation`), so
+            # the synthetic scan must cover the coupon chain too: a synthetic
+            # (fixture/offline-proof) checkout on a fully retained offer would
+            # otherwise present the observation as retained market history.
+            # Coupons without a resulting cost cannot decide a claim, but the
+            # scan is deliberately wider than the eventual winner: history
+            # does not know which path will win, so any reproduced coupon with
+            # fixture evidence marks the observation synthetic (fail closed).
+            coupon_claims = [
+                e
+                for coupon in coupons_by_offer.get((offer.id, offer.revision), [])
+                if coupon.resulting_cost is not None
+                for e in coupon_evidence(coupon)
+            ]
             origin = capture_lineage.resolve(offer)
             lineage = sorted(
                 origin.captures
@@ -205,7 +249,9 @@ def get_history(
                     else "unqualified" if reasons else "supported_at_capture"
                 )
             )
-            synthetic = any(c.retention == "synthetic" for c in offer.evidence + cost_claims)
+            synthetic = any(
+                c.retention == "synthetic" for c in offer.evidence + cost_claims + coupon_claims
+            )
             # Value changes compare the same offer, configuration, purchase and
             # policy basis only. Revisions remain dependencies, not new cohorts.
             basis = json.dumps(
