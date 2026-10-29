@@ -991,7 +991,9 @@ async def manufacturer_document():
         policy = type(harness.test_policy).model_validate(
             {
                 **harness.test_policy.model_dump(),
-                "provider_request_caps": {"manufacturer_spec": {"limit": 20, "tracking_reserve": 0}},
+                "provider_request_caps": {
+                    "manufacturer_spec": {"limit": 20, "tracking_reserve": 0}
+                },
             }
         )
         with operating_policy(policy):
@@ -1037,8 +1039,9 @@ async def manufacturer_document():
 
 
 async def manufacturer_host_gate():
-    with MonitoringHarness() as harness, manufacturer_fixture(
-        harness, base_url="https://www.ebay.co.uk"
+    with (
+        MonitoringHarness() as harness,
+        manufacturer_fixture(harness, base_url="https://www.ebay.co.uk"),
     ):
         from pricerecon.core.collection_policy import operating_policy
         from pricerecon.core.discovery import execute_discovery
@@ -1047,7 +1050,9 @@ async def manufacturer_host_gate():
         policy = type(harness.test_policy).model_validate(
             {
                 **harness.test_policy.model_dump(),
-                "provider_request_caps": {"manufacturer_spec": {"limit": 20, "tracking_reserve": 0}},
+                "provider_request_caps": {
+                    "manufacturer_spec": {"limit": 20, "tracking_reserve": 0}
+                },
             }
         )
         with operating_policy(policy):
