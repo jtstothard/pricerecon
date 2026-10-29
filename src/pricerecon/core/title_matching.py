@@ -109,15 +109,22 @@ def synonym_groups_match(
 
 
 def legacy_query_match(title: str, query: str) -> bool:
-    """Legacy fallback: match if all query terms appear in title.
+    """Legacy fallback: every query term must match the tokenized title.
 
-    Used for watches without synonym_groups. Preserves existing behavior.
+    Used only for watches with per-connector ``source_queries`` overrides and
+    no synonym groups (gate scoping decision, 2026-10-29): the watch query
+    terms re-supply precision after widened raw-connector recall. Terms are
+    tokenized with the same rules as synonym matching (ADR-0001 token
+    contract): a term matches only as a complete token (single-word term) or
+    a contiguous phrase (hyphenated/punctuated term), never as a substring —
+    "395" does not match "Ryzen 3950X", "128gb" does not match "1280GB",
+    while case, position and "128 GB" spacing variants still match.
     """
-    terms = [term for term in re.split(r"[^a-z0-9]+", query.lower()) if term]
+    title_tokens = _normalize_title(title)
+    terms = [term for term in query.split() if _normalize_title(term)]
     if not terms:
         return True
-    haystack = title.casefold()
-    return all(term in haystack for term in terms)
+    return all(_term_matches(term, title_tokens) for term in terms)
 
 
 def matches_watch_spec(
