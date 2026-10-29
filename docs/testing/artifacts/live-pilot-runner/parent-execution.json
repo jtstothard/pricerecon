@@ -1,0 +1,9 @@
+{
+  "cleanup": true,
+  "code_version": "bounded-pilot-v2",
+  "duration_seconds": 72.159,
+  "log_bytes": 0,
+  "policy_version": "live-pilot-plan-2026-10-28-v1",
+  "schema": "pricerecon.watch-pilot.v1",
+  "state": "failed"
+}
