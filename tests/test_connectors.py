@@ -1411,3 +1411,174 @@ def test_fb_marketplace_invalid_range_rejected() -> None:
 
     with pytest.raises(ConnectorDegradedError, match="out of range"):
         FacebookMarketplaceConnector(browser_client=None, latitude=0.0, longitude=181.0)
+
+
+def _admission_seam_policy(run_timeout_seconds: int) -> Any:
+    """Synthetic envelope for admission-enabled health seam tests (m3)."""
+    from datetime import UTC, datetime, timedelta
+
+    from pricerecon.models.collection import OperatingPolicy
+
+    now = datetime.now(UTC)
+    return OperatingPolicy(
+        scope_id="acquisition-health-seams",
+        version="synthetic-v1",
+        owner_reference="connector-health-test",
+        permission_reference="original-fixtures",
+        retention_reference="temporary-directory-only",
+        starts_at=now,
+        stops_at=now + timedelta(hours=1),
+        recovery_spacing_seconds=0,
+        run_timeout_seconds=run_timeout_seconds,
+        provider_request_caps={"ebay": {"limit": 100, "tracking_reserve": 0}},
+        caps={
+            name: {"limit": amount, "tracking_reserve": 0}
+            for name, amount in (
+                ("requests", 100),
+                ("pages", 100),
+                ("details", 100),
+                ("retries", 100),
+                ("fallbacks", 100),
+                ("storage_bytes", 10_000_000),
+                ("elapsed_seconds", 10_000),
+            )
+        },
+    )
+
+
+def _patch_admission_seam(monkeypatch: Any, connector_class: Any) -> list[Any]:
+    """Enable durable admission against a temporary database for one source."""
+    monkeypatch.setattr(
+        "pricerecon.connectors.discover_connectors", lambda: {"ebay": connector_class}
+    )
+    monkeypatch.setattr(
+        "pricerecon.core.connector_health.list_connector_health", lambda path=None: {}
+    )
+    recorded: list[Any] = []
+    monkeypatch.setattr(
+        "pricerecon.core.acquisition.upsert_connector_health",
+        lambda connector_id, status, last_error=None, details=None: recorded.append(
+            (connector_id, status, last_error, details)
+        ),
+    )
+    return recorded
+
+
+@pytest.mark.asyncio
+async def test_run_timeout_records_connector_health_under_active_policy(
+    tmp_path: Any, monkeypatch: Any
+) -> None:
+    """m3 seam (adversarial review, 2026-10-29), admission enabled.
+
+    The enforced asyncio run timeout left no health trace at all while an
+    httpx timeout records "timeout"; the run timeout must record the same
+    health fact. The retargeted legacy tests mock current_policy -> None, so
+    this test enables a real (synthetic) policy to exercise the path.
+    """
+    import asyncio
+
+    from pricerecon.core.acquisition import acquire_sources
+    from pricerecon.core.collection_policy import operating_policy
+    from pricerecon.db import schema
+
+    database = tmp_path / "ledger.db"
+    monkeypatch.setattr(schema, "DB_PATH", database)
+    schema.init_db(database, seed_sources=False)
+
+    class SlowSearchConnector:
+        collection_accounting = "http_v1"
+
+        async def initialize(self) -> None:
+            return None
+
+        async def search(self, query: Any, connector_filters: Any) -> Any:
+            await asyncio.sleep(30)
+
+        async def cleanup(self) -> None:
+            return None
+
+    recorded = _patch_admission_seam(monkeypatch, SlowSearchConnector)
+
+    with operating_policy(_admission_seam_policy(run_timeout_seconds=1)):
+        result = await acquire_sources(
+            [SourceConfig(connector="ebay", config={})],
+            query="fixture",
+            source_queries={},
+            filters={},
+            context_id="health-seam-run-timeout",
+        )
+
+    assert [(o.source, o.state, o.reason) for o in result.outcomes] == [
+        ("ebay", "failed", "run_timeout")
+    ]
+    assert result.listings == []
+    assert recorded == [("ebay", "timeout", "run_timeout", {"inference_source": "watch"})]
+
+
+@pytest.mark.asyncio
+async def test_cleanup_failure_under_policy_rewrites_stale_success_health(
+    tmp_path: Any, monkeypatch: Any
+) -> None:
+    """m3 seam (adversarial review, 2026-10-29), admission enabled.
+
+    With a policy budget active, a connector that succeeds (health recorded
+    ok/5-listings) and then fails cleanup has its outcome flipped to
+    failed/cleanup_failed and its listings dropped; the health row must not
+    keep advertising ok with the pre-drop listing count.
+    """
+    from pricerecon.core.acquisition import acquire_sources
+    from pricerecon.core.collection_policy import operating_policy
+    from pricerecon.db import schema
+
+    database = tmp_path / "ledger.db"
+    monkeypatch.setattr(schema, "DB_PATH", database)
+    schema.init_db(database, seed_sources=False)
+
+    def fixture_listing(listing_id: str) -> NormalizedListing:
+        return NormalizedListing(
+            source="ebay",
+            source_type=SourceType.MARKETPLACE,
+            source_listing_id=listing_id,
+            title_raw="Fixture Laptop 16GB",
+            price=Decimal("99.99"),
+            currency="GBP",
+            url=f"https://example.com/ebay/{listing_id}",
+            timestamp_seen=datetime.now(timezone.utc),
+            in_stock=True,
+        )
+
+    class LeakyCleanupConnector:
+        collection_accounting = "http_v1"
+
+        async def initialize(self) -> None:
+            return None
+
+        async def search(self, query: Any, connector_filters: Any) -> Any:
+            return [fixture_listing("1"), fixture_listing("2")]
+
+        async def cleanup(self) -> None:
+            raise RuntimeError("fixture cleanup explosion")
+
+    recorded = _patch_admission_seam(monkeypatch, LeakyCleanupConnector)
+
+    with operating_policy(_admission_seam_policy(run_timeout_seconds=60)):
+        result = await acquire_sources(
+            [SourceConfig(connector="ebay", config={})],
+            query="fixture",
+            source_queries={},
+            filters={},
+            context_id="health-seam-cleanup-failure",
+        )
+
+    assert [(o.source, o.state, o.reason) for o in result.outcomes] == [
+        ("ebay", "failed", "cleanup_failed")
+    ]
+    assert result.listings == []
+    # The success row is recorded first, then the outcome flip rewrites it.
+    assert recorded[0] == ("ebay", "ok", None, {"listing_count": 2, "inference_source": "watch"})
+    assert recorded[-1] == (
+        "ebay",
+        "unknown_error",
+        "cleanup_failed",
+        {"inference_source": "watch"},
+    )

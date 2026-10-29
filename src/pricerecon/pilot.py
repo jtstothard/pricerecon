@@ -87,7 +87,13 @@ def main() -> None:
         previous_handlers = {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
 
         def operator_stop(signum: int, frame: object) -> None:
-            owner.send_signal(signum)
+            try:
+                owner.send_signal(signum)
+            except ProcessLookupError:
+                # The detached supervisor can exit first (deadline or its own
+                # failure); forwarding the operator signal into a dead process
+                # must not raise inside this handler (n1, 2026-10-29).
+                pass
 
         try:
             for sig in previous_handlers:

@@ -222,11 +222,19 @@ def main() -> None:
         root.is_relative_to(base) for base in (Path(gettempdir()).resolve(), Path("/tmp").resolve())
     ):
         raise SystemExit("run directory must be temporary")
-    # Exclusive, persistent minimal tombstone: deleting merchant storage cannot
-    # refill/restart this run. This contains no source data or credential value.
+    # Exclusive minimal tombstone: within a run, deleting merchant storage
+    # cannot refill/restart it. This contains no source data or credential
+    # value. The synthetic offline-check copy is a sibling of a throwaway run
+    # root, so the worker deletes it with the run root in the finally below —
+    # repeated offline checks must not litter the temp directory (n2, 2026-10-29).
+    # The one-off live grant (pilot_activation.GRANT) is a different file and
+    # no code path ever deletes it.
+    tombstone: Path | None = None
     if args.synthetic:
-        with root.with_suffix(".consumed").open("x") as marker:
+        candidate = root.with_suffix(".consumed")
+        with candidate.open("x") as marker:
             marker.write("synthetic pilot consumed\n")
+        tombstone = candidate
     root.mkdir(mode=0o700)
     (root / ".pilot-run").write_text(MARKER)
     previous = Path.cwd()
@@ -348,6 +356,10 @@ def main() -> None:
     finally:
         os.chdir(previous)
         shutil.rmtree(root)
+        if tombstone is not None:
+            # Only the tombstone this run created exclusively (never another
+            # run's marker, never the live grant) is cleaned up here.
+            tombstone.unlink(missing_ok=True)
         receipt["cleanup"] = not root.exists()
     print(json.dumps(receipt, sort_keys=True))
 

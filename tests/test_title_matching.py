@@ -122,6 +122,46 @@ def test_legacy_query_match():
     assert not legacy_query_match("AMD Ryzen AI Max+ 395 Mini PC", "ryzen 128gb")
 
 
+def test_legacy_query_match_respects_token_boundaries():
+    """m2 (adversarial review, 2026-10-29): tokenized fallback semantics.
+
+    The fallback is the precision safety net for watches with
+    ``source_queries`` overrides, so it must obey the same ADR-0001 token
+    contract as synonym matching: a query term matches only as a complete
+    token (or contiguous phrase), never as a substring — "395" must not match
+    "Ryzen 3950X" and "128gb" must not match "1280GB".
+    """
+    # Substring over-matching is banned (the "128gb" vs "1280gb" trap).
+    assert not legacy_query_match("AMD Ryzen 3950X Mini PC", "395")
+    assert not legacy_query_match("AMD Ryzen 3950X Mini PC", "ryzen 395")
+    assert not legacy_query_match("Crucial 1280GB Portable SSD", "128gb")
+    # Genuine complete-token matches still pass.
+    assert legacy_query_match("Galaxy S23 512GB Phone", "512gb phone")
+    assert legacy_query_match("AMD Ryzen AI Max+ 395 128GB Mini PC", "395 128gb")
+    assert legacy_query_match("AMD Ryzen AI Max+ 395 128GB Mini PC", "max+ 395")
+
+
+def test_legacy_query_match_accepts_word_variants():
+    """Whole-word matching regardless of case/position/punctuation.
+
+    The old substring check was also accidentally strict about nothing — the
+    token contract now makes matching about whole words, so case and position
+    variants of a genuine term still pass while unrelated titles do not.
+    """
+    assert legacy_query_match("Lenovo ThinkPad T14 16GB RAM 512GB SSD", "thinkpad")
+    assert legacy_query_match("Gaming Laptop RTX 4060 Notebook", "laptop rtx")
+    assert legacy_query_match("128 GB Laptop", "128gb laptop")
+    assert legacy_query_match("Casio MTP-B145D-2A2VEF watch", "mtp b145d")
+    assert not legacy_query_match("Lenovo ThinkPad T14 16GB RAM 512GB SSD", "laptop")
+
+
+def test_legacy_query_match_degenerate_queries_match_everything():
+    """Empty or punctuation-only queries keep the historical allow-all shape."""
+    assert legacy_query_match("Any Title", "")
+    assert legacy_query_match("Any Title", "   ")
+    assert legacy_query_match("Any Title", "!!!")
+
+
 def test_special_chars_preserved():
     """Special chars like + are preserved in tokens."""
     synonym_groups = [["395+"], ["128gb"]]
