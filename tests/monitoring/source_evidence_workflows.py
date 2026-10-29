@@ -954,5 +954,135 @@ async def assessment_interaction():
             assert harness.deliveries == harness.blocked_edges == []
 
 
+@contextmanager
+def manufacturer_fixture(harness, base_url="https://specs.synthetic.invalid"):
+    from pricerecon import connectors
+    from pricerecon.connectors import manufacturer_spec
+    from pricerecon.core.collection_transport import collection_http_client
+
+    def transport(request):
+        from tests.support.document_fixtures import manufacturer_spec_page
+
+        harness.searches.append(("manufacturer_spec", str(request.url)))
+        return httpx.Response(200, json=manufacturer_spec_page())
+
+    with (
+        patch.object(
+            connectors,
+            "discover_connectors",
+            lambda: {"manufacturer_spec": manufacturer_spec.ManufacturerSpecConnector},
+        ),
+        patch.object(
+            manufacturer_spec,
+            "collection_http_client",
+            lambda **kwargs: collection_http_client(transport=httpx.MockTransport(transport)),
+            create=True,
+        ),
+    ):
+        yield
+
+
+async def manufacturer_document():
+    with MonitoringHarness() as harness, manufacturer_fixture(harness):
+        from pricerecon.core.collection_policy import operating_policy
+        from pricerecon.core.discovery import execute_discovery
+        from pricerecon.models.discovery import DiscoveryAdmission, DiscoveryRequest
+
+        policy = type(harness.test_policy).model_validate(
+            {
+                **harness.test_policy.model_dump(),
+                "provider_request_caps": {"manufacturer_spec": {"limit": 20, "tracking_reserve": 0}},
+            }
+        )
+        with operating_policy(policy):
+            async with harness.session() as (client, _):
+                await execute_discovery(
+                    DiscoveryRequest(
+                        query="VX-9",
+                        sources=[
+                            {
+                                "connector": "manufacturer_spec",
+                                "config": {
+                                    "base_url": "https://specs.synthetic.invalid",
+                                    "evidence_use": {
+                                        "permission_reference": "original-fixture-document",
+                                        "retention": "synthetic",
+                                    },
+                                },
+                            }
+                        ],
+                    ),
+                    admission=DiscoveryAdmission(
+                        mode="offline_verification",
+                        policy_reference="synthetic",
+                        permission_reference="original-test-data",
+                        activation_reference="isolated-harness",
+                    ),
+                )
+                feed = await get(client, "/api/discovery/watches")
+                candidate = feed["candidates"][0]
+                # The supported identity comes from the compiled capture; this
+                # workflow never constructs an issuer kind anywhere.
+                assert candidate["identity_state"] == "supported", candidate
+                configuration = candidate["configurations"][0]
+                assert configuration["state"] == "supported"
+                assert configuration["values"]["maker"] == "Northgate Instrument Co."
+                assert configuration["values"]["case_width_mm"] == "36"
+                # A manufacturer host defines the watch; it is not a merchant,
+                # so the offer must stay unqualified on the same candidate.
+                assert candidate["offers"][0]["qualification"]["state"] == "unresolved"
+                assert candidate["public_delivered_total"]["amount"] is None
+                assert len(harness.searches) == 1
+                assert harness.deliveries == harness.blocked_edges == []
+
+
+async def manufacturer_host_gate():
+    with MonitoringHarness() as harness, manufacturer_fixture(
+        harness, base_url="https://www.ebay.co.uk"
+    ):
+        from pricerecon.core.collection_policy import operating_policy
+        from pricerecon.core.discovery import execute_discovery
+        from pricerecon.models.discovery import DiscoveryAdmission, DiscoveryRequest
+
+        policy = type(harness.test_policy).model_validate(
+            {
+                **harness.test_policy.model_dump(),
+                "provider_request_caps": {"manufacturer_spec": {"limit": 20, "tracking_reserve": 0}},
+            }
+        )
+        with operating_policy(policy):
+            async with harness.session() as (client, _):
+                await execute_discovery(
+                    DiscoveryRequest(
+                        query="VX-9",
+                        sources=[
+                            {
+                                "connector": "manufacturer_spec",
+                                "config": {
+                                    "base_url": "https://www.ebay.co.uk",
+                                    "evidence_use": {
+                                        "permission_reference": "original-fixture-document",
+                                        "retention": "synthetic",
+                                    },
+                                },
+                            }
+                        ],
+                    ),
+                    admission=DiscoveryAdmission(
+                        mode="offline_verification",
+                        policy_reference="synthetic",
+                        permission_reference="original-test-data",
+                        activation_reference="isolated-harness",
+                    ),
+                )
+                feed = await get(client, "/api/discovery/watches")
+                # A third-party host can never serve manufacturer provenance,
+                # no matter what document it returns or how the config is
+                # labelled: the registry gate refuses before any transport use.
+                assert feed["candidates"] == []
+                assert harness.searches == []
+                assert harness.deliveries == harness.blocked_edges == []
+
+
 if __name__ == "__main__":
     asyncio.run(globals()[sys.argv[1]]())

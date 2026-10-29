@@ -9,7 +9,9 @@ import pytest
 
 from pricerecon.categories.watches import IDENTITY_FIELDS, resolve_watch
 from pricerecon.connectors.manufacturer_spec import compile_manufacturer_spec
+from pricerecon.models.source_evidence import EvidenceUse, SourceReceipt
 from tests.support.document_fixtures import (
+    CAPTURED_AT,
     FIXTURE_CONFIGURATION_KEY,
     manufacturer_spec_capture,
     manufacturer_spec_document,
@@ -88,6 +90,75 @@ def test_document_from_a_different_host_is_refused_at_compilation():
         compile_manufacturer_spec(
             document,
             capture,
+            configuration_key=FIXTURE_CONFIGURATION_KEY,
+            source_listing_id="fixture:manufacturer:vx-9",
+        )
+
+
+def test_same_host_third_party_capture_cannot_reach_manufacturer_claims():
+    """A marketplace capture plus a same-host 'spec document' forges nothing.
+
+    The classic forgery is two caller-supplied strings made to agree: a
+    third-party capture whose `source_host` matches a document URL on that
+    same third-party host. Host agreement alone must never confer the
+    manufacturer issuer kind.
+    """
+    capture = SourceReceipt(
+        route="ebay_browse_item_v1",
+        source_host="www.ebay.co.uk",
+        capture_id="third-party-capture",
+        retrieved_at=CAPTURED_AT,
+        use=EvidenceUse(
+            permission_reference="marketplace-capture-authority",
+            retention="minimal_fields",
+        ),
+    )
+    document = manufacturer_spec_document().model_copy(
+        update={
+            "issuer": "Rolex",
+            "document_url": "https://www.ebay.co.uk/itm/vx-9/specification",
+        }
+    )
+
+    with pytest.raises(ValueError, match="not an operator-registered manufacturer"):
+        compile_manufacturer_spec(
+            document,
+            capture,
+            configuration_key="ebay:vx-9",
+            source_listing_id="ebay:vx-9",
+        )
+
+
+def test_spoofed_document_on_a_registered_host_is_refused_for_a_third_party_capture():
+    """Cross-host spoofing: the document sits on the registered host, the capture does not."""
+    capture = SourceReceipt(
+        route="ebay_browse_item_v1",
+        source_host="www.ebay.co.uk",
+        capture_id="third-party-capture",
+        retrieved_at=CAPTURED_AT,
+        use=EvidenceUse(
+            permission_reference="marketplace-capture-authority",
+            retention="minimal_fields",
+        ),
+    )
+
+    with pytest.raises(ValueError, match="does not match the captured source host"):
+        compile_manufacturer_spec(
+            manufacturer_spec_document(),
+            capture,
+            configuration_key=FIXTURE_CONFIGURATION_KEY,
+            source_listing_id="fixture:manufacturer:vx-9",
+        )
+
+
+def test_registered_host_document_declaring_a_foreign_issuer_is_refused():
+    """The issuer is the operator attestation for the host, not document content."""
+    document = manufacturer_spec_document().model_copy(update={"issuer": "Somebody Else Ltd"})
+
+    with pytest.raises(ValueError, match="does not match the operator-registered manufacturer"):
+        compile_manufacturer_spec(
+            document,
+            manufacturer_spec_capture(),
             configuration_key=FIXTURE_CONFIGURATION_KEY,
             source_listing_id="fixture:manufacturer:vx-9",
         )

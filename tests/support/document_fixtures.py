@@ -46,3 +46,20 @@ def manufacturer_spec_capture() -> SourceReceipt:
             retention="synthetic",
         ),
     )
+
+
+def manufacturer_spec_page() -> dict[str, object]:
+    """The specification-index payload as captured from the fixture host.
+
+    This is the raw document a real acquisition transport returns from a
+    registered manufacturer host, not a pre-compiled report.
+    """
+    return {
+        "documents": [
+            {
+                "listing_id": FIXTURE_CONFIGURATION_KEY,
+                "configuration_key": FIXTURE_CONFIGURATION_KEY,
+                "document": manufacturer_spec_document().model_dump(mode="json"),
+            }
+        ]
+    }

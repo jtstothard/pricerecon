@@ -36,6 +36,8 @@ class SourceType(str, Enum):
     RETAILER = "retailer"
     MARKETPLACE = "marketplace"
     SIGNAL = "signal"
+    # A manufacturer's own host: definition evidence, never a merchant offer.
+    MANUFACTURER = "manufacturer"
 
 
 class VariantMatchConfidence(str, Enum):
