@@ -86,6 +86,12 @@ weakened, skipped or suppressed.
   tests/build and 19 inspected desktop/narrow screenshots are reused; no UI/response
   schema change. Existing ESLint missing-config, bundle and raw-log whitespace
   limitations remain recorded; no global lint/type claim is made.
+- 2026-10-29 (#149) correction: #149 changes the response schema (envelope
+  `PriceClaim.synthetic`, `ObservationHistory.market_history_eligible_count`) and
+  the frontend that renders assessments, so the reuse statement above described
+  only the #142 tree. On the #149 tree the full frontend suite (**88 vitest
+  tests**) and the production build were re-run and pass; the 19 screenshots
+  predate the #149 rendering change.
 - All **77** original dirty files retain their initial bytes and lengths. No live
   acquisition, credentials/accounts, production DB, install/download, push/PR,
   migration approval or activation occurred. Local commits remain authorized.
