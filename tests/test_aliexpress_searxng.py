@@ -104,7 +104,9 @@ async def test_searxng_keeps_url_only_result_as_ds_enrichment_candidate() -> Non
     assert len(results) == 1
     assert results[0].source_listing_id == "1005001234567890"
     assert results[0].price is None
-    assert results[0].variant_normalized["aliexpress_source_lane"] == "searxng_discovery"
+    variant = results[0].variant_normalized
+    assert variant is not None
+    assert variant["aliexpress_source_lane"] == "searxng_discovery"
 
 
 @pytest.mark.asyncio
@@ -148,7 +150,9 @@ async def test_search_enriches_url_only_searxng_result_with_ds_before_filtering(
     results = await conn.search("GPU 4090", {"site_search_discovery": False})
 
     assert [listing.price for listing in results] == [Decimal("999.99")]
-    assert results[0].variant_normalized["aliexpress_source_lane"] == "ds"
+    variant = results[0].variant_normalized
+    assert variant is not None
+    assert variant["aliexpress_source_lane"] == "ds"
 
 
 def test_searxng_url_environment_overrides_config(monkeypatch: Any) -> None:
