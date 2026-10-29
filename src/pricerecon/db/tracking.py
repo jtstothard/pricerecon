@@ -61,6 +61,22 @@ def init_tracking_tables(connection: sqlite3.Connection) -> None:
                 FOREIGN KEY(watch_id) REFERENCES watches(id) ON DELETE CASCADE
             );
             INSERT INTO events_tracking_migration SELECT * FROM events;
+            -- Seed the renamed table's AUTOINCREMENT row unconditionally: legacy
+            -- databases can arrive empty-but-sequenced (watch deletion cascaded
+            -- the rows away while unenforced notification FKs left orphans), and
+            -- relying on the zero-row copy above having created a sequence row is
+            -- SQLite-version-dependent (sqlite_sequence rows are not uniqued, so
+            -- seed explicitly rather than assuming/REPLACEing). DROP TABLE events
+            -- below destroys the old watermark, so preserve MAX(old, new) before
+            -- it is lost (m4, 2026-10-29).
+            INSERT INTO sqlite_sequence(name, seq)
+                SELECT 'events_tracking_migration', COALESCE(
+                    (SELECT seq FROM sqlite_sequence WHERE name='events'), 0
+                )
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM sqlite_sequence
+                    WHERE name='events_tracking_migration'
+                );
             UPDATE sqlite_sequence SET seq = MAX(seq, COALESCE(
                 (SELECT seq FROM sqlite_sequence WHERE name='events'), 0
             )) WHERE name='events_tracking_migration';

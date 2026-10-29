@@ -294,7 +294,13 @@ def test_sqlite_refuses_growth_before_physical_cap_and_denies_disk_journals(tmp_
         isolated_database.reset(token)
 
 
-def test_completed_pilot_cannot_restart_using_deleted_storage(tmp_path):
+def test_completed_offline_check_may_rerun_and_leaves_no_tombstones(tmp_path):
+    # n2 (adversarial review, 2026-10-29): the synthetic offline-check tombstone
+    # is a sibling of a throwaway run root, so the worker now deletes its own
+    # tombstone with the run root — repeated offline checks neither litter the
+    # temp directory nor stay blocked by a stale marker. Permanent consumption
+    # lives only in the shared live grant (pilot_activation.GRANT), which no
+    # code path deletes.
     command = [
         sys.executable,
         "-m",
@@ -304,9 +310,13 @@ def test_completed_pilot_cannot_restart_using_deleted_storage(tmp_path):
     ]
     first = subprocess.run(command, capture_output=True, text=True, timeout=30, check=False)
     assert first.returncode == 0, first.stderr
-    second = subprocess.run(command, capture_output=True, text=True, timeout=30, check=False)
-    assert second.returncode != 0
     assert not (tmp_path / "run").exists()
+    assert not (tmp_path / "run.consumed").exists()
+    second = subprocess.run(command, capture_output=True, text=True, timeout=30, check=False)
+    assert second.returncode == 0, second.stderr
+    assert not (tmp_path / "run").exists()
+    # Repeated runs leave no tombstones anywhere in the temp directory.
+    assert list(tmp_path.iterdir()) == []
 
 
 def test_default_and_execute_cli_remain_blocked_without_credentials_or_storage(tmp_path):
@@ -398,6 +408,9 @@ def test_documented_offline_cli_uses_tmp_and_supervised_application_seam():
         assert receipt["state"] == "success_empty"
         assert receipt["requests"] == 3
         assert receipt["cleanup"] is True
+        # n2 (2026-10-29): the documented offline CLI leaves the temporary
+        # directory exactly as it found it — no run root, no sibling tombstone.
+        assert list(Path(parent).iterdir()) == []
 
 
 def test_transient_ui_reads_normal_discovery_feed_and_denies_mutations(tmp_path):
@@ -547,9 +560,12 @@ with patch.object(worker, 'acquire_once', acquire), patch.object(ui, 'serve_ui',
     with socket.socket() as probe:
         assert probe.connect_ex(("127.0.0.1", 8878)) != 0
     assert not root.exists()
-    assert root.with_suffix(".consumed").read_text() == "synthetic pilot consumed\n"
+    # n2 (2026-10-29): the synthetic tombstone is scoped to its run and is
+    # deleted with the run root; permanent consumption is the live grant only.
+    assert not root.with_suffix(".consumed").exists()
     again = subprocess.run(command, capture_output=True, text=True, timeout=30, check=False)
-    assert again.returncode != 0
+    assert again.returncode == 0, again.stderr
+    assert not root.with_suffix(".consumed").exists()
     assert "synthetic-memory-only" not in result.stdout
 
 
@@ -561,3 +577,97 @@ def test_abnormal_worker_exit_cannot_promote_receipt_to_success(tmp_path):
     assert receipt["state"] == "failed"
     assert "requests" not in receipt
     assert receipt["cleanup"] is True
+
+
+def test_supervisor_arms_stop_handlers_before_spawning_worker(tmp_path):
+    # n1 (adversarial review, 2026-10-29): a TERM/INT delivered between Popen
+    # and handler installation previously killed the supervisor with default
+    # disposition and orphaned the worker. The stop handler must already be
+    # armed while the worker is being spawned.
+    import os
+    import signal
+    from unittest.mock import patch
+
+    import pricerecon.pilot_supervisor as supervisor
+
+    original_popen = subprocess.Popen
+    root = tmp_path / "pricerecon-pilot-early-signal"
+
+    def signal_during_spawn(command, **kwargs):
+        # The worker-to-be must ignore SIGINT from birth (dispositions set
+        # before exec survive it), so the forwarded stop cannot win a race
+        # against the fixture's own startup and the run is bounded only by
+        # the supervisor's operator-stop deadline.
+        child_process = original_popen(
+            command,
+            preexec_fn=lambda: signal.signal(signal.SIGINT, signal.SIG_IGN),
+            **kwargs,
+        )
+        os.kill(os.getpid(), signal.SIGINT)  # lands before supervise() resumes
+        return child_process
+
+    # The child ignores SIGINT and outlives the stop deadline, so the run can
+    # only end through the supervisor's bounded operator-stop path.
+    child = "import signal, time; signal.signal(signal.SIGINT, signal.SIG_IGN); time.sleep(30)"
+    with patch.object(supervisor.subprocess, "Popen", signal_during_spawn):
+        receipt = supervisor.supervise([sys.executable, "-c", child], root, timeout=10)
+    assert receipt["state"] == "operator_stop_failed"
+    assert receipt["cleanup"] is True
+    assert not root.exists()
+
+
+def test_supervisor_restores_handlers_when_spawning_fails(tmp_path):
+    # The save/restore discipline must also cover the spawn itself failing.
+    import signal
+    from unittest.mock import patch
+
+    import pricerecon.pilot_supervisor as supervisor
+
+    def refused_spawn(*args, **kwargs):
+        raise OSError("fixture spawn refusal")
+
+    previous = {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
+    with patch.object(supervisor.subprocess, "Popen", refused_spawn):
+        try:
+            supervisor.supervise([sys.executable, "-c", "pass"], tmp_path / "refused", timeout=1)
+        except OSError:
+            pass  # the original spawn failure must still surface
+    assert {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)} == previous
+
+
+def test_operator_stop_signal_after_supervisor_exit_does_not_raise(tmp_path, monkeypatch):
+    # n1 (adversarial review, 2026-10-29): the detached supervisor can already
+    # be gone when the operator's signal arrives; forwarding it into a dead
+    # process raised ProcessLookupError inside the signal handler.
+    import os
+    import signal
+
+    import pricerecon.pilot as pilot
+
+    class ExitedSupervisor:
+        returncode = 1
+
+        def send_signal(self, signum):
+            raise ProcessLookupError(f"fixture: supervisor already exited ({signum})")
+
+        def communicate(self):
+            os.kill(os.getpid(), signal.SIGINT)  # operator signal after exit
+            return ('{"schema": "pricerecon.watch-pilot.v1", "state": "supervisor_failed"}', None)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return None
+
+    previous = signal.getsignal(signal.SIGINT)
+    monkeypatch.setattr(sys, "argv", ["pilot", "--offline-check", str(tmp_path / "run")])
+    with patch_popen(pilot, ExitedSupervisor()):
+        pilot.main()  # must not raise out of the signal handler
+    assert signal.getsignal(signal.SIGINT) is previous
+
+
+def patch_popen(module, fake):
+    from unittest.mock import patch
+
+    return patch.object(module.subprocess, "Popen", lambda *args, **kwargs: fake)

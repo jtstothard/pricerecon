@@ -1,15 +1,18 @@
 """Tests for the token bucket rate limiter."""
 
 import asyncio
+import sqlite3
+from contextlib import closing
 from datetime import datetime, timedelta, timezone
-
 
 from pricerecon.core.rate_limiter import (
     ConnectorRateLimiter,
+    DurableAdmission,
     TokenBucket,
     get_rate_limiter,
     init_rate_limiter,
 )
+from pricerecon.models.collection import OperatingPolicy, ResourceCap
 from pricerecon.models.rate_limit import (
     RateLimitConfig,
     RateLimitWindow,
@@ -248,3 +251,78 @@ class TestGlobalLimiter:
         # Should return same instance
         limiter2 = init_rate_limiter()
         assert limiter is limiter2
+
+
+def _fresh_install_policy(source: str) -> OperatingPolicy:
+    """Explicit synthetic envelope; confers no production limits or rights."""
+    now = datetime.now(timezone.utc)
+    return OperatingPolicy(
+        scope_id="fresh-install-admission",
+        version="synthetic-v1",
+        owner_reference="rate-limiter-test",
+        permission_reference="original-fixtures",
+        retention_reference="temporary-directory-only",
+        starts_at=now,
+        stops_at=now + timedelta(hours=1),
+        recovery_spacing_seconds=0,
+        run_timeout_seconds=60,
+        provider_request_caps={source: ResourceCap(limit=100, tracking_reserve=0)},
+        caps={
+            "requests": ResourceCap(limit=100, tracking_reserve=0),
+            "pages": ResourceCap(limit=100, tracking_reserve=0),
+            "details": ResourceCap(limit=100, tracking_reserve=0),
+            "retries": ResourceCap(limit=100, tracking_reserve=0),
+            "fallbacks": ResourceCap(limit=100, tracking_reserve=0),
+            "storage_bytes": ResourceCap(limit=10_000_000, tracking_reserve=0),
+            "elapsed_seconds": ResourceCap(limit=10_000, tracking_reserve=0),
+        },
+    )
+
+
+class TestDurableAdmissionFreshDatabase:
+    """m1 (adversarial review, 2026-10-29): owned admission paths self-initialize.
+
+    A connector's first admission action can be the first database touch of a
+    fresh install; debit/begin/finish on owned connections (and a
+    caller-supplied idle connection) must not depend on init_db having run
+    earlier in the process.
+    """
+
+    def test_begin_debit_finish_initialize_a_truly_fresh_database(
+        self, tmp_path, monkeypatch
+    ) -> None:
+        from pricerecon.core.collection_policy import current_policy, operating_policy
+        from pricerecon.db import schema
+
+        database = tmp_path / "fresh.db"
+        monkeypatch.setattr(schema, "DB_PATH", database)
+        policy = _fresh_install_policy("ebay")
+        admission = DurableAdmission(policy, "ebay", "discovery", "fresh-install")
+
+        # Production ordering: bind the grant, then reserve and account.
+        with operating_policy(policy):
+            assert current_policy() == policy
+            admission.begin()
+            admission.debit({"requests": 1})
+            admission.finish("success_empty")
+
+        with closing(sqlite3.connect(database)) as connection:
+            states = connection.execute("SELECT state FROM collection_attempts").fetchall()
+        assert states == [("success_empty",)]
+
+    def test_select_policy_with_supplied_fresh_connection_initializes(
+        self, tmp_path, monkeypatch
+    ) -> None:
+        from pricerecon.core.collection_policy import operating_policy
+        from pricerecon.db import schema
+        from pricerecon.db.connection import connect
+
+        database = tmp_path / "fresh-supplied.db"
+        monkeypatch.setattr(schema, "DB_PATH", database)
+        policy = _fresh_install_policy("ebay")
+
+        with operating_policy(policy), closing(connect(database)) as supplied:
+            selection = DurableAdmission.select_policy(supplied)
+
+        assert selection.reason is None
+        assert selection.policy == policy

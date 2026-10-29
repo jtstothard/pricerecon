@@ -415,6 +415,15 @@ async def acquire_sources(
                 source=connector_id, state="failed", reason="run_timeout"
             )
             outcomes.append(source_outcome)
+            # An enforced run timeout is as much a connector-health fact as an
+            # httpx timeout; record it with the same record shape rather than
+            # leaving no health trace (m3, adversarial review 2026-10-29).
+            upsert_connector_health(
+                connector_id,
+                "timeout",
+                last_error="run_timeout",
+                details={"inference_source": purpose},
+            )
             if isinstance(exc, asyncio.CancelledError):
                 raise
         except ConnectorDegradedError as exc:
@@ -514,6 +523,17 @@ async def acquire_sources(
                     async with asyncio.timeout_at(deadline):
                         await connector.cleanup()
             except AdmissionDenied as exc:
+                if source_outcome.state in {"success", "success_empty"}:
+                    # The ok row recorded above now overstates this run: the
+                    # outcome is flipped and (under a policy budget) the
+                    # listings are dropped, so the health row must not keep
+                    # advertising the pre-drop success (m3, 2026-10-29).
+                    upsert_connector_health(
+                        connector_id,
+                        "unknown_error",
+                        last_error=exc.reason,
+                        details={"inference_source": purpose},
+                    )
                 source_outcome = AcquisitionOutcome(
                     source=connector_id, state=exc.state, reason=exc.reason
                 )
@@ -522,6 +542,17 @@ async def acquire_sources(
             except Exception:
                 logger.exception("connector_cleanup_failed", extra={"connector": connector_id})
                 if budget:
+                    if source_outcome.state in {"success", "success_empty"}:
+                        # A policy-budget cleanup failure flips this outcome to
+                        # failed/cleanup_failed and drops the source's listings;
+                        # the health row must not keep advertising ok with the
+                        # pre-drop listing count (m3, 2026-10-29).
+                        upsert_connector_health(
+                            connector_id,
+                            "unknown_error",
+                            last_error="cleanup_failed",
+                            details={"inference_source": purpose},
+                        )
                     source_outcome = AcquisitionOutcome(
                         source=connector_id, state="failed", reason="cleanup_failed"
                     )
