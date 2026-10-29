@@ -152,18 +152,23 @@ async def test_watch_executor_filters_by_spec_match_ram(monkeypatch: Any) -> Non
         status="active",
     )
 
+    # ADR 0001 fallback (docs/adr/0001-watch-query-and-matching-model.md):
+    # watches without synonym_groups keep the all-query-terms title filter, so
+    # each fixture title must contain the watch query term ("laptop").
     listings = [
         NormalizedListing(
             source="aliexpress",
             source_type=SourceType.MARKETPLACE,
             source_listing_id="1",
-            title_raw="Lenovo ThinkPad T14 16GB RAM 512GB SSD",
+            title_raw="Lenovo ThinkPad T14 Laptop 16GB RAM 512GB SSD",
             price=Decimal("499.99"),
             currency="GBP",
             url="https://example.com/1",
             timestamp_seen=now,
             product_normalized=None,
-            variant_normalized=extract_specs("Lenovo ThinkPad T14 16GB RAM 512GB SSD", "laptop"),
+            variant_normalized=extract_specs(
+                "Lenovo ThinkPad T14 Laptop 16GB RAM 512GB SSD", "laptop"
+            ),
             condition=None,
             condition_raw=None,
             shipping_cost=None,
@@ -185,13 +190,15 @@ async def test_watch_executor_filters_by_spec_match_ram(monkeypatch: Any) -> Non
             source="aliexpress",
             source_type=SourceType.MARKETPLACE,
             source_listing_id="2",
-            title_raw="Lenovo ThinkPad T14 32GB RAM 1TB SSD",
+            title_raw="Lenovo ThinkPad T14 Laptop 32GB RAM 1TB SSD",
             price=Decimal("699.99"),
             currency="GBP",
             url="https://example.com/2",
             timestamp_seen=now,
             product_normalized=None,
-            variant_normalized=extract_specs("Lenovo ThinkPad T14 32GB RAM 1TB SSD", "laptop"),
+            variant_normalized=extract_specs(
+                "Lenovo ThinkPad T14 Laptop 32GB RAM 1TB SSD", "laptop"
+            ),
             condition=None,
             condition_raw=None,
             shipping_cost=None,

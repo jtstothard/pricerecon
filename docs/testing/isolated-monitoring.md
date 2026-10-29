@@ -237,3 +237,19 @@ interval and retained enabled/disabled state. This implementation did not run a
 post-fix browser session and does not claim UI acceptance. Separate merger owns
 integration; ticket 01 stays open. No push/PR, live source access, credentials,
 production database, deployment or activation occurred.
+
+## Legacy fixture reconciliation — 2026-10-29
+
+The CI quality gate's full-pytest step surfaced one full-suite failure on this
+branch: `test_watch_executor_filters_by_spec_match_ram`. Its fixture predates
+the matching model — f78204e (2026-07-12) added the watch execution path and
+26de71e (2026-07-23) later added configurable matching, including the ADR-0001
+fallback in which every fallback-query term must appear in the title — and was
+never adapted to that contract. The accepted ADR-0001 behavior stands; the
+fixture was adapted instead: both fixture titles now contain the watch query
+term ("Laptop"), so the RAM(32) floor remains the discriminating filter. The
+assertion was not edited, weakened, skipped or xfailed, and no production code
+changed. After the fixture edit the module pair runs **36 passed**, and the
+full suite runs **842 passed, 10 skipped, 0 failed** twice back-to-back; pinned
+Black and Ruff, mypy (baseline unchanged) and `git diff --check` pass. No push
+occurred.
