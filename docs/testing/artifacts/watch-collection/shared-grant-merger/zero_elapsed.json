@@ -1,0 +1,320 @@
+{
+  "case": "zero_elapsed",
+  "result": "failed",
+  "failures": [
+    "denied Watch status is completed, expected capped",
+    "denied Watch reports success=true",
+    "denied Watch advanced last_check_at"
+  ],
+  "before": {
+    "name": "Saved wristwatch search",
+    "query": "fallback merchant query",
+    "display_title": "My compact colourful choices",
+    "category": null,
+    "synonym_groups": [
+      [
+        "ML05",
+        "ML05B"
+      ],
+      [
+        "blue",
+        "mint"
+      ]
+    ],
+    "source_queries": {
+      "cex": " (ML05 OR \"ML05B\") -parts  "
+    },
+    "sources": [
+      {
+        "connector": "cex",
+        "enabled": true,
+        "config": {}
+      }
+    ],
+    "filters": {
+      "price_max": "100.00",
+      "min_price_gbp": null,
+      "component_subject_pattern": null,
+      "enforce_component_pattern": true,
+      "enforce_price_floor": true,
+      "currency": "GBP",
+      "condition_filter": {
+        "conditions": [],
+        "dedup_enabled": false
+      },
+      "exclude_patterns": [],
+      "spec_match": {
+        "gpu_model": null,
+        "ram_gb": null,
+        "storage_gb": null,
+        "cpu_model": null,
+        "synonym_groups": [],
+        "excluded_title_terms": [
+          "parts"
+        ],
+        "required_title_terms": []
+      },
+      "min_seller_feedback": null,
+      "min_seller_feedback_pct": null
+    },
+    "schedule": {
+      "interval": "30m",
+      "timezone": "Europe/London",
+      "time_window": {
+        "start": "09:00",
+        "end": "18:00",
+        "days": [
+          "mon",
+          "tue",
+          "wed"
+        ]
+      }
+    },
+    "grouping": {
+      "enabled": false,
+      "product_key": null
+    },
+    "notifications": {
+      "events": [
+        "price_drop"
+      ],
+      "channels": [
+        "webhook",
+        "telegram",
+        "discord"
+      ],
+      "webhook_url": "https://notify.invalid/hook",
+      "telegram_bot_token": "offline-placeholder",
+      "telegram_chat_id": "offline-chat",
+      "discord_webhook_url": "https://discord.invalid/hook"
+    },
+    "enabled": true,
+    "id": 7,
+    "created_at": "2026-01-01T09:00:00Z",
+    "updated_at": "2026-01-02T09:00:00Z",
+    "last_check_at": null,
+    "status": "active"
+  },
+  "after": {
+    "name": "Saved wristwatch search",
+    "query": "fallback merchant query",
+    "display_title": "My compact colourful choices",
+    "category": null,
+    "synonym_groups": [
+      [
+        "ML05",
+        "ML05B"
+      ],
+      [
+        "blue",
+        "mint"
+      ]
+    ],
+    "source_queries": {
+      "cex": " (ML05 OR \"ML05B\") -parts  "
+    },
+    "sources": [
+      {
+        "connector": "cex",
+        "enabled": true,
+        "config": {}
+      }
+    ],
+    "filters": {
+      "price_max": "100.00",
+      "min_price_gbp": null,
+      "component_subject_pattern": null,
+      "enforce_component_pattern": true,
+      "enforce_price_floor": true,
+      "currency": "GBP",
+      "condition_filter": {
+        "conditions": [],
+        "dedup_enabled": false
+      },
+      "exclude_patterns": [],
+      "spec_match": {
+        "gpu_model": null,
+        "ram_gb": null,
+        "storage_gb": null,
+        "cpu_model": null,
+        "synonym_groups": [],
+        "excluded_title_terms": [
+          "parts"
+        ],
+        "required_title_terms": []
+      },
+      "min_seller_feedback": null,
+      "min_seller_feedback_pct": null
+    },
+    "schedule": {
+      "interval": "30m",
+      "timezone": "Europe/London",
+      "time_window": {
+        "start": "09:00",
+        "end": "18:00",
+        "days": [
+          "mon",
+          "tue",
+          "wed"
+        ]
+      }
+    },
+    "grouping": {
+      "enabled": false,
+      "product_key": null
+    },
+    "notifications": {
+      "events": [
+        "price_drop"
+      ],
+      "channels": [
+        "webhook",
+        "telegram",
+        "discord"
+      ],
+      "webhook_url": "https://notify.invalid/hook",
+      "telegram_bot_token": "offline-placeholder",
+      "telegram_chat_id": "offline-chat",
+      "discord_webhook_url": "https://discord.invalid/hook"
+    },
+    "enabled": true,
+    "id": 7,
+    "created_at": "2026-01-01T09:00:00Z",
+    "updated_at": "2026-01-02T09:00:00Z",
+    "last_check_at": "2026-10-27T13:00:00Z",
+    "status": "active"
+  },
+  "api_response": {
+    "watch_id": 7,
+    "status": "completed",
+    "message": "Check completed: 0 listings found",
+    "started_at": "2026-10-27T13:00:00Z",
+    "result": {
+      "success": true,
+      "acquisition_outcomes": [
+        {
+          "source": "cex",
+          "route": "connector_search_v1",
+          "state": "capped",
+          "listing_count": 0,
+          "reason": "resource_exhausted:elapsed_seconds",
+          "completeness": "unknown",
+          "reused_capture_id": null
+        }
+      ],
+      "watch_id": 7,
+      "first_run": true,
+      "listings_found": 0,
+      "new_listings": 0,
+      "price_drops": 0,
+      "stock_changes": 0,
+      "listings_gone": 0,
+      "events": [],
+      "notifications_sent": 0,
+      "shadow_filters_logged": 0
+    }
+  },
+  "collection": {
+    "state": "supplied",
+    "activation": "staged",
+    "gates": [
+      "live_activation_not_authorized",
+      "production_operating_envelope_unproven"
+    ],
+    "scope_id": "synthetic-finite-study",
+    "version": "fixture-v1",
+    "stops_at": "2026-10-28T12:00:00Z",
+    "usage": [
+      {
+        "resource": "requests",
+        "used": 0,
+        "limit": 1,
+        "tracking_reserve": 0
+      },
+      {
+        "resource": "pages",
+        "used": 0,
+        "limit": 20,
+        "tracking_reserve": 1
+      },
+      {
+        "resource": "details",
+        "used": 0,
+        "limit": 20,
+        "tracking_reserve": 1
+      },
+      {
+        "resource": "retries",
+        "used": 0,
+        "limit": 20,
+        "tracking_reserve": 1
+      },
+      {
+        "resource": "fallbacks",
+        "used": 0,
+        "limit": 20,
+        "tracking_reserve": 1
+      },
+      {
+        "resource": "storage_bytes",
+        "used": 0,
+        "limit": 10000000,
+        "tracking_reserve": 100000
+      },
+      {
+        "resource": "elapsed_seconds",
+        "used": 0,
+        "limit": 0,
+        "tracking_reserve": 0
+      }
+    ],
+    "provider_usage": [
+      {
+        "source": "cex",
+        "used": 0,
+        "limit": 1,
+        "tracking_reserve": 0
+      },
+      {
+        "source": "scan",
+        "used": 0,
+        "limit": 1,
+        "tracking_reserve": 0
+      },
+      {
+        "source": "ebay",
+        "used": 0,
+        "limit": 1,
+        "tracking_reserve": 0
+      },
+      {
+        "source": "amazon_uk",
+        "used": 0,
+        "limit": 1,
+        "tracking_reserve": 0
+      }
+    ],
+    "attempts": [
+      {
+        "id": "81032fef-3c7e-4af7-b40b-99889ed55bce",
+        "source": "cex",
+        "purpose": "tracking",
+        "context_id": "watch:7:5a6bed16-8e50-4e31-a843-928824737970",
+        "query": " (ML05 OR \"ML05B\") -parts  ",
+        "attempted_at": "2026-10-27T13:00:00Z",
+        "state": "capped",
+        "reason": "resource_exhausted:elapsed_seconds",
+        "next_eligible_at": "2026-10-27T13:00:00Z",
+        "last_good_at": null,
+        "last_good_age_seconds": null,
+        "evidence_state": "unrefreshed"
+      }
+    ]
+  },
+  "rows_preserved": true,
+  "additional_transport_sends": 0,
+  "notifications_sent": 0,
+  "blocked_edges": [],
+  "temporary_storage": true,
+  "activation": "staged"
+}

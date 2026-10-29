@@ -8,6 +8,7 @@ import asyncio
 import httpx
 import sqlite3
 import time
+from html import escape
 from datetime import datetime
 from typing import Any, Optional
 
@@ -156,6 +157,20 @@ def format_message(
     Returns:
         Formatted message string
     """
+    if event_type == EventType.EXACT_TARGET_CROSSING:
+        # Only the qualified target evaluator creates this event. Never use a
+        # legacy listing price or advertise an item-price saving here.
+        return (
+            f"📢 {listing.get('delivered_gbp')} GBP verified UK delivered · {escape(watch_name)}\n"
+            f"Target £{listing.get('target_gbp')} · {listing.get('reason')}\n"
+            + (
+                f"Verified public coupon: {escape(str(listing.get('coupon_codes')))}; "
+                f"no-coupon base £{listing.get('base_delivered_gbp')}\n"
+                if listing.get("scenario_kind") == "public_coupon"
+                else ""
+            )
+            + f"Evidence at {listing.get('observed_at')} · {escape(str(listing.get('url') or 'No public link'))}"
+        )
     emoji_by_event = {
         EventType.NEW_LISTING: "🆕",
         EventType.PRICE_DROP: "🔻",
@@ -196,13 +211,15 @@ def format_message(
 
 
 async def dispatch_notifications(
-    watch_id: int,
+    watch_id: int | None,
     event_id: int,
     event_type: EventType,
     watch_name: str,
     watch_notifications: dict[str, Any],
     listing: dict[str, Any],
     global_config: dict[str, Any],
+    *,
+    durable_key: str | None = None,
 ) -> list[str]:
     """Dispatch notifications for an event.
 
@@ -259,6 +276,11 @@ async def dispatch_notifications(
     # Send to each channel
     attempted_channels = []
     for channel in channels_to_send:
+        attempt_id = None
+        if durable_key is not None:
+            attempt_id = _claim_notification(event_id, channel, f"{durable_key}:{channel}", message)
+            if attempt_id is None:
+                continue
         success = False
         error_message = None
 
@@ -314,17 +336,55 @@ async def dispatch_notifications(
             error_message = str(e)
 
         # Log the notification attempt
-        _log_notification(
-            event_id=event_id,
-            channel=channel,
-            status="sent" if success else "failed",
-            message=message,
-            error_message=error_message,
-        )
+        if attempt_id is None:
+            _log_notification(
+                event_id=event_id,
+                channel=channel,
+                status="sent" if success else "failed",
+                message=message,
+                error_message=error_message,
+            )
+        else:
+            conn = get_db()
+            with conn:
+                conn.execute(
+                    "UPDATE notifications SET status=?, error_message=? WHERE id=?",
+                    ("sent" if success else "failed", error_message, attempt_id),
+                )
+            conn.close()
 
         attempted_channels.append(channel)
 
     return attempted_channels
+
+
+def _claim_notification(event_id: int, channel: str, key: str, message: str) -> int | None:
+    """A durable attempt precedes external I/O. Unacknowledged claims never resend.
+
+    This cannot make an external transport exactly-once. A process crash or a
+    lost response may occur after the remote accepted the message.
+    """
+    conn = get_db()
+    try:
+        with conn:
+            conn.execute("BEGIN IMMEDIATE")
+            from pricerecon.db.tracking import target_delivery_valid
+
+            if not target_delivery_valid(conn, event_id):
+                conn.execute(
+                    "INSERT OR IGNORE INTO notifications(event_id,channel,status,message,delivery_key) "
+                    "VALUES (?,?,'withheld',?,?)",
+                    (event_id, channel, message, key),
+                )
+                return None
+            cursor = conn.execute(
+                "INSERT OR IGNORE INTO notifications(event_id,channel,status,message,delivery_key) "
+                "VALUES (?,?,'dispatching',?,?)",
+                (event_id, channel, message, key),
+            )
+            return cursor.lastrowid if cursor.rowcount else None
+    finally:
+        conn.close()
 
 
 def _log_notification(

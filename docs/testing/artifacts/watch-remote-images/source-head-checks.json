@@ -1,0 +1,12 @@
+{
+  "checked_on": "2026-10-28",
+  "method": "HEAD only; urllib.request; 15 second per-source timeout; no image body read or retained",
+  "results": [
+    {"source": "addies", "status": 200, "content_type": "image/jpeg"},
+    {"source": "militado", "status": 200, "content_type": "image/jpeg"},
+    {"source": "san", "status": 200, "content_type": "image/jpeg"},
+    {"source": "casio", "status": 200, "content_type": "image/png"}
+  ],
+  "url_registry": "tests/monitoring/watch_images.py REMOTE_REFERENCES plus manifest.json Casio front source_url",
+  "limits": "Does not prove browser hotlink loading, image appearance, licence, exact buyer configuration or buying qualification. Public page checks independently found Addiesdive selected Mint Green gallery link and original ML05 blue gallery link; Ben's review identifies a 39mm SN0144-GX sample."
+}

@@ -1,0 +1,4 @@
+docs/testing/artifacts/watch-source-evidence/merger/build.log:14: trailing whitespace.
++[plugin builtin:vite-reporter] 
+docs/testing/artifacts/watch-source-evidence/merger/eslint.log:20: new blank line at EOF.
+docs/testing/artifacts/watch-source-evidence/merger/frontend-tests.log:14: new blank line at EOF.

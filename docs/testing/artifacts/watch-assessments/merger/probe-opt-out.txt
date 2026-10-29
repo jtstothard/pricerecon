@@ -1,0 +1,41 @@
+Loaded 0 watches into scheduler
+{
+  "mode": "opt_out",
+  "before": {
+    "items": [
+      {
+        "event_id": 1,
+        "tracking_id": 1,
+        "intent_revision": 1,
+        "offer_key": "faefa6cd41ee8b13b6827abc9fca0614cb08542ecc5b213f3ae9b591c66f6e98",
+        "delivered_gbp": "45.10",
+        "reason": "target_crossing",
+        "status": "pending",
+        "channels": {
+          "webhook": "not_attempted"
+        },
+        "guarantee": "External send/ack crashes are ambiguous; no exactly-once guarantee."
+      }
+    ]
+  },
+  "after": {
+    "items": [
+      {
+        "event_id": 1,
+        "tracking_id": 1,
+        "intent_revision": 1,
+        "offer_key": "faefa6cd41ee8b13b6827abc9fca0614cb08542ecc5b213f3ae9b591c66f6e98",
+        "delivered_gbp": "45.10",
+        "reason": "target_crossing",
+        "status": "withheld",
+        "channels": {
+          "webhook": "not_attempted"
+        },
+        "guarantee": "External send/ack crashes are ambiguous; no exactly-once guarantee."
+      }
+    ]
+  },
+  "deliveries": [],
+  "blocked_edges": [],
+  "result": "passed"
+}

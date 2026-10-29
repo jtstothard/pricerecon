@@ -1,0 +1,132 @@
+{
+  "src/pricerecon/app.py": {
+    "base": {
+      "count": 5,
+      "codes": [
+        "BLE001",
+        "BLE001",
+        "UP017",
+        "UP017",
+        "UP035"
+      ]
+    },
+    "working": {
+      "count": 5,
+      "codes": [
+        "BLE001",
+        "BLE001",
+        "UP017",
+        "UP017",
+        "UP035"
+      ]
+    }
+  },
+  "src/pricerecon/core/notifications.py": {
+    "base": {
+      "count": 8,
+      "codes": [
+        "BLE001",
+        "BLE001",
+        "BLE001",
+        "BLE001",
+        "I001",
+        "UP017",
+        "UP045",
+        "UP045"
+      ]
+    },
+    "working": {
+      "count": 8,
+      "codes": [
+        "BLE001",
+        "BLE001",
+        "BLE001",
+        "BLE001",
+        "I001",
+        "UP017",
+        "UP045",
+        "UP045"
+      ]
+    }
+  },
+  "src/pricerecon/db/schema.py": {
+    "base": {
+      "count": 2,
+      "codes": [
+        "BLE001",
+        "BLE001"
+      ]
+    },
+    "working": {
+      "count": 2,
+      "codes": [
+        "BLE001",
+        "BLE001"
+      ]
+    }
+  },
+  "src/pricerecon/models/watches.py": {
+    "base": {
+      "count": 26,
+      "codes": [
+        "I001",
+        "PIE790",
+        "PIE790",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045"
+      ]
+    },
+    "working": {
+      "count": 26,
+      "codes": [
+        "I001",
+        "PIE790",
+        "PIE790",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045",
+        "UP045"
+      ]
+    }
+  }
+}

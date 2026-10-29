@@ -1,0 +1,12 @@
+Loaded 1 watches into scheduler
+discovery_connector_error
+Traceback (most recent call last):
+  File "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/src/pricerecon/core/acquisition.py", line 266, in acquire_sources
+    report = await inspect(effective_query, connector_filters)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/tests/monitoring/harness.py", line 175, in search_with_evidence
+    listings=await self.search(query, filters),
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/tests/monitoring/harness.py", line 187, in search
+    raise outcome
+RuntimeError: Synthetic source outage

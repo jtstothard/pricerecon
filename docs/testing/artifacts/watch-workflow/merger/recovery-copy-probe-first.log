@@ -1,0 +1,8 @@
+Loaded 1 watches into scheduler
+Loaded 1 watches into scheduler
+Loaded 1 watches into scheduler
+Traceback (most recent call last):
+  File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/docs/testing/artifacts/watch-workflow/merger/recovery_copy_probe.py", line 95, in <module>
+    assert [row['count'] for row in api_roundtrips if row['kind'] == 'candidates'] == [5, 0, 5]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

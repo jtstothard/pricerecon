@@ -83,6 +83,9 @@ class NormalizedListing(BaseModel):
     location: Optional[str] = Field(None, description="Geographic location")
     in_stock: Optional[bool] = Field(None, description="Item is buyable")
     stock_state: Optional[StockState] = Field(None, description="Stock state")
+    # Untrusted depiction report, validated independently at discovery publication.
+    # image_url alone never supplies permission or exact-watch identity evidence.
+    discovery_image: dict[str, object] | None = None
     image_url: Optional[str] = Field(None, description="Primary product image")
     exact_variant_confirmed: Optional[bool] = Field(None, description="Spec verified")
     variant_match_confidence: Optional[VariantMatchConfidence] = Field(

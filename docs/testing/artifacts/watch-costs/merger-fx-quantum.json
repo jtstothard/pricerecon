@@ -1,0 +1,74 @@
+{
+  "date": "2026-10-27",
+  "fixture": "synthetic GBP item 48; USD shipping 2.10; GBP/USD rate 0.741; budget GBP 49",
+  "observations": [
+    {
+      "quantum": "0.01",
+      "state": "verified_at_observation",
+      "total": {
+        "amount": "49.56",
+        "currency": "GBP"
+      },
+      "public_total": "49.56",
+      "budget_fit": "outside",
+      "history_revisions": 1,
+      "comparison": "unresolved",
+      "alert_eligible": false
+    },
+    {
+      "quantum": "0.010",
+      "state": "verified_at_observation",
+      "total": {
+        "amount": "49.556",
+        "currency": "GBP"
+      },
+      "public_total": "49.556",
+      "budget_fit": "outside",
+      "history_revisions": 2,
+      "comparison": "unresolved",
+      "alert_eligible": false
+    },
+    {
+      "quantum": "1E+1",
+      "state": "verified_at_observation",
+      "total": {
+        "amount": "48.00",
+        "currency": "GBP"
+      },
+      "public_total": "48.00",
+      "budget_fit": "fits",
+      "history_revisions": 3,
+      "comparison": "unresolved",
+      "alert_eligible": false
+    },
+    {
+      "quantum": "10",
+      "state": "verified_at_observation",
+      "total": {
+        "amount": "50.00",
+        "currency": "GBP"
+      },
+      "public_total": "50.00",
+      "budget_fit": "outside",
+      "history_revisions": 4,
+      "comparison": "unresolved",
+      "alert_eligible": false
+    },
+    {
+      "quantum": "10.0",
+      "state": "verified_at_observation",
+      "total": {
+        "amount": "49.60",
+        "currency": "GBP"
+      },
+      "public_total": "49.60",
+      "budget_fit": "outside",
+      "history_revisions": 5,
+      "comparison": "unresolved",
+      "alert_eligible": false
+    }
+  ],
+  "historical_rows_unchanged": true,
+  "blocked_edges": [],
+  "notifications": []
+}

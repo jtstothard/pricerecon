@@ -1,0 +1,80 @@
+{
+  "gate": "passed",
+  "copies": [
+    {
+      "source": "pricerecon.db",
+      "destination": "pre-migration.sqlite-copy",
+      "open_connections": 0,
+      "wal_absent": true,
+      "source_sha256": "0d1efacc3a388499ff0e5e859bd5140770d5f55a9320fe973e17b94ffd50c7ec",
+      "destination_sha256": "0d1efacc3a388499ff0e5e859bd5140770d5f55a9320fe973e17b94ffd50c7ec",
+      "bytes": 16384
+    },
+    {
+      "source": "pricerecon.db",
+      "destination": "post-migration.sqlite-copy",
+      "open_connections": 0,
+      "wal_absent": true,
+      "source_sha256": "41c999e81522b8232df2ec847071ec6bfe884d20b7fce8d0e2c0a6b0723595d6",
+      "destination_sha256": "41c999e81522b8232df2ec847071ec6bfe884d20b7fce8d0e2c0a6b0723595d6",
+      "bytes": 552960
+    },
+    {
+      "source": "pre-migration.sqlite-copy",
+      "destination": "pricerecon.db",
+      "open_connections": 0,
+      "wal_absent": true,
+      "source_sha256": "0d1efacc3a388499ff0e5e859bd5140770d5f55a9320fe973e17b94ffd50c7ec",
+      "destination_sha256": "0d1efacc3a388499ff0e5e859bd5140770d5f55a9320fe973e17b94ffd50c7ec",
+      "bytes": 16384
+    },
+    {
+      "source": "post-migration.sqlite-copy",
+      "destination": "pricerecon.db",
+      "open_connections": 0,
+      "wal_absent": true,
+      "source_sha256": "41c999e81522b8232df2ec847071ec6bfe884d20b7fce8d0e2c0a6b0723595d6",
+      "destination_sha256": "41c999e81522b8232df2ec847071ec6bfe884d20b7fce8d0e2c0a6b0723595d6",
+      "bytes": 552960
+    }
+  ],
+  "api_roundtrips": [
+    {
+      "kind": "legacy",
+      "enabled_id": 7,
+      "disabled_id": 8,
+      "settings_match": true
+    },
+    {
+      "kind": "candidates",
+      "count": 5
+    },
+    {
+      "kind": "candidates",
+      "count": 5
+    },
+    {
+      "kind": "legacy",
+      "enabled_id": 7,
+      "disabled_id": 8,
+      "settings_match": true
+    },
+    {
+      "kind": "candidates",
+      "count": 0
+    },
+    {
+      "kind": "legacy",
+      "enabled_id": 7,
+      "disabled_id": 8,
+      "settings_match": true
+    },
+    {
+      "kind": "candidates",
+      "count": 5
+    }
+  ],
+  "all_connections_closed": true,
+  "temporary_storage_removed": true,
+  "scope": "Closed marked temporary SQLite only; no running/WAL backup or deployment rollback proof"
+}

@@ -1,0 +1,164 @@
+[
+  {
+    "name": "mypy",
+    "command": [
+      "/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python",
+      "-m",
+      "mypy",
+      "--no-incremental",
+      "src/pricerecon/categories/watch_sources.py",
+      "src/pricerecon/connectors/evidence.py",
+      "src/pricerecon/connectors/ebay_evidence.py",
+      "src/pricerecon/connectors/shopify_evidence.py",
+      "src/pricerecon/models/source_evidence.py",
+      "src/pricerecon/connectors/aliexpress.py",
+      "src/pricerecon/connectors/aliexpress_browser.py",
+      "src/pricerecon/connectors/ebay.py",
+      "src/pricerecon/connectors/shopify.py",
+      "src/pricerecon/core/acquisition.py",
+      "src/pricerecon/core/collection_transport.py",
+      "src/pricerecon/models/discovery.py",
+      "src/pricerecon/models/history.py",
+      "src/pricerecon/models/qualification.py",
+      "src/pricerecon/core/qualification.py",
+      "src/pricerecon/db/discovery.py",
+      "src/pricerecon/models/tracking.py"
+    ],
+    "environment": {
+      "PATH": "/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONPATH": "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/src:/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28"
+    },
+    "exit_code": 0,
+    "artifact": "mypy-uncached.log"
+  },
+  {
+    "name": "frontend-tests",
+    "command": [
+      "npm",
+      "--prefix",
+      "frontend",
+      "run",
+      "test",
+      "--",
+      "--run"
+    ],
+    "environment": {
+      "PATH": "/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONPATH": "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/src:/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28"
+    },
+    "exit_code": 0,
+    "artifact": "frontend-tests.log"
+  },
+  {
+    "name": "eslint",
+    "command": [
+      "npm",
+      "--prefix",
+      "frontend",
+      "run",
+      "lint"
+    ],
+    "environment": {
+      "PATH": "/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONPATH": "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/src:/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28"
+    },
+    "exit_code": 2,
+    "artifact": "eslint.log"
+  },
+  {
+    "name": "full-workflows",
+    "command": [
+      "/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_collection_workflow.py",
+      "tests/test_monitoring_workflow.py",
+      "tests/test_discovery_workflow.py",
+      "tests/test_qualification_workflow.py",
+      "tests/test_cost_workflow.py",
+      "tests/test_history_workflow.py",
+      "tests/test_coupon_workflow.py",
+      "tests/test_tracking_workflow.py",
+      "tests/test_correction_workflow.py",
+      "tests/test_correction_target_ownership.py",
+      "tests/test_shared_grant_workflow.py",
+      "tests/test_assessment_workflow.py",
+      "tests/test_source_evidence_workflow.py",
+      "tests/test_watch_workflow.py"
+    ],
+    "environment": {
+      "PATH": "/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONPATH": "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/src:/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28"
+    },
+    "exit_code": 0,
+    "passed": 191,
+    "seconds": 196.1,
+    "artifact": "full-workflows-final.log"
+  },
+  {
+    "name": "contracts",
+    "command": [
+      "/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_rate_limiter.py",
+      "tests/test_external_browser.py"
+    ],
+    "environment": {
+      "PATH": "/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONPATH": "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/src:/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28"
+    },
+    "exit_code": 0,
+    "passed": 37,
+    "warnings": 10,
+    "artifact": "contracts.log"
+  },
+  {
+    "name": "build-before-fixture",
+    "command": [
+      "npm",
+      "--prefix",
+      "frontend",
+      "run",
+      "build"
+    ],
+    "environment": {
+      "PATH": "/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin"
+    },
+    "exit_code": 0,
+    "artifact": "build.log",
+    "limitation": "large-chunk warning retained"
+  },
+  {
+    "name": "browser",
+    "command": [
+      "/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python",
+      "-m",
+      "tests.monitoring.watch_workflow_browser",
+      "--port",
+      "8892",
+      "--artifacts",
+      "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/docs/testing/artifacts/watch-workflow/browser"
+    ],
+    "exit_code": 0,
+    "artifact": "browser-reviewed.log",
+    "receipt": "browser/receipt.json",
+    "closed_owned_session": true
+  },
+  {
+    "name": "ruff-baseline",
+    "command": [
+      "/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python",
+      "docs/testing/artifacts/watch-workflow/verify_static.py"
+    ],
+    "exit_code": 0,
+    "artifact": "ruff-comparison.json"
+  }
+]

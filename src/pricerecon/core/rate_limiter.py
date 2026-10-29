@@ -1,14 +1,20 @@
 """Token bucket rate limiter per connector."""
 
 import logging
+import sqlite3
 import time
-from datetime import datetime, timedelta, timezone
+from collections.abc import Mapping
+from contextlib import closing
+from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta, timezone
 from threading import Lock
-from typing import Optional
+from typing import Literal, Optional
 
+from pricerecon.db.connection import connect
+from pricerecon.models.collection import OperatingPolicy, Priority, Resource
 from pricerecon.models.rate_limit import (
-    RateLimitStatus,
     RateLimitConfig,
+    RateLimitStatus,
     RateLimitWindow,
 )
 
@@ -294,3 +300,272 @@ def init_rate_limiter() -> ConnectorRateLimiter:
     if _global_limiter is None:
         _global_limiter = ConnectorRateLimiter()
     return _global_limiter
+
+
+# Finite envelopes deliberately do not inherit/refill the legacy token defaults.
+# SQLite BEGIN IMMEDIATE serializes reservations across threads and processes.
+class AdmissionDenied(BaseException):
+    """Control signal: adapter retry/fallback handlers must not swallow admission."""
+
+    def __init__(self, reason: str, *, state: Literal["blocked", "capped"] = "capped") -> None:
+        self.reason = reason
+        self.state = state
+        super().__init__(reason)
+
+
+@dataclass(frozen=True)
+class PolicySelection:
+    policy: OperatingPolicy | None
+    reason: str | None = None
+
+
+class DurableAdmission:
+    """Native limiter's explicit, durable collection-accounting boundary."""
+
+    @staticmethod
+    def select_policy(connection: sqlite3.Connection | None = None) -> PolicySelection:
+        """Bind one immutable grant to this database before any reservable work.
+
+        A missing caller context is not a missing database policy. Selection is
+        committed separately from usage/evidence so a denied first reservation
+        cannot restore legacy eligibility. Multiple historical scopes require
+        operator reconciliation; this boundary never chooses/refills a grant.
+        """
+        from pydantic import ValidationError
+
+        from pricerecon.core.collection_policy import supplied_policy
+        from pricerecon.db.schema import DB_PATH
+
+        if connection is None:
+            from pricerecon.db.collection import init_collection_tables
+
+            with closing(connect(DB_PATH)) as owned:
+                # A connector's first admission check can be the first database
+                # touch of a fresh install; durable accounting must not depend
+                # on init_db having run earlier in this process or checkout.
+                init_collection_tables(owned)
+                with owned:
+                    owned.execute("BEGIN IMMEDIATE")
+                    return DurableAdmission.select_policy(owned)
+        supplied = supplied_policy()
+        selected = connection.execute(
+            "SELECT scope_id, reason FROM collection_policy_selection WHERE singleton=1"
+        ).fetchone()
+        policies = connection.execute(
+            "SELECT scope_id, payload_json FROM collection_policies"
+        ).fetchall()
+        if not selected:
+            if len(policies) > 1:
+                connection.execute(
+                    "INSERT INTO collection_policy_selection VALUES (1, NULL, ?) ",
+                    ("operating_policy_ambiguous",),
+                )
+                return PolicySelection(None, "operating_policy_ambiguous")
+            if policies:
+                scope = policies[0][0]
+            elif connection.execute(
+                "SELECT 1 FROM collection_usage UNION ALL SELECT 1 FROM collection_attempts LIMIT 1"
+            ).fetchone():
+                connection.execute(
+                    "INSERT INTO collection_policy_selection VALUES (1, NULL, ?)",
+                    ("operating_policy_required",),
+                )
+                return PolicySelection(None, "operating_policy_required")
+            elif supplied is not None:
+                scope = supplied.scope_id
+                connection.execute(
+                    "INSERT INTO collection_policies VALUES (?, ?)",
+                    (scope, supplied.model_dump_json()),
+                )
+                policies = [(scope, supplied.model_dump_json())]
+            else:
+                return PolicySelection(None)  # Truly never configured legacy database.
+            connection.execute(
+                "INSERT INTO collection_policy_selection VALUES (1, ?, NULL)", (scope,)
+            )
+            selected = (scope, None)
+        if selected[1]:
+            return PolicySelection(None, selected[1])
+        if len(policies) > 1:
+            return PolicySelection(None, "operating_policy_ambiguous")
+        if not policies or policies[0][0] != selected[0]:
+            return PolicySelection(None, "operating_policy_required")
+        try:
+            policy = OperatingPolicy.model_validate_json(policies[0][1])
+        except ValidationError:
+            return PolicySelection(None, "operating_policy_invalid")
+        if policy.scope_id != selected[0]:
+            return PolicySelection(None, "operating_policy_invalid")
+        if supplied is not None and supplied != policy:
+            return PolicySelection(policy, "operating_policy_changed")
+        return PolicySelection(policy)
+
+    def __init__(
+        self,
+        policy: OperatingPolicy,
+        source: str,
+        purpose: Priority,
+        context_id: int | str,
+        *,
+        query: str = "",
+    ) -> None:
+        self.policy = policy
+        self.source = source
+        self.purpose = purpose
+        self.context_id = str(context_id)
+        self.query = query
+        self.attempt_id: str | None = None
+        self.requests: dict[str, int] = {}
+
+    def debit(
+        self, costs: Mapping[Resource, int], *, connection: sqlite3.Connection | None = None
+    ) -> None:
+        from pricerecon.db.schema import DB_PATH
+
+        now = datetime.now(UTC)
+        if not self.policy.starts_at <= now < self.policy.stops_at:
+            raise AdmissionDenied("operating_policy_expired", state="blocked")
+        if connection is None:
+            with closing(connect(DB_PATH)) as owned, owned:
+                owned.execute("BEGIN IMMEDIATE")
+                self.debit(costs, connection=owned)
+            return
+        selection = self.select_policy(connection)
+        if selection.reason or selection.policy != self.policy:
+            raise AdmissionDenied(selection.reason or "operating_policy_changed", state="blocked")
+        for resource, amount in costs.items():
+            if not isinstance(amount, int) or amount < 0:
+                raise ValueError("Resource debit must be a nonnegative integer")
+            cap = self.policy.caps.get(resource)
+            if cap is None:
+                raise AdmissionDenied(f"resource_policy_required:{resource}", state="blocked")
+            row = connection.execute(
+                "SELECT used FROM collection_usage WHERE scope_id=? AND resource=?",
+                (self.policy.scope_id, resource),
+            ).fetchone()
+            used = row[0] if row else 0
+            ceiling = cap.limit - (cap.tracking_reserve if self.purpose == "discovery" else 0)
+            if used + amount > ceiling:
+                reserved = self.purpose == "discovery" and used + amount <= cap.limit
+                raise AdmissionDenied(
+                    f'{"tracking_capacity_reserved" if reserved else "resource_exhausted"}:{resource}'
+                )
+        provider_key = f"provider:{self.source}:requests"
+        provider_amount = costs.get("requests", 0)
+        if provider_amount:
+            cap = self.policy.provider_request_caps.get(self.source)
+            if cap is None:
+                raise AdmissionDenied(f"provider_policy_required:{self.source}", state="blocked")
+            row = connection.execute(
+                "SELECT used FROM collection_usage WHERE scope_id=? AND resource=?",
+                (self.policy.scope_id, provider_key),
+            ).fetchone()
+            used = row[0] if row else 0
+            ceiling = cap.limit - (cap.tracking_reserve if self.purpose == "discovery" else 0)
+            if used + provider_amount > ceiling:
+                raise AdmissionDenied(f"provider_requests_exhausted:{self.source}")
+        for resource, amount in costs.items():
+            connection.execute(
+                """INSERT INTO collection_usage VALUES (?, ?, ?)
+                ON CONFLICT(scope_id, resource) DO UPDATE SET used=used+excluded.used""",
+                (self.policy.scope_id, resource, amount),
+            )
+        if provider_amount:
+            connection.execute(
+                """INSERT INTO collection_usage VALUES (?, ?, ?)
+                ON CONFLICT(scope_id, resource) DO UPDATE SET used=used+excluded.used""",
+                (self.policy.scope_id, provider_key, provider_amount),
+            )
+
+    def begin(self) -> None:
+        from contextlib import closing
+        from uuid import uuid4
+
+        from pricerecon.db.schema import DB_PATH
+
+        now = datetime.now(UTC)
+        attempt_id = str(uuid4())
+        reason = None
+        with closing(connect(DB_PATH)) as connection, connection:
+            connection.execute("BEGIN IMMEDIATE")
+            rows = connection.execute(
+                """SELECT id, state, next_eligible_at FROM collection_attempts
+                WHERE scope_id=? AND source=? AND next_eligible_at IS NOT NULL
+                ORDER BY rowid DESC LIMIT 1""",
+                (self.policy.scope_id, self.source),
+            ).fetchone()
+            if rows:
+                next_at = datetime.fromisoformat(rows[2])
+                if next_at > now:
+                    reason = "recovery_spacing"
+                elif rows[1] == "running":
+                    connection.execute(
+                        """UPDATE collection_attempts SET state='interrupted',
+                        reason='lease_expired_unconfirmed' WHERE id=?""",
+                        (rows[0],),
+                    )
+            # The durable lease outlives the enforced run timeout. A killed process
+            # consumes its reservation; recovery never replays missed periods.
+            next_eligible = now + timedelta(
+                seconds=(self.policy.run_timeout_seconds + self.policy.recovery_spacing_seconds)
+            )
+            last_good = connection.execute(
+                """SELECT MAX(attempted_at) FROM collection_attempts
+                WHERE source=? AND query=? AND state IN ('success', 'success_empty')""",
+                (self.source, self.query),
+            ).fetchone()[0]
+            connection.execute(
+                """INSERT INTO collection_attempts VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    attempt_id,
+                    self.policy.scope_id,
+                    self.source,
+                    self.purpose,
+                    self.context_id,
+                    self.query,
+                    now.isoformat(),
+                    "capped" if reason else "running",
+                    reason,
+                    None if reason else next_eligible.isoformat(),
+                    last_good,
+                ),
+            )
+        self.attempt_id = attempt_id
+        if reason:
+            raise AdmissionDenied(reason)
+        self.debit({"elapsed_seconds": self.policy.run_timeout_seconds})
+
+    def finish(self, state: str, reason: str | None = None) -> None:
+        from contextlib import closing
+
+        from pricerecon.db.schema import DB_PATH
+
+        if not self.attempt_id:
+            return
+        now = datetime.now(UTC)
+        with closing(connect(DB_PATH)) as connection, connection:
+            # A denied overlap cannot extend the existing source lease.
+            connection.execute(
+                """UPDATE collection_attempts SET state=?, reason=?,
+                last_good_at=CASE WHEN ? IN ('success', 'success_empty') THEN attempted_at
+                    ELSE last_good_at END,
+                next_eligible_at=CASE WHEN state='running' THEN ? ELSE next_eligible_at END
+                WHERE id=?""",
+                (
+                    state,
+                    reason,
+                    state,
+                    (
+                        now
+                        + timedelta(
+                            seconds=(
+                                self.policy.recovery_spacing_seconds
+                                if state
+                                in {"success", "success_empty", "partial", "cache_reuse", "failed"}
+                                else 0
+                            )
+                        )
+                    ).isoformat(),
+                    self.attempt_id,
+                ),
+            )

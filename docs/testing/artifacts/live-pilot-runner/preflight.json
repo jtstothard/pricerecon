@@ -1,0 +1,10 @@
+{
+  "gates": [
+    "ebay_app_approval_unproven",
+    "ebay_transient_retention_unproven",
+    "backup_exclusion_unproven"
+  ],
+  "requests": 0,
+  "schema": "pricerecon.watch-pilot.v1",
+  "state": "blocked"
+}

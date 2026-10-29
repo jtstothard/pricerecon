@@ -1,0 +1,58 @@
+{
+  "fixture": "ticket06-merger-derived-copy",
+  "expected": "Derived re-extraction is unqualified and names its original owner",
+  "first": {
+    "id": "2cb4a235-13ec-44ce-b33d-2386442484b1:b0b87917cc52cbefe692637f82477c60c9bce5e11145477f204b798bd5780131:1",
+    "validity": "supported_at_capture",
+    "change": "initial",
+    "duplicate_of": null,
+    "observed_at": "2026-10-27T12:00:00Z",
+    "lineage": [
+      "synthetic-original:history:carrier_fee",
+      "synthetic-original:history:context",
+      "synthetic-original:history:duty",
+      "synthetic-original:history:import_tax",
+      "synthetic-original:history:item",
+      "synthetic-original:history:merchant_fee",
+      "synthetic-original:history:merchant_tax",
+      "synthetic-original:history:offer",
+      "synthetic-original:history:payment_fee",
+      "synthetic-original:history:selection",
+      "synthetic-original:history:shipping",
+      "synthetic:history:2026-10-27T12:00:00+00:00"
+    ]
+  },
+  "derived_copy": {
+    "id": "19207f34-e8fe-41e8-b685-7f0cc5c6aa6f:b0b87917cc52cbefe692637f82477c60c9bce5e11145477f204b798bd5780131:2",
+    "validity": "unqualified",
+    "change": "not_comparable",
+    "duplicate_of": "2cb4a235-13ec-44ce-b33d-2386442484b1:b0b87917cc52cbefe692637f82477c60c9bce5e11145477f204b798bd5780131:1",
+    "observed_at": "2026-10-27T12:00:00Z",
+    "lineage": [
+      "re-extracted:synthetic:history:2026-10-27T12:00:00+00:00",
+      "synthetic-original:history:carrier_fee",
+      "synthetic-original:history:context",
+      "synthetic-original:history:duty",
+      "synthetic-original:history:import_tax",
+      "synthetic-original:history:item",
+      "synthetic-original:history:merchant_fee",
+      "synthetic-original:history:merchant_tax",
+      "synthetic-original:history:offer",
+      "synthetic-original:history:payment_fee",
+      "synthetic-original:history:shipping",
+      "synthetic:history:2026-10-27T12:00:00+00:00"
+    ]
+  },
+  "original_offer_preserved": true,
+  "last_good_age_seconds": 3600.0,
+  "savings": null,
+  "usual_price": {
+    "state": "unavailable",
+    "amount": null,
+    "reason": "No accepted longitudinal sufficiency or baseline calibration."
+  },
+  "collection_state": "staged",
+  "temporary_storage": true,
+  "blocked_edges": [],
+  "notifications_sent": 0
+}

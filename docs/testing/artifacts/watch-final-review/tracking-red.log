@@ -1,0 +1,59 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____________ test_fresh_price_crosses_with_valid_reused_definition _____________
+
+tmp_path = PosixPath('/private/tmp/pytest-of-jay/pytest-44/test_fresh_price_crosses_with_0')
+
+    def test_fresh_price_crosses_with_valid_reused_definition(tmp_path):
+>       run_review("retained_definition", "retained", tmp_path)
+
+tests/test_final_review_workflow.py:35: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'retained_definition', case = 'retained'
+tmp_path = PosixPath('/private/tmp/pytest-of-jay/pytest-44/test_fresh_price_crosses_with_0')
+
+    def run_review(name, case, tmp_path):
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-m", "tests.monitoring.final_review_workflows", name, case,
+             str(tmp_path / f"{name}-{case}.json")],
+            cwd=root,
+            env={
+                "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                "PYTHONDONTWRITEBYTECODE": "1",
+            },
+            capture_output=True,
+            text=True,
+            timeout=40,
+            check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Loaded 0 watches into scheduler
+E         Traceback (most recent call last):
+E           File "<frozen runpy>", line 203, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/tests/monitoring/final_review_workflows.py", line 103, in <module>
+E             asyncio.run(globals()[sys.argv[1]](sys.argv[2], Path(sys.argv[3]).resolve()))
+E             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+E             return runner.run(main)
+E                    ~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+E             return self._loop.run_until_complete(task)
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+E             return future.result()
+E                    ~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/tests/monitoring/final_review_workflows.py", line 93, in retained_definition
+E             assert after["assessment"]["reasons"] == ["target_crossing"]
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E         AssertionError
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python', '-m', 'tests.monitoring.fin..."reasons"] == ["target_crossing"]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n').returncode
+
+tests/test_final_review_workflow.py:26: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_final_review_workflow.py::test_fresh_price_crosses_with_valid_reused_definition
+1 failed, 5 deselected in 1.02s

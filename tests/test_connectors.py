@@ -258,8 +258,15 @@ async def test_watch_executor_filters_by_spec_match_ram(monkeypatch: Any) -> Non
         lambda: {"aliexpress": FakeConnector},
     )
     monkeypatch.setattr(
-        watch_executor,
-        "upsert_connector_health",
+        "pricerecon.core.connector_health.list_connector_health",
+        lambda path=None: {},
+    )
+    monkeypatch.setattr(
+        "pricerecon.core.collection_policy.current_policy",
+        lambda connection=None: None,
+    )
+    monkeypatch.setattr(
+        "pricerecon.core.acquisition.upsert_connector_health",
         lambda connector_id, status, last_error=None, details=None, checked_at=None, **_kw: recorded.append(
             (connector_id, status, last_error, details)
         ),
@@ -1314,8 +1321,15 @@ async def test_watch_executor_records_non_empty_timeout_health(monkeypatch: Any)
         lambda: {"overclockers": FakeConnector},
     )
     monkeypatch.setattr(
-        watch_executor,
-        "upsert_connector_health",
+        "pricerecon.core.connector_health.list_connector_health",
+        lambda path=None: {},
+    )
+    monkeypatch.setattr(
+        "pricerecon.core.collection_policy.current_policy",
+        lambda connection=None: None,
+    )
+    monkeypatch.setattr(
+        "pricerecon.core.acquisition.upsert_connector_health",
         lambda connector_id, status, last_error=None, details=None, checked_at=None, **_kw: recorded.append(
             (connector_id, status, last_error, details)
         ),

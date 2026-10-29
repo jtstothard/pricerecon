@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "tested_driver_sha256": "c26f5fa4a92056434b6c3a6a23afa843ef28a9c0f4d2e6883c98131ba7947240",
+  "post_run_change": "receipt serialization only: unchanged complete feed moved to feed.json.gz; UI actions and assertions unchanged",
+  "application_and_build_hashes": "../provenance.json",
+  "current_driver_sha256": "0d867837b886fca65ca9052be71c37c4c70fb3977b70b38ed7b8c8751e9d504e"
+}

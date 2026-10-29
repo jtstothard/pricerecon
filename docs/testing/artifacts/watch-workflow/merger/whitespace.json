@@ -1,0 +1,31 @@
+[
+  {
+    "scope": "source-doc",
+    "command": [
+      "git",
+      "diff",
+      "--cached",
+      "--check",
+      "9ce8d31",
+      "--",
+      ".",
+      ":(glob,exclude)**/*.log"
+    ],
+    "exit": 0,
+    "log": "diff-source-doc.log"
+  },
+  {
+    "scope": "raw-logs",
+    "command": [
+      "git",
+      "diff",
+      "--cached",
+      "--check",
+      "9ce8d31",
+      "--",
+      ":(glob)**/*.log"
+    ],
+    "exit": 2,
+    "log": "diff-raw-logs.log"
+  }
+]

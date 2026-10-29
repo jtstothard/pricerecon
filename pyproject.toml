@@ -11,7 +11,12 @@ dependencies = [
     "fastapi>=0.109.0",
     "uvicorn[standard]>=0.27.0",
     "httpx>=0.26.0",
-    "selectolax>=0.3.19",
+    # Cap below 1.0: selectolax 1.0 removed the Modest `selectolax.parser`
+    # backend (import raises ImportError; lexbor is the replacement engine).
+    # Migrating connectors to lexbor is a behavior-affecting change, so keep
+    # the Modest engine — pip's resolver drifts to 1.0.x on fresh installs
+    # otherwise and breaks every connector import at runtime.
+    "selectolax>=0.3.19,<1.0",
     "beautifulsoup4>=4.12.3",
     "pydantic>=2.5.3",
     "pydantic-settings>=2.1.0",

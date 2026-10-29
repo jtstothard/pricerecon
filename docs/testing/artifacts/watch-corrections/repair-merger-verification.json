@@ -1,0 +1,178 @@
+{
+  "recorded_at_utc": "2026-10-27T19:19:35.874152+00:00",
+  "disposition": "07 open for independent-target intent repair; 08 blocked and unclaimed",
+  "worktree": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration",
+  "branch": "integration/watch-category-discovery",
+  "integration_before": "f8ff7e5024401991ca33b9bf08468476dc708227",
+  "source": "430f4f07f6e591b90f9dfb233a33d9fdf86ac775",
+  "integration_merge": "7fcc3ea27e815ccd0922c3c4c1fe08c3d3724bc9",
+  "merge_parents": [
+    "f8ff7e5024401991ca33b9bf08468476dc708227",
+    "430f4f07f6e591b90f9dfb233a33d9fdf86ac775"
+  ],
+  "source_and_merge_trees_equal": true,
+  "suite": {
+    "passed": 123,
+    "seconds": 117.72,
+    "skipped": 0,
+    "xfail": 0,
+    "original": 95,
+    "collection": 11,
+    "scope": 17,
+    "log": "repair-merger-suite.txt",
+    "environment": {
+      "PATH": "/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONPATH": "<integration>/src:<integration>"
+    },
+    "python": "/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python"
+  },
+  "probes": {
+    "multi": {
+      "result": "passed",
+      "guard": {
+        "temporary_storage": true,
+        "blocked_edges": [],
+        "notifications_sent": 0,
+        "collection_state": "staged"
+      },
+      "receipt": "repair-merger-multi.json"
+    },
+    "single": {
+      "result": "passed",
+      "guard": {
+        "temporary_storage": true,
+        "blocked_edges": [],
+        "notifications_sent": 0,
+        "collection_state": "staged"
+      },
+      "receipt": "repair-merger-single.json"
+    },
+    "sibling-control": {
+      "result": "passed",
+      "guard": {
+        "temporary_storage": true,
+        "blocked_edges": [],
+        "notifications_sent": 1,
+        "collection_state": "staged"
+      },
+      "receipt": "repair-merger-sibling-control.json"
+    },
+    "independent-recorrection": {
+      "result": "failed",
+      "guard": {
+        "temporary_storage": true,
+        "blocked_edges": [],
+        "notifications_sent": 0,
+        "collection_state": "staged"
+      },
+      "receipt": "repair-merger-independent-recorrection.json"
+    }
+  },
+  "failure": {
+    "before_dials": [
+      "blue",
+      "red"
+    ],
+    "after_dials": [
+      "gold",
+      "gold"
+    ],
+    "restart_dials": [
+      "gold",
+      "gold"
+    ],
+    "independent_journal_dial": "red",
+    "original_configuration_ids_and_60_pound_targets_retained": true,
+    "incorrect_send_demonstrated": false,
+    "log": "repair-merger-independent-recorrection.txt"
+  },
+  "sibling_control": {
+    "aggregate_publication_state": "withdrawn",
+    "captured_sends": 1,
+    "recipient": "independent blue tracking id",
+    "delivered_gbp": "58.10",
+    "corrected_target_withheld_after_restart": true
+  },
+  "focused_ruff": {
+    "passed": true,
+    "files": [
+      "src/pricerecon/core/corrections.py",
+      "src/pricerecon/db/corrections.py",
+      "src/pricerecon/db/coupons.py",
+      "src/pricerecon/db/tracking.py",
+      "tests/test_correction_workflow.py",
+      "tests/monitoring/correction_scope_workflows.py",
+      "tests/monitoring/correction_merger_probe.py",
+      "tests/monitoring/correction_repair_merger_probe.py"
+    ]
+  },
+  "focused_mypy": {
+    "passed": true,
+    "source_files": [
+      "src/pricerecon/core/corrections.py",
+      "src/pricerecon/db/corrections.py",
+      "src/pricerecon/db/coupons.py",
+      "src/pricerecon/db/tracking.py"
+    ],
+    "options": [
+      "--follow-imports=silent"
+    ],
+    "inherited_unused_override_notes": true
+  },
+  "new_probe_format": "passed",
+  "diff_check": "passed",
+  "frontend_browser_reuse": {
+    "repeated": false,
+    "frontend_tree": "fdcd941bb28fda22b7a8e2d9e7d606a6f9a7f7ec",
+    "unchanged_paths_against_base": [
+      "frontend",
+      "tests/monitoring/discovery_browser_check.py",
+      "tests/monitoring/discovery_ui_server.py",
+      "tests/monitoring/collection_browser_check.py",
+      "tests/monitoring/collection_ui_server.py",
+      "tests/monitoring/correction_workflows.py",
+      "tests/monitoring/correction_merger_probe.py",
+      "tests/monitoring/collection_merger_probe.py",
+      "docs/testing/artifacts/watch-corrections/desktop-correction.png",
+      "docs/testing/artifacts/watch-corrections/desktop-history-withdrawn.png",
+      "docs/testing/artifacts/watch-corrections/narrow-correction.png",
+      "docs/testing/artifacts/watch-corrections/receipt.json"
+    ],
+    "tests_reused": 25,
+    "build_reused": true,
+    "browser_reused": true,
+    "manifests": [
+      "../watch-collection/merger-verification.json",
+      "merger-verification.json"
+    ]
+  },
+  "ticket10": {
+    "context_bypass_probes": "remain open for owner; not run, repaired or classified as passed",
+    "collection_workflows_in_suite_do_not_cover_existing_failing_probes": true
+  },
+  "scope": {
+    "application_repairs_by_merger": false,
+    "source_worktree_edited": false,
+    "active10_worktree_edited": false,
+    "dirty_parent_edited": false,
+    "collection": "staged",
+    "installs_downloads_network_live_credentials_accounts_productionDB_activation_deploy_push_PR_delegation_cleanup": false
+  },
+  "sha256": {
+    "src/pricerecon/core/corrections.py": "ecb9e17ce3e20d03590b4c7a6c012438caee420a598dd5952320b905c91f991d",
+    "src/pricerecon/db/corrections.py": "45f69f910f83b042a749cd170d257fe6e42d02a0569bd94c7d79ff9b4e6d2570",
+    "src/pricerecon/db/coupons.py": "2f32dfb323fe9a1f9a6b074a1527d68c32bab2ad25fd74597910c93c9a61d9ea",
+    "src/pricerecon/db/tracking.py": "24104e4458ff3cd7ec92b6a969c9343b88fce399f10b0984a5145138bb862160",
+    "tests/test_correction_workflow.py": "4a0e2d19339f2c875e05665f04701581b89d412fec1752b3be6a9c1209c67696",
+    "tests/monitoring/correction_scope_workflows.py": "2c54c6235d66bab7943627850322e7b3a24c9b233a5c3d0fc76c2357c2f2769e",
+    "tests/monitoring/correction_merger_probe.py": "2e06080590a7e2156ffaf8a63cc35ccc8719ddeddf0a578e3e68cb49c973438a",
+    "tests/monitoring/correction_repair_merger_probe.py": "31612acadafcd71f53c374fbb46ca2a8d28b861fcb8a0a9ba4a1b18e41601310",
+    "docs/testing/artifacts/watch-corrections/repair-merger-independent-recorrection.json": "c3f9547454c859d2a1d95d6329ad680dadd10c0cd1ef0e021c0e0f9b289017af",
+    "docs/testing/artifacts/watch-corrections/repair-merger-independent-recorrection.txt": "2dddcb3b7f246b425bf379efc99d690e2632852f299debcca97d014ce9f89015",
+    "docs/testing/artifacts/watch-corrections/repair-merger-multi.json": "336f70c15fe64f378a9728c532963fd15018e213f721f7ab5b4227d1d0c151fd",
+    "docs/testing/artifacts/watch-corrections/repair-merger-sibling-control.json": "89d7ba8cfc98bea506752522463ddaf60764a7f4c23cd7fb1bfca74d41a01077",
+    "docs/testing/artifacts/watch-corrections/repair-merger-single.json": "074be0c76b1925dce651c1eefff9e5580c06239ea4e1b5293ce6d216aeaed8ba",
+    "docs/testing/artifacts/watch-corrections/repair-merger-suite.txt": "1628688dab1523d38ffab1344af8d774a75103be4b2b9c953c4023cd1cff921f"
+  }
+}

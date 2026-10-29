@@ -1,0 +1,16 @@
+{
+  "files": [
+    "docs/testing/artifacts/watch-workflow/verify_static.py",
+    "tests/monitoring/discovery_ui_server.py",
+    "tests/monitoring/watch_workflow.py",
+    "tests/monitoring/watch_workflow_browser.py",
+    "tests/monitoring/watch_workflow_receipts.py",
+    "tests/monitoring/watch_workflow_ui.py",
+    "tests/test_watch_workflow.py",
+    "docs/testing/artifacts/watch-workflow/merger/audit_evidence.py",
+    "docs/testing/artifacts/watch-workflow/merger/recovery_copy_probe.py"
+  ],
+  "current": [],
+  "baseline": [],
+  "added": []
+}

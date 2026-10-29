@@ -1,0 +1,15 @@
+{
+  "result": "passed",
+  "fixture": "five unresolved original test leads",
+  "fixture_identity_checked_before_writes": true,
+  "gates": [
+    "image-led feed",
+    "keyboard save",
+    "preferences survive reload",
+    "expanded evidence",
+    "375px no overflow",
+    "legacy queue navigation"
+  ],
+  "buyer_acceptance": "unproven",
+  "live_acquisition": "not attempted"
+}

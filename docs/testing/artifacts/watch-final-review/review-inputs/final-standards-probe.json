@@ -1,0 +1,160 @@
+{
+  "storage": "/tmp/pricerecon-offline-standards-qs97spvw",
+  "synthetic": true,
+  "adapter_probes": [
+    {
+      "source": "shopify",
+      "case": "control",
+      "direct_count": 2,
+      "normal_outcomes": [
+        {
+          "source_evidence": {
+            "route": "synthetic-review",
+            "source_host": null,
+            "capture_id": "b716e4a7-9967-467f-a69b-8836b86671c5",
+            "retrieved_at": "2026-10-27T12:00:00Z",
+            "use": {
+              "permission_reference": "original-review-fixture",
+              "retention": "synthetic"
+            },
+            "history_rights": "unqualified",
+            "prerequisites": [],
+            "pages_captured": 1,
+            "page_limit": 1,
+            "item_limit": 250,
+            "detail_limit": null,
+            "discovered_count": 1,
+            "inspected_count": 2,
+            "next_page": null,
+            "content_truncated": null,
+            "completeness": "partial",
+            "issues": [
+              "single_250_product_page",
+              "pagination_not_exhausted",
+              "query_not_catalogue_filter"
+            ]
+          },
+          "source": "shopify",
+          "route": "connector_search_v1",
+          "state": "partial",
+          "listing_count": 2,
+          "reason": "bounded_retailer_variants",
+          "completeness": "partial",
+          "reused_capture_id": null
+        }
+      ]
+    },
+    {
+      "source": "shopify",
+      "case": "bad_numeric_claim",
+      "direct_error": "ValidationError",
+      "direct_error_detail": "1 validation error for FieldEvidence\n  Value error, Numeric evidence outside representation bounds [type=value_error, input_value={'id': '0fcdea08-45ff-4fc...retention': 'synthetic'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error",
+      "normal_outcomes": [
+        {
+          "source_evidence": null,
+          "source": "shopify",
+          "route": "connector_search_v1",
+          "state": "failed",
+          "listing_count": 0,
+          "reason": "parse_error",
+          "completeness": "unknown",
+          "reused_capture_id": null
+        }
+      ]
+    },
+    {
+      "source": "shopify",
+      "case": "bad_text_claim",
+      "direct_error": "ValidationError",
+      "direct_error_detail": "1 validation error for FieldEvidence\nvalue\n  String should have at most 500 characters [type=string_too_long, input_value='xxxxxxxxxxxxxxxxxxxxxxxx...xxxxxxxxxxxxxxxxxxxxxxx', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.14/v/string_too_long",
+      "normal_outcomes": [
+        {
+          "source_evidence": null,
+          "source": "shopify",
+          "route": "connector_search_v1",
+          "state": "failed",
+          "listing_count": 0,
+          "reason": "parse_error",
+          "completeness": "unknown",
+          "reused_capture_id": null
+        }
+      ]
+    },
+    {
+      "source": "ebay",
+      "case": "control",
+      "direct_count": 2,
+      "normal_outcomes": [
+        {
+          "source_evidence": {
+            "route": "synthetic-review",
+            "source_host": null,
+            "capture_id": "47f8b5db-ec17-4855-9b80-17093c9894c5",
+            "retrieved_at": "2026-10-27T15:00:00Z",
+            "use": {
+              "permission_reference": "original-review-fixture",
+              "retention": "synthetic"
+            },
+            "history_rights": "unqualified",
+            "prerequisites": [],
+            "pages_captured": 1,
+            "page_limit": 1,
+            "item_limit": 50,
+            "detail_limit": null,
+            "discovered_count": null,
+            "inspected_count": 2,
+            "next_page": false,
+            "content_truncated": null,
+            "completeness": "unknown",
+            "issues": []
+          },
+          "source": "ebay",
+          "route": "connector_search_v1",
+          "state": "success",
+          "listing_count": 2,
+          "reason": null,
+          "completeness": "unknown",
+          "reused_capture_id": null
+        }
+      ]
+    },
+    {
+      "source": "ebay",
+      "case": "bad_numeric_claim",
+      "direct_error": "ValidationError",
+      "direct_error_detail": "1 validation error for FieldEvidence\n  Value error, Numeric evidence outside representation bounds [type=value_error, input_value={'id': '0e7bdb58-27c3-459...retention': 'synthetic'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error",
+      "normal_outcomes": [
+        {
+          "source_evidence": null,
+          "source": "ebay",
+          "route": "connector_search_v1",
+          "state": "failed",
+          "listing_count": 0,
+          "reason": "parse_error",
+          "completeness": "unknown",
+          "reused_capture_id": null
+        }
+      ]
+    }
+  ],
+  "safe_pointer": [
+    {
+      "input": "https://example.test/watch?access_token=SYNTHETIC",
+      "output": null
+    },
+    {
+      "input": "https://example.test/watch?client_secret=SYNTHETIC",
+      "output": "https://example.test/watch?client_secret=SYNTHETIC"
+    },
+    {
+      "input": "https://example.test/watch?X-Amz-Credential=SYNTHETIC&X-Amz-Signature=SYNTHETIC",
+      "output": "https://example.test/watch?X-Amz-Credential=SYNTHETIC&X-Amz-Signature=SYNTHETIC"
+    }
+  ],
+  "persisted_candidate_url": "https://example.test/watch?client_secret=SYNTHETIC",
+  "persisted_evidence_pointers": [
+    "https://example.test/watch?client_secret=SYNTHETIC",
+    "https://example.test/watch?client_secret=SYNTHETIC"
+  ],
+  "blocked_edges": []
+}

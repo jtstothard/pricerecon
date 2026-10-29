@@ -1,0 +1,40 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_private_walkthrough_serves_real_attributed_images_without_qualifying_prices _
+
+    def test_private_walkthrough_serves_real_attributed_images_without_qualifying_prices():
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, '-m', 'tests.monitoring.watch_image_workflow'],
+            cwd=root,
+            env={'PYTHONPATH': os.pathsep.join([str(root / 'src'), str(root)]), 'PYTHONDONTWRITEBYTECODE': '1'},
+            capture_output=True, text=True, timeout=60, check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Warning: Frontend build directory not found at /Users/jay/.t3/worktrees/pricerecon/t3-ad24f213/frontend/dist
+E         Traceback (most recent call last):
+E           File "<frozen runpy>", line 203, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-ad24f213/tests/monitoring/watch_image_workflow.py", line 45, in <module>
+E             asyncio.run(verify())
+E             ~~~~~~~~~~~^^^^^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+E             return runner.run(main)
+E                    ~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+E             return self._loop.run_until_complete(task)
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+E             return future.result()
+E                    ~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-ad24f213/tests/monitoring/watch_image_workflow.py", line 12, in verify
+E             from .watch_images import install_images, ASSETS
+E         ModuleNotFoundError: No module named 'tests.monitoring.watch_images'
+E
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python', '-m', 'tests.monitoring.wat....watch_images import install_images, ASSETS\nModuleNotFoundError: No module named \'tests.monitoring.watch_images\'\n').returncode
+
+tests/test_watch_workflow.py:53: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_watch_workflow.py::test_private_walkthrough_serves_real_attributed_images_without_qualifying_prices
+1 failed, 2 deselected in 1.12s

@@ -1,0 +1,53 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__ test_militado_signer_gate_cannot_be_replaced_by_a_fixture_permission_label __
+
+    def test_militado_signer_gate_cannot_be_replaced_by_a_fixture_permission_label():
+>       run_source("militado_gate")
+
+tests/test_source_evidence_workflow.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'militado_gate', storage = None
+
+    def run_source(name, storage=None):
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-m", "tests.monitoring.source_evidence_workflows", name]
+            + ([str(storage)] if storage else []),
+            cwd=root,
+            env={
+                "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                "PYTHONDONTWRITEBYTECODE": "1",
+            },
+            capture_output=True, text=True, timeout=40, check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Loaded 0 watches into scheduler
+E         Traceback (most recent call last):
+E           File "<frozen runpy>", line 203, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/tests/monitoring/source_evidence_workflows.py", line 480, in <module>
+E             asyncio.run(globals()[sys.argv[1]]())
+E             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+E             return runner.run(main)
+E                    ~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+E             return self._loop.run_until_complete(task)
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+E             return future.result()
+E                    ~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-3f2871eb/tests/monitoring/source_evidence_workflows.py", line 473, in militado_gate
+E             assert outcome["state"] == "blocked", outcome
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E         AssertionError: {'source_evidence': {'route': 'shopify_products_v1', 'source_host': 'www.militadowatch.com', 'capture_id': 'e8bc4b5c-ecce-44c9-ab4c-f136bef4265c', 'retrieved_at': '2026-10-27T12:00:00Z', 'use': {'permission_reference': 'original-fixture', 'retention': 'synthetic'}, 'history_rights': 'unqualified', 'prerequisites': ['store-specific capture/display/reuse authority', 'separate archive grant', 'selected stock/fulfilment origin and UK checkout cost'], 'pages_captured': 1, 'page_limit': 1, 'discovered_count': 1, 'inspected_count': 2, 'next_page': None, 'content_truncated': None, 'completeness': 'partial', 'issues': ['single_250_product_page', 'pagination_not_exhausted', 'query_not_catalogue_filter']}, 'source': 'shopify', 'route': 'connector_search_v1', 'state': 'partial', 'listing_count': 2, 'reason': 'bounded_retailer_variants', 'completeness': 'partial', 'reused_capture_id': None}
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python', '-m', 'tests.monitoring.sou..._count\': 2, \'reason\': \'bounded_retailer_variants\', \'completeness\': \'partial\', \'reused_capture_id\': None}\n').returncode
+
+tests/test_source_evidence_workflow.py:23: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_source_evidence_workflow.py::test_militado_signer_gate_cannot_be_replaced_by_a_fixture_permission_label
+1 failed, 12 deselected in 0.80s

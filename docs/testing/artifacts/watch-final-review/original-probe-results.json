@@ -1,0 +1,44 @@
+[
+  {
+    "case": "standards",
+    "exit_code": 0,
+    "review_assertions": "passed",
+    "blocked_edges": []
+  },
+  {
+    "case": "coupon-valid-first",
+    "exit_code": 0,
+    "review_assertions": "passed",
+    "blocked_edges": []
+  },
+  {
+    "case": "coupon-expired-first",
+    "exit_code": 0,
+    "review_assertions": "passed",
+    "blocked_edges": []
+  },
+  {
+    "case": "coupon-expired-only",
+    "exit_code": 0,
+    "review_assertions": "passed",
+    "blocked_edges": []
+  },
+  {
+    "case": "coupon-same-report-conflict",
+    "exit_code": 0,
+    "review_assertions": "passed",
+    "blocked_edges": []
+  },
+  {
+    "case": "tracking-retained-definition",
+    "exit_code": 0,
+    "review_assertions": "passed",
+    "blocked_edges": []
+  },
+  {
+    "case": "tracking-all-fresh",
+    "exit_code": 0,
+    "review_assertions": "passed",
+    "blocked_edges": []
+  }
+]

@@ -9,19 +9,13 @@ import json
 import logging
 import re
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Any, Optional
+from typing import Any
 
-import httpx
-
-from pricerecon.config import load_config
-from pricerecon.connectors.browser_client import BrowserClient, BrowserSessionConfig
-from pricerecon.core.connector_health import upsert_connector_health
+from pricerecon.connectors.specs import extract_specs
 from pricerecon.core.diff_engine import run_check
 from pricerecon.core.notifications import dispatch_for_event
-from pricerecon.connectors.specs import extract_specs
-from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
 from pricerecon.db.schema import DB_PATH
 from pricerecon.models import EventType, NormalizedListing, Watch
 
@@ -150,7 +144,7 @@ def get_db() -> sqlite3.Connection:
     return conn
 
 
-def get_watch(watch_id: int) -> Optional[Watch]:
+def get_watch(watch_id: int) -> Watch | None:
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM watches WHERE id = ?", (watch_id,))
@@ -302,255 +296,99 @@ def apply_post_normalization_filters(
     return filtered
 
 
-def _non_empty_error_message(exc: Exception) -> str:
-    message = str(exc).strip()
-    return message or exc.__class__.__name__
-
-
 async def execute_watch(watch_id: int) -> dict[str, Any]:
     watch = get_watch(watch_id)
     if not watch:
         return {"success": False, "error": f"Watch {watch_id} not found"}
 
-    runtime_config = load_config()
-    connector_defaults = (
-        runtime_config.get("connectors", {}) if isinstance(runtime_config, dict) else {}
+    from uuid import uuid4
+
+    from pricerecon.core.acquisition import acquire_sources
+
+    acquisition_context = f"watch:{watch_id}:{uuid4()}"
+    acquisition = await acquire_sources(
+        watch.sources,
+        query=watch.query,
+        source_queries=watch.source_queries,
+        filters={"price_max": watch.filters.price_max} if watch.filters.price_max else {},
+        context_id=acquisition_context,
     )
+    all_listings = acquisition.listings
+    failed_sources = acquisition.failed_sources
 
-    all_listings = []
-
-    for source in watch.sources:
-        if not source.enabled:
-            continue
-        from pricerecon.connectors import canonical_connector_id
-
-        connector_id = canonical_connector_id(source.connector)
-        if not connector_id:
-            continue
-
-        # Check health state: skip connectors with fresh auth_failed errors
-        from pricerecon.core.connector_health import is_health_stale, list_connector_health
-
-        health_state = list_connector_health().get(connector_id, {})
-        if health_state.get("status") == "auth_failed":
-            if not is_health_stale(connector_id):
-                logger.warning(
-                    "watch_connector_skipped_fresh_auth_failed",
-                    extra={"watch_id": watch_id, "connector": connector_id},
-                )
-                continue
-            logger.info(
-                "watch_connector_retrying_stale_auth_failed",
-                extra={"watch_id": watch_id, "connector": connector_id},
-            )
-
-        connector = None
-        try:
-            logger.info(
-                "watch_connector_start", extra={"watch_id": watch_id, "connector": connector_id}
-            )
-            # Use entry-point registry to resolve connector_id -> class
-            from pricerecon.connectors import discover_connectors
-
-            all_connectors = discover_connectors()
-            connector_class = all_connectors.get(connector_id)
-            if connector_class is None:
-                raise AttributeError(
-                    f"Connector '{connector_id}' not found in registry. "
-                    f"Available: {sorted(all_connectors.keys())}"
-                )
-            # Build connector kwargs: merge config-file defaults, env-level credentials,
-            # and per-watch config. Per-watch config takes precedence.
-            config_defaults = dict(connector_defaults.get(connector_id, {}) or {})
-            connector_kwargs: dict[str, Any] = {**config_defaults, **dict(source.config or {})}
-            if connector_id == "ebay":
-                import os
-
-                # A persisted config may contain a null app_id (for example, when
-                # a watch was created before credentials were configured). Treat
-                # null/empty values as unset so the deployed environment remains
-                # the source of truth for the OAuth client id.
-                if not connector_kwargs.get("app_id"):
-                    connector_kwargs["app_id"] = os.environ.get("EBAY_APP_ID", "")
-                connector_kwargs.setdefault("cert_id", os.environ.get("EBAY_CERT_ID"))
-            elif connector_id == "dell_uk":
-                import os
-
-                # Dell requires serialized HTML; prefer the shared
-                # FlareSolverr/Byparr-compatible endpoint over Camofox's a11y
-                # snapshot backend. Per-watch config still takes precedence.
-                if not connector_kwargs.get("flaresolverr_url"):
-                    connector_kwargs["flaresolverr_url"] = runtime_config.get(
-                        "flaresolverr_url"
-                    ) or os.environ.get("PRICERECON_FLARESOLVERR_URL")
-            elif connector_id == "aliexpress":
-                import os
-
-                cfg = {**config_defaults, **dict(source.config or {})}
-                cfg.setdefault("app_key", os.environ.get("ALIEXPRESS_APP_KEY"))
-                cfg.setdefault("app_secret", os.environ.get("ALIEXPRESS_APP_SECRET"))
-                cfg.setdefault("ds_app_key", os.environ.get("ALIEXPRESS_DS_APP_KEY"))
-                cfg.setdefault("ds_app_secret", os.environ.get("ALIEXPRESS_DS_APP_SECRET"))
-                cfg.setdefault("ds_access_token", os.environ.get("ALIEXPRESS_DS_ACCESS_TOKEN"))
-                cfg.setdefault("ds_refresh_token", os.environ.get("ALIEXPRESS_DS_REFRESH_TOKEN"))
-                browser_client = None
-                camofox_url = (
-                    cfg.get("camofox_url")
-                    or os.environ.get("ALIEXPRESS_CAMOFOX_URL")
-                    or os.environ.get("CAMOFOX_URL")
-                )
-                cfg.setdefault("camofox_url", camofox_url)
-                if camofox_url:
-                    browser_client = BrowserClient(
-                        config=BrowserSessionConfig(
-                            camofox_url=str(camofox_url),
-                            camofox_user_id=str(
-                                cfg.get("camofox_user_id") or f"pricerecon_{watch_id}"
-                            ),
-                            camofox_session_key=str(
-                                cfg.get("camofox_session_key") or f"watch_{watch_id}"
-                            ),
-                            camofox_api_key=os.environ.get("CAMOFOX_API_KEY"),
-                            camofox_access_key=os.environ.get("CAMOFOX_ACCESS_KEY"),
-                        )
-                    )
-                connector_kwargs = {"config": cfg}
-                if browser_client is not None:
-                    connector_kwargs["browser_client"] = browser_client
-            elif connector_id == "hotukdeals":
-                import os
-
-                cfg = {**config_defaults, **dict(source.config or {})}
-                browser_client = None
-                camofox_url = cfg.get("camofox_url") or os.environ.get("CAMOFOX_URL")
-                cfg.setdefault("camofox_url", camofox_url)
-                if camofox_url:
-                    browser_client = BrowserClient(
-                        config=BrowserSessionConfig(
-                            camofox_url=str(camofox_url),
-                            camofox_user_id=str(
-                                cfg.get("camofox_user_id") or f"pricerecon_{watch_id}"
-                            ),
-                            camofox_session_key=str(
-                                cfg.get("camofox_session_key") or f"watch_{watch_id}"
-                            ),
-                            camofox_api_key=os.environ.get("CAMOFOX_API_KEY"),
-                            camofox_access_key=os.environ.get("CAMOFOX_ACCESS_KEY"),
-                        )
-                    )
-                connector_kwargs = {"config": cfg}
-                if browser_client is not None:
-                    connector_kwargs["browser_client"] = browser_client
-            try:
-                from pricerecon.connectors.factory import validate_and_create_connector
-
-                connector = validate_and_create_connector(
-                    connector_class, connector_id, connector_kwargs
-                )
-                # This is deliberately post-construction: every BaseConnector
-                # can receive the shared named-backend selection without
-                # expanding its public constructor or changing its direct/API
-                # default. The structural guard keeps existing plugin/test
-                # doubles compatible with the executor contract.
-                configure_browser = getattr(connector, "configure_external_browser", None)
-                if callable(configure_browser):
-                    configure_browser(runtime_config, config_defaults | dict(source.config or {}))
-            except Exception as exc:
-                raise ConnectorDegradedError(
-                    status=ConnectorStatus.unknown_error,
-                    message=f"Failed to create connector '{connector_id}': {exc}",
-                    connector_id=connector_id,
-                    detail={"error": str(exc), "error_type": exc.__class__.__name__},
-                ) from exc
-            await connector.initialize()
-            connector_filters = {}
-            if watch.filters.price_max:
-                connector_filters["price_max"] = watch.filters.price_max
-            # Use per-connector query if available, otherwise fall back to watch.query
-            effective_query = watch.source_queries.get(connector_id, watch.query)
-            listings = await connector.search(effective_query, connector_filters)
-            all_listings.extend(listings)
-            logger.info(
-                "watch_connector_result",
-                extra={
-                    "watch_id": watch_id,
-                    "connector": connector_id,
-                    "listing_count": len(listings),
-                },
-            )
-            upsert_connector_health(
-                connector_id,
-                "ok",
-                details={"listing_count": len(listings), "inference_source": "watch"},
-            )
-        except ConnectorDegradedError as exc:
-            logger.warning(
-                "watch_connector_degraded",
-                extra={
-                    "watch_id": watch_id,
-                    "connector": connector_id,
-                    "status": exc.status.value,
-                    "error": exc.message,
-                    "detail": exc.detail,
-                },
-            )
-            last_error = exc.message.strip() if exc.message else exc.status.value
-            details = dict(exc.detail) if exc.detail else {}
-            details["inference_source"] = "watch"
-            upsert_connector_health(
-                connector_id, exc.status.value, last_error=last_error, details=details
-            )
-            continue
-        except httpx.TimeoutException as exc:
-            message = _non_empty_error_message(exc)
-            upsert_connector_health(
-                connector_id,
-                "timeout",
-                last_error=message,
-                details={
-                    "error": message,
-                    "error_type": exc.__class__.__name__,
-                    "inference_source": "watch",
-                },
-            )
-            continue
-        except Exception as exc:
-            message = _non_empty_error_message(exc)
-            upsert_connector_health(
-                connector_id,
-                "unknown_error",
-                last_error=message,
-                details={
-                    "error": message,
-                    "error_type": exc.__class__.__name__,
-                    "inference_source": "watch",
-                },
-            )
-            logger.exception(
-                "watch_connector_error", extra={"watch_id": watch_id, "connector": connector_id}
-            )
-        finally:
-            if connector is not None:
-                try:
-                    await connector.cleanup()
-                except Exception:
-                    pass
+    # A denied source is not a successful empty search. If no source supplied
+    # usable results, preserve the snapshot and successful-check timestamp.
+    refreshed = {"success", "success_empty", "partial", "cache_reuse"}
+    denied = [outcome for outcome in acquisition.outcomes if outcome.state in {"blocked", "capped"}]
+    if denied and not any(outcome.state in refreshed for outcome in acquisition.outcomes):
+        denial = next((outcome for outcome in denied if outcome.state == "blocked"), denied[0])
+        return {
+            "success": False,
+            "watch_id": watch_id,
+            "error": denial.reason or "acquisition_denied",
+            "collection_state": denial.state,
+            "acquisition_outcomes": [
+                outcome.model_dump(mode="json") for outcome in acquisition.outcomes
+            ],
+            "notifications_sent": 0,
+            "events": [],
+        }
 
     filtered_listings = apply_post_normalization_filters(
         all_listings, watch.filters, watch.synonym_groups if watch.synonym_groups else None
     )
+    # ADR 0001: raw connector queries never replace title matching. The
+    # all-query-terms safety net exists to re-precise the recall that
+    # per-connector ``source_queries`` overrides widen, so it fires only for
+    # watches with such overrides. Plain watches without overrides (and
+    # without synonym groups) keep the pre-ADR watch-path behavior of
+    # origin/main: no query-term title gate (gate scoping decision,
+    # 2026-10-29).
+    if (
+        watch.source_queries
+        and not watch.synonym_groups
+        and not watch.filters.spec_match.synonym_groups
+    ):
+        from pricerecon.core.title_matching import legacy_query_match
+
+        filtered_listings = [
+            listing
+            for listing in filtered_listings
+            if legacy_query_match(listing.title_raw, watch.query)
+        ]
     # Keep shadow evaluation against the complete post-fetch set for auditing,
     # then enforce P1 component pattern + price floors before the alert pipeline.
     shadow_entries = evaluate_shadow_filters(all_listings, watch.filters, watch_id)
     filtered_listings = apply_component_pattern_filter(filtered_listings, watch.filters)
     filtered_listings = apply_price_floor_filter(filtered_listings, watch.filters)
-    first_run, diff_result, event_ids = run_check(watch_id, filtered_listings)
+    from pricerecon.core.rate_limiter import AdmissionDenied
+
+    try:
+        first_run, diff_result, event_ids = run_check(
+            watch_id, filtered_listings, failed_sources=failed_sources
+        )
+    except AdmissionDenied as exc:
+        from pricerecon.db.collection import reject_capture
+
+        reject_capture(acquisition_context, exc.reason, exc.state)
+        for outcome in acquisition.outcomes:
+            if outcome.state in {"success", "success_empty", "partial", "cache_reuse"}:
+                outcome.state, outcome.reason = exc.state, exc.reason
+        return {
+            "success": False,
+            "watch_id": watch_id,
+            "error": exc.reason,
+            "collection_state": exc.state,
+            "acquisition_outcomes": [o.model_dump(mode="json") for o in acquisition.outcomes],
+            "notifications_sent": 0,
+            "events": [],
+        }
 
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute(
         "UPDATE watches SET last_check_at = ? WHERE id = ?",
-        (datetime.now(timezone.utc).isoformat(), watch_id),
+        (datetime.now(UTC).isoformat(), watch_id),
     )
     conn.commit()
     conn.close()
@@ -617,6 +455,9 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
 
     result: dict[str, Any] = {
         "success": True,
+        "acquisition_outcomes": [
+            outcome.model_dump(mode="json") for outcome in acquisition.outcomes
+        ],
         "watch_id": watch_id,
         "first_run": first_run,
         "listings_found": len(filtered_listings),

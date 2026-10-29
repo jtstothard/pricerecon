@@ -1,0 +1,233 @@
+Loaded 0 watches into scheduler
+{
+  "storage": "/tmp/pricerecon-offline-standards-27_q0efc",
+  "synthetic": true,
+  "adapter_probes": [
+    {
+      "source": "shopify",
+      "case": "control",
+      "direct_count": 2,
+      "normal_outcomes": [
+        {
+          "source_evidence": {
+            "route": "synthetic-review",
+            "source_host": null,
+            "capture_id": "5819821c-9b6d-48a3-a1f5-ecad2a11fc79",
+            "retrieved_at": "2026-10-27T12:00:00Z",
+            "use": {
+              "permission_reference": "original-review-fixture",
+              "retention": "synthetic"
+            },
+            "history_rights": "unqualified",
+            "prerequisites": [],
+            "pages_captured": 1,
+            "page_limit": 1,
+            "item_limit": 250,
+            "detail_limit": null,
+            "discovered_count": 1,
+            "inspected_count": 2,
+            "next_page": null,
+            "content_truncated": null,
+            "completeness": "partial",
+            "issues": [
+              "single_250_product_page",
+              "pagination_not_exhausted",
+              "query_not_catalogue_filter"
+            ]
+          },
+          "source": "shopify",
+          "route": "connector_search_v1",
+          "state": "partial",
+          "listing_count": 2,
+          "reason": "bounded_retailer_variants",
+          "completeness": "partial",
+          "reused_capture_id": null
+        }
+      ]
+    },
+    {
+      "source": "shopify",
+      "case": "bad_numeric_claim",
+      "direct_count": 1,
+      "normal_outcomes": [
+        {
+          "source_evidence": {
+            "route": "synthetic-review",
+            "source_host": null,
+            "capture_id": "38cb6a48-5ce4-4fb4-b217-8cb05b7b303b",
+            "retrieved_at": "2026-10-27T13:00:00Z",
+            "use": {
+              "permission_reference": "original-review-fixture",
+              "retention": "synthetic"
+            },
+            "history_rights": "unqualified",
+            "prerequisites": [],
+            "pages_captured": 1,
+            "page_limit": 1,
+            "item_limit": 250,
+            "detail_limit": null,
+            "discovered_count": 1,
+            "inspected_count": 1,
+            "next_page": null,
+            "content_truncated": null,
+            "completeness": "partial",
+            "issues": [
+              "single_250_product_page",
+              "pagination_not_exhausted",
+              "query_not_catalogue_filter",
+              "invalid_variant:0:1"
+            ]
+          },
+          "source": "shopify",
+          "route": "connector_search_v1",
+          "state": "partial",
+          "listing_count": 1,
+          "reason": "bounded_retailer_variants",
+          "completeness": "partial",
+          "reused_capture_id": null
+        }
+      ]
+    },
+    {
+      "source": "shopify",
+      "case": "bad_text_claim",
+      "direct_count": 1,
+      "normal_outcomes": [
+        {
+          "source_evidence": {
+            "route": "synthetic-review",
+            "source_host": null,
+            "capture_id": "2f65d6e2-5fed-48bf-af9c-77e55f511d4d",
+            "retrieved_at": "2026-10-27T14:00:00Z",
+            "use": {
+              "permission_reference": "original-review-fixture",
+              "retention": "synthetic"
+            },
+            "history_rights": "unqualified",
+            "prerequisites": [],
+            "pages_captured": 1,
+            "page_limit": 1,
+            "item_limit": 250,
+            "detail_limit": null,
+            "discovered_count": 1,
+            "inspected_count": 1,
+            "next_page": null,
+            "content_truncated": null,
+            "completeness": "partial",
+            "issues": [
+              "single_250_product_page",
+              "pagination_not_exhausted",
+              "query_not_catalogue_filter",
+              "invalid_variant:0:1"
+            ]
+          },
+          "source": "shopify",
+          "route": "connector_search_v1",
+          "state": "partial",
+          "listing_count": 1,
+          "reason": "bounded_retailer_variants",
+          "completeness": "partial",
+          "reused_capture_id": null
+        }
+      ]
+    },
+    {
+      "source": "ebay",
+      "case": "control",
+      "direct_count": 2,
+      "normal_outcomes": [
+        {
+          "source_evidence": {
+            "route": "synthetic-review",
+            "source_host": null,
+            "capture_id": "350daa8f-d289-49e2-a3f7-9269f6f813ef",
+            "retrieved_at": "2026-10-27T15:00:00Z",
+            "use": {
+              "permission_reference": "original-review-fixture",
+              "retention": "synthetic"
+            },
+            "history_rights": "unqualified",
+            "prerequisites": [],
+            "pages_captured": 1,
+            "page_limit": 1,
+            "item_limit": 50,
+            "detail_limit": null,
+            "discovered_count": null,
+            "inspected_count": 2,
+            "next_page": false,
+            "content_truncated": null,
+            "completeness": "unknown",
+            "issues": []
+          },
+          "source": "ebay",
+          "route": "connector_search_v1",
+          "state": "success",
+          "listing_count": 2,
+          "reason": null,
+          "completeness": "unknown",
+          "reused_capture_id": null
+        }
+      ]
+    },
+    {
+      "source": "ebay",
+      "case": "bad_numeric_claim",
+      "direct_count": 1,
+      "normal_outcomes": [
+        {
+          "source_evidence": {
+            "route": "synthetic-review",
+            "source_host": null,
+            "capture_id": "1e672277-475d-49d9-b69d-bcd960ec1ff2",
+            "retrieved_at": "2026-10-27T16:00:00Z",
+            "use": {
+              "permission_reference": "original-review-fixture",
+              "retention": "synthetic"
+            },
+            "history_rights": "unqualified",
+            "prerequisites": [],
+            "pages_captured": 1,
+            "page_limit": 1,
+            "item_limit": 50,
+            "detail_limit": null,
+            "discovered_count": null,
+            "inspected_count": 2,
+            "next_page": false,
+            "content_truncated": null,
+            "completeness": "unknown",
+            "issues": [
+              "invalid_item:1"
+            ]
+          },
+          "source": "ebay",
+          "route": "connector_search_v1",
+          "state": "partial",
+          "listing_count": 1,
+          "reason": "bounded_browse_leads",
+          "completeness": "partial",
+          "reused_capture_id": null
+        }
+      ]
+    }
+  ],
+  "safe_pointer": [
+    {
+      "input": "https://example.test/watch?access_token=SYNTHETIC",
+      "output": null
+    },
+    {
+      "input": "https://example.test/watch?client_secret=SYNTHETIC",
+      "output": null
+    },
+    {
+      "input": "https://example.test/watch?X-Amz-Credential=SYNTHETIC&X-Amz-Signature=SYNTHETIC",
+      "output": null
+    }
+  ],
+  "persisted_candidate_url": null,
+  "persisted_evidence_pointers": [
+    null,
+    null
+  ],
+  "blocked_edges": []
+}

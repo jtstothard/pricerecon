@@ -4,6 +4,8 @@ import json
 import sqlite3
 from pathlib import Path
 
+from pricerecon.db.connection import connect
+
 DB_PATH = Path("pricerecon.db")
 
 
@@ -158,7 +160,7 @@ def _apply_migrations(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
-def init_db(path: Path | None = None) -> None:
+def init_db(path: Path | None = None, *, seed_sources: bool = True) -> None:
     """Initialize the SQLite database with all required tables.
 
     Args:
@@ -167,7 +169,7 @@ def init_db(path: Path | None = None) -> None:
     if path is None:
         path = DB_PATH
 
-    conn = sqlite3.connect(path)
+    conn = connect(path)
     cursor = conn.cursor()
 
     # Create tables
@@ -306,8 +308,27 @@ def init_db(path: Path | None = None) -> None:
         VALUES ('1.0', 'Initial schema');
         """)
 
+    from pricerecon.db.discovery import init_discovery_tables
+
+    init_discovery_tables(conn)
+    from pricerecon.db.tracking import init_tracking_tables
+
+    init_tracking_tables(conn)
+    from pricerecon.db.history import init_history_tables
+
+    init_history_tables(conn)
+    from pricerecon.db.collection import init_collection_tables
+
+    init_collection_tables(conn)
+    from pricerecon.db.corrections import init_correction_tables
+
+    init_correction_tables(conn)
+    from pricerecon.db.assessments import init_assessment_tables
+
+    init_assessment_tables(conn)
     conn.commit()
-    _seed_sources(conn)
+    if seed_sources:
+        _seed_sources(conn)
     _migrate_connector_ids(conn)
     _apply_migrations(conn)
     conn.close()

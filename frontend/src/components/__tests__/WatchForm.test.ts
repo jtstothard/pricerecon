@@ -1,5 +1,143 @@
 import { describe, it, expect } from 'vitest'
-import { buildWatchCreatePayload, validateWatchForm } from '../../lib/watchPayload'
+import { buildWatchCreatePayload, buildWatchEditPayload, formDataFromWatch, validateWatchForm } from '../../lib/watchPayload'
+import type { WatchSummary } from '../watchTypes'
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import WatchForm from '../WatchForm'
+
+const savedWatch: WatchSummary = {
+  id: 7,
+  name: 'Saved wristwatch search',
+  query: 'fallback merchant query',
+  category: null,
+  display_title: 'My compact colourful choices',
+  synonym_groups: [['ML05', 'ML05B'], ['blue', 'mint']],
+  source_queries: { cex: ' (ML05 OR "ML05B") -parts  ', scan: ' saved disabled query  ' },
+  sources: [
+    { connector: 'cex', enabled: true, config: { region: 'UK' } },
+    { connector: 'scan', enabled: false, config: { category: 'watches' } },
+  ],
+  filters: {
+    price_max: '100.00',
+    currency: 'EUR',
+    condition_filter: { conditions: ['new'], dedup_enabled: true },
+    exclude_patterns: ['broken'],
+    spec_match: { excluded_title_terms: ['parts'], synonym_groups: [['Militado']], ram_gb: 16 },
+    min_price_gbp: 20,
+    component_subject_pattern: 'watch',
+    enforce_component_pattern: false,
+    enforce_price_floor: false,
+    min_seller_feedback: 100,
+    min_seller_feedback_pct: '99.5',
+  },
+  schedule: { interval: '30m', timezone: 'Europe/London', time_window: { start: '09:00', end: '18:00', days: ['mon'] } },
+  grouping: { enabled: true, product_key: 'ML05' },
+  notifications: {
+    events: ['price_drop'], channels: ['webhook', 'telegram', 'discord'],
+    webhook_url: 'https://notify.invalid/hook', telegram_bot_token: 'offline-placeholder',
+    telegram_chat_id: 'offline-chat', discord_webhook_url: 'https://discord.invalid/hook',
+  },
+  enabled: false,
+  last_check_at: null,
+}
+
+describe('saved watch edits', () => {
+  it('changes only the display title while retaining all other saved intent', () => {
+    const form = formDataFromWatch(savedWatch)
+    const payload = buildWatchEditPayload({ ...form, display_title: 'Edited label' }, savedWatch)
+    const { id, last_check_at, ...config } = savedWatch
+    expect(payload).toEqual({ ...config, display_title: 'Edited label' })
+    expect(savedWatch.display_title).toBe('My compact colourful choices')
+  })
+
+  it('renders the saved custom interval as the selected option', () => {
+    const html = renderToStaticMarkup(createElement(WatchForm, {
+      open: true, editingWatch: savedWatch, onClose: () => {}, onSaved: () => {},
+    }))
+    expect(html).toContain('<option value="30m" selected="">Every 30m (saved)</option>')
+  })
+
+  it('preserves untouched raw overrides even when another connector query is edited', () => {
+    const saved = { ...savedWatch, source_queries: { ...savedWatch.source_queries, unavailable: '  ' } }
+    const form = formDataFromWatch(saved)
+    form.source_queries = { ...form.source_queries, cex: '  (ML05 OR mint) -parts  ' }
+    expect(buildWatchEditPayload(form, saved).source_queries).toEqual({
+      cex: '  (ML05 OR mint) -parts  ', scan: ' saved disabled query  ', unavailable: '  ',
+    })
+  })
+
+  it('allows a title edit when every saved source is already disabled', () => {
+    const saved = { ...savedWatch, sources: savedWatch.sources.map(source => ({ ...source, enabled: false })) }
+    const form = { ...formDataFromWatch(saved), display_title: 'Paused intent' }
+    expect(validateWatchForm(form, saved)).toBeNull()
+    expect(buildWatchEditPayload(form, saved).sources).toEqual(saved.sources)
+  })
+
+  it('applies intentional source, query and filter edits without resetting hidden configuration', () => {
+    const form = formDataFromWatch(savedWatch)
+    const payload = buildWatchEditPayload({
+      ...form,
+      name: 'Changed search', query: 'new fallback', category: 'other', interval: '4h', enabled: true,
+      sources: ['scan', 'ebay'],
+      filters: { price_max: '80.50', condition: ['refurbished'] },
+      synonym_groups: [[' ML05 ', ' mint ']], excluded_terms: [' broken ', ' damaged '],
+      source_queries: { ...form.source_queries, scan: ' (ML05 OR mint) ', cex: '' },
+    }, savedWatch)
+    expect(payload).toMatchObject({
+      name: 'Changed search', query: 'new fallback', category: null, enabled: true,
+      synonym_groups: [['ML05', 'mint']],
+      source_queries: { scan: ' (ML05 OR mint) ' },
+      sources: [
+        { connector: 'cex', enabled: false, config: { region: 'UK' } },
+        { connector: 'scan', enabled: true, config: { category: 'watches' } },
+        { connector: 'ebay', enabled: true },
+      ],
+      schedule: { interval: '4h', timezone: 'Europe/London', time_window: { start: '09:00', end: '18:00', days: ['mon'] } },
+      filters: {
+        ...savedWatch.filters,
+        price_max: 80.5,
+        condition_filter: { conditions: ['refurbished'], dedup_enabled: true },
+        exclude_patterns: ['broken', 'damaged'],
+      },
+      notifications: savedWatch.notifications, grouping: savedWatch.grouping,
+    })
+    expect(payload.source_queries).not.toHaveProperty('cex')
+  })
+
+  it('clears owned filters and overrides intentionally while retaining the underlying spec rules', () => {
+    const form = formDataFromWatch(savedWatch)
+    const payload = buildWatchEditPayload({
+      ...form, category: 'gpu', display_title: '', synonym_groups: [], excluded_terms: [],
+      filters: { price_max: '', condition: [] }, advancedMode: false,
+    }, savedWatch)
+    expect(payload).toMatchObject({
+      category: 'gpu', display_title: null, synonym_groups: [], source_queries: {},
+      filters: {
+        price_max: null, condition_filter: { conditions: [], dedup_enabled: true }, exclude_patterns: [],
+        spec_match: { excluded_title_terms: ['parts'], synonym_groups: [['Militado']], ram_gb: 16 },
+      },
+    })
+    // Choosing simple mode removes raw overrides for both creation and editing.
+    expect(buildWatchCreatePayload({ ...form, advancedMode: false }).source_queries).toEqual({})
+  })
+
+  it('keeps form term edits separate from the saved watch until submission', () => {
+    const form = formDataFromWatch(savedWatch)
+    form.synonym_groups[0][0] = 'Changed'
+    form.excluded_terms.push('damaged')
+    form.filters.condition.push('refurbished')
+    expect(savedWatch.synonym_groups).toEqual([['ML05', 'ML05B'], ['blue', 'mint']])
+    expect(savedWatch.filters?.exclude_patterns).toEqual(['broken'])
+    expect(savedWatch.filters?.condition_filter?.conditions).toEqual(['new'])
+  })
+
+  it('changes only enabled state when pausing or resuming a watch', () => {
+    const form = formDataFromWatch(savedWatch)
+    const { id, last_check_at, ...config } = savedWatch
+    expect(buildWatchEditPayload({ ...form, enabled: true }, savedWatch)).toEqual({ ...config, enabled: true })
+    expect(validateWatchForm({ ...form, sources: [] })).toBe('Select at least one source.')
+  })
+})
 
 describe('WatchForm payload transformation', () => {
   it('transforms sources from string[] to object[] with connector field', () => {

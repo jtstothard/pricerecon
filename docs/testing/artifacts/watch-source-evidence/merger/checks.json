@@ -1,0 +1,71 @@
+[
+  {
+    "name": "mypy",
+    "command": [
+      "/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python",
+      "-m",
+      "mypy",
+      "--no-incremental",
+      "src/pricerecon/categories/watch_sources.py",
+      "src/pricerecon/connectors/evidence.py",
+      "src/pricerecon/connectors/ebay_evidence.py",
+      "src/pricerecon/connectors/shopify_evidence.py",
+      "src/pricerecon/models/source_evidence.py",
+      "src/pricerecon/connectors/aliexpress.py",
+      "src/pricerecon/connectors/aliexpress_browser.py",
+      "src/pricerecon/connectors/ebay.py",
+      "src/pricerecon/connectors/shopify.py",
+      "src/pricerecon/core/acquisition.py",
+      "src/pricerecon/core/collection_transport.py",
+      "src/pricerecon/models/discovery.py",
+      "src/pricerecon/models/history.py",
+      "src/pricerecon/models/qualification.py",
+      "src/pricerecon/core/qualification.py",
+      "src/pricerecon/db/discovery.py",
+      "src/pricerecon/models/tracking.py"
+    ],
+    "environment": {
+      "PATH": "/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONPATH": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src:/Users/jay/.t3/worktrees/pricerecon/watch-category-integration"
+    },
+    "exit_code": 0,
+    "artifact": "mypy.log"
+  },
+  {
+    "name": "frontend-tests",
+    "command": [
+      "npm",
+      "--prefix",
+      "frontend",
+      "run",
+      "test",
+      "--",
+      "--run"
+    ],
+    "environment": {
+      "PATH": "/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONPATH": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src:/Users/jay/.t3/worktrees/pricerecon/watch-category-integration"
+    },
+    "exit_code": 0,
+    "artifact": "frontend-tests.log"
+  },
+  {
+    "name": "eslint",
+    "command": [
+      "npm",
+      "--prefix",
+      "frontend",
+      "run",
+      "lint"
+    ],
+    "environment": {
+      "PATH": "/Users/jay/.nvm/versions/node/v24.14.1/bin:/usr/bin:/bin",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONPATH": "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/src:/Users/jay/.t3/worktrees/pricerecon/watch-category-integration"
+    },
+    "exit_code": 2,
+    "artifact": "eslint.log"
+  }
+]

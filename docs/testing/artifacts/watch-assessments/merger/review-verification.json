@@ -1,0 +1,39 @@
+{
+  "recorded_at": "2026-10-27T20:06:56.613518+00:00",
+  "integration_merge": "20728c299d2b8a8d217e80dd0dcd5fef6fa79ea1",
+  "merge_parents": [
+    "52104eb3de8e4b7c6ff615763d8ecc3572e4e34d",
+    "81f18ab18d3417f17945ca46ec437e628689a892"
+  ],
+  "source_head": "81f18ab18d3417f17945ca46ec437e628689a892",
+  "source_clean": true,
+  "original_manifest_files_unchanged": 77,
+  "passed": {
+    "guarded_workflows": 171,
+    "contracts": 37,
+    "frontend_tests": 25,
+    "build_modules": 644,
+    "independent_probes": 3,
+    "focused_ruff_files": 13,
+    "source_receipt_hashes": 45
+  },
+  "failed": {
+    "focused_mypy": "one new arg-type error at models/tracking.py:101",
+    "uncached_mypy_model": "same error",
+    "whole_diff_whitespace": "retained raw logs only"
+  },
+  "blocked": {
+    "eslint": "existing missing eslint.config.*",
+    "08": "parent source type repair pending",
+    "12": "08 and 11 remain open"
+  },
+  "frontier": {
+    "01-07,09,10": "closed offline",
+    "08": "open pending type repair",
+    "11": "existing owner active",
+    "12": "blocked"
+  },
+  "limits": "offline fixture proof only; collection staged; live/buyer/calibration/source-rights/operating/physical-resource/activation gates unproven",
+  "no_new_browser_or_fixture_server": true,
+  "no_source_repair": true
+}

@@ -1,0 +1,264 @@
+{
+  "date": "2026-10-27",
+  "integration_before": "c84f1f166a3bd6688cbfbafc6fe350e7a80f987c",
+  "source_before": "2ac8eff897318572f50dff4ecfc77a2b32f05c9b",
+  "source_refresh_merge": "f61bc3cab241f86795bcf320276151b69480bc29",
+  "integration_merge": "906ef0f690c5a5545d8845878d34fa91c9fd1ff6",
+  "merge_parents": [
+    "c84f1f166a3bd6688cbfbafc6fe350e7a80f987c",
+    "f61bc3cab241f86795bcf320276151b69480bc29"
+  ],
+  "conflicts": false,
+  "source_and_integration_merge_trees_equal": true,
+  "verified_trees": {
+    "src": "c7e18ec09d790bcb9e6bd22b2902da98676565b7",
+    "tests": "eaa853dfea12f08df06e08ad3af72442a00a5ed5",
+    "frontend": "fdcd941bb28fda22b7a8e2d9e7d606a6f9a7f7ec"
+  },
+  "correction_target_ownership_paths_unchanged": [
+    "src/pricerecon/db/corrections.py",
+    "tests/test_correction_target_ownership.py",
+    "tests/monitoring/correction_repair_merger_probe.py",
+    ".scratch/watch-category-discovery/issues/08-compare-qualified-offers.md",
+    "docs/testing/artifacts/watch-corrections/target-ownership/descendant-target.json",
+    "docs/testing/artifacts/watch-corrections/target-ownership/final-suite.txt",
+    "docs/testing/artifacts/watch-corrections/target-ownership/initial-suite.txt",
+    "docs/testing/artifacts/watch-corrections/target-ownership/original-order.json",
+    "docs/testing/artifacts/watch-corrections/target-ownership/reverse-order.json",
+    "docs/testing/artifacts/watch-corrections/target-ownership/sibling-control.json",
+    "docs/testing/artifacts/watch-corrections/target-ownership/verification.json"
+  ],
+  "application_suite": {
+    "passed": 148,
+    "seconds": 144.31,
+    "current_integration_cases": 126,
+    "new_shared_grant_cases": 22,
+    "skips": 0,
+    "xfails": 0,
+    "single_invocation": true,
+    "cleared_environment": true,
+    "modules": [
+      "tests/test_collection_workflow.py",
+      "tests/test_monitoring_workflow.py",
+      "tests/test_discovery_workflow.py",
+      "tests/test_qualification_workflow.py",
+      "tests/test_cost_workflow.py",
+      "tests/test_history_workflow.py",
+      "tests/test_coupon_workflow.py",
+      "tests/test_tracking_workflow.py",
+      "tests/test_correction_workflow.py",
+      "tests/test_correction_target_ownership.py",
+      "tests/test_shared_grant_workflow.py"
+    ]
+  },
+  "contracts": {
+    "passed": 37,
+    "seconds": 0.39,
+    "inherited_warnings": 10,
+    "files": [
+      "tests/test_rate_limiter.py",
+      "tests/test_external_browser.py"
+    ]
+  },
+  "mypy": {
+    "passed": true,
+    "files": 14,
+    "follow_imports": "silent",
+    "existing_unused_override_notes": true
+  },
+  "ruff": {
+    "repair_changed_files": 17,
+    "clean": 15,
+    "inherited_diagnostics": 18,
+    "added": 0,
+    "baseline": "c84f1f166a3bd6688cbfbafc6fe350e7a80f987c",
+    "new_timestamp_probe": "also clean"
+  },
+  "exact_retained_probe_results": [
+    {
+      "case": "context_api",
+      "exit": 0,
+      "result": "passed",
+      "actual_sends": 1,
+      "expected_sends": 1,
+      "notifications_sent": 0,
+      "blocked_edges": []
+    },
+    {
+      "case": "context_scheduler",
+      "exit": 0,
+      "result": "passed",
+      "actual_sends": 1,
+      "expected_sends": 1,
+      "notifications_sent": 0,
+      "blocked_edges": []
+    },
+    {
+      "case": "legacy_no_grant",
+      "exit": 0,
+      "result": "passed",
+      "actual_sends": 1,
+      "expected_sends": 1,
+      "notifications_sent": 0,
+      "blocked_edges": []
+    },
+    {
+      "case": "redirect",
+      "exit": 0,
+      "result": "passed",
+      "actual_sends": 1,
+      "expected_sends": 1,
+      "notifications_sent": 0,
+      "blocked_edges": []
+    },
+    {
+      "case": "process_seed",
+      "exit": 0,
+      "result": "passed",
+      "actual_sends": 1,
+      "expected_sends": 1,
+      "notifications_sent": 0,
+      "blocked_edges": []
+    },
+    {
+      "case": "process_resume",
+      "exit": 0,
+      "result": "passed",
+      "actual_sends": 0,
+      "expected_sends": 0,
+      "notifications_sent": 0,
+      "blocked_edges": []
+    }
+  ],
+  "additional_acceptance_results": [
+    {
+      "case": "request_cap",
+      "exit": 1,
+      "result": "failed",
+      "failures": [
+        "denied Watch status is completed, expected capped",
+        "denied Watch reports success=true",
+        "denied Watch advanced last_check_at"
+      ],
+      "before_last_check": "2026-10-27T12:00:00Z",
+      "after_last_check": "2026-10-27T13:00:00Z",
+      "additional_sends": 0,
+      "error": null
+    },
+    {
+      "case": "zero_elapsed",
+      "exit": 1,
+      "result": "failed",
+      "failures": [
+        "denied Watch status is completed, expected capped",
+        "denied Watch reports success=true",
+        "denied Watch advanced last_check_at"
+      ],
+      "before_last_check": null,
+      "after_last_check": "2026-10-27T13:00:00Z",
+      "additional_sends": 0,
+      "error": null
+    },
+    {
+      "case": "zero_provider",
+      "exit": 1,
+      "result": "failed",
+      "failures": [
+        "denied Watch status is completed, expected capped",
+        "denied Watch reports success=true",
+        "denied Watch advanced last_check_at"
+      ],
+      "before_last_check": null,
+      "after_last_check": "2026-10-27T13:00:00Z",
+      "additional_sends": 0,
+      "error": null
+    },
+    {
+      "case": "expired",
+      "exit": 0,
+      "result": "passed",
+      "failures": [],
+      "before_last_check": "2026-10-27T12:00:00Z",
+      "after_last_check": "2026-10-27T12:00:00Z",
+      "additional_sends": 0,
+      "error": null
+    }
+  ],
+  "frontend": {
+    "unchanged_tree": "fdcd941bb28fda22b7a8e2d9e7d606a6f9a7f7ec",
+    "reused_tests": 25,
+    "reused_build_modules": 642,
+    "reused_ui_receipts": [
+      "docs/testing/artifacts/watch-collection/merger-ui/receipt.json",
+      "docs/testing/artifacts/watch-collection/merger-correction-ui/receipt.json"
+    ],
+    "new_browser_or_preview_run": false,
+    "existing_ESLint_missing_config_blocker": true,
+    "existing_chunk_warning": true
+  },
+  "disposition": "10 open for denied Watch status/timestamp repair; 11 blocked and unclaimed; 07 closed and 08 active ownership preserved",
+  "activation": "staged",
+  "production_acceptance": false,
+  "gates": [
+    "denied all-source request/time/provider caps report completed/success and advance Watch last_check_at",
+    "unsupported browser origin/native/AI acquisition lanes",
+    "physical disk/WAL/log/control-metadata quotas",
+    "retention/deletion/backup/restore qualification",
+    "source access/retention rights",
+    "measured sustainable breadth/freshness/cost/maintenance ownership",
+    "live offer/history/notification evidence",
+    "buyer walkthrough and activation"
+  ],
+  "no_install_network_live_credentials_production_activation_deploy_push_PR_delegation_cleanup": true,
+  "original_dirty_parent_and_active_08_untouched": true,
+  "source_sha256": {
+    "src/pricerecon/api/discovery.py": "3b162491d0e7aa9b4c3c816fad1d569bc7c5c9baf8f1330f7e205604daf0f29f",
+    "src/pricerecon/api/watches.py": "e399ad32816539448075484f8a13e4a5676fd334ecaa6ed81cee858f79618196",
+    "src/pricerecon/core/acquisition.py": "bb2512fd25cda3dc1741f3952ee3578e5a313b510383c3398e99df8444a818af",
+    "src/pricerecon/core/collection_policy.py": "f3ca950cd91790329eb9cf77eaa9389f4cc99e50a71a3da22440356fc63571c3",
+    "src/pricerecon/core/collection_transport.py": "8e9255b48114981b8efd34bcdcaf888250b87a6ad63a5e58a2f0b0a725a161f2",
+    "src/pricerecon/core/discovery.py": "2ef2910f6a21eb55e2f677310289433f833e81d1e2ba1dd2f65f6d17b74ff041",
+    "src/pricerecon/core/exact_tracking.py": "a716b0bde353c6ad0b4bbf4859c9d72b583c5abc268fb94ad0b1a41f4bb8db44",
+    "src/pricerecon/core/rate_limiter.py": "96d60160f30ff7df2e28ba37677b4df60d826f9dc96570a4d30967e954d98016",
+    "src/pricerecon/core/watch_executor.py": "7841cf1b10e40c66af134bbc9e0af36c1380ba9d3233660464ac20505142f939",
+    "src/pricerecon/db/collection.py": "cddbcf2e487aacdf6d08afa6f3cde78e93cb0d259e40497596068f25e5f969f1",
+    "src/pricerecon/db/corrections.py": "f0e75811d475852f6e4fdfaa6cd9b5e4d9f915e3e11cb4610c84b69003abeaeb",
+    "src/pricerecon/db/discovery.py": "7513b3d526f99fd6f811309efd774e9d66fb71d3c6471f0374ed0e0cdfe3b039",
+    "tests/monitoring/collection_merger_probe.py": "292827627f65fdc4aba4bac1fafff268e8729c619e624296493a4ecb18e2e45c",
+    "tests/monitoring/collection_timestamp_merger_probe.py": "59807ab4a971d40bb095349e0becb300960958504f0c7a297ddd8905243c6d12",
+    "tests/monitoring/collection_workflows.py": "fb752c49e96a7ce526d8d84cae5aec6e6c98b79e8c199094aa67b3eca400c3e8",
+    "tests/monitoring/correction_repair_merger_probe.py": "f3d2092e61ea903c23dbc3c2c3ef347ceabc1aa0ec561227808a01fab924474e",
+    "tests/monitoring/shared_grant_workflows.py": "ad6bf6327cb6de1ffb9baa2d951490f51df5bc5d2f645084db21fc89d9919122",
+    "tests/monitoring/workflows.py": "d1997bb0e73214b4e70ab28aab1fb251349fd99d2ab03d34d0c780b2d0147253",
+    "tests/test_correction_target_ownership.py": "168feca2334a679ad083fbeafc7e4a351888736028ed5776559447e7b53afd56",
+    "tests/test_external_browser.py": "83fbd21d01857e6bc5dd298011bf5dc644e2f2099e4a06e71510e9fd9167ea16",
+    "tests/test_shared_grant_workflow.py": "fb79f8a8f09b1ed71fe7b1d1bbddf888e9bbf7beb5f45a2a5c24d2a4a7ad37d9"
+  },
+  "artifact_sha256": {
+    "context_api.json": "bc4e1830641e3df5d2df950f7be589ea747ceb319dfc89547fc93edf31ff06a6",
+    "context_api.txt": "023c009b72409015f77ff50d1a52c01b5bbb35a30eba238e43fce32c593feb2b",
+    "context_scheduler.json": "0b32267d2b37ba10a3f94c728f6f1ab2de7334de221659d24f8a2be3d4002260",
+    "context_scheduler.txt": "51eb38fb404dad59907659e845d9c395d18b6610da3a052a9b9ae06c2e22bc66",
+    "expired.json": "93f4312c2dff3a667df1a5aa1c81e398eb5bd867ecdfdf910e1489ab61f1a6f0",
+    "expired.txt": "023c009b72409015f77ff50d1a52c01b5bbb35a30eba238e43fce32c593feb2b",
+    "focused-checks.txt": "ed2cbc2a5152385250304e2531efd45f166fe4b579ce861d86fc7bb077ae3f50",
+    "full-suite.txt": "c9e3e240b6efc46db72726dc5d0320ceeacfe0b3dd14f2ed499f0e4746500b23",
+    "legacy_no_grant.json": "43a35283053ac914a0aadbcd08b693b55599177ed5ede1201757fa502bcd207e",
+    "legacy_no_grant.txt": "023c009b72409015f77ff50d1a52c01b5bbb35a30eba238e43fce32c593feb2b",
+    "probe-results.json": "b5d342e821d4b72d4a08fc886cecc698017ee3eff8f734a4299818d6e9d82095",
+    "process_resume.json": "3bffe991bdfb289130e4f6ee2d73fff6bc28525d1310aec769966935ad86a346",
+    "process_resume.txt": "023c009b72409015f77ff50d1a52c01b5bbb35a30eba238e43fce32c593feb2b",
+    "process_seed.json": "8bf4e711cf9b54106708fc9833fb979451cc4d2aa2c2c79224eede8a6b029591",
+    "process_seed.txt": "023c009b72409015f77ff50d1a52c01b5bbb35a30eba238e43fce32c593feb2b",
+    "redirect.json": "3b658a4a35713ed912debbd83cbc450d3ca6750f38e2627654d14929e625f721",
+    "redirect.txt": "023c009b72409015f77ff50d1a52c01b5bbb35a30eba238e43fce32c593feb2b",
+    "request_cap.json": "07ae246dd8e4fbbe3892e369934c03916d6f14256807d9e43170505dd356dd7f",
+    "request_cap.txt": "4337d0059464efe64efe8b1938aeb6aab41a6e0c4983382a01596d7208dd581e",
+    "ruff.json": "a67d5fd1ab63ff3ca6accb4ca6a13a993e51e3ad5b51f5310eb0cb439ff01a4e",
+    "timestamp-results.json": "30c73d262baab891268ffa855d3549d589378cc35d6f8058e26917f28acb0336",
+    "zero_elapsed.json": "95f5b81e34cb16dc8bcca30ae8a69e32990d6054d192f692877bb4845c126f3d",
+    "zero_elapsed.txt": "4337d0059464efe64efe8b1938aeb6aab41a6e0c4983382a01596d7208dd581e",
+    "zero_provider.json": "5c4a6c0230c9891281d3003d3129afb2cbd4a3881c23e0eeec5c3ef432d4492d",
+    "zero_provider.txt": "4337d0059464efe64efe8b1938aeb6aab41a6e0c4983382a01596d7208dd581e"
+  }
+}

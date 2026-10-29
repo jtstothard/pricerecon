@@ -1,0 +1,460 @@
+{
+  "mode": "malformed",
+  "feed": {
+    "source_coverage": [
+      {
+        "family": "aliexpress",
+        "source": "AliExpress browser-first",
+        "route": "aliexpress_browser_first_v1",
+        "accepted_status": "reviewed_lead",
+        "activation": "staged",
+        "reason": "Bounded displayed selections; no accepted selected SKU stock or UK total.",
+        "prerequisites": [
+          "capture/display/reuse authority",
+          "bounded browser-origin accounting",
+          "separate archive grant"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "aliexpress",
+        "source": "AliExpress affiliate",
+        "route": "aliexpress_affiliate",
+        "accepted_status": "unqualified",
+        "activation": "staged",
+        "reason": "Narrower affiliate inventory cannot replace browser discovery; detail unqualified.",
+        "prerequisites": [
+          "intended capture and retention authority",
+          "detail/selection qualification"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "aliexpress",
+        "source": "AliExpress DS",
+        "route": "aliexpress_ds",
+        "accepted_status": "unsupported",
+        "activation": "staged",
+        "reason": "No existing DS entitlement assumed.",
+        "prerequisites": [
+          "demonstrated DS entitlement",
+          "source retention authority"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "ebay_secondhand",
+        "source": "eBay Browse new / used",
+        "route": "ebay_browse_search_v1",
+        "accepted_status": "reviewed_lead",
+        "activation": "staged",
+        "reason": "Condition and purchase mode remain distinct; search pages do not certify selected offers.",
+        "prerequisites": [
+          "provider-approved capture/display use",
+          "retention/derivation grant",
+          "destination and complete UK cost",
+          "freshness review"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "ebay_secondhand",
+        "source": "Chrono24",
+        "route": "chrono24_manual_lead",
+        "accepted_status": "blocked",
+        "activation": "staged",
+        "reason": "Manual lead only; automated acquisition and history unqualified.",
+        "prerequisites": [
+          "approved automated/API/retention route",
+          "dealer/private seller and shipping quote evidence"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "brand_direct",
+        "source": "Militado",
+        "route": "militado_read_only",
+        "accepted_status": "blocked",
+        "activation": "staged",
+        "reason": "Store/manufacturer ownership and exact cohort fields remain unproven.",
+        "prerequisites": [
+          "recognized Web Bot Auth signer",
+          "store/manufacturer identity",
+          "capture/reuse authority"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "uk_retail",
+        "source": "Watch Shop",
+        "route": "watch_shop_public",
+        "accepted_status": "unqualified",
+        "activation": "staged",
+        "reason": "Current exact offer and use/access qualification missing.",
+        "prerequisites": [
+          "current applicable access/use terms",
+          "selected offer delivery evidence; checkout may be required"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "uk_retail",
+        "source": "WatchGecko",
+        "route": "watchgecko_public",
+        "accepted_status": "unqualified",
+        "activation": "staged",
+        "reason": "Public reading does not grant reusable archive or deep-link publication.",
+        "prerequisites": [
+          "intended storage/display/deep-link authority",
+          "selected complete-watch offer"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "uk_shipping_international",
+        "source": "Sakura Watches",
+        "route": "sakura_clean_category",
+        "accepted_status": "unqualified",
+        "activation": "staged",
+        "reason": "Clean category distinct from restricted search/paging; physical versus orderable stock unresolved.",
+        "prerequisites": [
+          "route-specific access and retention review",
+          "selected stock and buyer import cost"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "uk_shipping_international",
+        "source": "San Martin independent retailer",
+        "route": "shopify_products_v1",
+        "accepted_status": "reviewed_lead",
+        "activation": "staged",
+        "reason": "sanmartin.watch is an independent retailer; selected stock, dispatch origin and UK fees unqualified.",
+        "prerequisites": [
+          "store-specific reuse/archive authority",
+          "selected SKU and fulfilment evidence",
+          "UK checkout costs"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": {
+          "source_evidence": {
+            "route": "shopify_products_v1",
+            "source_host": "www.sanmartin.watch",
+            "capture_id": "0d90c811-d9f6-4238-be5d-adee7cc80b5a",
+            "retrieved_at": "2026-10-27T12:00:00Z",
+            "use": {
+              "permission_reference": "original-fixture",
+              "retention": "synthetic"
+            },
+            "history_rights": "unqualified",
+            "prerequisites": [
+              "store-specific capture/display/reuse authority",
+              "separate archive grant",
+              "selected stock/fulfilment origin and UK checkout cost"
+            ],
+            "pages_captured": 0,
+            "page_limit": null,
+            "item_limit": null,
+            "detail_limit": null,
+            "discovered_count": null,
+            "inspected_count": null,
+            "next_page": null,
+            "content_truncated": null,
+            "completeness": "unknown",
+            "issues": []
+          },
+          "source": "shopify",
+          "route": "connector_search_v1",
+          "state": "failed",
+          "listing_count": 0,
+          "reason": "connector_error",
+          "completeness": "unknown",
+          "reused_capture_id": null
+        }
+      },
+      {
+        "family": "search_aggregator_community",
+        "source": "Brave API",
+        "route": "brave_search",
+        "accepted_status": "unqualified",
+        "activation": "staged",
+        "reason": "Runtime access and plan/storage entitlement unresolved.",
+        "prerequisites": [
+          "existing token and actual plan inventory",
+          "storage-entitled plan",
+          "merchant re-verification"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "search_aggregator_community",
+        "source": "SearXNG",
+        "route": "searxng_search",
+        "accepted_status": "unqualified",
+        "activation": "staged",
+        "reason": "Healthy transport/configuration is not permitted merchant discovery.",
+        "prerequisites": [
+          "actual engine/upstream use and storage terms",
+          "merchant re-verification"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "search_aggregator_community",
+        "source": "Google Shopping",
+        "route": "google_shopping_lead",
+        "accepted_status": "blocked",
+        "activation": "staged",
+        "reason": "Retained search-path access stop; aggregator is not selected-price authority.",
+        "prerequisites": [
+          "permitted exact search route",
+          "merchant re-verification and reuse rights"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "search_aggregator_community",
+        "source": "Google Custom Search JSON API",
+        "route": "google_custom_search",
+        "accepted_status": "unsupported",
+        "activation": "staged",
+        "reason": "Closed to new customers; retained decision records existing-service end 2027-01-01.",
+        "prerequisites": [
+          "supported alternative under separate decision"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "search_aggregator_community",
+        "source": "HotUKDeals",
+        "route": "hotukdeals_feed",
+        "accepted_status": "blocked",
+        "activation": "staged",
+        "reason": "Retained terms/robots HTTP403; no automation/storage grant established.",
+        "prerequisites": [
+          "readable applicable feed/use conditions",
+          "retention authority"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "search_aggregator_community",
+        "source": "Reddit watch communities",
+        "route": "reddit_watch_communities",
+        "accepted_status": "blocked",
+        "activation": "staged",
+        "reason": "RSS/browser fallback does not replace provider-approved API use.",
+        "prerequisites": [
+          "provider-approved app/use case",
+          "approved retention scope"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      }
+    ],
+    "cohort_gaps": [
+      "Militado ML05/ML05B: real manufacturer/store identity, selection and UK offer evidence unresolved.",
+      "Merkur Lightning salmon: no reconciled exact reference/offer; missing evidence remains an abstention."
+    ],
+    "category": "watches",
+    "collection_state": "staged",
+    "collection_reason": "Live collection awaits explicit source policy, permissions and activation.",
+    "candidates": [],
+    "captures": [
+      {
+        "correction_input_revision": 0,
+        "publication_state": "accepted",
+        "history_contract_version": "observation-history-v1",
+        "capture_id": "489199f3-5a6d-487a-b491-4ff5c822a5c0",
+        "captured_at": "2026-10-27T12:00:00Z",
+        "request": {
+          "category": "watches",
+          "query": "SN0144",
+          "sources": [
+            "shopify"
+          ],
+          "source_queries": {}
+        },
+        "admission": {
+          "mode": "offline_verification",
+          "policy_reference": "ticket11-original-fixtures",
+          "permission_reference": "original-synthetic-data",
+          "activation_reference": "guarded-child"
+        },
+        "outcomes": [
+          {
+            "source_evidence": {
+              "route": "shopify_products_v1",
+              "source_host": "www.sanmartin.watch",
+              "capture_id": "0d90c811-d9f6-4238-be5d-adee7cc80b5a",
+              "retrieved_at": "2026-10-27T12:00:00Z",
+              "use": {
+                "permission_reference": "original-fixture",
+                "retention": "synthetic"
+              },
+              "history_rights": "unqualified",
+              "prerequisites": [
+                "store-specific capture/display/reuse authority",
+                "separate archive grant",
+                "selected stock/fulfilment origin and UK checkout cost"
+              ],
+              "pages_captured": 0,
+              "page_limit": null,
+              "item_limit": null,
+              "detail_limit": null,
+              "discovered_count": null,
+              "inspected_count": null,
+              "next_page": null,
+              "content_truncated": null,
+              "completeness": "unknown",
+              "issues": []
+            },
+            "source": "shopify",
+            "route": "connector_search_v1",
+            "state": "failed",
+            "listing_count": 0,
+            "reason": "connector_error",
+            "completeness": "unknown",
+            "reused_capture_id": null
+          }
+        ]
+      }
+    ],
+    "preferences": {
+      "category": "watches",
+      "revision": 0,
+      "updated_at": null,
+      "values": {
+        "compact_max_width_mm": null,
+        "compact_strength": "hard",
+        "colourful_dials": [],
+        "colourful_strength": "soft",
+        "budget_gbp": null,
+        "budget_strength": "hard"
+      },
+      "interpretation": [
+        {
+          "field": "compact",
+          "strength": "unset",
+          "meaning": "Compact is unset; choose a maximum case width."
+        },
+        {
+          "field": "colourful",
+          "strength": "unset",
+          "meaning": "Colourful is unset; choose the dial colours you want."
+        },
+        {
+          "field": "budget",
+          "strength": "unset",
+          "meaning": "Budget is unset; choose a public UK delivered budget."
+        }
+      ]
+    },
+    "tracking": []
+  },
+  "collection": {
+    "state": "supplied",
+    "activation": "staged",
+    "gates": [
+      "live_activation_not_authorized",
+      "production_operating_envelope_unproven"
+    ],
+    "scope_id": "retained-offline-regressions",
+    "version": "synthetic-v1",
+    "stops_at": "2030-01-01T00:00:00Z",
+    "usage": [
+      {
+        "resource": "requests",
+        "used": 2,
+        "limit": 100000,
+        "tracking_reserve": 0
+      },
+      {
+        "resource": "pages",
+        "used": 2,
+        "limit": 100000,
+        "tracking_reserve": 0
+      },
+      {
+        "resource": "details",
+        "used": 0,
+        "limit": 100000,
+        "tracking_reserve": 0
+      },
+      {
+        "resource": "retries",
+        "used": 0,
+        "limit": 100000,
+        "tracking_reserve": 0
+      },
+      {
+        "resource": "fallbacks",
+        "used": 0,
+        "limit": 100000,
+        "tracking_reserve": 0
+      },
+      {
+        "resource": "storage_bytes",
+        "used": 1433,
+        "limit": 1000000000,
+        "tracking_reserve": 0
+      },
+      {
+        "resource": "elapsed_seconds",
+        "used": 30,
+        "limit": 1000000,
+        "tracking_reserve": 0
+      }
+    ],
+    "provider_usage": [
+      {
+        "source": "shopify",
+        "used": 2,
+        "limit": 20,
+        "tracking_reserve": 0
+      }
+    ],
+    "attempts": [
+      {
+        "id": "51224414-78ae-42c1-ba9d-f231d68c9f5d",
+        "source": "shopify",
+        "purpose": "discovery",
+        "context_id": "489199f3-5a6d-487a-b491-4ff5c822a5c0",
+        "query": "SN0144",
+        "attempted_at": "2026-10-27T12:00:00Z",
+        "state": "failed",
+        "reason": "connector_error",
+        "next_eligible_at": "2026-10-27T12:00:00Z",
+        "last_good_at": null,
+        "last_good_age_seconds": null,
+        "evidence_state": "unrefreshed"
+      }
+    ]
+  },
+  "sends": [
+    [
+      "shopify",
+      "https://www.sanmartin.watch/search?q=SN0144&type=product"
+    ],
+    [
+      "shopify",
+      "https://www.sanmartin.watch/products.json?limit=250"
+    ]
+  ],
+  "notifications": [],
+  "blocked_edges": []
+}

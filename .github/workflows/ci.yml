@@ -73,6 +73,15 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      # The pilot UI tests serve frontend/dist (gitignored), and the quality
+      # gate's own build step runs after pytest, so the suite needs the build
+      # present first. Documented requirement:
+      # docs/testing/live-pilot-offline-repair.md ("Frontend build is required
+      # for the unchanged application UI").
+      - name: Build frontend for the test suite
+        working-directory: frontend
+        run: npm run build
+
       - name: Check public-release markers
         run: python scripts/check_public_markers.py
 

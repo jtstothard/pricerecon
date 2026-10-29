@@ -13,6 +13,8 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from pricerecon.api.auth import require_api_key
+from pricerecon.api.corrections import router as corrections_router
+from pricerecon.api.discovery import router as discovery_router
 from pricerecon.api.events import router as events_router
 from pricerecon.api.export import router as export_router
 from pricerecon.api.health import router as health_router
@@ -20,6 +22,7 @@ from pricerecon.api.history import router as history_router
 from pricerecon.api.listings import router as listings_router
 from pricerecon.api.signals import router as signals_router
 from pricerecon.api.sources import router as sources_router
+from pricerecon.api.tracking import router as tracking_router
 from pricerecon.api.watches import router as watches_router
 from pricerecon.config import get_settings
 from pricerecon.core.scheduler import scheduler_lifespan
@@ -68,19 +71,14 @@ async def check_watch(watch_id: int) -> None:
     print(f"[scheduler] Executing watch {watch_id}")
     from pricerecon.core.watch_executor import execute_watch
 
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    try:
-        cursor.execute(
-            "UPDATE watches SET last_check_at = ? WHERE id = ?",
-            (datetime.now(timezone.utc).isoformat(), watch_id),
-        )
-        conn.commit()
-    finally:
-        conn.close()
-
     try:
         result = await execute_watch(watch_id)
+        if not result["success"]:
+            print(
+                f"[scheduler] Watch {watch_id} {result.get('collection_state', 'failed')}: "
+                f"{result.get('error', 'Unknown error')}"
+            )
+            return
         events = result.get("events", [])
         notifications = result.get("notifications_sent", 0)
         listings = result.get("listings_found", 0)
@@ -121,6 +119,9 @@ app.add_middleware(
 
 api_deps = [Depends(require_api_key)] if settings.api_key else []
 app.include_router(health_router, prefix="/api", tags=["Health"], dependencies=api_deps)
+app.include_router(discovery_router, prefix="/api", tags=["Discovery"], dependencies=api_deps)
+app.include_router(corrections_router, prefix="/api", tags=["Corrections"], dependencies=api_deps)
+app.include_router(tracking_router, prefix="/api", tags=["Tracking"], dependencies=api_deps)
 app.include_router(watches_router, prefix="/api", tags=["Watches"], dependencies=api_deps)
 app.include_router(listings_router, prefix="/api", tags=["Listings"], dependencies=api_deps)
 app.include_router(history_router, prefix="/api", tags=["History"], dependencies=api_deps)

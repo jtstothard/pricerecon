@@ -1,11 +1,10 @@
 """eBay Browse API connector with OAuth token management - Enhanced with startup burst protection."""
 
-import logging
 import asyncio
-import threading
+import logging
 import re
-from decimal import Decimal
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from typing import Any, Optional
 from urllib.parse import quote_plus
 
@@ -14,33 +13,12 @@ from pydantic import BaseModel, Field, field_validator
 
 from pricerecon.connectors.base import BaseConnector
 from pricerecon.connectors.external_browser import as_connector_degraded_error
+from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
+from pricerecon.core.collection_transport import collection_http_client
 from pricerecon.models import NormalizedListing, SourceType
+from pricerecon.models.qualification import EvidenceSearchReport
 
 logger = logging.getLogger(__name__)
-
-# Token fetch call tracking for startup burst investigation
-_token_fetch_calls: dict[str, dict[str, Any]] = {}
-_token_fetch_lock = threading.Lock()
-
-
-def _track_token_fetch_call(operation: str, cache_key: str, details: str = "") -> None:
-    """Track token fetch calls with timing and sequence information."""
-    with _token_fetch_lock:
-        timestamp = datetime.now(timezone.utc).isoformat()
-        thread_id = threading.current_thread().ident
-        call_id = f"{timestamp}:{thread_id}"
-
-        _token_fetch_calls[call_id] = {
-            "timestamp": timestamp,
-            "thread_id": thread_id,
-            "operation": operation,
-            "cache_key": cache_key,
-            "details": details,
-        }
-
-        logger.info(
-            f"[TOKEN_FETCH_TRACKING] {operation} | cache_key={cache_key} | thread={thread_id} | {details}"
-        )
 
 
 class eBayOAuthToken(BaseModel):
@@ -106,14 +84,14 @@ class eBayTokenStore:
             if token.expires_at > datetime.now(timezone.utc) + timedelta(minutes=5):
                 return token
         except Exception as e:
-            logger.warning(f"Failed to parse stored token: {e}")
+            logger.warning("Failed to parse stored token (%s)", type(e).__name__)
 
         return None
 
     def save_token(self, token: eBayOAuthToken) -> None:
         """Save token to database, preserving existing config keys."""
-        import sqlite3
         import json
+        import sqlite3
         from pathlib import Path
 
         db = Path(self.db_path)
@@ -146,7 +124,7 @@ class eBayTokenStore:
             try:
                 existing_config = json.loads(row[0])
             except Exception as e:
-                logger.warning(f"Failed to parse existing config: {e}")
+                logger.warning("Failed to parse existing config (%s)", type(e).__name__)
 
         # Merge the new token data
         existing_config["oauth_token"] = token.model_dump(mode="json")
@@ -207,34 +185,22 @@ class _EBayTokenFetchCoordinator:
             RuntimeError: If token fetch fails after all retries
         """
         cache_key = f"{app_id}:{cert_id or app_id}"
-        _track_token_fetch_call(
-            "FETCH_TOKEN_ENTRY",
-            cache_key,
-            f"app_id={app_id[:8]}... cert_id={'SET' if cert_id else 'NONE'}",
-        )
 
         # First, check if there's already an active fetch (lock-protected read)
         async with cls._active_fetches_lock:
             if cache_key in cls._active_fetches:
-                logger.info(f"Waiting for in-progress token fetch for credentials {cache_key}")
-                _track_token_fetch_call(
-                    "WAITING_FOR_ACTIVE_FETCH", cache_key, "Found existing fetch in progress"
-                )
+                logger.info("Waiting for in-progress eBay token fetch")
                 existing_task = cls._active_fetches[cache_key]
                 # Don't release lock until we've added a waiter
                 # The existing task will clean up the entry
                 try:
                     result: eBayOAuthToken = await existing_task
-                    _track_token_fetch_call(
-                        "REUSED_ACTIVE_FETCH", cache_key, "Successfully reused in-progress fetch"
-                    )
                     return result
                 finally:
                     # The existing task will clean up the active fetches dict
                     pass
             else:
                 # No active fetch, create new one
-                _track_token_fetch_call("CREATING_NEW_FETCH", cache_key, "No existing fetch found")
                 fetch_task = asyncio.create_task(
                     cls._fetch_token_with_retry(
                         app_id, cert_id, client, max_retries, initial_backoff
@@ -243,22 +209,13 @@ class _EBayTokenFetchCoordinator:
                 cls._active_fetches[cache_key] = fetch_task
 
         try:
-            _track_token_fetch_call(
-                "AWAITING_FETCH_TASK", cache_key, "Waiting for fetch completion"
-            )
             result = await fetch_task
-            _track_token_fetch_call(
-                "FETCH_TASK_COMPLETE", cache_key, "Fetch completed successfully"
-            )
             return result
         finally:
             # Clean up completed task
             async with cls._active_fetches_lock:
                 if cache_key in cls._active_fetches and cls._active_fetches[cache_key].done():
                     cls._active_fetches.pop(cache_key, None)
-                    _track_token_fetch_call(
-                        "CLEANED_UP_FETCH", cache_key, "Removed completed fetch from active fetches"
-                    )
 
     @staticmethod
     async def _fetch_token_with_retry(
@@ -269,22 +226,12 @@ class _EBayTokenFetchCoordinator:
         initial_backoff: float,
     ) -> eBayOAuthToken:
         """Fetch token with exponential backoff retry logic."""
-        cache_key = f"{app_id}:{cert_id or app_id}"
-        _track_token_fetch_call(
-            "FETCH_WITH_RETRY_ENTRY",
-            cache_key,
-            f"max_retries={max_retries} initial_backoff={initial_backoff}",
-        )
 
         url = "https://api.ebay.com/identity/v1/oauth2/token"
         backoff = initial_backoff
-        last_error: Exception | None = None
 
         for attempt in range(max_retries):
             try:
-                _track_token_fetch_call(
-                    "ATTEMPT_START", cache_key, f"attempt={attempt+1}/{max_retries}"
-                )
 
                 headers = {
                     "Content-Type": "application/x-www-form-urlencoded",
@@ -296,11 +243,7 @@ class _EBayTokenFetchCoordinator:
                     "scope": "https://api.ebay.com/oauth/api_scope",
                 }
 
-                _track_token_fetch_call("MAKING_HTTP_REQUEST", cache_key, f"POST {url}")
                 response = await client.post(url, headers=headers, data=data)
-                _track_token_fetch_call(
-                    "HTTP_RESPONSE_RECEIVED", cache_key, f"status={response.status_code}"
-                )
                 response.raise_for_status()
 
                 token_data = response.json()
@@ -310,9 +253,6 @@ class _EBayTokenFetchCoordinator:
 
                 logger.info(
                     f"Successfully fetched eBay OAuth token on attempt {attempt + 1}/{max_retries}"
-                )
-                _track_token_fetch_call(
-                    "TOKEN_FETCH_SUCCESS", cache_key, f"expires_in={token_data['expires_in']}s"
                 )
 
                 return eBayOAuthToken(
@@ -324,13 +264,7 @@ class _EBayTokenFetchCoordinator:
                 )
 
             except httpx.HTTPStatusError as exc:
-                last_error = exc
                 status_code = exc.response.status_code
-                _track_token_fetch_call(
-                    "HTTP_STATUS_ERROR",
-                    cache_key,
-                    f"status={status_code} attempt={attempt+1}/{max_retries}",
-                )
 
                 # Retry on rate limiting (429) or server errors (5xx)
                 if attempt < max_retries - 1 and (status_code == 429 or status_code >= 500):
@@ -338,64 +272,40 @@ class _EBayTokenFetchCoordinator:
                         f"Token fetch failed with status {status_code}, "
                         f"retrying in {backoff}s (attempt {attempt + 1}/{max_retries})"
                     )
-                    _track_token_fetch_call(
-                        "RETRY_BACKOFF",
-                        cache_key,
-                        f"backoff={backoff}s reason=rate_limit_or_server_error",
-                    )
                     await asyncio.sleep(backoff)
                     backoff *= 2  # Exponential backoff
                 elif status_code == 401:
                     # 401 on token endpoint suggests invalid credentials, don't retry
                     logger.error("Token fetch failed with 401: invalid credentials")
-                    _track_token_fetch_call(
-                        "FATAL_401_ERROR", cache_key, "invalid_credentials - will not retry"
-                    )
                     raise RuntimeError(
                         "eBay OAuth token fetch failed with 401: invalid credentials. "
                         "Check EBAY_APP_ID and EBAY_CERT_ID environment variables."
-                    ) from exc
+                    ) from None
                 else:
                     # Other errors, raise immediately
                     logger.error(f"Token fetch failed with status {status_code}")
-                    _track_token_fetch_call(
-                        "FATAL_HTTP_ERROR", cache_key, f"status={status_code} - raising immediately"
-                    )
                     raise RuntimeError(
-                        f"eBay OAuth token fetch failed: {exc.response.status_code} {exc.response.text}"
-                    ) from exc
+                        f"eBay OAuth token fetch failed: HTTP {exc.response.status_code}"
+                    ) from None
 
-            except Exception as exc:
-                last_error = exc
-                _track_token_fetch_call(
-                    "GENERAL_EXCEPTION",
-                    cache_key,
-                    f"exception={type(exc).__name__} attempt={attempt+1}/{max_retries}",
-                )
+            except (httpx.HTTPError, ValueError, TypeError, KeyError, OverflowError) as exc:
                 if attempt < max_retries - 1:
                     logger.warning(
                         f"Token fetch failed with exception, retrying in {backoff}s "
-                        f"(attempt {attempt + 1}/{max_retries}): {exc}"
-                    )
-                    _track_token_fetch_call(
-                        "RETRY_BACKOFF", cache_key, f"backoff={backoff}s reason=general_exception"
+                        f"(attempt {attempt + 1}/{max_retries}; {type(exc).__name__})"
                     )
                     await asyncio.sleep(backoff)
                     backoff *= 2
                 else:
-                    logger.error(f"Token fetch failed after {max_retries} attempts: {exc}")
-                    _track_token_fetch_call(
-                        "FATAL_EXCEPTION",
-                        cache_key,
-                        f"exhausted_retries - exception={type(exc).__name__}",
+                    logger.error(
+                        "Token fetch failed after %s attempts (%s)", max_retries, type(exc).__name__
                     )
-                    raise
+                    raise RuntimeError(
+                        f"eBay OAuth token fetch failed ({type(exc).__name__})"
+                    ) from None
 
         # Should never reach here, but just in case
-        _track_token_fetch_call("UNEXPECTED_FALLTHROUGH", cache_key, "should_never_reach_here")
-        raise RuntimeError(
-            f"eBay OAuth token fetch failed after {max_retries} attempts. Last error: {last_error}"
-        )
+        raise RuntimeError(f"eBay OAuth token fetch failed after {max_retries} attempts")
 
 
 def _get_basic_auth(app_id: str, cert_id: Optional[str]) -> str:
@@ -408,23 +318,146 @@ def _get_basic_auth(app_id: str, cert_id: Optional[str]) -> str:
 
 
 class eBayConnector(BaseConnector):
+    collection_accounting = "http_v1"
+
     """eBay Browse API connector with startup burst protection."""
 
     CONNECTOR_ID = "ebay"
 
-    def __init__(self, app_id: str, cert_id: Optional[str] = None, db_path: str = "pricerecon.db"):
+    def __init__(
+        self,
+        app_id: str,
+        cert_id: Optional[str] = None,
+        db_path: str = "pricerecon.db",
+        *,
+        evidence_use: dict[str, object] | None = None,
+    ):
         self.app_id = app_id
         self.cert_id = cert_id
         self.db_path = db_path
         self.token_store = eBayTokenStore(db_path)
         self._client: Optional[httpx.AsyncClient] = None
+        from pricerecon.models.source_evidence import EvidenceUse
+
+        self.evidence_use = (
+            EvidenceUse.model_validate(evidence_use) if evidence_use is not None else None
+        )
+        self._last_browse_payload: object = None
+
+    def validate_evidence_access(self) -> None:
+        from pricerecon.connectors.evidence import receipt, require_evidence_use
+
+        self.evidence_receipt = receipt(
+            "ebay_browse_search_v1",
+            self.evidence_use,
+            [
+                "provider-authorised capture/display use",
+                "separate retention/derivation grant",
+                "display freshness review; six hours is not archive duration",
+            ],
+        )
+        require_evidence_use(self.evidence_use, self.connector_id)
+
+    async def search_with_evidence(
+        self, query: str, filters: dict[str, Any] | None = None
+    ) -> EvidenceSearchReport:
+        from pricerecon.connectors.ebay_evidence import browse_evidence
+
+        self.validate_evidence_access()
+        from pricerecon.pilot_bounds import active_pilot
+
+        if active_pilot.get() is not None:
+            return await self._pilot_search(query)
+        if self.has_external_browser():
+            raise ConnectorDegradedError(
+                ConnectorStatus.disabled,
+                "Reviewed discovery requires Browse, not a browser fallback",
+                self.connector_id,
+            )
+        self._last_browse_payload = None
+        await self.search(query, filters)
+        return browse_evidence(self._last_browse_payload, self.evidence_receipt)
+
+    async def _pilot_search(self, query: str) -> EvidenceSearchReport:
+        """Same Browse normalizer, restricted acquisition; no identity upgrades.
+
+        Reference-led title hints choose detail candidates, never establish a selected
+        variation or UK delivered total. Detail payloads must validate and match
+        the searched item, and remain bounded transient memory only.
+        """
+        from urllib.parse import quote
+
+        from pydantic import ValidationError
+
+        from pricerecon.connectors.ebay_evidence import BrowseItem, BrowsePage, browse_evidence
+        from pricerecon.pilot_bounds import QUERIES, active_pilot, detail_candidate
+
+        bounds = active_pilot.get()
+        if bounds is None or self._client is None or query not in QUERIES:
+            raise RuntimeError("Pilot context required")
+        if self.has_external_browser():
+            bounds.deny("pilot_browser_denied")
+        token = await self.ensure_token()
+        headers = {"Authorization": f"Bearer {token}", "X-EBAY-C-MARKETPLACE-ID": "EBAY_GB"}
+        response = await self._client.get(
+            "https://api.ebay.com/buy/browse/v1/item_summary/search",
+            headers=headers,
+            params={
+                "q": query,
+                "limit": "5",
+                "filter": "conditions:{NEW},buyingOptions:{FIXED_PRICE},deliveryCountry:GB",
+            },
+        )
+        page = BrowsePage.model_validate(response.json())
+        if len(page.itemSummaries) > 5:
+            bounds.deny("pilot_lead_cap")
+        attempted = 0
+        details: dict[int, object] = {}
+        for index, raw in enumerate(page.itemSummaries):
+            try:
+                item = BrowseItem.model_validate(raw)
+            except ValidationError:
+                # The shared normalizer records the rejected summary per item.
+                continue
+            if (
+                not detail_candidate(query, item.title)
+                or item.conditionId != "1000"
+                or item.buyingOptions != ["FIXED_PRICE"]
+            ):
+                continue
+            if attempted == 2:
+                break
+            attempted += 1
+            bounds.candidates[item.itemId] = query
+            detail = await self._client.get(
+                "https://api.ebay.com/buy/browse/v1/item/" + quote(item.itemId, safe=""),
+                headers=headers,
+            )
+            try:
+                parsed = BrowseItem.model_validate(detail.json())
+                if parsed.itemId != item.itemId:
+                    raise ValueError("detail identity mismatch")
+            except (ValidationError, ValueError):
+                self.evidence_receipt.issues.append(f"invalid_detail:{index}")
+                # Never silently fall back to the summary after a bad detail.
+                details[index] = None
+                continue
+            details[index] = parsed.model_dump()
+        report = browse_evidence(page.model_dump(), self.evidence_receipt, details=details)
+        if report.source_evidence is None:
+            bounds.deny("pilot_receipt_missing")
+            raise RuntimeError("Pilot receipt unavailable")
+        report.source_evidence.item_limit = 5
+        report.source_evidence.detail_limit = 2
+        bounds.normalized(len(report.model_dump_json().encode()))
+        return report
 
     @property
     def source_role(self) -> SourceType:
         return SourceType.MARKETPLACE
 
     async def initialize(self) -> None:
-        self._client = httpx.AsyncClient(timeout=30.0)
+        self._client = collection_http_client(timeout=30.0)
         await self.ensure_token()
 
     async def cleanup(self) -> None:
@@ -432,37 +465,51 @@ class eBayConnector(BaseConnector):
             await self._client.aclose()
 
     async def ensure_token(self) -> str:
-        cache_key = f"{self.app_id}:{self.cert_id or self.app_id}"
-        _track_token_fetch_call("ENSURE_TOKEN_ENTRY", cache_key, "Checking for cached token")
+
+        from pricerecon.pilot_bounds import active_pilot
+
+        pilot = active_pilot.get()
+        if pilot is not None:
+            pilot.check()
+            if pilot.token is None:
+                if self._client is None:
+                    raise RuntimeError("HTTP client not initialized")
+                response = await self._client.post(
+                    "https://api.ebay.com/identity/v1/oauth2/token",
+                    headers={
+                        "Authorization": f"Basic {_get_basic_auth(self.app_id, self.cert_id)}"
+                    },
+                    data={
+                        "grant_type": "client_credentials",
+                        "scope": "https://api.ebay.com/oauth/api_scope",
+                    },
+                )
+                payload = response.json()
+                value = payload.get("access_token")
+                if not isinstance(value, str) or not value:
+                    pilot.deny("pilot_auth_schema")
+                else:
+                    pilot.token = value
+            if pilot.token is None:
+                raise RuntimeError("Pilot token unavailable")
+            return pilot.token
 
         token = self.token_store.get_token()
         if token:
             # Clear stale auth_failed health when a valid cached token is used
             self._clear_health_error()
-            _track_token_fetch_call(
-                "USING_CACHED_TOKEN", cache_key, f"Token valid until {token.expires_at.isoformat()}"
-            )
             logger.info(
                 f"Using cached eBay OAuth token (valid until {token.expires_at.isoformat()})"
             )
             return token.access_token
 
         logger.info("Fetching new eBay OAuth token")
-        _track_token_fetch_call("NO_CACHED_TOKEN", cache_key, "Proceeding to fetch new token")
         try:
             token = await self._fetch_token()
             self.token_store.save_token(token)
             self._clear_health_error()
-            _track_token_fetch_call(
-                "TOKEN_FETCHED_AND_SAVED",
-                cache_key,
-                f"New token valid until {token.expires_at.isoformat()}",
-            )
             return token.access_token
         except Exception as exc:
-            _track_token_fetch_call(
-                "TOKEN_FETCH_FAILED", cache_key, f"exception={type(exc).__name__}"
-            )
             self._mark_health_error(str(exc))
             raise
 
@@ -501,7 +548,7 @@ class eBayConnector(BaseConnector):
                     conn.commit()
                     logger.info("Deleted cached eBay OAuth token")
             except Exception as e:
-                logger.warning(f"Failed to delete cached token: {e}")
+                logger.warning("Failed to delete cached token (%s)", type(e).__name__)
 
         conn.close()
 
@@ -610,6 +657,7 @@ class eBayConnector(BaseConnector):
                 raise
 
         data = response.json()
+        self._last_browse_payload = data
         return self._parse_listings(data.get("itemSummaries", []))
 
     def _parse_browser_listings(self, html: str) -> list[NormalizedListing]:

@@ -1,0 +1,60 @@
+......F                                                                  [100%]
+=================================== FAILURES ===================================
+_______ test_invalid_or_unmatched_images_fall_back_without_losing_leads ________
+
+    def test_invalid_or_unmatched_images_fall_back_without_losing_leads():
+>       run_discovery("image_rejections")
+
+tests/test_discovery_workflow.py:57:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'image_rejections', shared_root = None
+
+    def run_discovery(name, shared_root=None):
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-m", "tests.monitoring.discovery_workflows", name]
+            + ([str(shared_root)] if shared_root else []),
+            cwd=root,
+            env={
+                "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                "PYTHONDONTWRITEBYTECODE": "1",
+                **({"TMPDIR": str(Path(shared_root).parent)} if shared_root else {}),
+            },
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Loaded 0 watches into scheduler
+E         Traceback (most recent call last):
+E           File "<frozen runpy>", line 203, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-e17dc593/tests/monitoring/discovery_workflows.py", line 414, in <module>
+E             asyncio.run(globals()[sys.argv[1]]())
+E             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+E             return runner.run(main)
+E                    ~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+E             return self._loop.run_until_complete(task)
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+E             return future.result()
+E                    ~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/t3-e17dc593/tests/monitoring/discovery_workflows.py", line 145, in image_rejections
+E             assert candidate["image"]["kind"] == (
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E             ...<3 lines>...
+E             )
+E             ^
+E         AssertionError
+E
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python', '-m', 'tests.monitoring.dis...image"]["kind"] == (\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<3 lines>...\n    )\n    ^\nAssertionError\n').returncode
+
+tests/test_discovery_workflow.py:26: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_discovery_workflow.py::test_invalid_or_unmatched_images_fall_back_without_losing_leads
+1 failed, 6 passed in 12.04s

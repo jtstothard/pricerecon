@@ -1,7 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { formatSourceName } from '../lib/sourceNames'
-import { buildWatchCreatePayload, validateWatchForm, type WatchFormData } from '../lib/watchPayload'
+import { buildWatchCreatePayload, buildWatchEditPayload, formDataFromWatch, validateWatchForm, type WatchFormData } from '../lib/watchPayload'
 import type { WatchSummary, SourceSummary } from './watchTypes'
 
 interface WatchFormProps {
@@ -27,24 +27,6 @@ const emptyFormData = (): WatchFormData => ({
   excluded_terms: [],
   source_queries: {},
   advancedMode: false,
-})
-
-const formDataFromWatch = (watch: WatchSummary): WatchFormData => ({
-  name: watch.name,
-  query: watch.query,
-  category: watch.category || 'other',
-  interval: watch.schedule?.interval || '4h',
-  enabled: watch.enabled,
-  sources: watch.sources.filter(source => source.enabled !== false).map(source => source.connector),
-  filters: {
-    price_max: watch.filters?.price_max == null ? '' : String(watch.filters.price_max),
-    condition: watch.filters?.condition_filter?.conditions || [],
-  },
-  display_title: watch.display_title || '',
-  synonym_groups: watch.synonym_groups || [],
-  excluded_terms: watch.filters?.exclude_patterns || [],
-  source_queries: watch.source_queries || {},
-  advancedMode: watch.source_queries != null && Object.keys(watch.source_queries).length > 0,
 })
 
 const CATEGORIES = [
@@ -242,7 +224,7 @@ function SourceMultiSelect({ sources, selected, onToggle, disabled }: {
 }
 
 export default function WatchForm({ open, onClose, onSaved, editingWatch }: WatchFormProps) {
-  const [formData, setFormData] = useState<WatchFormData>(emptyFormData)
+  const [formData, setFormData] = useState<WatchFormData>(() => editingWatch ? formDataFromWatch(editingWatch) : emptyFormData())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [availableSources, setAvailableSources] = useState<SourceSummary[]>([])
@@ -279,7 +261,7 @@ export default function WatchForm({ open, onClose, onSaved, editingWatch }: Watc
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const validationError = validateWatchForm(formData)
+    const validationError = validateWatchForm(formData, editingWatch)
     if (validationError) {
       setError(validationError)
       return
@@ -287,7 +269,9 @@ export default function WatchForm({ open, onClose, onSaved, editingWatch }: Watc
     setLoading(true)
     setError(null)
     try {
-      const payload = buildWatchCreatePayload(formData)
+      const payload = editingWatch
+        ? buildWatchEditPayload(formData, editingWatch)
+        : buildWatchCreatePayload(formData)
       const response = await fetch(editingWatch ? `/api/watches/${editingWatch.id}` : '/api/watches', {
         method: editingWatch ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -519,6 +503,9 @@ export default function WatchForm({ open, onClose, onSaved, editingWatch }: Watc
                 onChange={e => setFormData(prev => ({ ...prev, interval: e.target.value }))}
                 disabled={loading}
               >
+                {!INTERVALS.some(interval => interval.value === formData.interval) && (
+                  <option value={formData.interval}>Every {formData.interval} (saved)</option>
+                )}
                 {INTERVALS.map(i => <option key={i.value} value={i.value}>{i.label}</option>)}
               </select>
             </div>

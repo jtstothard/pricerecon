@@ -1,0 +1,49 @@
+{
+  "result": "passed",
+  "fixture": "ticket05-tracking-ui",
+  "port": 8885,
+  "fixture_identity_checked_before_writes": true,
+  "temporary_storage": true,
+  "gates": [
+    "keyboard Track",
+    "target editing and reload",
+    "explicit channel choice",
+    "policy withholding",
+    "above target",
+    "crossing",
+    "duplicate route suppression",
+    "further drop",
+    "captured transport",
+    "delivery explanation",
+    "stale withholding",
+    "375px no overflow",
+    "legacy intent preserved",
+    "staged collection"
+  ],
+  "steps": [
+    {
+      "action": "baseline",
+      "captured_sends": 0
+    },
+    {
+      "action": "cross",
+      "captured_sends": 1
+    },
+    {
+      "action": "duplicate",
+      "captured_sends": 1
+    },
+    {
+      "action": "drop",
+      "captured_sends": 2
+    }
+  ],
+  "blocked_edges": [],
+  "captured_sends": 2,
+  "viewports": [
+    "1280x900",
+    "375x812"
+  ],
+  "buyer_acceptance": "unproven",
+  "live_acquisition": "not attempted"
+}

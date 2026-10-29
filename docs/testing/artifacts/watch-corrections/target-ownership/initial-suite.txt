@@ -1,0 +1,62 @@
+........................................................................ [ 57%]
+.......................................F..............                   [100%]
+=================================== FAILURES ===================================
+_ test_pre_correction_other_identity_history_and_target_are_not_reassigned_by_selection_reuse _
+
+    def test_pre_correction_other_identity_history_and_target_are_not_reassigned_by_selection_reuse():
+>       run_correction("pre_correction_other_identity", "tests.monitoring.correction_scope_workflows")
+
+tests/test_correction_workflow.py:131: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'pre_correction_other_identity'
+module = 'tests.monitoring.correction_scope_workflows'
+
+    def run_correction(name, module="tests.monitoring.correction_workflows"):
+        import os
+        import subprocess
+        import sys
+        from pathlib import Path
+    
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [sys.executable, "-m", module, name],
+            cwd=root,
+            env={
+                "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)]),
+                "PYTHONDONTWRITEBYTECODE": "1",
+            },
+            capture_output=True,
+            text=True,
+            timeout=45,
+            check=False,
+        )
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Loaded 0 watches into scheduler
+E         Traceback (most recent call last):
+E           File "<frozen runpy>", line 203, in _run_module_as_main
+E           File "<frozen runpy>", line 88, in _run_code
+E           File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/tests/monitoring/correction_scope_workflows.py", line 522, in <module>
+E             asyncio.run(globals()[sys.argv[1]]())
+E             ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 205, in run
+E             return runner.run(main)
+E                    ~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/runners.py", line 128, in run
+E             return self._loop.run_until_complete(task)
+E                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+E           File "/Users/jay/.local/share/uv/python/cpython-3.14.7-macos-aarch64-none/lib/python3.14/asyncio/base_events.py", line 720, in run_until_complete
+E             return future.result()
+E                    ~~~~~~~~~~~~~^^
+E           File "/Users/jay/.t3/worktrees/pricerecon/watch-category-integration/tests/monitoring/correction_scope_workflows.py", line 517, in pre_correction_other_identity
+E             assert after[field] == target_before[field]
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E         AssertionError
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/Users/jay/.t3/worktrees/pricerecon/t3-7260bb2e/.venv/bin/python', '-m', 'tests.monitoring.cor...y\n    assert after[field] == target_before[field]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n').returncode
+
+tests/test_correction_workflow.py:23: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_correction_workflow.py::test_pre_correction_other_identity_history_and_target_are_not_reassigned_by_selection_reuse
+1 failed, 125 passed in 118.66s (0:01:58)

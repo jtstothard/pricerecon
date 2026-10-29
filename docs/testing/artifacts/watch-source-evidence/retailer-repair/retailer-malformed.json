@@ -1,0 +1,1923 @@
+{
+  "mode": "malformed",
+  "feed": {
+    "source_coverage": [
+      {
+        "family": "aliexpress",
+        "source": "AliExpress browser-first",
+        "route": "aliexpress_browser_first_v1",
+        "accepted_status": "reviewed_lead",
+        "activation": "staged",
+        "reason": "Bounded displayed selections; no accepted selected SKU stock or UK total.",
+        "prerequisites": [
+          "capture/display/reuse authority",
+          "bounded browser-origin accounting",
+          "separate archive grant"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "aliexpress",
+        "source": "AliExpress affiliate",
+        "route": "aliexpress_affiliate",
+        "accepted_status": "unqualified",
+        "activation": "staged",
+        "reason": "Narrower affiliate inventory cannot replace browser discovery; detail unqualified.",
+        "prerequisites": [
+          "intended capture and retention authority",
+          "detail/selection qualification"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "aliexpress",
+        "source": "AliExpress DS",
+        "route": "aliexpress_ds",
+        "accepted_status": "unsupported",
+        "activation": "staged",
+        "reason": "No existing DS entitlement assumed.",
+        "prerequisites": [
+          "demonstrated DS entitlement",
+          "source retention authority"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "ebay_secondhand",
+        "source": "eBay Browse new / used",
+        "route": "ebay_browse_search_v1",
+        "accepted_status": "reviewed_lead",
+        "activation": "staged",
+        "reason": "Condition and purchase mode remain distinct; search pages do not certify selected offers.",
+        "prerequisites": [
+          "provider-approved capture/display use",
+          "retention/derivation grant",
+          "destination and complete UK cost",
+          "freshness review"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "ebay_secondhand",
+        "source": "Chrono24",
+        "route": "chrono24_manual_lead",
+        "accepted_status": "blocked",
+        "activation": "staged",
+        "reason": "Manual lead only; automated acquisition and history unqualified.",
+        "prerequisites": [
+          "approved automated/API/retention route",
+          "dealer/private seller and shipping quote evidence"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "brand_direct",
+        "source": "Militado",
+        "route": "militado_read_only",
+        "accepted_status": "blocked",
+        "activation": "staged",
+        "reason": "Store/manufacturer ownership and exact cohort fields remain unproven.",
+        "prerequisites": [
+          "recognized Web Bot Auth signer",
+          "store/manufacturer identity",
+          "capture/reuse authority"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "uk_retail",
+        "source": "Watch Shop",
+        "route": "watch_shop_public",
+        "accepted_status": "unqualified",
+        "activation": "staged",
+        "reason": "Current exact offer and use/access qualification missing.",
+        "prerequisites": [
+          "current applicable access/use terms",
+          "selected offer delivery evidence; checkout may be required"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "uk_retail",
+        "source": "WatchGecko",
+        "route": "watchgecko_public",
+        "accepted_status": "unqualified",
+        "activation": "staged",
+        "reason": "Public reading does not grant reusable archive or deep-link publication.",
+        "prerequisites": [
+          "intended storage/display/deep-link authority",
+          "selected complete-watch offer"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "uk_shipping_international",
+        "source": "Sakura Watches",
+        "route": "sakura_clean_category",
+        "accepted_status": "unqualified",
+        "activation": "staged",
+        "reason": "Clean category distinct from restricted search/paging; physical versus orderable stock unresolved.",
+        "prerequisites": [
+          "route-specific access and retention review",
+          "selected stock and buyer import cost"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "uk_shipping_international",
+        "source": "San Martin independent retailer",
+        "route": "shopify_products_v1",
+        "accepted_status": "reviewed_lead",
+        "activation": "staged",
+        "reason": "sanmartin.watch is an independent retailer; selected stock, dispatch origin and UK fees unqualified.",
+        "prerequisites": [
+          "store-specific reuse/archive authority",
+          "selected SKU and fulfilment evidence",
+          "UK checkout costs"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": {
+          "source_evidence": {
+            "route": "shopify_products_v1",
+            "source_host": "www.sanmartin.watch",
+            "capture_id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a",
+            "retrieved_at": "2026-10-27T12:00:00Z",
+            "use": {
+              "permission_reference": "original-fixture",
+              "retention": "synthetic"
+            },
+            "history_rights": "unqualified",
+            "prerequisites": [
+              "store-specific capture/display/reuse authority",
+              "separate archive grant",
+              "selected stock/fulfilment origin and UK checkout cost"
+            ],
+            "pages_captured": 1,
+            "page_limit": 1,
+            "item_limit": 250,
+            "detail_limit": null,
+            "discovered_count": 1,
+            "inspected_count": 2,
+            "next_page": null,
+            "content_truncated": null,
+            "completeness": "partial",
+            "issues": [
+              "single_250_product_page",
+              "pagination_not_exhausted",
+              "query_not_catalogue_filter",
+              "invalid_variant:0:2"
+            ]
+          },
+          "source": "shopify",
+          "route": "connector_search_v1",
+          "state": "partial",
+          "listing_count": 2,
+          "reason": "bounded_retailer_variants",
+          "completeness": "partial",
+          "reused_capture_id": null
+        }
+      },
+      {
+        "family": "search_aggregator_community",
+        "source": "Brave API",
+        "route": "brave_search",
+        "accepted_status": "unqualified",
+        "activation": "staged",
+        "reason": "Runtime access and plan/storage entitlement unresolved.",
+        "prerequisites": [
+          "existing token and actual plan inventory",
+          "storage-entitled plan",
+          "merchant re-verification"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "search_aggregator_community",
+        "source": "SearXNG",
+        "route": "searxng_search",
+        "accepted_status": "unqualified",
+        "activation": "staged",
+        "reason": "Healthy transport/configuration is not permitted merchant discovery.",
+        "prerequisites": [
+          "actual engine/upstream use and storage terms",
+          "merchant re-verification"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "search_aggregator_community",
+        "source": "Google Shopping",
+        "route": "google_shopping_lead",
+        "accepted_status": "blocked",
+        "activation": "staged",
+        "reason": "Retained search-path access stop; aggregator is not selected-price authority.",
+        "prerequisites": [
+          "permitted exact search route",
+          "merchant re-verification and reuse rights"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "search_aggregator_community",
+        "source": "Google Custom Search JSON API",
+        "route": "google_custom_search",
+        "accepted_status": "unsupported",
+        "activation": "staged",
+        "reason": "Closed to new customers; retained decision records existing-service end 2027-01-01.",
+        "prerequisites": [
+          "supported alternative under separate decision"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "search_aggregator_community",
+        "source": "HotUKDeals",
+        "route": "hotukdeals_feed",
+        "accepted_status": "blocked",
+        "activation": "staged",
+        "reason": "Retained terms/robots HTTP403; no automation/storage grant established.",
+        "prerequisites": [
+          "readable applicable feed/use conditions",
+          "retention authority"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      },
+      {
+        "family": "search_aggregator_community",
+        "source": "Reddit watch communities",
+        "route": "reddit_watch_communities",
+        "accepted_status": "blocked",
+        "activation": "staged",
+        "reason": "RSS/browser fallback does not replace provider-approved API use.",
+        "prerequisites": [
+          "provider-approved app/use case",
+          "approved retention scope"
+        ],
+        "decision_reference": "docs/product/category-discovery/source-qualification-decision.md",
+        "last_outcome": null
+      }
+    ],
+    "cohort_gaps": [
+      "Militado ML05/ML05B: real manufacturer/store identity, selection and UK offer evidence unresolved.",
+      "Merkur Lightning salmon: no reconciled exact reference/offer; missing evidence remains an abstention."
+    ],
+    "category": "watches",
+    "collection_state": "staged",
+    "collection_reason": "Live collection awaits explicit source policy, permissions and activation.",
+    "candidates": [
+      {
+        "price_assessments": [],
+        "corrections": [],
+        "history": {
+          "observation_count": 1,
+          "last_good": null,
+          "validity": "unavailable",
+          "reason": "Retained captures only; freshness and usual price are uncalibrated."
+        },
+        "id": "96b829486f8e7a8b43fa36d5e1adf641688ad2fc22823cf8904d3b10a0d2e591",
+        "category": "watches",
+        "origin": "category_discovery",
+        "source": "shopify",
+        "reported_source": "shopify",
+        "source_listing_id": "202",
+        "title": "San Martin SN0144",
+        "query": "SN0144",
+        "url": "https://www.sanmartin.watch/products/synthetic-sn0144?variant=202",
+        "capture_id": "a3863198-b60b-4aad-aed6-ffe7b7083e31",
+        "captured_at": "2026-10-27T12:00:00Z",
+        "evidence": [
+          {
+            "id": "a3863198-b60b-4aad-aed6-ffe7b7083e31:96b829486f8e7a8b43fa36d5e1adf641688ad2fc22823cf8904d3b10a0d2e591:title:5209b62e794938334ec1b2ba2ccb35b7c265f12d7e9b0786509d6a6823ac06fa",
+            "subject": "96b829486f8e7a8b43fa36d5e1adf641688ad2fc22823cf8904d3b10a0d2e591",
+            "field": "title",
+            "value": "San Martin SN0144",
+            "issuer": "shopify",
+            "issuer_kind": "connector_report",
+            "extractor": "normalized_lead_v1",
+            "captured_at": "2026-10-27T12:00:00Z",
+            "source_observed_at": "2026-10-27T12:00:00Z",
+            "capture_id": "a3863198-b60b-4aad-aed6-ffe7b7083e31",
+            "route": "connector_search_v1",
+            "pointer": "https://www.sanmartin.watch/products/synthetic-sn0144?variant=202",
+            "validity_context": "search lead; exact selection, identity and payable cost unverified",
+            "derived_from": [
+              "a3863198-b60b-4aad-aed6-ffe7b7083e31:shopify:202"
+            ]
+          },
+          {
+            "id": "a3863198-b60b-4aad-aed6-ffe7b7083e31:96b829486f8e7a8b43fa36d5e1adf641688ad2fc22823cf8904d3b10a0d2e591:advertised_item_price:d7fd2f8fe58a53cceb53421e881cab299e460d27cb623656008393270333285f",
+            "subject": "96b829486f8e7a8b43fa36d5e1adf641688ad2fc22823cf8904d3b10a0d2e591",
+            "field": "advertised_item_price",
+            "value": "180.00",
+            "issuer": "shopify",
+            "issuer_kind": "connector_report",
+            "extractor": "normalized_lead_v1",
+            "captured_at": "2026-10-27T12:00:00Z",
+            "source_observed_at": "2026-10-27T12:00:00Z",
+            "capture_id": "a3863198-b60b-4aad-aed6-ffe7b7083e31",
+            "route": "connector_search_v1",
+            "pointer": "https://www.sanmartin.watch/products/synthetic-sn0144?variant=202",
+            "validity_context": "search lead; exact selection, identity and payable cost unverified",
+            "derived_from": [
+              "a3863198-b60b-4aad-aed6-ffe7b7083e31:shopify:202"
+            ]
+          }
+        ],
+        "image": {
+          "kind": "original_placeholder",
+          "attribution": "PriceRecon original SVG illustration",
+          "provenance": "Original generic artwork; not a product photograph or evidence of dial colour.",
+          "permission": "original_artwork"
+        },
+        "advertised_item_price": "180.00",
+        "reported_currency": null,
+        "price_caveat": "Connector-reported item price only; may describe another variation or a normalized default.",
+        "identity_state": "unresolved",
+        "configuration": {
+          "state": "unresolved",
+          "values": {},
+          "evidence_ids": [],
+          "issues": [
+            {
+              "field": "product_kind",
+              "code": "missing_evidence",
+              "evidence_ids": []
+            },
+            {
+              "field": "maker",
+              "code": "missing_evidence",
+              "evidence_ids": []
+            },
+            {
+              "field": "reference",
+              "code": "missing_evidence",
+              "evidence_ids": []
+            },
+            {
+              "field": "generation",
+              "code": "missing_evidence",
+              "evidence_ids": []
+            },
+            {
+              "field": "movement",
+              "code": "missing_evidence",
+              "evidence_ids": []
+            },
+            {
+              "field": "case_width_mm",
+              "code": "missing_evidence",
+              "evidence_ids": []
+            },
+            {
+              "field": "dial",
+              "code": "missing_evidence",
+              "evidence_ids": []
+            },
+            {
+              "field": "strap",
+              "code": "missing_evidence",
+              "evidence_ids": []
+            },
+            {
+              "field": "date_display",
+              "code": "missing_evidence",
+              "evidence_ids": []
+            }
+          ],
+          "id": "688e3639614833a1e7d2d0df8e00134d7464d5fd55cf91290128353da780f78c",
+          "revision": 1,
+          "policy_version": "watch-identity-v1"
+        },
+        "configurations": [
+          {
+            "state": "unresolved",
+            "values": {},
+            "evidence_ids": [],
+            "issues": [
+              {
+                "field": "product_kind",
+                "code": "missing_evidence",
+                "evidence_ids": []
+              },
+              {
+                "field": "maker",
+                "code": "missing_evidence",
+                "evidence_ids": []
+              },
+              {
+                "field": "reference",
+                "code": "missing_evidence",
+                "evidence_ids": []
+              },
+              {
+                "field": "generation",
+                "code": "missing_evidence",
+                "evidence_ids": []
+              },
+              {
+                "field": "movement",
+                "code": "missing_evidence",
+                "evidence_ids": []
+              },
+              {
+                "field": "case_width_mm",
+                "code": "missing_evidence",
+                "evidence_ids": []
+              },
+              {
+                "field": "dial",
+                "code": "missing_evidence",
+                "evidence_ids": []
+              },
+              {
+                "field": "strap",
+                "code": "missing_evidence",
+                "evidence_ids": []
+              },
+              {
+                "field": "date_display",
+                "code": "missing_evidence",
+                "evidence_ids": []
+              }
+            ],
+            "id": "688e3639614833a1e7d2d0df8e00134d7464d5fd55cf91290128353da780f78c",
+            "revision": 1,
+            "policy_version": "watch-identity-v1"
+          }
+        ],
+        "bindings": [
+          {
+            "policy_version": "watch-selection-v1",
+            "id": "51f76f8b8b954b0c075a0f8eea4e26a582d89216ec33db6225fc690c2f962ac0",
+            "revision": 1,
+            "configuration_id": "688e3639614833a1e7d2d0df8e00134d7464d5fd55cf91290128353da780f78c",
+            "configuration_revision": 1,
+            "merchant_key": "www.sanmartin.watch",
+            "product_id": "123",
+            "variation_id": "202",
+            "resolution": {
+              "state": "unresolved",
+              "values": {},
+              "evidence_ids": [],
+              "issues": [
+                {
+                  "field": "product_kind",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "maker",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "reference",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "generation",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "movement",
+                  "code": "purchase_context_missing",
+                  "evidence_ids": [
+                    "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[1].movement:movement"
+                  ]
+                },
+                {
+                  "field": "movement",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "case_width_mm",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "dial",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "strap",
+                  "code": "purchase_context_missing",
+                  "evidence_ids": [
+                    "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[1].strap:strap"
+                  ]
+                },
+                {
+                  "field": "strap",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "date_display",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "configuration",
+                  "code": "configuration_not_supported",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "item_price",
+                  "code": "purchase_context_missing",
+                  "evidence_ids": [
+                    "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[1].item_price:item_price"
+                  ]
+                },
+                {
+                  "field": "item_price",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "currency",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "availability",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "quantity",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "destination",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                }
+              ]
+            }
+          }
+        ],
+        "offers": [
+          {
+            "source_evidence": {
+              "merchant_role": "independent_retailer",
+              "selected_options": {
+                "movement": "Miyota",
+                "strap": "bracelet"
+              },
+              "selected_sku": "202",
+              "price_scope": "selected_variation",
+              "condition_literal": null,
+              "seller_literal": "www.sanmartin.watch",
+              "destination": null,
+              "destination_literal": null,
+              "quantity": null,
+              "availability_literal": null,
+              "stock_quantity": null,
+              "purchase_modes": [],
+              "shipping_claim": null,
+              "vat_included_claim": null,
+              "other_price_claims": {},
+              "missing_fields": [
+                "manufacturer_definition",
+                "UK_destination",
+                "purchase_quantity",
+                "availability_basis",
+                "dispatch_origin",
+                "UK_delivered_cost",
+                "history_rights"
+              ]
+            },
+            "id": "389e2df0a2e05dea39f6fb0927a048f101afe0178e11c540e8726d29ddffa445",
+            "revision": 1,
+            "binding_id": "51f76f8b8b954b0c075a0f8eea4e26a582d89216ec33db6225fc690c2f962ac0",
+            "binding_revision": 1,
+            "source": "shopify",
+            "source_listing_id": "202",
+            "seller": null,
+            "condition": null,
+            "condition_description": null,
+            "visible_condition": null,
+            "quantity": null,
+            "availability": null,
+            "purchase_mode": null,
+            "item_price": null,
+            "currency": null,
+            "destination": null,
+            "authenticity": "unknown",
+            "internal_health": "unknown",
+            "qualification": {
+              "state": "unresolved",
+              "values": {},
+              "evidence_ids": [],
+              "issues": [
+                {
+                  "field": "seller",
+                  "code": "purchase_context_missing",
+                  "evidence_ids": [
+                    "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[1].seller:seller"
+                  ]
+                },
+                {
+                  "field": "seller",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "condition",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "quantity",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "availability",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "purchase_mode",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "item_price",
+                  "code": "purchase_context_missing",
+                  "evidence_ids": [
+                    "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[1].item_price:item_price"
+                  ]
+                },
+                {
+                  "field": "item_price",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "currency",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "destination",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "binding",
+                  "code": "selection_not_supported",
+                  "evidence_ids": []
+                }
+              ]
+            },
+            "comparison": {
+              "state": "unresolved",
+              "values": {},
+              "evidence_ids": [],
+              "issues": [
+                {
+                  "field": "cost",
+                  "code": "uk_cost_unknown",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "freshness",
+                  "code": "freshness_unvalidated",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "offer",
+                  "code": "offer_not_supported",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "purchase_mode",
+                  "code": "not_fixed_purchase_price",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "destination",
+                  "code": "uk_delivery_unproven",
+                  "evidence_ids": []
+                }
+              ]
+            },
+            "comparison_cohort": null,
+            "policy_version": "offer-comparison-v1",
+            "evidence": [
+              {
+                "id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[1].seller:seller",
+                "subject": "offer",
+                "field": "seller",
+                "value": "www.sanmartin.watch",
+                "assertion_state": "asserted",
+                "issuer": "www.sanmartin.watch",
+                "issuer_kind": "seller",
+                "extractor": "shopify_products_v1",
+                "extractor_kind": "structured_data",
+                "extractor_version": null,
+                "extractor_model": null,
+                "extraction_run_id": null,
+                "uncertainty": null,
+                "effective_at": null,
+                "observed_at": "2026-10-27T12:00:00Z",
+                "retrieved_at": "2026-10-27T12:00:00Z",
+                "capture_id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a",
+                "acquisition_capture_id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a",
+                "route": "shopify_products_v1",
+                "pointer": "https://www.sanmartin.watch/products/synthetic-sn0144?variant=202",
+                "locator": "products[0].variants[1].seller",
+                "context": {
+                  "configuration_key": null,
+                  "scope": "selected_variation",
+                  "merchant_key": "www.sanmartin.watch",
+                  "product_id": "123",
+                  "variation_id": "202",
+                  "destination": null,
+                  "currency": null,
+                  "quantity": null
+                },
+                "derived_from": [
+                  "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[1].seller"
+                ],
+                "input_claim_ids": [],
+                "permission_reference": "original-fixture",
+                "retention": "synthetic"
+              },
+              {
+                "id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[1].movement:movement",
+                "subject": "selection",
+                "field": "movement",
+                "value": "Miyota",
+                "assertion_state": "asserted",
+                "issuer": "www.sanmartin.watch",
+                "issuer_kind": "seller",
+                "extractor": "shopify_products_v1",
+                "extractor_kind": "structured_data",
+                "extractor_version": null,
+                "extractor_model": null,
+                "extraction_run_id": null,
+                "uncertainty": null,
+                "effective_at": null,
+                "observed_at": "2026-10-27T12:00:00Z",
+                "retrieved_at": "2026-10-27T12:00:00Z",
+                "capture_id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a",
+                "acquisition_capture_id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a",
+                "route": "shopify_products_v1",
+                "pointer": "https://www.sanmartin.watch/products/synthetic-sn0144?variant=202",
+                "locator": "products[0].variants[1].movement",
+                "context": {
+                  "configuration_key": null,
+                  "scope": "selected_variation",
+                  "merchant_key": "www.sanmartin.watch",
+                  "product_id": "123",
+                  "variation_id": "202",
+                  "destination": null,
+                  "currency": null,
+                  "quantity": null
+                },
+                "derived_from": [
+                  "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[1].movement"
+                ],
+                "input_claim_ids": [],
+                "permission_reference": "original-fixture",
+                "retention": "synthetic"
+              },
+              {
+                "id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[1].strap:strap",
+                "subject": "selection",
+                "field": "strap",
+                "value": "bracelet",
+                "assertion_state": "asserted",
+                "issuer": "www.sanmartin.watch",
+                "issuer_kind": "seller",
+                "extractor": "shopify_products_v1",
+                "extractor_kind": "structured_data",
+                "extractor_version": null,
+                "extractor_model": null,
+                "extraction_run_id": null,
+                "uncertainty": null,
+                "effective_at": null,
+                "observed_at": "2026-10-27T12:00:00Z",
+                "retrieved_at": "2026-10-27T12:00:00Z",
+                "capture_id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a",
+                "acquisition_capture_id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a",
+                "route": "shopify_products_v1",
+                "pointer": "https://www.sanmartin.watch/products/synthetic-sn0144?variant=202",
+                "locator": "products[0].variants[1].strap",
+                "context": {
+                  "configuration_key": null,
+                  "scope": "selected_variation",
+                  "merchant_key": "www.sanmartin.watch",
+                  "product_id": "123",
+                  "variation_id": "202",
+                  "destination": null,
+                  "currency": null,
+                  "quantity": null
+                },
+                "derived_from": [
+                  "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[1].strap"
+                ],
+                "input_claim_ids": [],
+                "permission_reference": "original-fixture",
+                "retention": "synthetic"
+              },
+              {
+                "id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[1].item_price:item_price",
+                "subject": "offer",
+                "field": "item_price",
+                "value": "180.00",
+                "assertion_state": "asserted",
+                "issuer": "www.sanmartin.watch",
+                "issuer_kind": "seller",
+                "extractor": "shopify_products_v1",
+                "extractor_kind": "structured_data",
+                "extractor_version": null,
+                "extractor_model": null,
+                "extraction_run_id": null,
+                "uncertainty": null,
+                "effective_at": null,
+                "observed_at": "2026-10-27T12:00:00Z",
+                "retrieved_at": "2026-10-27T12:00:00Z",
+                "capture_id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a",
+                "acquisition_capture_id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a",
+                "route": "shopify_products_v1",
+                "pointer": "https://www.sanmartin.watch/products/synthetic-sn0144?variant=202",
+                "locator": "products[0].variants[1].item_price",
+                "context": {
+                  "configuration_key": null,
+                  "scope": "selected_variation",
+                  "merchant_key": "www.sanmartin.watch",
+                  "product_id": "123",
+                  "variation_id": "202",
+                  "destination": null,
+                  "currency": null,
+                  "quantity": null
+                },
+                "derived_from": [
+                  "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[1].item_price"
+                ],
+                "input_claim_ids": [],
+                "permission_reference": "original-fixture",
+                "retention": "synthetic"
+              }
+            ],
+            "cost_scenarios": [],
+            "coupons": []
+          }
+        ],
+        "missing_data": [
+          "product_kind: missing_evidence",
+          "maker: missing_evidence",
+          "reference: missing_evidence",
+          "generation: missing_evidence",
+          "movement: missing_evidence",
+          "case_width_mm: missing_evidence",
+          "dial: missing_evidence",
+          "strap: missing_evidence",
+          "date_display: missing_evidence",
+          "movement: purchase_context_missing",
+          "strap: purchase_context_missing",
+          "configuration: configuration_not_supported",
+          "item_price: purchase_context_missing",
+          "item_price: missing_evidence",
+          "currency: missing_evidence",
+          "availability: missing_evidence",
+          "quantity: missing_evidence",
+          "destination: missing_evidence",
+          "seller: purchase_context_missing",
+          "seller: missing_evidence",
+          "condition: missing_evidence",
+          "purchase_mode: missing_evidence",
+          "binding: selection_not_supported",
+          "cost: uk_cost_unknown",
+          "freshness: freshness_unvalidated",
+          "offer: offer_not_supported",
+          "purchase_mode: not_fixed_purchase_price",
+          "destination: uk_delivery_unproven"
+        ],
+        "public_delivered_total": {
+          "state": "unknown",
+          "amount": null,
+          "currency": null,
+          "scenario_id": null,
+          "scenario_revision": null,
+          "reason": "Expand exact-offer scenarios; no single public scenario is selected."
+        },
+        "usual_price": {
+          "state": "unavailable",
+          "amount": null,
+          "reason": "No qualified history or accepted baseline calibration."
+        },
+        "savings": null,
+        "alert_eligible": false,
+        "preference_fit": [
+          {
+            "field": "compact",
+            "strength": "unset",
+            "state": "unset",
+            "reason": "No preference set."
+          },
+          {
+            "field": "colourful",
+            "strength": "unset",
+            "state": "unset",
+            "reason": "No preference set."
+          },
+          {
+            "field": "budget",
+            "strength": "unset",
+            "state": "unset",
+            "reason": "No preference set."
+          }
+        ]
+      },
+      {
+        "price_assessments": [],
+        "corrections": [],
+        "history": {
+          "observation_count": 1,
+          "last_good": null,
+          "validity": "unavailable",
+          "reason": "Retained captures only; freshness and usual price are uncalibrated."
+        },
+        "id": "a093227461d09c0e5837b4873bd14618faa0dce629a80b71ea707508c4b25d90",
+        "category": "watches",
+        "origin": "category_discovery",
+        "source": "shopify",
+        "reported_source": "shopify",
+        "source_listing_id": "201",
+        "title": "San Martin SN0144",
+        "query": "SN0144",
+        "url": "https://www.sanmartin.watch/products/synthetic-sn0144?variant=201",
+        "capture_id": "a3863198-b60b-4aad-aed6-ffe7b7083e31",
+        "captured_at": "2026-10-27T12:00:00Z",
+        "evidence": [
+          {
+            "id": "a3863198-b60b-4aad-aed6-ffe7b7083e31:a093227461d09c0e5837b4873bd14618faa0dce629a80b71ea707508c4b25d90:title:5209b62e794938334ec1b2ba2ccb35b7c265f12d7e9b0786509d6a6823ac06fa",
+            "subject": "a093227461d09c0e5837b4873bd14618faa0dce629a80b71ea707508c4b25d90",
+            "field": "title",
+            "value": "San Martin SN0144",
+            "issuer": "shopify",
+            "issuer_kind": "connector_report",
+            "extractor": "normalized_lead_v1",
+            "captured_at": "2026-10-27T12:00:00Z",
+            "source_observed_at": "2026-10-27T12:00:00Z",
+            "capture_id": "a3863198-b60b-4aad-aed6-ffe7b7083e31",
+            "route": "connector_search_v1",
+            "pointer": "https://www.sanmartin.watch/products/synthetic-sn0144?variant=201",
+            "validity_context": "search lead; exact selection, identity and payable cost unverified",
+            "derived_from": [
+              "a3863198-b60b-4aad-aed6-ffe7b7083e31:shopify:201"
+            ]
+          },
+          {
+            "id": "a3863198-b60b-4aad-aed6-ffe7b7083e31:a093227461d09c0e5837b4873bd14618faa0dce629a80b71ea707508c4b25d90:advertised_item_price:3865e69f77780ea1f57408fd93bfe48498dfae8e8b155a2fab8de4d4dc5b08f9",
+            "subject": "a093227461d09c0e5837b4873bd14618faa0dce629a80b71ea707508c4b25d90",
+            "field": "advertised_item_price",
+            "value": "110.00",
+            "issuer": "shopify",
+            "issuer_kind": "connector_report",
+            "extractor": "normalized_lead_v1",
+            "captured_at": "2026-10-27T12:00:00Z",
+            "source_observed_at": "2026-10-27T12:00:00Z",
+            "capture_id": "a3863198-b60b-4aad-aed6-ffe7b7083e31",
+            "route": "connector_search_v1",
+            "pointer": "https://www.sanmartin.watch/products/synthetic-sn0144?variant=201",
+            "validity_context": "search lead; exact selection, identity and payable cost unverified",
+            "derived_from": [
+              "a3863198-b60b-4aad-aed6-ffe7b7083e31:shopify:201"
+            ]
+          }
+        ],
+        "image": {
+          "kind": "original_placeholder",
+          "attribution": "PriceRecon original SVG illustration",
+          "provenance": "Original generic artwork; not a product photograph or evidence of dial colour.",
+          "permission": "original_artwork"
+        },
+        "advertised_item_price": "110.00",
+        "reported_currency": "GBP",
+        "price_caveat": "Connector-reported item price only; may describe another variation or a normalized default.",
+        "identity_state": "unresolved",
+        "configuration": {
+          "state": "unresolved",
+          "values": {},
+          "evidence_ids": [],
+          "issues": [
+            {
+              "field": "product_kind",
+              "code": "missing_evidence",
+              "evidence_ids": []
+            },
+            {
+              "field": "maker",
+              "code": "missing_evidence",
+              "evidence_ids": []
+            },
+            {
+              "field": "reference",
+              "code": "missing_evidence",
+              "evidence_ids": []
+            },
+            {
+              "field": "generation",
+              "code": "missing_evidence",
+              "evidence_ids": []
+            },
+            {
+              "field": "movement",
+              "code": "missing_evidence",
+              "evidence_ids": []
+            },
+            {
+              "field": "case_width_mm",
+              "code": "missing_evidence",
+              "evidence_ids": []
+            },
+            {
+              "field": "dial",
+              "code": "missing_evidence",
+              "evidence_ids": []
+            },
+            {
+              "field": "strap",
+              "code": "missing_evidence",
+              "evidence_ids": []
+            },
+            {
+              "field": "date_display",
+              "code": "missing_evidence",
+              "evidence_ids": []
+            }
+          ],
+          "id": "fee140c9f9262215bbda374793e84a0a173c64abf87dc21f62f5d13bc0beabf4",
+          "revision": 1,
+          "policy_version": "watch-identity-v1"
+        },
+        "configurations": [
+          {
+            "state": "unresolved",
+            "values": {},
+            "evidence_ids": [],
+            "issues": [
+              {
+                "field": "product_kind",
+                "code": "missing_evidence",
+                "evidence_ids": []
+              },
+              {
+                "field": "maker",
+                "code": "missing_evidence",
+                "evidence_ids": []
+              },
+              {
+                "field": "reference",
+                "code": "missing_evidence",
+                "evidence_ids": []
+              },
+              {
+                "field": "generation",
+                "code": "missing_evidence",
+                "evidence_ids": []
+              },
+              {
+                "field": "movement",
+                "code": "missing_evidence",
+                "evidence_ids": []
+              },
+              {
+                "field": "case_width_mm",
+                "code": "missing_evidence",
+                "evidence_ids": []
+              },
+              {
+                "field": "dial",
+                "code": "missing_evidence",
+                "evidence_ids": []
+              },
+              {
+                "field": "strap",
+                "code": "missing_evidence",
+                "evidence_ids": []
+              },
+              {
+                "field": "date_display",
+                "code": "missing_evidence",
+                "evidence_ids": []
+              }
+            ],
+            "id": "fee140c9f9262215bbda374793e84a0a173c64abf87dc21f62f5d13bc0beabf4",
+            "revision": 1,
+            "policy_version": "watch-identity-v1"
+          }
+        ],
+        "bindings": [
+          {
+            "policy_version": "watch-selection-v1",
+            "id": "09ea95f34e005c5cbed2cfd859b66f624b663a29687aa0666a6d551173ed333e",
+            "revision": 1,
+            "configuration_id": "fee140c9f9262215bbda374793e84a0a173c64abf87dc21f62f5d13bc0beabf4",
+            "configuration_revision": 1,
+            "merchant_key": "www.sanmartin.watch",
+            "product_id": "123",
+            "variation_id": "201",
+            "resolution": {
+              "state": "unresolved",
+              "values": {},
+              "evidence_ids": [],
+              "issues": [
+                {
+                  "field": "product_kind",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "maker",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "reference",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "generation",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "movement",
+                  "code": "purchase_context_missing",
+                  "evidence_ids": [
+                    "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[0].movement:movement"
+                  ]
+                },
+                {
+                  "field": "movement",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "case_width_mm",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "dial",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "strap",
+                  "code": "purchase_context_missing",
+                  "evidence_ids": [
+                    "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[0].strap:strap"
+                  ]
+                },
+                {
+                  "field": "strap",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "date_display",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "configuration",
+                  "code": "configuration_not_supported",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "item_price",
+                  "code": "purchase_context_missing",
+                  "evidence_ids": [
+                    "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[0].item_price:item_price"
+                  ]
+                },
+                {
+                  "field": "item_price",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "currency",
+                  "code": "purchase_context_missing",
+                  "evidence_ids": [
+                    "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[0].currency:currency"
+                  ]
+                },
+                {
+                  "field": "currency",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "availability",
+                  "code": "purchase_context_missing",
+                  "evidence_ids": [
+                    "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[0].availability:availability"
+                  ]
+                },
+                {
+                  "field": "availability",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "quantity",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "destination",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                }
+              ]
+            }
+          }
+        ],
+        "offers": [
+          {
+            "source_evidence": {
+              "merchant_role": "independent_retailer",
+              "selected_options": {
+                "movement": "NH35",
+                "strap": "FKM"
+              },
+              "selected_sku": "201",
+              "price_scope": "selected_variation",
+              "condition_literal": null,
+              "seller_literal": "www.sanmartin.watch",
+              "destination": null,
+              "destination_literal": null,
+              "quantity": null,
+              "availability_literal": "True",
+              "stock_quantity": null,
+              "purchase_modes": [],
+              "shipping_claim": null,
+              "vat_included_claim": null,
+              "other_price_claims": {},
+              "missing_fields": [
+                "manufacturer_definition",
+                "UK_destination",
+                "purchase_quantity",
+                "availability_basis",
+                "dispatch_origin",
+                "UK_delivered_cost",
+                "history_rights"
+              ]
+            },
+            "id": "f4cbafe8db79e2df66e8748e2cda0a4c585aee23d183dc93d345697f54b79f27",
+            "revision": 1,
+            "binding_id": "09ea95f34e005c5cbed2cfd859b66f624b663a29687aa0666a6d551173ed333e",
+            "binding_revision": 1,
+            "source": "shopify",
+            "source_listing_id": "201",
+            "seller": null,
+            "condition": null,
+            "condition_description": null,
+            "visible_condition": null,
+            "quantity": null,
+            "availability": null,
+            "purchase_mode": null,
+            "item_price": null,
+            "currency": null,
+            "destination": null,
+            "authenticity": "unknown",
+            "internal_health": "unknown",
+            "qualification": {
+              "state": "unresolved",
+              "values": {},
+              "evidence_ids": [],
+              "issues": [
+                {
+                  "field": "seller",
+                  "code": "purchase_context_missing",
+                  "evidence_ids": [
+                    "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[0].seller:seller"
+                  ]
+                },
+                {
+                  "field": "seller",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "condition",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "quantity",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "availability",
+                  "code": "purchase_context_missing",
+                  "evidence_ids": [
+                    "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[0].availability:availability"
+                  ]
+                },
+                {
+                  "field": "availability",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "purchase_mode",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "item_price",
+                  "code": "purchase_context_missing",
+                  "evidence_ids": [
+                    "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[0].item_price:item_price"
+                  ]
+                },
+                {
+                  "field": "item_price",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "currency",
+                  "code": "purchase_context_missing",
+                  "evidence_ids": [
+                    "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[0].currency:currency"
+                  ]
+                },
+                {
+                  "field": "currency",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "destination",
+                  "code": "missing_evidence",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "binding",
+                  "code": "selection_not_supported",
+                  "evidence_ids": []
+                }
+              ]
+            },
+            "comparison": {
+              "state": "unresolved",
+              "values": {},
+              "evidence_ids": [],
+              "issues": [
+                {
+                  "field": "cost",
+                  "code": "uk_cost_unknown",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "freshness",
+                  "code": "freshness_unvalidated",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "offer",
+                  "code": "offer_not_supported",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "purchase_mode",
+                  "code": "not_fixed_purchase_price",
+                  "evidence_ids": []
+                },
+                {
+                  "field": "destination",
+                  "code": "uk_delivery_unproven",
+                  "evidence_ids": []
+                }
+              ]
+            },
+            "comparison_cohort": null,
+            "policy_version": "offer-comparison-v1",
+            "evidence": [
+              {
+                "id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[0].seller:seller",
+                "subject": "offer",
+                "field": "seller",
+                "value": "www.sanmartin.watch",
+                "assertion_state": "asserted",
+                "issuer": "www.sanmartin.watch",
+                "issuer_kind": "seller",
+                "extractor": "shopify_products_v1",
+                "extractor_kind": "structured_data",
+                "extractor_version": null,
+                "extractor_model": null,
+                "extraction_run_id": null,
+                "uncertainty": null,
+                "effective_at": null,
+                "observed_at": "2026-10-27T12:00:00Z",
+                "retrieved_at": "2026-10-27T12:00:00Z",
+                "capture_id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a",
+                "acquisition_capture_id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a",
+                "route": "shopify_products_v1",
+                "pointer": "https://www.sanmartin.watch/products/synthetic-sn0144?variant=201",
+                "locator": "products[0].variants[0].seller",
+                "context": {
+                  "configuration_key": null,
+                  "scope": "selected_variation",
+                  "merchant_key": "www.sanmartin.watch",
+                  "product_id": "123",
+                  "variation_id": "201",
+                  "destination": null,
+                  "currency": "GBP",
+                  "quantity": null
+                },
+                "derived_from": [
+                  "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[0].seller"
+                ],
+                "input_claim_ids": [],
+                "permission_reference": "original-fixture",
+                "retention": "synthetic"
+              },
+              {
+                "id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[0].movement:movement",
+                "subject": "selection",
+                "field": "movement",
+                "value": "NH35",
+                "assertion_state": "asserted",
+                "issuer": "www.sanmartin.watch",
+                "issuer_kind": "seller",
+                "extractor": "shopify_products_v1",
+                "extractor_kind": "structured_data",
+                "extractor_version": null,
+                "extractor_model": null,
+                "extraction_run_id": null,
+                "uncertainty": null,
+                "effective_at": null,
+                "observed_at": "2026-10-27T12:00:00Z",
+                "retrieved_at": "2026-10-27T12:00:00Z",
+                "capture_id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a",
+                "acquisition_capture_id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a",
+                "route": "shopify_products_v1",
+                "pointer": "https://www.sanmartin.watch/products/synthetic-sn0144?variant=201",
+                "locator": "products[0].variants[0].movement",
+                "context": {
+                  "configuration_key": null,
+                  "scope": "selected_variation",
+                  "merchant_key": "www.sanmartin.watch",
+                  "product_id": "123",
+                  "variation_id": "201",
+                  "destination": null,
+                  "currency": "GBP",
+                  "quantity": null
+                },
+                "derived_from": [
+                  "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[0].movement"
+                ],
+                "input_claim_ids": [],
+                "permission_reference": "original-fixture",
+                "retention": "synthetic"
+              },
+              {
+                "id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[0].strap:strap",
+                "subject": "selection",
+                "field": "strap",
+                "value": "FKM",
+                "assertion_state": "asserted",
+                "issuer": "www.sanmartin.watch",
+                "issuer_kind": "seller",
+                "extractor": "shopify_products_v1",
+                "extractor_kind": "structured_data",
+                "extractor_version": null,
+                "extractor_model": null,
+                "extraction_run_id": null,
+                "uncertainty": null,
+                "effective_at": null,
+                "observed_at": "2026-10-27T12:00:00Z",
+                "retrieved_at": "2026-10-27T12:00:00Z",
+                "capture_id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a",
+                "acquisition_capture_id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a",
+                "route": "shopify_products_v1",
+                "pointer": "https://www.sanmartin.watch/products/synthetic-sn0144?variant=201",
+                "locator": "products[0].variants[0].strap",
+                "context": {
+                  "configuration_key": null,
+                  "scope": "selected_variation",
+                  "merchant_key": "www.sanmartin.watch",
+                  "product_id": "123",
+                  "variation_id": "201",
+                  "destination": null,
+                  "currency": "GBP",
+                  "quantity": null
+                },
+                "derived_from": [
+                  "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[0].strap"
+                ],
+                "input_claim_ids": [],
+                "permission_reference": "original-fixture",
+                "retention": "synthetic"
+              },
+              {
+                "id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[0].item_price:item_price",
+                "subject": "offer",
+                "field": "item_price",
+                "value": "110.00",
+                "assertion_state": "asserted",
+                "issuer": "www.sanmartin.watch",
+                "issuer_kind": "seller",
+                "extractor": "shopify_products_v1",
+                "extractor_kind": "structured_data",
+                "extractor_version": null,
+                "extractor_model": null,
+                "extraction_run_id": null,
+                "uncertainty": null,
+                "effective_at": null,
+                "observed_at": "2026-10-27T12:00:00Z",
+                "retrieved_at": "2026-10-27T12:00:00Z",
+                "capture_id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a",
+                "acquisition_capture_id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a",
+                "route": "shopify_products_v1",
+                "pointer": "https://www.sanmartin.watch/products/synthetic-sn0144?variant=201",
+                "locator": "products[0].variants[0].item_price",
+                "context": {
+                  "configuration_key": null,
+                  "scope": "selected_variation",
+                  "merchant_key": "www.sanmartin.watch",
+                  "product_id": "123",
+                  "variation_id": "201",
+                  "destination": null,
+                  "currency": "GBP",
+                  "quantity": null
+                },
+                "derived_from": [
+                  "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[0].item_price"
+                ],
+                "input_claim_ids": [],
+                "permission_reference": "original-fixture",
+                "retention": "synthetic"
+              },
+              {
+                "id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[0].currency:currency",
+                "subject": "offer",
+                "field": "currency",
+                "value": "GBP",
+                "assertion_state": "asserted",
+                "issuer": "www.sanmartin.watch",
+                "issuer_kind": "seller",
+                "extractor": "shopify_products_v1",
+                "extractor_kind": "structured_data",
+                "extractor_version": null,
+                "extractor_model": null,
+                "extraction_run_id": null,
+                "uncertainty": null,
+                "effective_at": null,
+                "observed_at": "2026-10-27T12:00:00Z",
+                "retrieved_at": "2026-10-27T12:00:00Z",
+                "capture_id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a",
+                "acquisition_capture_id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a",
+                "route": "shopify_products_v1",
+                "pointer": "https://www.sanmartin.watch/products/synthetic-sn0144?variant=201",
+                "locator": "products[0].variants[0].currency",
+                "context": {
+                  "configuration_key": null,
+                  "scope": "selected_variation",
+                  "merchant_key": "www.sanmartin.watch",
+                  "product_id": "123",
+                  "variation_id": "201",
+                  "destination": null,
+                  "currency": "GBP",
+                  "quantity": null
+                },
+                "derived_from": [
+                  "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[0].currency"
+                ],
+                "input_claim_ids": [],
+                "permission_reference": "original-fixture",
+                "retention": "synthetic"
+              },
+              {
+                "id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[0].availability:availability",
+                "subject": "offer",
+                "field": "availability",
+                "value": "in_stock",
+                "assertion_state": "asserted",
+                "issuer": "www.sanmartin.watch",
+                "issuer_kind": "seller",
+                "extractor": "shopify_products_v1",
+                "extractor_kind": "structured_data",
+                "extractor_version": null,
+                "extractor_model": null,
+                "extraction_run_id": null,
+                "uncertainty": null,
+                "effective_at": null,
+                "observed_at": "2026-10-27T12:00:00Z",
+                "retrieved_at": "2026-10-27T12:00:00Z",
+                "capture_id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a",
+                "acquisition_capture_id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a",
+                "route": "shopify_products_v1",
+                "pointer": "https://www.sanmartin.watch/products/synthetic-sn0144?variant=201",
+                "locator": "products[0].variants[0].availability",
+                "context": {
+                  "configuration_key": null,
+                  "scope": "selected_variation",
+                  "merchant_key": "www.sanmartin.watch",
+                  "product_id": "123",
+                  "variation_id": "201",
+                  "destination": null,
+                  "currency": "GBP",
+                  "quantity": null
+                },
+                "derived_from": [
+                  "47e51744-3f07-47b5-b0f8-a3b0ca05e27a:products[0].variants[0].availability"
+                ],
+                "input_claim_ids": [],
+                "permission_reference": "original-fixture",
+                "retention": "synthetic"
+              }
+            ],
+            "cost_scenarios": [],
+            "coupons": []
+          }
+        ],
+        "missing_data": [
+          "product_kind: missing_evidence",
+          "maker: missing_evidence",
+          "reference: missing_evidence",
+          "generation: missing_evidence",
+          "movement: missing_evidence",
+          "case_width_mm: missing_evidence",
+          "dial: missing_evidence",
+          "strap: missing_evidence",
+          "date_display: missing_evidence",
+          "movement: purchase_context_missing",
+          "strap: purchase_context_missing",
+          "configuration: configuration_not_supported",
+          "item_price: purchase_context_missing",
+          "item_price: missing_evidence",
+          "currency: purchase_context_missing",
+          "currency: missing_evidence",
+          "availability: purchase_context_missing",
+          "availability: missing_evidence",
+          "quantity: missing_evidence",
+          "destination: missing_evidence",
+          "seller: purchase_context_missing",
+          "seller: missing_evidence",
+          "condition: missing_evidence",
+          "purchase_mode: missing_evidence",
+          "binding: selection_not_supported",
+          "cost: uk_cost_unknown",
+          "freshness: freshness_unvalidated",
+          "offer: offer_not_supported",
+          "purchase_mode: not_fixed_purchase_price",
+          "destination: uk_delivery_unproven"
+        ],
+        "public_delivered_total": {
+          "state": "unknown",
+          "amount": null,
+          "currency": null,
+          "scenario_id": null,
+          "scenario_revision": null,
+          "reason": "Expand exact-offer scenarios; no single public scenario is selected."
+        },
+        "usual_price": {
+          "state": "unavailable",
+          "amount": null,
+          "reason": "No qualified history or accepted baseline calibration."
+        },
+        "savings": null,
+        "alert_eligible": false,
+        "preference_fit": [
+          {
+            "field": "compact",
+            "strength": "unset",
+            "state": "unset",
+            "reason": "No preference set."
+          },
+          {
+            "field": "colourful",
+            "strength": "unset",
+            "state": "unset",
+            "reason": "No preference set."
+          },
+          {
+            "field": "budget",
+            "strength": "unset",
+            "state": "unset",
+            "reason": "No preference set."
+          }
+        ]
+      }
+    ],
+    "captures": [
+      {
+        "correction_input_revision": 0,
+        "publication_state": "accepted",
+        "history_contract_version": "observation-history-v1",
+        "capture_id": "a3863198-b60b-4aad-aed6-ffe7b7083e31",
+        "captured_at": "2026-10-27T12:00:00Z",
+        "request": {
+          "category": "watches",
+          "query": "SN0144",
+          "sources": [
+            "shopify"
+          ],
+          "source_queries": {}
+        },
+        "admission": {
+          "mode": "offline_verification",
+          "policy_reference": "ticket11-original-fixtures",
+          "permission_reference": "original-synthetic-data",
+          "activation_reference": "guarded-child"
+        },
+        "outcomes": [
+          {
+            "source_evidence": {
+              "route": "shopify_products_v1",
+              "source_host": "www.sanmartin.watch",
+              "capture_id": "47e51744-3f07-47b5-b0f8-a3b0ca05e27a",
+              "retrieved_at": "2026-10-27T12:00:00Z",
+              "use": {
+                "permission_reference": "original-fixture",
+                "retention": "synthetic"
+              },
+              "history_rights": "unqualified",
+              "prerequisites": [
+                "store-specific capture/display/reuse authority",
+                "separate archive grant",
+                "selected stock/fulfilment origin and UK checkout cost"
+              ],
+              "pages_captured": 1,
+              "page_limit": 1,
+              "item_limit": 250,
+              "detail_limit": null,
+              "discovered_count": 1,
+              "inspected_count": 2,
+              "next_page": null,
+              "content_truncated": null,
+              "completeness": "partial",
+              "issues": [
+                "single_250_product_page",
+                "pagination_not_exhausted",
+                "query_not_catalogue_filter",
+                "invalid_variant:0:2"
+              ]
+            },
+            "source": "shopify",
+            "route": "connector_search_v1",
+            "state": "partial",
+            "listing_count": 2,
+            "reason": "bounded_retailer_variants",
+            "completeness": "partial",
+            "reused_capture_id": null
+          }
+        ]
+      }
+    ],
+    "preferences": {
+      "category": "watches",
+      "revision": 0,
+      "updated_at": null,
+      "values": {
+        "compact_max_width_mm": null,
+        "compact_strength": "hard",
+        "colourful_dials": [],
+        "colourful_strength": "soft",
+        "budget_gbp": null,
+        "budget_strength": "hard"
+      },
+      "interpretation": [
+        {
+          "field": "compact",
+          "strength": "unset",
+          "meaning": "Compact is unset; choose a maximum case width."
+        },
+        {
+          "field": "colourful",
+          "strength": "unset",
+          "meaning": "Colourful is unset; choose the dial colours you want."
+        },
+        {
+          "field": "budget",
+          "strength": "unset",
+          "meaning": "Budget is unset; choose a public UK delivered budget."
+        }
+      ]
+    },
+    "tracking": []
+  },
+  "collection": {
+    "state": "supplied",
+    "activation": "staged",
+    "gates": [
+      "live_activation_not_authorized",
+      "production_operating_envelope_unproven"
+    ],
+    "scope_id": "retained-offline-regressions",
+    "version": "synthetic-v1",
+    "stops_at": "2030-01-01T00:00:00Z",
+    "usage": [
+      {
+        "resource": "requests",
+        "used": 2,
+        "limit": 100000,
+        "tracking_reserve": 0
+      },
+      {
+        "resource": "pages",
+        "used": 2,
+        "limit": 100000,
+        "tracking_reserve": 0
+      },
+      {
+        "resource": "details",
+        "used": 0,
+        "limit": 100000,
+        "tracking_reserve": 0
+      },
+      {
+        "resource": "retries",
+        "used": 0,
+        "limit": 100000,
+        "tracking_reserve": 0
+      },
+      {
+        "resource": "fallbacks",
+        "used": 0,
+        "limit": 100000,
+        "tracking_reserve": 0
+      },
+      {
+        "resource": "storage_bytes",
+        "used": 34507,
+        "limit": 1000000000,
+        "tracking_reserve": 0
+      },
+      {
+        "resource": "elapsed_seconds",
+        "used": 30,
+        "limit": 1000000,
+        "tracking_reserve": 0
+      }
+    ],
+    "provider_usage": [
+      {
+        "source": "shopify",
+        "used": 2,
+        "limit": 20,
+        "tracking_reserve": 0
+      }
+    ],
+    "attempts": [
+      {
+        "id": "91baf13e-8ecf-4eb7-970a-cc8fbd570c48",
+        "source": "shopify",
+        "purpose": "discovery",
+        "context_id": "a3863198-b60b-4aad-aed6-ffe7b7083e31",
+        "query": "SN0144",
+        "attempted_at": "2026-10-27T12:00:00Z",
+        "state": "partial",
+        "reason": "bounded_retailer_variants",
+        "next_eligible_at": "2026-10-27T12:00:00Z",
+        "last_good_at": null,
+        "last_good_age_seconds": null,
+        "evidence_state": "unrefreshed"
+      }
+    ]
+  },
+  "sends": [
+    [
+      "shopify",
+      "https://www.sanmartin.watch/search?q=SN0144&type=product"
+    ],
+    [
+      "shopify",
+      "https://www.sanmartin.watch/products.json?limit=250"
+    ]
+  ],
+  "notifications": [],
+  "blocked_edges": []
+}

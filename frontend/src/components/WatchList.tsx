@@ -11,6 +11,7 @@ import { usePageTitle } from '../hooks/usePageTitle'
 import { formatSourceName } from '../lib/sourceNames'
 import { formatCategory } from '../lib/categoryUtils'
 import { formatDateTime } from '../lib/dateUtils'
+import { buildWatchEditPayload, formDataFromWatch } from '../lib/watchPayload'
 
 interface PaginatedResponse<T> {
   items: T[]
@@ -200,46 +201,7 @@ export default function WatchList() {
       const response = await fetch(`/api/watches/${watch.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: watch.name,
-          query: watch.query,
-          display_title: watch.display_title ?? null,
-          synonym_groups: watch.synonym_groups ?? [],
-          source_queries: watch.source_queries ?? {},
-          category: watch.category,
-          sources: watch.sources.map(source => ({
-            connector: source.connector,
-            enabled: source.enabled ?? true,
-            config: {},
-          })),
-          filters: {
-            price_max: watch.filters?.price_max ?? null,
-            currency: 'GBP',
-            condition_filter: {
-              conditions: watch.filters?.condition_filter?.conditions ?? [],
-              dedup_enabled: false,
-            },
-            exclude_patterns: watch.filters?.exclude_patterns ?? [],
-            spec_match: {},
-            min_seller_feedback: null,
-            min_seller_feedback_pct: null,
-          },
-          schedule: {
-            interval: watch.schedule?.interval || '4h',
-            timezone: watch.schedule?.timezone || 'UTC',
-            time_window: watch.schedule?.time_window || null,
-          },
-          grouping: { enabled: false, product_key: null },
-          notifications: {
-            events: ['new_listing', 'price_drop', 'stock_change'],
-            channels: ['webhook'],
-            webhook_url: null,
-            telegram_bot_token: null,
-            telegram_chat_id: null,
-            discord_webhook_url: null,
-          },
-          enabled: !watch.enabled,
-        }),
+        body: JSON.stringify(buildWatchEditPayload({ ...formDataFromWatch(watch), enabled: !watch.enabled }, watch)),
       })
       if (!response.ok) throw new Error('Failed to toggle watch')
       const updatedWatch: WatchSummary = await response.json()

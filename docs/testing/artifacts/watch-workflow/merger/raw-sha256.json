@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-27",
+  "scope": "Merger raw logs, exact command arrays, independent probe/audit sources and results",
+  "files": {
+    "docs/testing/artifacts/watch-workflow/merger/audit-first.log": {
+      "sha256": "0506e44cf941eb71475254cad3a257099e47003940b7cd16a8e57b4471057734",
+      "bytes": 423
+    },
+    "docs/testing/artifacts/watch-workflow/merger/audit_evidence.py": {
+      "sha256": "431c829f48c52ee1f6b85366c9aa0bd42a1844d81433d6f6e61fdbd7eb43002b",
+      "bytes": 3821
+    },
+    "docs/testing/artifacts/watch-workflow/merger/build.log": {
+      "sha256": "4270ddeb80905e203712a17bf702ce08c7a56cd5a48cca21b6161a607ba79a4c",
+      "bytes": 768
+    },
+    "docs/testing/artifacts/watch-workflow/merger/check-results.json": {
+      "sha256": "fa58cac38d1335b08c180f73d2ae0ffabb583c802674817597ec5f6ee3faf678",
+      "bytes": 6296
+    },
+    "docs/testing/artifacts/watch-workflow/merger/commands.json": {
+      "sha256": "49149765325393aae68c13ff2dea4d93f7c2d96ed0b6962c1003613d496025c8",
+      "bytes": 2951
+    },
+    "docs/testing/artifacts/watch-workflow/merger/contracts.log": {
+      "sha256": "ca11c71f0c5852c02c771a81b92ed24d5cd2a7a0d2739f46511a8364e80e0b4e",
+      "bytes": 3197
+    },
+    "docs/testing/artifacts/watch-workflow/merger/diff-raw-logs.log": {
+      "sha256": "933473cc8cc7caada128dfb3cc04142ffb5a9cee8cb9ab136d76659d983ddac8",
+      "bytes": 13370
+    },
+    "docs/testing/artifacts/watch-workflow/merger/diff-source-doc.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "docs/testing/artifacts/watch-workflow/merger/eslint.log": {
+      "sha256": "20afa08e2f58e3950ec32ea06f95373770af611f60c7bd360a874c4c3b3bf409",
+      "bytes": 602
+    },
+    "docs/testing/artifacts/watch-workflow/merger/evidence-audit.json": {
+      "sha256": "64a2cffd5a501e50b0e106ed21940c19ba215e7c68ab4fe62d182d4efd27fab0",
+      "bytes": 824
+    },
+    "docs/testing/artifacts/watch-workflow/merger/evidence-audit.log": {
+      "sha256": "64a2cffd5a501e50b0e106ed21940c19ba215e7c68ab4fe62d182d4efd27fab0",
+      "bytes": 824
+    },
+    "docs/testing/artifacts/watch-workflow/merger/frontend-tests.log": {
+      "sha256": "6aac990e968d191016c915bc055c2e0ca74fc3985adb08539e22b915468d060f",
+      "bytes": 556
+    },
+    "docs/testing/artifacts/watch-workflow/merger/full-workflows.log": {
+      "sha256": "d73026ce6b87261958ac0ee745dc0bf738bdd4d3268174e7ea36c175355acb95",
+      "bytes": 272
+    },
+    "docs/testing/artifacts/watch-workflow/merger/mypy.log": {
+      "sha256": "716e401c8d856926ba73e4339d46621cd3440a96d8b7b1d1a61a3b6ea29b4687",
+      "bytes": 400
+    },
+    "docs/testing/artifacts/watch-workflow/merger/recovery-copy-probe-first.log": {
+      "sha256": "462114e4d057e39a05a52cf6a01761ce219558057b3de1a4feed095526290376",
+      "bytes": 500
+    },
+    "docs/testing/artifacts/watch-workflow/merger/recovery-copy-probe.json": {
+      "sha256": "bae90df5461c3a9718a50e402e6727bb5d22931388a5062bc06a187a92d1a0f5",
+      "bytes": 2251
+    },
+    "docs/testing/artifacts/watch-workflow/merger/recovery-copy-probe.log": {
+      "sha256": "4aebcee9f83d5d5f942d400e627127c265ad1257f61225cef3b558c82cdc9c43",
+      "bytes": 2347
+    },
+    "docs/testing/artifacts/watch-workflow/merger/recovery_copy_probe.py": {
+      "sha256": "1d3ac04ac5e0b3dffddab8e2cbc4630c53dbd204db5171c006a324918852fd39",
+      "bytes": 4212
+    },
+    "docs/testing/artifacts/watch-workflow/merger/ruff.json": {
+      "sha256": "ddcfa298948ac4d22628d41a92acd1a0b37f215bdab36bb85d952d4711739ba6",
+      "bytes": 548
+    },
+    "docs/testing/artifacts/watch-workflow/merger/whitespace.json": {
+      "sha256": "b51905d380517256dc23515b72d2b1a8ae3202178e59e33fe1a60b23d96bd136",
+      "bytes": 464
+    }
+  }
+}

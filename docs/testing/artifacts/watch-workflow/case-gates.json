@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "expected": "expected.json#/gates/named_cases",
+  "cases": [
+    {
+      "case": "Militado ML05/ML05B",
+      "offline_gate": "passed",
+      "live_gate": "blocked",
+      "source": "cex",
+      "listing_id": "militado",
+      "candidate_id": "877a3b92fcbc87a2fa4894d4911654fe1ebb2d71ce3f30d03ba5a37fca517424",
+      "configuration_id": "84675e20057188cf4b0d0544afa888f12e28bdc525b9f505c6d898fe4e17719b",
+      "seed_observed": {
+        "identity": "unresolved",
+        "binding": "unresolved",
+        "total": {
+          "state": "unknown",
+          "amount": null,
+          "currency": null,
+          "scenario_id": null,
+          "scenario_revision": null,
+          "reason": "Expand exact-offer scenarios; no single public scenario is selected."
+        },
+        "alert_eligible": false
+      },
+      "later_observed_cost": {
+        "state": "unknown",
+        "amount": null,
+        "currency": null,
+        "scenario_id": null,
+        "scenario_revision": null,
+        "reason": "Expand exact-offer scenarios; no single public scenario is selected."
+      },
+      "evidence_paths": [
+        "observed.json#/checkpoints/five_case_seed",
+        "observed.json#/checkpoints/cost_edges",
+        "raw-api.json.gz"
+      ],
+      "limitation": "original invented fixture; no certified real watch/offer"
+    },
+    {
+      "case": "Addiesdive AD2066 mint",
+      "offline_gate": "passed",
+      "live_gate": "unproven",
+      "source": "cex",
+      "listing_id": "addies",
+      "candidate_id": "04e336378c628c261d5c11b75d77064d393b96ef3f10764901d758ef596f0f87",
+      "configuration_id": "59c72dc2203cb6fc29b450eddc15b7660654da5d87012c6e32cbccb1973f5ab7",
+      "seed_observed": {
+        "identity": "supported",
+        "binding": "supported",
+        "total": {
+          "state": "verified_at_observation",
+          "amount": "70.10",
+          "currency": "GBP",
+          "scenario_id": "ec68a306786ffdfd0fe0b87dd5a94f8b37f762451a3c2d389b2c12614504b594",
+          "scenario_revision": 1,
+          "reason": "Cost at observation only; freshness and comparison acceptance remain unvalidated."
+        },
+        "alert_eligible": false
+      },
+      "later_observed_cost": {
+        "state": "verified_at_observation",
+        "amount": "70.10",
+        "currency": "GBP",
+        "scenario_id": "ec68a306786ffdfd0fe0b87dd5a94f8b37f762451a3c2d389b2c12614504b594",
+        "scenario_revision": 1,
+        "reason": "Cost at observation only; freshness and comparison acceptance remain unvalidated."
+      },
+      "evidence_paths": [
+        "observed.json#/checkpoints/five_case_seed",
+        "observed.json#/checkpoints/cost_edges",
+        "raw-api.json.gz"
+      ],
+      "limitation": "original invented fixture; no certified real watch/offer"
+    },
+    {
+      "case": "San Martin SN0144",
+      "offline_gate": "passed",
+      "live_gate": "unproven",
+      "source": "cex",
+      "listing_id": "san",
+      "candidate_id": "9b5de7d4f1c6c1ed957587c170487d8dcb3ef3f731e00cb3a2767c643eed4adc",
+      "configuration_id": "510c1e824fc52c8a7e7bc7ff94b7c27276939855c72b1df5c89fddfa246d1e25",
+      "seed_observed": {
+        "identity": "supported",
+        "binding": "rejected",
+        "total": {
+          "state": "unknown",
+          "amount": null,
+          "currency": null,
+          "scenario_id": "d463db018055e77e7f3a0981e3c7620ad87999da1f54eaa75fe99e5871adbf13",
+          "scenario_revision": 1,
+          "reason": "Cost at observation only; freshness and comparison acceptance remain unvalidated."
+        },
+        "alert_eligible": false
+      },
+      "later_observed_cost": {
+        "state": "conditional",
+        "amount": "70.10",
+        "currency": "GBP",
+        "scenario_id": "d463db018055e77e7f3a0981e3c7620ad87999da1f54eaa75fe99e5871adbf13",
+        "scenario_revision": 3,
+        "reason": "Cost at observation only; freshness and comparison acceptance remain unvalidated."
+      },
+      "evidence_paths": [
+        "observed.json#/checkpoints/five_case_seed",
+        "observed.json#/checkpoints/cost_edges",
+        "raw-api.json.gz"
+      ],
+      "limitation": "original invented fixture; no certified real watch/offer"
+    },
+    {
+      "case": "Merkur Lightning salmon",
+      "offline_gate": "passed",
+      "live_gate": "blocked",
+      "source": "cex",
+      "listing_id": "merkur",
+      "candidate_id": "20a564702d583fcbb094efc4f2466170a9d4ead53e0e4a3bc763ed649182ad39",
+      "configuration_id": "edf906e7f2e4719d46060821930231d511668187d1daf41810703c023483df77",
+      "seed_observed": {
+        "identity": "unresolved",
+        "binding": "unresolved",
+        "total": {
+          "state": "unknown",
+          "amount": null,
+          "currency": null,
+          "scenario_id": null,
+          "scenario_revision": null,
+          "reason": "Expand exact-offer scenarios; no single public scenario is selected."
+        },
+        "alert_eligible": false
+      },
+      "later_observed_cost": {
+        "state": "unknown",
+        "amount": null,
+        "currency": null,
+        "scenario_id": null,
+        "scenario_revision": null,
+        "reason": "Expand exact-offer scenarios; no single public scenario is selected."
+      },
+      "evidence_paths": [
+        "observed.json#/checkpoints/five_case_seed",
+        "observed.json#/checkpoints/cost_edges",
+        "raw-api.json.gz"
+      ],
+      "limitation": "original invented fixture; no certified real watch/offer"
+    },
+    {
+      "case": "Casio MTP-B145D-2A2VEF",
+      "offline_gate": "passed",
+      "live_gate": "unproven",
+      "source": "cex",
+      "listing_id": "casio",
+      "candidate_id": "1dc02e1e23a0a0b4db7afab0ee574791959284041192f3f985726c12f7321137",
+      "configuration_id": "08ea8ae7f77b2af7a6663b7b0ce67a994909f16a29048ab9b2354a5a6f0b8f42",
+      "seed_observed": {
+        "identity": "supported",
+        "binding": "supported",
+        "total": {
+          "state": "unknown",
+          "amount": null,
+          "currency": null,
+          "scenario_id": "9e3fe73f0c6f03d8859378b95bf824d2cb3e49ed692c2770726d52678d667d1a",
+          "scenario_revision": 1,
+          "reason": "Cost at observation only; freshness and comparison acceptance remain unvalidated."
+        },
+        "alert_eligible": false
+      },
+      "later_observed_cost": {
+        "state": "verified_at_observation",
+        "amount": "49.68",
+        "currency": "GBP",
+        "scenario_id": "9e3fe73f0c6f03d8859378b95bf824d2cb3e49ed692c2770726d52678d667d1a",
+        "scenario_revision": 3,
+        "reason": "Cost at observation only; freshness and comparison acceptance remain unvalidated."
+      },
+      "evidence_paths": [
+        "observed.json#/checkpoints/five_case_seed",
+        "observed.json#/checkpoints/cost_edges",
+        "raw-api.json.gz"
+      ],
+      "limitation": "original invented fixture; no certified real watch/offer"
+    }
+  ],
+  "buyer_feedback": "unproven",
+  "full_market_coverage": "unproven"
+}

@@ -1,0 +1,87 @@
+{
+  "date": "2026-10-27",
+  "review_base": "c294a48cb561e61678ce416ead320e89d1e95b70",
+  "review_head": "82afe34833ec4ade8e46d954291bee79dd4a6794",
+  "axes": {
+    "standards": {
+      "findings": 2,
+      "worst": "P2",
+      "fixed": 2
+    },
+    "spec": {
+      "findings": 2,
+      "worst": "P1",
+      "fixed": 2
+    }
+  },
+  "application_workflows": {
+    "passed": 215,
+    "seconds": 198.98,
+    "retained": 191,
+    "added": 24,
+    "skips": 0,
+    "xfails": 0
+  },
+  "focused_regressions": 24,
+  "original_reviewer_script_runs": 7,
+  "contracts": {
+    "passed": 37,
+    "warnings": 10
+  },
+  "uncached_mypy_files": 5,
+  "focused_ruff": {
+    "base": "82afe34833ec4ade8e46d954291bee79dd4a6794",
+    "current": 0,
+    "baseline": 0,
+    "added": []
+  },
+  "frontend_unchanged": "08aa2e1fe99d9702e09ae087f8fcc1925452b547",
+  "reused_frontend_proof": "25tests/build and19 inspected workflow screenshots",
+  "buyer_feedback": "pending actual response; not inferred from automation",
+  "original_parent_files_unchanged": 77,
+  "sha256": {
+    "src/pricerecon/core/acquisition.py": "c0cde04792af61b4827d947182c136c63fc6c10d443b187465e395e9ba2aa9e2",
+    "src/pricerecon/core/exact_tracking.py": "71510753cba3c971ab539b586ebded828b245e4aaa7a30a61b0895a9351c5b1a",
+    "src/pricerecon/connectors/shopify_evidence.py": "bf08562828f6e8474ca1fa6589784979a903c738cff7dc749ca0a8dd8a691536",
+    "src/pricerecon/connectors/ebay_evidence.py": "051e68143a367ff1bbc96e318e22f9447f31794d055a148dc768264742db064f",
+    "src/pricerecon/models/qualification.py": "7e34f78639e91acfb97306ba8014a7f83bf945094549633d22f73e989dda50aa",
+    "tests/monitoring/final_review_workflows.py": "286ec719511e7dc4479a786564e0e4d83df0bdc640a92f13f1acbfe0bf6b6951",
+    "tests/test_final_review_workflow.py": "461249538504ab63823c0d98aafb0d1aafcd2728016ad97b467fe5b5bff185bf",
+    "docs/testing/artifacts/watch-final-review/black.log": "7657c5ec367da2c8d4deead1b5f1f8eca9c1b89120ad13df7f855ca4005696b6",
+    "docs/testing/artifacts/watch-final-review/contracts.log": "06020a300ae3c8845853e1e2453b4da9904064d2e737d02c5c39a8e6643195e8",
+    "docs/testing/artifacts/watch-final-review/coupon-green.log": "261d80fee161174dfef792cf7bc961003dede6c18cb3fc7e43c0fa25dae6f9e1",
+    "docs/testing/artifacts/watch-final-review/coupon-red.log": "db3115eea50a78a4df7b7ef0c0ae0b27b2355678246f51d5aa9720029b719f6c",
+    "docs/testing/artifacts/watch-final-review/focused.log": "ac8707f193ec7d08d44c43de56ca46d457959965c2e92eedc2758403bc54282b",
+    "docs/testing/artifacts/watch-final-review/isolation-green.log": "eae2e58397a556fe3911c0b79ccd5a7b30afc8836f6c86e65a58d3a44e99fc2c",
+    "docs/testing/artifacts/watch-final-review/isolation-red.log": "b1b3b5401ebef49249e199b621f3ddc5d891a212398573eb2f76b974dddad72c",
+    "docs/testing/artifacts/watch-final-review/mypy.log": "14ec9c68575a2c0cadddaa0abf375a25d91f5360400091868714826159b10a02",
+    "docs/testing/artifacts/watch-final-review/original-coupon-expired-first.log": "745253ccc06639e2942b93246883f99c4442e889bc70906b721866eea24db8ea",
+    "docs/testing/artifacts/watch-final-review/original-coupon-expired-only.log": "c727e69ffcef50f9c054b5053fb122647d2f3f87de36b6d5022b9b6d8dd7274e",
+    "docs/testing/artifacts/watch-final-review/original-coupon-same-report-conflict.log": "917a30a4ac33c798bd0c596a5b2f356b219bb27a2d4c3a8dbeb0e61f89194529",
+    "docs/testing/artifacts/watch-final-review/original-coupon-valid-first.log": "91027beedd796306a984327d7dd95556f2815db26e1117a35f81fbbd48242b9c",
+    "docs/testing/artifacts/watch-final-review/original-probe-results.json": "c91430369a9dca393de068af420c28170e97795ec63e7a763535e8bf0ea0553f",
+    "docs/testing/artifacts/watch-final-review/original-standards.log": "9ef274c95cac989a9f9d3f7c783d599561d67756fbcc7c94937a1032d039b10a",
+    "docs/testing/artifacts/watch-final-review/original-tracking-all-fresh.log": "697ebc3647fca7b09c27c6a2575de682874ee05736f4181c8b48049eaa74e8a1",
+    "docs/testing/artifacts/watch-final-review/original-tracking-retained-definition.log": "985680ddc0cd89bb824d4f4452ee02bcb77d6392b6007b0ff62d05942a8f3f0b",
+    "docs/testing/artifacts/watch-final-review/pointer-red.log": "18a638987364c904530039127ebb66c387effc148bd08e5395ecc43bd8090ad1",
+    "docs/testing/artifacts/watch-final-review/review-inputs/final-review-spec-evidence.md": "ce99511b8d42418715b0766b3eedf39bd3c654fd1172f9674b4e6fa253acaebf",
+    "docs/testing/artifacts/watch-final-review/review-inputs/final-review-spec.md": "238a26dbb95cce032c994141bfc095731af5c424e8afbd7821e110630270aea3",
+    "docs/testing/artifacts/watch-final-review/review-inputs/final-review-standards.md": "37d2e860d6bfe4347e89a01c2b02d5240c771067880cf09280483f4daf728578",
+    "docs/testing/artifacts/watch-final-review/review-inputs/final-spec-coupon-expired-first.txt": "285fe6a3b346c5e9108b75affc36c0bd432480a52964720bea2763408a1dcc6b",
+    "docs/testing/artifacts/watch-final-review/review-inputs/final-spec-coupon-expired-only.txt": "dd802e85bc8a5356bb2da34a712d5a3d3b2ea2fbc8bffaaff19a84dc336423db",
+    "docs/testing/artifacts/watch-final-review/review-inputs/final-spec-coupon-probe.py": "328de44bc8bb6087ce5aa574b803a64293747572c065c8dc5a4082ab1f6a241c",
+    "docs/testing/artifacts/watch-final-review/review-inputs/final-spec-coupon-same-report-conflict.txt": "8c2b1f11dd1d9e84f87ec08f6edabd0f1685e3b558479a0494df7eb909027960",
+    "docs/testing/artifacts/watch-final-review/review-inputs/final-spec-coupon-valid-first.txt": "6c1a967cc92fd0bddaf9bf0d37101ef33a895442bc4c8f51b62582c739695249",
+    "docs/testing/artifacts/watch-final-review/review-inputs/final-spec-tracking-all-fresh.txt": "60ed4a165dba0b04d1d704fe1cb21ffb4b1c568e04fb114e00037505aa6262fc",
+    "docs/testing/artifacts/watch-final-review/review-inputs/final-spec-tracking-probe.py": "ce738ee3076394b817569e2f251a6935322e551731176db8d37d635da6434dbb",
+    "docs/testing/artifacts/watch-final-review/review-inputs/final-spec-tracking-retained-definition.txt": "4b2b8456e088823b1b493baec068c41fea650675dfa2b232006e4d09d68b43c6",
+    "docs/testing/artifacts/watch-final-review/review-inputs/final-standards-probe.json": "d3ed28a25ca9cb2a9f3f6916adbf495f89cb47629e9d4c24fca134bdf8ce0a7f",
+    "docs/testing/artifacts/watch-final-review/review-inputs/final-standards-probe.log": "e478d4271855b4375eef2332c962e7df60bfacd7119644ee143182de5ea0f713",
+    "docs/testing/artifacts/watch-final-review/review-inputs/final-standards-probe.py": "cfc19024ceec77b3a9a839df4024ce146ed73ad759734eeb7d0d7ffd4393d771",
+    "docs/testing/artifacts/watch-final-review/ruff-comparison.json": "8f4b05ab756cf3891f6843b3cd9c35339f2b8fd12df40c042dc9380287697c4b",
+    "docs/testing/artifacts/watch-final-review/ruff.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "docs/testing/artifacts/watch-final-review/tracking-green.log": "c18fe49cb3935e7d6dd461fa3e9c01f2f7be6e4fd5582ae53b1e6c03773ea753",
+    "docs/testing/artifacts/watch-final-review/tracking-red.log": "9124cea2dcea21ea2e16070f71b7eb2f6aa2d5a9bd9d19fad8dfedccb3365c46",
+    "docs/testing/artifacts/watch-final-review/workflows.log": "c85f7e9fb28008ca6b963583966f66020020947f9979efe9fe8df71cdea5eaac"
+  }
+}

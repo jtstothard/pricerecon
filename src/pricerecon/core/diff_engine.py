@@ -90,6 +90,8 @@ def is_first_run(watch_id: int) -> bool:
 def compute_diff(
     watch_id: int,
     current_listings: list[NormalizedListing],
+    *,
+    failed_sources: set[str] | None = None,
 ) -> DiffResult:
     """Compute diff between current listings and previous state.
 
@@ -178,7 +180,7 @@ def compute_diff(
 
     # Check for listings that disappeared
     for key in previous:
-        if key not in current:
+        if key not in current and key[0] not in (failed_sources or set()):
             prev = previous[key]
             listings_gone.append(
                 {
@@ -199,16 +201,29 @@ def compute_diff(
     )
 
 
-def store_listings(watch_id: int, listings: list[NormalizedListing]) -> None:
+def store_listings(
+    watch_id: int,
+    listings: list[NormalizedListing],
+    *,
+    failed_sources: set[str] | None = None,
+    connection: sqlite3.Connection | None = None,
+) -> None:
     """Store current listings in the database.
 
-    Replaces previous listings for this watch.
+    Replaces previous listings except last-good rows from failed sources.
+    Retained rows keep their original observation time and payload.
     """
-    conn = get_db()
+    conn = connection if connection is not None else get_db()
     cursor = conn.cursor()
 
-    # Delete old listings for this watch
-    cursor.execute("DELETE FROM listings WHERE watch_id = ?", (watch_id,))
+    if failed_sources:
+        placeholders = ", ".join("?" for _ in failed_sources)
+        cursor.execute(
+            f"DELETE FROM listings WHERE watch_id = ? AND source NOT IN ({placeholders})",
+            (watch_id, *sorted(failed_sources)),
+        )
+    else:
+        cursor.execute("DELETE FROM listings WHERE watch_id = ?", (watch_id,))
 
     # Insert new listings
     for listing in listings:
@@ -233,17 +248,20 @@ def store_listings(watch_id: int, listings: list[NormalizedListing]) -> None:
             ),
         )
 
-    conn.commit()
-    conn.close()
+    if connection is None:
+        conn.commit()
+        conn.close()
 
 
-def store_events(watch_id: int, diff_result: DiffResult) -> list[int]:
+def store_events(
+    watch_id: int, diff_result: DiffResult, *, connection: sqlite3.Connection | None = None
+) -> list[int]:
     """Store events from diff result in the database.
 
     Returns list of created event IDs.
     """
 
-    conn = get_db()
+    conn = connection if connection is not None else get_db()
     cursor = conn.cursor()
 
     event_ids = []
@@ -320,8 +338,9 @@ def store_events(watch_id: int, diff_result: DiffResult) -> list[int]:
         if cursor.lastrowid is not None:
             event_ids.append(cursor.lastrowid)
 
-    conn.commit()
-    conn.close()
+    if connection is None:
+        conn.commit()
+        conn.close()
 
     return event_ids
 
@@ -329,6 +348,8 @@ def store_events(watch_id: int, diff_result: DiffResult) -> list[int]:
 def run_check(
     watch_id: int,
     listings: list[NormalizedListing],
+    *,
+    failed_sources: set[str] | None = None,
 ) -> tuple[bool, DiffResult, list[int]]:
     """Run a complete check cycle for a watch.
 
@@ -340,15 +361,40 @@ def run_check(
     Args:
         watch_id: Watch ID
         listings: Current listings from connectors
+        failed_sources: Sources whose old evidence must survive failed collection.
+            An empty successful collection still replaces its previous snapshot.
 
     Returns:
         Tuple of (is_first_run, DiffResult, event_ids)
     """
     first_run = is_first_run(watch_id)
-    diff_result = compute_diff(watch_id, listings)
+    diff_result = compute_diff(watch_id, listings, failed_sources=failed_sources)
+
+    from contextlib import closing
+
+    from pricerecon.core.collection_policy import current_policy
+
+    policy = current_policy()
+    if policy:
+        from pricerecon.core.rate_limiter import DurableAdmission
+        from pricerecon.db.collection import storage_size
+
+        with closing(get_db()) as connection, connection:
+            connection.execute("BEGIN IMMEDIATE")
+            before = storage_size(connection)
+            store_listings(watch_id, listings, failed_sources=failed_sources, connection=connection)
+            event_ids = (
+                store_events(watch_id, diff_result, connection=connection)
+                if (not first_run and diff_result.has_events)
+                else []
+            )
+            DurableAdmission(policy, "sqlite", "tracking", watch_id).debit(
+                {"storage_bytes": max(0, storage_size(connection) - before)}, connection=connection
+            )
+        return first_run, diff_result, event_ids
 
     # Store current listings (always)
-    store_listings(watch_id, listings)
+    store_listings(watch_id, listings, failed_sources=failed_sources)
 
     # Store events only if not first run
     event_ids = []

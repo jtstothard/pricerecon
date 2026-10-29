@@ -1,0 +1,71 @@
+docs/testing/artifacts/watch-assessments/build.txt:14: trailing whitespace.
++[plugin builtin:vite-reporter] 
+docs/testing/artifacts/watch-assessments/frontend-tests.txt:13: new blank line at EOF.
+docs/testing/artifacts/watch-assessments/merge-lock-red.txt:8: trailing whitespace.
++tests/test_discovery_workflow.py:30: 
+docs/testing/artifacts/watch-assessments/merge-lock-red.txt:9: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-assessments/merge-lock-red.txt:69: trailing whitespace.
++E         
+docs/testing/artifacts/watch-assessments/merge-lock-red.txt:79: trailing whitespace.
++tests/test_discovery_workflow.py:34: 
+docs/testing/artifacts/watch-assessments/merge-lock-red.txt:80: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-assessments/merge-lock-red.txt:138: trailing whitespace.
++E         
+docs/testing/artifacts/watch-assessments/merge-lock-red.txt:148: trailing whitespace.
++tests/test_discovery_workflow.py:38: 
+docs/testing/artifacts/watch-assessments/merge-lock-red.txt:149: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-assessments/merge-lock-red.txt:207: trailing whitespace.
++E         
+docs/testing/artifacts/watch-assessments/merge-lock-red.txt:217: trailing whitespace.
++tests/test_discovery_workflow.py:42: 
+docs/testing/artifacts/watch-assessments/merge-lock-red.txt:218: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-assessments/merge-lock-red.txt:275: trailing whitespace.
++E         
+docs/testing/artifacts/watch-assessments/merge-lock-red.txt:287: trailing whitespace.
++tests/test_discovery_workflow.py:48: 
+docs/testing/artifacts/watch-assessments/merge-lock-red.txt:288: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-assessments/merge-lock-red.txt:348: trailing whitespace.
++E         
+docs/testing/artifacts/watch-assessments/merge-lock-red.txt:358: trailing whitespace.
++tests/test_qualification_workflow.py:30: 
+docs/testing/artifacts/watch-assessments/merge-lock-red.txt:359: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-assessments/merge-lock-red.txt:417: trailing whitespace.
++E         
+docs/testing/artifacts/watch-assessments/red-conflicts.txt:8: trailing whitespace.
++tests/test_assessment_workflow.py:42: 
+docs/testing/artifacts/watch-assessments/red-conflicts.txt:9: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-assessments/red-conflicts.txt:18: trailing whitespace.
++    
+docs/testing/artifacts/watch-assessments/red-conflicts.txt:49: trailing whitespace.
++E         
+docs/testing/artifacts/watch-assessments/red-coupon.txt:8: trailing whitespace.
++tests/test_assessment_workflow.py:30: 
+docs/testing/artifacts/watch-assessments/red-coupon.txt:9: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-assessments/red-coupon.txt:18: trailing whitespace.
++    
+docs/testing/artifacts/watch-assessments/red-coupon.txt:59: trailing whitespace.
++E         
+docs/testing/artifacts/watch-assessments/red-invalidation.txt:8: trailing whitespace.
++tests/test_assessment_workflow.py:26: 
+docs/testing/artifacts/watch-assessments/red-invalidation.txt:9: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-assessments/red-invalidation.txt:18: trailing whitespace.
++    
+docs/testing/artifacts/watch-assessments/red-invalidation.txt:49: trailing whitespace.
++E         
+docs/testing/artifacts/watch-assessments/red-scoped.txt:8: trailing whitespace.
++tests/test_assessment_workflow.py:25: 
+docs/testing/artifacts/watch-assessments/red-scoped.txt:9: trailing whitespace.
++_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+docs/testing/artifacts/watch-assessments/red-scoped.txt:18: trailing whitespace.
++    
+docs/testing/artifacts/watch-assessments/red-scoped.txt:50: trailing whitespace.
++E         

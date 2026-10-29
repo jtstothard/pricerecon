@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/tests/monitoring/watch_workflow_browser.py", line 229, in <module>
+  File "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/tests/monitoring/watch_workflow_browser.py", line 184, in main
+    command("fill", row + ' input[name="correction_value"]', "green")
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jay/.t3/worktrees/pricerecon/t3-dbe22e28/tests/monitoring/watch_workflow_browser.py", line 36, in command
+    assert result.returncode == 0, result.stdout + result.stderr
+           ^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {"success":false,"data":null,"error":"page.waitForSelector: Timeout 25000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.discovery-row[data-candidate=\"04e336378c628c261d5c11b75d77064d393b96ef3f10764901d758ef596f0f87\"] [role=\"alert\"]') to be visible\u001b[22m\n"}
+
