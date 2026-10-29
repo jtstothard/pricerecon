@@ -6,13 +6,11 @@ import sys
 from .harness import MonitoringHarness
 from .history_workflows import priced_report as history_report
 from .tracking_workflows import policy as tracking_policy
+from .workflows import get, listing
 
 
 def priced_report(harness, price="68.00", listing_id="assessment"):
     return history_report(harness, price, listing_id)
-
-
-from .workflows import get, listing
 
 
 def policy(harness, **changes):
