@@ -32,9 +32,6 @@ def supervise(
     ):
         raise ValueError("temporary pilot root required")
     started = time.monotonic()
-    child = subprocess.Popen(
-        command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, start_new_session=True
-    )
     stop_requested = False
     stop_deadline: float | None = None
     previous_handlers = {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
@@ -43,8 +40,23 @@ def supervise(
         nonlocal stop_requested
         stop_requested = True
 
+    # Arm the stop handlers before spawning the worker: a TERM/INT delivered
+    # in the gap between Popen and installation would otherwise kill this
+    # supervisor with default disposition and orphan the (self-bounded)
+    # worker (n1, adversarial review 2026-10-29).
     for sig in previous_handlers:
         signal.signal(sig, operator_stop)
+    spawned = False
+    try:
+        child = subprocess.Popen(
+            command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, start_new_session=True
+        )
+        spawned = True
+    finally:
+        if not spawned:
+            # The save/restore discipline covers the spawn itself failing.
+            for sig, handler in previous_handlers.items():
+                signal.signal(sig, handler)
     state = "failed"
     output = bytearray()
     try:
