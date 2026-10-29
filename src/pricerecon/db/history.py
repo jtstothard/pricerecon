@@ -199,11 +199,11 @@ def get_history(
             validity: HistoryValidity = (
                 "invalidated"
                 if invalidations
-                else "legacy_unqualified"
-                if capture.history_contract_version is None
-                else "unqualified"
-                if reasons
-                else "supported_at_capture"
+                else (
+                    "legacy_unqualified"
+                    if capture.history_contract_version is None
+                    else "unqualified" if reasons else "supported_at_capture"
+                )
             )
             synthetic = any(c.retention == "synthetic" for c in offer.evidence + cost_claims)
             # Value changes compare the same offer, configuration, purchase and
@@ -250,9 +250,7 @@ def get_history(
                         change = (
                             "unchanged"
                             if after.amount == before.amount
-                            else "increased"
-                            if after.amount > before.amount
-                            else "decreased"
+                            else "increased" if after.amount > before.amount else "decreased"
                         )
             observation = HistoryObservation(
                 id=observation_id,
@@ -261,9 +259,9 @@ def get_history(
                 observed_at=observed_at,
                 candidate_id=candidate.id,
                 source=candidate.source,
-                acquisition_state=state
-                if state in {"success", "partial", "cache_reuse"}
-                else "unknown",
+                acquisition_state=(
+                    state if state in {"success", "partial", "cache_reuse"} else "unknown"
+                ),
                 offer=offer,
                 binding=binding,
                 configuration=configuration,

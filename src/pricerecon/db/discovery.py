@@ -358,12 +358,14 @@ def get_feed() -> DiscoveryFeed:
 
 
 def load_capture_candidates(
-    connection: sqlite3.Connection, capture_id: str,
+    connection: sqlite3.Connection,
+    capture_id: str,
 ) -> list[DiscoveryCandidate]:
     """Hydrate retained capture inputs in the caller's SQLite snapshot."""
     candidates = []
     for row in connection.execute(
-        "SELECT payload_json FROM discovery_leads WHERE capture_id=? ORDER BY rowid", (capture_id,),
+        "SELECT payload_json FROM discovery_leads WHERE capture_id=? ORDER BY rowid",
+        (capture_id,),
     ):
         candidate = DiscoveryCandidate.model_validate_json(row[0])
         hydrate_candidate(connection, candidate)

@@ -73,12 +73,14 @@ def collection_status() -> CollectionStatus:
                     reason=row["reason"],
                     next_eligible_at=row["next_eligible_at"],
                     last_good_at=good,
-                    last_good_age_seconds=max(0, int((now - good).total_seconds()))
-                    if good
-                    else None,
-                    evidence_state="observed_at_attempt"
-                    if state in {"success", "success_empty"}
-                    else "unrefreshed",
+                    last_good_age_seconds=(
+                        max(0, int((now - good).total_seconds())) if good else None
+                    ),
+                    evidence_state=(
+                        "observed_at_attempt"
+                        if state in {"success", "success_empty"}
+                        else "unrefreshed"
+                    ),
                 )
             )
         policy_gate = selection.reason
@@ -116,7 +118,8 @@ def collection_status() -> CollectionStatus:
             []
             if valid
             else [
-                policy_gate or ("operating_policy_expired" if policy else "operating_policy_required")
+                policy_gate
+                or ("operating_policy_expired" if policy else "operating_policy_required")
             ]
         )
         + ["live_activation_not_authorized", "production_operating_envelope_unproven"],

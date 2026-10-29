@@ -65,15 +65,33 @@ def main():
         command("set", "viewport", "1280", "900")
         fixture = evaluate('fetch("/api/offline-verification").then(response => response.json())')
         assert fixture["fixture"] == (
-            "ticket08-assessment-ui" if args.assessments else
-            "ticket07-correction-ui" if args.corrections else
-            "ticket05-tracking-ui" if args.tracking else
-            "ticket09-coupon-ui" if args.coupons else
-            "ticket06-history-ui" if args.history else "ticket04-cost-ui"
-            if args.costs
-            else "ticket03-qualification-ui"
-            if args.qualification
-            else "ticket02-discovery-ui"
+            "ticket08-assessment-ui"
+            if args.assessments
+            else (
+                "ticket07-correction-ui"
+                if args.corrections
+                else (
+                    "ticket05-tracking-ui"
+                    if args.tracking
+                    else (
+                        "ticket09-coupon-ui"
+                        if args.coupons
+                        else (
+                            "ticket06-history-ui"
+                            if args.history
+                            else (
+                                "ticket04-cost-ui"
+                                if args.costs
+                                else (
+                                    "ticket03-qualification-ui"
+                                    if args.qualification
+                                    else "ticket02-discovery-ui"
+                                )
+                            )
+                        )
+                    )
+                )
+            )
         ), fixture
         assert fixture["temporary_storage"] is True, fixture
         assert fixture["automatic_checks"] is False, fixture
@@ -242,9 +260,13 @@ def main():
             )
             assert evaluate('document.body.textContent.includes("Known subtotal: GBP 48.00")')
             assert evaluate('document.body.textContent.includes("shipping:unknown")')
-        if not evaluate('document.querySelector(".discovery-row:first-of-type > details.discovery-evidence").open'):
+        if not evaluate(
+            'document.querySelector(".discovery-row:first-of-type > details.discovery-evidence").open'
+        ):
             command("click", ".discovery-row:first-of-type > details > summary")
-        assert evaluate('document.querySelector(".discovery-row:first-of-type > details.discovery-evidence").open')
+        assert evaluate(
+            'document.querySelector(".discovery-row:first-of-type > details.discovery-evidence").open'
+        )
         assert evaluate('document.body.textContent.includes("Usual price unavailable")')
         assert evaluate('document.body.textContent.includes("No bargain alerts")')
         if args.costs:
@@ -281,12 +303,14 @@ def main():
             "fixture": (
                 "synthetic reproduced public coupon / advertised opportunity / complete no-coupon; Militado/Merkur abstain"
                 if args.coupons
-                else "synthetic verified / conditional / unknown costs; Militado/Merkur abstain"
-                if args.costs
                 else (
-                    "five named synthetic cases; Militado/Merkur abstain"
-                    if args.qualification
-                    else "five unresolved original test leads"
+                    "synthetic verified / conditional / unknown costs; Militado/Merkur abstain"
+                    if args.costs
+                    else (
+                        "five named synthetic cases; Militado/Merkur abstain"
+                        if args.qualification
+                        else "five unresolved original test leads"
+                    )
                 )
             ),
             "fixture_identity_checked_before_writes": True,
@@ -310,16 +334,18 @@ def main():
             ],
             "cost_workflow": args.costs,
             "coupon_workflow": args.coupons,
-            "coupon_gates": [
-                "separate GBP 45.10 synthetic receipt",
-                "complete payable GBP 45.10",
-                "public no-coupon GBP 50.10 unchanged",
-                "terms and eligibility",
-                "unverified opportunity",
-                "empty checked coupon scope",
-            ]
-            if args.coupons
-            else [],
+            "coupon_gates": (
+                [
+                    "separate GBP 45.10 synthetic receipt",
+                    "complete payable GBP 45.10",
+                    "public no-coupon GBP 50.10 unchanged",
+                    "terms and eligibility",
+                    "unverified opportunity",
+                    "empty checked coupon scope",
+                ]
+                if args.coupons
+                else []
+            ),
             "viewports": ["1280x900", "375x812"],
             "cost_gates": (
                 [

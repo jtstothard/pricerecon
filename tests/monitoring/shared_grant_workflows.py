@@ -61,23 +61,30 @@ async def main(case, storage=None):
 
         if case not in {"zero_resume", "concurrent_resume", "concurrent_inspect"}:
             harness.seed_legacy([(7, {**LEGACY, "sources": [{"connector": "cex"}]})])
-        policy = envelope(harness, requests=2 if case == "remaining_none" else 1,
-                          reserve=0, spacing=0)
+        policy = envelope(
+            harness, requests=2 if case == "remaining_none" else 1, reserve=0, spacing=0
+        )
         if case in {"zero_elapsed", "zero_seed", "zero_resume", "zero_requests"}:
             caps = dict(policy.caps)
             caps["requests" if case == "zero_requests" else "elapsed_seconds"] = {
-                "limit": 0, "tracking_reserve": 0,
+                "limit": 0,
+                "tracking_reserve": 0,
             }
             policy = type(policy).model_validate({**policy.model_dump(), "caps": caps})
         elif case == "zero_provider":
             providers = dict(policy.provider_request_caps)
             providers["cex"] = {"limit": 0, "tracking_reserve": 0}
-            policy = type(policy).model_validate({**policy.model_dump(), "provider_request_caps": providers})
+            policy = type(policy).model_validate(
+                {**policy.model_dump(), "provider_request_caps": providers}
+            )
         elif case == "expired_first":
-            policy = type(policy).model_validate({
-                **policy.model_dump(), "starts_at": harness.clock.now - timedelta(hours=2),
-                "stops_at": harness.clock.now - timedelta(hours=1),
-            })
+            policy = type(policy).model_validate(
+                {
+                    **policy.model_dump(),
+                    "starts_at": harness.clock.now - timedelta(hours=2),
+                    "stops_at": harness.clock.now - timedelta(hours=1),
+                }
+            )
         with patch.object(connectors, "discover_connectors", lambda: {"cex": HTTPFixture}):
             async with harness.session() as (client, _):
                 before = await get(client, "/api/watches/7")
@@ -109,7 +116,10 @@ async def main(case, storage=None):
                     assert any(a["state"] == "success" for a in state["attempts"])
                 elif case == "zero_resume":
                     result = await outside()
-                    assert result["acquisition_outcomes"][0]["reason"] == "resource_exhausted:elapsed_seconds"
+                    assert (
+                        result["acquisition_outcomes"][0]["reason"]
+                        == "resource_exhausted:elapsed_seconds"
+                    )
                     assert sends == []
                     state = await get(client, "/api/discovery/collection")
                     assert state["scope_id"] == policy.scope_id
@@ -118,9 +128,9 @@ async def main(case, storage=None):
                 elif case == "concurrent_none":
                     with operating_policy(policy):
                         await get(client, "/api/discovery/collection")
-                    await asyncio.gather(*[
-                        asyncio.create_task(outside(), context=Context()) for _ in range(2)
-                    ])
+                    await asyncio.gather(
+                        *[asyncio.create_task(outside(), context=Context()) for _ in range(2)]
+                    )
                     assert len(sends) == 1
                     state = await get(client, "/api/discovery/collection")
                     assert usage(state)["requests"] == 1
@@ -155,20 +165,28 @@ async def main(case, storage=None):
                             await outside()
                             denied = await outside()
                             assert len(sends) == 2
-                            assert denied["acquisition_outcomes"][0]["reason"] == "resource_exhausted:requests"
+                            assert (
+                                denied["acquisition_outcomes"][0]["reason"]
+                                == "resource_exhausted:requests"
+                            )
                             state = await get(client, "/api/discovery/collection")
                             assert usage(state)["requests"] == 2
                             assert usage(state)["storage_bytes"] > 0
                             assert state["provider_usage"][0]["used"] == 2
                         elif case == "transport":
-                            async with collection_http_client(transport=httpx.MockTransport(transport)) as edge:
+                            async with collection_http_client(
+                                transport=httpx.MockTransport(transport)
+                            ) as edge:
                                 try:
                                     await edge.get("https://fixture.invalid/search")
                                 except AdmissionDenied as exc:
                                     assert exc.reason == "collection_attempt_required"
                                 else:
                                     raise AssertionError("Transport without an admitted run sent")
-                            for operation in (lambda: debit_resources(ai_calls=1), require_bounded_browser):
+                            for operation in (
+                                lambda: debit_resources(ai_calls=1),
+                                require_bounded_browser,
+                            ):
                                 try:
                                     operation()
                                 except AdmissionDenied as exc:
@@ -180,10 +198,14 @@ async def main(case, storage=None):
                             if case == "expired":
                                 harness.clock.advance(hours=25)
                             elif case == "scope_change":
-                                changed = type(policy).model_validate({
-                                    **policy.model_dump(), "scope_id": "new-scope-cannot-refill",
-                                    "version": "different", "caps": envelope(harness).caps,
-                                })
+                                changed = type(policy).model_validate(
+                                    {
+                                        **policy.model_dump(),
+                                        "scope_id": "new-scope-cannot-refill",
+                                        "version": "different",
+                                        "caps": envelope(harness).caps,
+                                    }
+                                )
                                 with operating_policy(changed):
                                     result = await check(client, 7)
                                     state = await get(client, "/api/discovery/collection")
@@ -197,11 +219,22 @@ async def main(case, storage=None):
                                     if case == "missing":
                                         conn.execute("DELETE FROM collection_policies")
                                     elif case == "invalid":
-                                        conn.execute("UPDATE collection_policies SET payload_json='{}'")
+                                        conn.execute(
+                                            "UPDATE collection_policies SET payload_json='{}'"
+                                        )
                                     else:
-                                        other = type(policy).model_validate({**policy.model_dump(), "scope_id": "ambiguous"})
-                                        conn.execute("INSERT INTO collection_policies VALUES (?,?)", (other.scope_id, other.model_dump_json()))
-                                expected = {"missing": "operating_policy_required", "invalid": "operating_policy_invalid", "ambiguous": "operating_policy_ambiguous"}[case]
+                                        other = type(policy).model_validate(
+                                            {**policy.model_dump(), "scope_id": "ambiguous"}
+                                        )
+                                        conn.execute(
+                                            "INSERT INTO collection_policies VALUES (?,?)",
+                                            (other.scope_id, other.model_dump_json()),
+                                        )
+                                expected = {
+                                    "missing": "operating_policy_required",
+                                    "invalid": "operating_policy_invalid",
+                                    "ambiguous": "operating_policy_ambiguous",
+                                }[case]
                             if case != "scope_change":
                                 result = await outside()
                                 state = await get(client, "/api/discovery/collection")
@@ -210,7 +243,9 @@ async def main(case, storage=None):
                             assert state["state"] == ("expired" if case == "expired" else "blocked")
                             assert len(sends) == 1
                             assert await get(client, "/api/watches/7/listings") == old_rows
-                            assert (await get(client, "/api/watches/7"))["last_check_at"] == last_check
+                            assert (await get(client, "/api/watches/7"))[
+                                "last_check_at"
+                            ] == last_check
                             # Discovery uses the same durable selection even
                             # when no caller supplies an operating context.
                             from pricerecon.core.discovery import execute_discovery
@@ -223,26 +258,41 @@ async def main(case, storage=None):
                             capture = await execute_discovery(
                                 DiscoveryRequest(query="watch", sources=[{"connector": "cex"}]),
                                 admission=DiscoveryAdmission(
-                                    mode="offline_verification", policy_reference="fixture",
-                                    permission_reference="fixture", activation_reference="isolated",
+                                    mode="offline_verification",
+                                    policy_reference="fixture",
+                                    permission_reference="fixture",
+                                    activation_reference="isolated",
                                 ),
                             )
                             # Outside the deliberately mismatched supplied context,
                             # scope_change resolves the original exhausted grant.
                             assert capture.outcomes[0].reason == (
-                                "resource_exhausted:requests" if case == "scope_change" else expected
+                                "resource_exhausted:requests"
+                                if case == "scope_change"
+                                else expected
                             )
                             assert len(sends) == 1
                             new_feed = await get(client, "/api/discovery/watches")
                             if case == "scope_change":
                                 assert {**new_feed, "captures": old_feed["captures"]} == old_feed
                                 assert len(new_feed["captures"]) == len(old_feed["captures"]) + 1
-                                assert new_feed["captures"][0]["outcomes"][0]["reason"] == "resource_exhausted:requests"
+                                assert (
+                                    new_feed["captures"][0]["outcomes"][0]["reason"]
+                                    == "resource_exhausted:requests"
+                                )
                             else:
                                 assert new_feed == old_feed
                             assert harness.deliveries == []
                 after = await get(client, "/api/watches/7")
-                for key in ("enabled", "query", "source_queries", "sources", "filters", "notifications", "schedule"):
+                for key in (
+                    "enabled",
+                    "query",
+                    "source_queries",
+                    "sources",
+                    "filters",
+                    "notifications",
+                    "schedule",
+                ):
                     assert before[key] == after[key], key
                 assert harness.deliveries == harness.blocked_edges == []
         print(f"PASS {case}: sends={len(sends)}, intent retained, no live edges or notifications")
@@ -269,8 +319,13 @@ async def migrated_policy(case):
             connection.execute("DROP TABLE collection_policy_selection")
             connection.execute("DELETE FROM schema_migrations WHERE version='2.1'")
             if case == "migration_ambiguous":
-                other = type(policy).model_validate({**policy.model_dump(), "scope_id": "old-second-grant"})
-                connection.execute("INSERT INTO collection_policies VALUES (?,?)", (other.scope_id, other.model_dump_json()))
+                other = type(policy).model_validate(
+                    {**policy.model_dump(), "scope_id": "old-second-grant"}
+                )
+                connection.execute(
+                    "INSERT INTO collection_policies VALUES (?,?)",
+                    (other.scope_id, other.model_dump_json()),
+                )
         async with harness.session() as (client, _):
             result = await check(client, 7)
             state = await get(client, "/api/discovery/collection")

@@ -73,6 +73,9 @@ def collection_http_client(
             transport or pilot_transport.get() or httpx.AsyncHTTPTransport(retries=0), pilot
         )
     return httpx.AsyncClient(
-        event_hooks={"request": [account_request]}, timeout=timeout, transport=transport,
-        trust_env=pilot is None, headers={"Accept-Encoding": "identity"} if pilot else None,
+        event_hooks={"request": [account_request]},
+        timeout=timeout,
+        transport=transport,
+        trust_env=pilot is None,
+        headers={"Accept-Encoding": "identity"} if pilot else None,
     )

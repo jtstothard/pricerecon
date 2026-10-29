@@ -120,9 +120,7 @@ def resolve_fields(
     result.state = (
         "conflicting"
         if any(i.code in {"conflicting_claims", "purchase_context_mismatch"} for i in result.issues)
-        else "supported"
-        if len(result.values) == len(fields)
-        else "unresolved"
+        else "supported" if len(result.values) == len(fields) else "unresolved"
     )
     return result
 

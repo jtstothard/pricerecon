@@ -558,13 +558,20 @@ async def target_storage_readback():
             # Exhaust the same immutable envelope with a larger evidence write;
             # switching policy scope is no longer permission to reset resources.
             with operating_policy(initial):
-                result, _ = await capture(harness, client, priced_report(harness, "48.00"),
-                    title="Synthetic exact watch " + "x" * 300_000)
+                result, _ = await capture(
+                    harness,
+                    client,
+                    priced_report(harness, "48.00"),
+                    title="Synthetic exact watch " + "x" * 300_000,
+                )
                 assert result.outcomes[0].state == "capped"
                 assert result.outcomes[0].reason == "resource_exhausted:storage_bytes"
                 state = await get(client, "/api/discovery/collection")
                 assert state["scope_id"] == initial.scope_id
-                assert next(u for u in state["usage"] if u["resource"] == "storage_bytes")["used"] <= 200_000
+                assert (
+                    next(u for u in state["usage"] if u["resource"] == "storage_bytes")["used"]
+                    <= 200_000
+                )
                 current = await get(client, f"/api/discovery/tracking/{saved['id']}")
                 assert current["assessment"]["state"] == "withheld"
                 assert "source_refresh_unavailable" in current["assessment"]["reasons"]

@@ -57,9 +57,9 @@ async def probe(output: Path) -> None:
             output.write_text(json.dumps(receipt, indent=2) + "\n")
             assert receipt["original_offer_preserved"]
             assert harness.deliveries == harness.blocked_edges == []
-            assert second["duplicate_of"] == first["id"], (
-                "Derived re-extraction counted as a new supported observation"
-            )
+            assert (
+                second["duplicate_of"] == first["id"]
+            ), "Derived re-extraction counted as a new supported observation"
             assert second["validity"] == "unqualified"
 
 

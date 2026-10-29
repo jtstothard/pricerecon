@@ -200,12 +200,16 @@ def project_tracking(connection: sqlite3.Connection, intent: ExactTracking) -> E
     if has_delivery_claim(connection, intent.id):
         reasons.append("delivery_in_flight_or_interrupted")
     if reasons:
-        intent.assessment = assessment.model_copy(update={
-            "state": "withheld",
-            "reasons": list(dict.fromkeys(
-                (assessment.reasons if assessment.state == "withheld" else []) + reasons
-            )),
-        })
+        intent.assessment = assessment.model_copy(
+            update={
+                "state": "withheld",
+                "reasons": list(
+                    dict.fromkeys(
+                        (assessment.reasons if assessment.state == "withheld" else []) + reasons
+                    )
+                ),
+            }
+        )
     return intent
 
 
@@ -405,14 +409,19 @@ def coupon_assessment_valid(connection: sqlite3.Connection, assessment: Tracking
     if row is None:
         return False
     coupon = project_lineage(connection, CouponAssessment.model_validate_json(row[0]))
-    base = connection.execute("SELECT MAX(revision) FROM discovery_cost_scenarios WHERE id=?",
-                              (assessment.base_scenario_id,)).fetchone()[0]
+    base = connection.execute(
+        "SELECT MAX(revision) FROM discovery_cost_scenarios WHERE id=?",
+        (assessment.base_scenario_id,),
+    ).fetchone()[0]
     cost = coupon.resulting_cost
-    return (coupon.state == "reproduced_at_observation" and cost is not None
-            and coupon.revision == assessment.coupon_revision
-            and identity_key(coupon.model_dump_json()) == assessment.coupon_fingerprint
-            and (cost.id, cost.revision) == (assessment.scenario_id, assessment.scenario_revision)
-            and base == assessment.base_scenario_revision)
+    return (
+        coupon.state == "reproduced_at_observation"
+        and cost is not None
+        and coupon.revision == assessment.coupon_revision
+        and identity_key(coupon.model_dump_json()) == assessment.coupon_fingerprint
+        and (cost.id, cost.revision) == (assessment.scenario_id, assessment.scenario_revision)
+        and base == assessment.base_scenario_revision
+    )
 
 
 def evidence_revision_withdrawn(
@@ -426,7 +435,11 @@ def evidence_revision_withdrawn(
         (assessment.offer_id, assessment.offer_revision),
     ).fetchone()
     references = [
-        ("configuration", assessment.configuration_id or intent.configuration_id, assessment.configuration_revision),
+        (
+            "configuration",
+            assessment.configuration_id or intent.configuration_id,
+            assessment.configuration_revision,
+        ),
         ("binding", row[0] if row else None, assessment.binding_revision),
         ("offer", assessment.offer_id, assessment.offer_revision),
         ("cost", assessment.scenario_id, assessment.scenario_revision),

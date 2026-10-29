@@ -476,8 +476,13 @@ class eBayConnector(BaseConnector):
                     raise RuntimeError("HTTP client not initialized")
                 response = await self._client.post(
                     "https://api.ebay.com/identity/v1/oauth2/token",
-                    headers={"Authorization": f"Basic {_get_basic_auth(self.app_id, self.cert_id)}"},
-                    data={"grant_type": "client_credentials", "scope": "https://api.ebay.com/oauth/api_scope"},
+                    headers={
+                        "Authorization": f"Basic {_get_basic_auth(self.app_id, self.cert_id)}"
+                    },
+                    data={
+                        "grant_type": "client_credentials",
+                        "scope": "https://api.ebay.com/oauth/api_scope",
+                    },
                 )
                 payload = response.json()
                 value = payload.get("access_token")

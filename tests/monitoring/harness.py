@@ -270,18 +270,30 @@ class MonitoringHarness:
             # Explicit synthetic policy for retained offline workflows. These
             # values confer no production limits, rights, cadence or ownership.
             self.test_policy = OperatingPolicy(
-                scope_id="retained-offline-regressions", version="synthetic-v1",
-                owner_reference="test-harness", permission_reference="original-fixtures",
+                scope_id="retained-offline-regressions",
+                version="synthetic-v1",
+                owner_reference="test-harness",
+                permission_reference="original-fixtures",
                 retention_reference="temporary-directory-only",
                 starts_at=datetime(2026, 1, 1, tzinfo=UTC),
                 stops_at=datetime(2030, 1, 1, tzinfo=UTC),
-                recovery_spacing_seconds=0, run_timeout_seconds=30,
-                provider_request_caps={source: {"limit":100000, "tracking_reserve":0}
-                                       for source in self.outcomes},
-                caps={name: {"limit": amount, "tracking_reserve": 0} for name, amount in (
-                    ("requests", 100000), ("pages", 100000), ("details", 100000),
-                    ("retries", 100000), ("fallbacks", 100000),
-                    ("storage_bytes", 1000000000), ("elapsed_seconds", 1000000))},
+                recovery_spacing_seconds=0,
+                run_timeout_seconds=30,
+                provider_request_caps={
+                    source: {"limit": 100000, "tracking_reserve": 0} for source in self.outcomes
+                },
+                caps={
+                    name: {"limit": amount, "tracking_reserve": 0}
+                    for name, amount in (
+                        ("requests", 100000),
+                        ("pages", 100000),
+                        ("details", 100000),
+                        ("retries", 100000),
+                        ("fallbacks", 100000),
+                        ("storage_bytes", 1000000000),
+                        ("elapsed_seconds", 1000000),
+                    )
+                },
             )
             self.stack.enter_context(operating_policy(self.test_policy))
         return self

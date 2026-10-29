@@ -99,17 +99,19 @@ async def main(output, *, single=False):
             assert restarted["configurations"] == observed["configurations"]
             assert harness.deliveries == harness.blocked_edges == []
             receipt = {
-                "fixture": "ticket07-single-control"
-                if single
-                else "ticket07-multi-configuration-merger",
-                "result": "passed"
-                if observed["correction"]["requalification"] == "supported_by_fresh_evidence"
-                and all(c["state"] == "supported" for c in restarted["configurations"])
-                else "failed",
+                "fixture": (
+                    "ticket07-single-control" if single else "ticket07-multi-configuration-merger"
+                ),
+                "result": (
+                    "passed"
+                    if observed["correction"]["requalification"] == "supported_by_fresh_evidence"
+                    and all(c["state"] == "supported" for c in restarted["configurations"])
+                    else "failed"
+                ),
                 "initial_dials": [c["values"]["dial"] for c in initial["configurations"]],
-                "blue_after_correction": blue_after_correction["state"]
-                if blue_after_correction
-                else None,
+                "blue_after_correction": (
+                    blue_after_correction["state"] if blue_after_correction else None
+                ),
                 "after_fresh_capture_and_restart": observed,
                 "guard": {
                     "temporary_storage": True,
@@ -119,12 +121,12 @@ async def main(output, *, single=False):
                 },
             }
             output.write_text(json.dumps(receipt, indent=2) + "\n")
-            assert observed["correction"]["requalification"] == "supported_by_fresh_evidence", (
-                "Fresh supported salmon configuration cannot requalify alongside unrelated blue"
-            )
-            assert all(c["state"] == "supported" for c in restarted["configurations"]), (
-                "Unrelated blue configuration withdrawn during corrected salmon reacquisition"
-            )
+            assert (
+                observed["correction"]["requalification"] == "supported_by_fresh_evidence"
+            ), "Fresh supported salmon configuration cannot requalify alongside unrelated blue"
+            assert all(
+                c["state"] == "supported" for c in restarted["configurations"]
+            ), "Unrelated blue configuration withdrawn during corrected salmon reacquisition"
 
 
 if __name__ == "__main__":

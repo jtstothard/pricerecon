@@ -253,8 +253,9 @@ def store_listings(
         conn.close()
 
 
-def store_events(watch_id: int, diff_result: DiffResult, *,
-                 connection: sqlite3.Connection | None = None) -> list[int]:
+def store_events(
+    watch_id: int, diff_result: DiffResult, *, connection: sqlite3.Connection | None = None
+) -> list[int]:
     """Store events from diff result in the database.
 
     Returns list of created event IDs.
@@ -382,11 +383,14 @@ def run_check(
             connection.execute("BEGIN IMMEDIATE")
             before = storage_size(connection)
             store_listings(watch_id, listings, failed_sources=failed_sources, connection=connection)
-            event_ids = store_events(watch_id, diff_result, connection=connection) if (
-                not first_run and diff_result.has_events
-            ) else []
+            event_ids = (
+                store_events(watch_id, diff_result, connection=connection)
+                if (not first_run and diff_result.has_events)
+                else []
+            )
             DurableAdmission(policy, "sqlite", "tracking", watch_id).debit(
-                {"storage_bytes": max(0, storage_size(connection) - before)}, connection=connection)
+                {"storage_bytes": max(0, storage_size(connection) - before)}, connection=connection
+            )
         return first_run, diff_result, event_ids
 
     # Store current listings (always)

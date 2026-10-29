@@ -253,9 +253,9 @@ async def traps():
         no_sku.variation_id = None
         reports.append(no_sku)
         generic = synthetic_report(harness, "generic-stock")
-        next(
-            c for c in generic.claims if c.field == "availability"
-        ).context.scope = "generic_listing"
+        next(c for c in generic.claims if c.field == "availability").context.scope = (
+            "generic_listing"
+        )
         reports.append(generic)
         inferred = synthetic_report(harness, "ai")
         primary = next(
@@ -325,9 +325,9 @@ async def traps():
                 "accessory",
             ):
                 assert candidates[key]["configuration"]["state"] == "supported"
-                assert candidates[key]["bindings"][0]["resolution"]["state"] == "rejected", (
-                    candidates[key]
-                )
+                assert (
+                    candidates[key]["bindings"][0]["resolution"]["state"] == "rejected"
+                ), candidates[key]
                 assert candidates[key]["offers"][0]["qualification"]["state"] != "supported"
             assert candidates["conflict"]["configuration"]["state"] == "conflicting"
             assert "movement" not in candidates["conflict"]["configuration"]["values"]

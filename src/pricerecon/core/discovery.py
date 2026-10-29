@@ -237,8 +237,15 @@ async def execute_discovery(
             AcquisitionOutcome(
                 source=source.connector,
                 state="blocked" if admission.admitted and source.enabled else "not_attempted",
-                reason=("source_disabled" if not source.enabled else
-                        (policy_gate or "operating_policy_required") if admission.admitted else "collection_staged"),
+                reason=(
+                    "source_disabled"
+                    if not source.enabled
+                    else (
+                        (policy_gate or "operating_policy_required")
+                        if admission.admitted
+                        else "collection_staged"
+                    )
+                ),
             )
             for source in request.sources
         ]
@@ -247,11 +254,11 @@ async def execute_discovery(
         candidate.identity_state = (
             "conflicting"
             if "conflicting" in states
-            else "supported"
-            if states == {"supported"}
-            else "rejected"
-            if states == {"rejected"}
-            else "unresolved"
+            else (
+                "supported"
+                if states == {"supported"}
+                else "rejected" if states == {"rejected"} else "unresolved"
+            )
         )
     capture = DiscoveryCapture(
         correction_input_revision=correction_input_revision,
@@ -291,8 +298,10 @@ async def execute_discovery(
             comparison_policy if admission.admitted and operating is not None else None,
             datetime.now(UTC),
         )
-        await evaluate_tracking_capture(capture.capture_id,
-            policy=tracking_policy if admission.admitted and operating is not None else None)
+        await evaluate_tracking_capture(
+            capture.capture_id,
+            policy=tracking_policy if admission.admitted and operating is not None else None,
+        )
     except AdmissionDenied as exc:
         from pricerecon.db.collection import reject_capture
 

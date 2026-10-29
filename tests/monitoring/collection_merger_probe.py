@@ -60,7 +60,12 @@ async def main(case, output, storage=None):
                     with operating_policy(policy):
                         ledger_before = await get(client, "/api/discovery/collection")
                         assert ledger_before["state"] == "supplied"
-                        assert next(u for u in ledger_before["usage"] if u["resource"] == "requests")["used"] == 1
+                        assert (
+                            next(u for u in ledger_before["usage"] if u["resource"] == "requests")[
+                                "used"
+                            ]
+                            == 1
+                        )
                     assert supplied_policy() is None
                     await check(client, 7)
                     expected_sends = 0
@@ -71,7 +76,10 @@ async def main(case, output, storage=None):
                 elif case == "redirect":
                     with operating_policy(policy):
                         result = await check(client, 7)
-                        assert result["acquisition_outcomes"][0]["reason"] == "resource_exhausted:requests"
+                        assert (
+                            result["acquisition_outcomes"][0]["reason"]
+                            == "resource_exhausted:requests"
+                        )
                         ledger = await get(client, "/api/discovery/collection")
                     observed_status = ledger
                     used = {u["resource"]: u["used"] for u in ledger["usage"]}
@@ -83,15 +91,24 @@ async def main(case, output, storage=None):
                             first = await check(client, 7)
                             assert first["acquisition_outcomes"][0]["state"] == "success_empty"
                             capped = await check(client, 7)
-                            assert capped["acquisition_outcomes"][0]["reason"] == "resource_exhausted:requests"
+                            assert (
+                                capped["acquisition_outcomes"][0]["reason"]
+                                == "resource_exhausted:requests"
+                            )
                             assert len(sends) == 1
                         ledger_before = await get(client, "/api/discovery/collection")
                         assert ledger_before["state"] == "supplied"
-                        assert next(u for u in ledger_before["usage"] if u["resource"] == "requests")["used"] == 1
+                        assert (
+                            next(u for u in ledger_before["usage"] if u["resource"] == "requests")[
+                                "used"
+                            ]
+                            == 1
+                        )
                         expected_sends = len(sends)
                         if case == "process_seed":
                             observed_status = ledger_before
                         else:
+
                             async def outside_entry():
                                 assert supplied_policy() is None
                                 if case == "context_scheduler":
@@ -111,7 +128,15 @@ async def main(case, output, storage=None):
                         if case != "process_seed":
                             assert_denied(ledger_before, ledger, observed_status)
                 after = await get(client, "/api/watches/7")
-                for key in ("enabled", "query", "source_queries", "sources", "filters", "notifications", "schedule"):
+                for key in (
+                    "enabled",
+                    "query",
+                    "source_queries",
+                    "sources",
+                    "filters",
+                    "notifications",
+                    "schedule",
+                ):
                     assert before[key] == after[key], key
                 assert harness.blocked_edges == harness.deliveries == []
                 passed = len(sends) == expected_sends
@@ -131,7 +156,9 @@ async def main(case, output, storage=None):
                     "activation": "staged",
                 }
                 output.write_text(json.dumps(receipt, indent=2) + "\n")
-                assert passed, "Provider transport ran outside shared exhausted grant without a debit"
+                assert (
+                    passed
+                ), "Provider transport ran outside shared exhausted grant without a debit"
 
 
 def assert_denied(before, after, outside):
@@ -150,7 +177,17 @@ def assert_denied(before, after, outside):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("case", choices=["context_api", "context_scheduler", "process_seed", "process_resume", "legacy_no_grant", "redirect"])
+    parser.add_argument(
+        "case",
+        choices=[
+            "context_api",
+            "context_scheduler",
+            "process_seed",
+            "process_resume",
+            "legacy_no_grant",
+            "redirect",
+        ],
+    )
     parser.add_argument("output", type=Path)
     parser.add_argument("--storage", type=Path)
     args = parser.parse_args()

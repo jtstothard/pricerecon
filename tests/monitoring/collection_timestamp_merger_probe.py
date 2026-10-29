@@ -51,7 +51,9 @@ async def main(case, output, entrypoint="api"):
         elif case == "zero_provider":
             caps = dict(policy.provider_request_caps)
             caps["cex"] = {"limit": 0, "tracking_reserve": 0}
-            policy = type(policy).model_validate({**policy.model_dump(), "provider_request_caps": caps})
+            policy = type(policy).model_validate(
+                {**policy.model_dump(), "provider_request_caps": caps}
+            )
 
         expected_reason = {
             "request_cap": "resource_exhausted:requests",
@@ -66,7 +68,9 @@ async def main(case, output, entrypoint="api"):
                     if case in {"request_cap", "expired"}:
                         first = await client.post("/api/watches/7/check")
                         assert first.status_code == 200
-                        assert first.json()["result"]["acquisition_outcomes"][0]["state"] == "success"
+                        assert (
+                            first.json()["result"]["acquisition_outcomes"][0]["state"] == "success"
+                        )
                     else:
                         await get(client, "/api/discovery/collection")
                 before = await get(client, "/api/watches/7")
@@ -91,11 +95,21 @@ async def main(case, output, entrypoint="api"):
                     assert body["result"]["acquisition_outcomes"][0]["reason"] == expected_reason
                 assert rows_before == rows_after
                 assert harness.deliveries == harness.blocked_edges == []
-                for key in ("enabled", "query", "source_queries", "sources", "filters", "notifications", "schedule"):
+                for key in (
+                    "enabled",
+                    "query",
+                    "source_queries",
+                    "sources",
+                    "filters",
+                    "notifications",
+                    "schedule",
+                ):
                     assert before[key] == after[key], key
                 failures = []
                 if body is not None and body["status"] != expected_state:
-                    failures.append(f"denied Watch status is {body['status']}, expected {expected_state}")
+                    failures.append(
+                        f"denied Watch status is {body['status']}, expected {expected_state}"
+                    )
                 if body is not None and body["result"]["success"]:
                     failures.append("denied Watch reports success=true")
                 if entrypoint == "scheduler" and expected_state not in scheduler_log.getvalue():
@@ -104,23 +118,29 @@ async def main(case, output, entrypoint="api"):
                     failures.append("scheduler reported denied work as done")
                 if before["last_check_at"] != after["last_check_at"]:
                     failures.append("denied Watch advanced last_check_at")
-                output.write_text(json.dumps({
-                    "case": case,
-                    "entrypoint": entrypoint,
-                    "scheduler_log": scheduler_log.getvalue(),
-                    "result": "failed" if failures else "passed",
-                    "failures": failures,
-                    "before": before,
-                    "after": after,
-                    "api_response": body,
-                    "collection": ledger,
-                    "rows_preserved": rows_before == rows_after,
-                    "additional_transport_sends": len(sends) - sends_before,
-                    "notifications_sent": len(harness.deliveries),
-                    "blocked_edges": harness.blocked_edges,
-                    "temporary_storage": True,
-                    "activation": "staged",
-                }, indent=2) + "\n")
+                output.write_text(
+                    json.dumps(
+                        {
+                            "case": case,
+                            "entrypoint": entrypoint,
+                            "scheduler_log": scheduler_log.getvalue(),
+                            "result": "failed" if failures else "passed",
+                            "failures": failures,
+                            "before": before,
+                            "after": after,
+                            "api_response": body,
+                            "collection": ledger,
+                            "rows_preserved": rows_before == rows_after,
+                            "additional_transport_sends": len(sends) - sends_before,
+                            "notifications_sent": len(harness.deliveries),
+                            "blocked_edges": harness.blocked_edges,
+                            "temporary_storage": True,
+                            "activation": "staged",
+                        },
+                        indent=2,
+                    )
+                    + "\n"
+                )
                 assert not failures, "; ".join(failures)
 
 

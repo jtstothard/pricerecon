@@ -542,8 +542,16 @@ class ExternalBrowserAdapter:
                     "url": url,
                     "apiUrl": api_url,
                     "waitMs": wait_ms,
-                    **({"renderMode": backend.options["render_mode"]} if "render_mode" in backend.options else {}),
-                    **({"readySelector": backend.options["ready_selector"]} if "ready_selector" in backend.options else {}),
+                    **(
+                        {"renderMode": backend.options["render_mode"]}
+                        if "render_mode" in backend.options
+                        else {}
+                    ),
+                    **(
+                        {"readySelector": backend.options["ready_selector"]}
+                        if "ready_selector" in backend.options
+                        else {}
+                    ),
                 },
             )
             response.raise_for_status()
@@ -711,14 +719,19 @@ class ExternalBrowserAdapter:
                     )
                 except Exception:
                     pass
-        return RenderedContent(
-            snapshot=text,
-            final_url=str(document["url"]) if document.get("url") else None,
-            snapshot_truncated=(
-                bool(document.get("truncated") or document.get("hasMore"))
-                if "truncated" in document or "hasMore" in document else None
+        return (
+            RenderedContent(
+                snapshot=text,
+                final_url=str(document["url"]) if document.get("url") else None,
+                snapshot_truncated=(
+                    bool(document.get("truncated") or document.get("hasMore"))
+                    if "truncated" in document or "hasMore" in document
+                    else None
+                ),
             ),
-        ), [], False
+            [],
+            False,
+        )
 
     async def _playwright(
         self, backend: BrowserBackendConfig, url: str, wait_ms: int, timeout_ms: int, limit: int

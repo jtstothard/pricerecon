@@ -28,7 +28,9 @@ def run(module, case, *args):
     return result.stdout
 
 
-@pytest.mark.parametrize("case", ["context_api", "context_scheduler", "legacy_no_grant", "redirect"])
+@pytest.mark.parametrize(
+    "case", ["context_api", "context_scheduler", "legacy_no_grant", "redirect"]
+)
 def test_retained_shared_grant_probes(case, tmp_path):
     run("collection_merger_probe", case, tmp_path / f"{case}.json")
 
@@ -40,8 +42,13 @@ def test_denied_watch_retains_successful_check_timestamp(case, tmp_path):
 
 @pytest.mark.parametrize("case", ["request_cap", "zero_elapsed", "zero_provider", "expired"])
 def test_scheduler_denial_retains_successful_check_timestamp(case, tmp_path):
-    run("collection_timestamp_merger_probe", case, tmp_path / f"{case}.json",
-        "--entrypoint", "scheduler")
+    run(
+        "collection_timestamp_merger_probe",
+        case,
+        tmp_path / f"{case}.json",
+        "--entrypoint",
+        "scheduler",
+    )
 
 
 @pytest.mark.parametrize("case", ["empty", "partial"])
@@ -57,12 +64,26 @@ def test_retained_fresh_process_exhausted_grant_probe(tmp_path):
             run("collection_merger_probe", case, tmp_path / f"{case}.json", "--storage", root)
 
 
-@pytest.mark.parametrize("case", [
-    "remaining_none", "expired", "expired_first", "zero_elapsed", "zero_requests",
-    "zero_provider", "scope_change",
-    "concurrent_none", "transport", "missing", "invalid", "ambiguous", "legacy_intent",
-    "migration_single", "migration_ambiguous",
-])
+@pytest.mark.parametrize(
+    "case",
+    [
+        "remaining_none",
+        "expired",
+        "expired_first",
+        "zero_elapsed",
+        "zero_requests",
+        "zero_provider",
+        "scope_change",
+        "concurrent_none",
+        "transport",
+        "missing",
+        "invalid",
+        "ambiguous",
+        "legacy_intent",
+        "migration_single",
+        "migration_ambiguous",
+    ],
+)
 def test_durable_shared_policy_boundary(case):
     run("shared_grant_workflows", case)
 
@@ -79,8 +100,10 @@ def test_independent_processes_share_the_same_source_lease_and_global_provider_c
         Path(root, ".offline-monitoring").write_text("ticket01-test-storage\n")
         run("shared_grant_workflows", "concurrent_seed", root)
         with ThreadPoolExecutor(max_workers=2) as pool:
-            runs = [pool.submit(run, "shared_grant_workflows", "concurrent_resume", root)
-                    for _ in range(2)]
+            runs = [
+                pool.submit(run, "shared_grant_workflows", "concurrent_resume", root)
+                for _ in range(2)
+            ]
             outputs = [result.result() for result in runs]
         assert sum("sends=1" in output for output in outputs) == 1
         run("shared_grant_workflows", "concurrent_inspect", root)

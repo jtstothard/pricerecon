@@ -307,7 +307,9 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
 
     acquisition_context = f"watch:{watch_id}:{uuid4()}"
     acquisition = await acquire_sources(
-        watch.sources, query=watch.query, source_queries=watch.source_queries,
+        watch.sources,
+        query=watch.query,
+        source_queries=watch.source_queries,
         filters={"price_max": watch.filters.price_max} if watch.filters.price_max else {},
         context_id=acquisition_context,
     )
@@ -363,10 +365,15 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
         for outcome in acquisition.outcomes:
             if outcome.state in {"success", "success_empty", "partial", "cache_reuse"}:
                 outcome.state, outcome.reason = exc.state, exc.reason
-        return {"success": False, "watch_id": watch_id, "error": exc.reason,
-                "collection_state": exc.state,
-                "acquisition_outcomes": [o.model_dump(mode="json") for o in acquisition.outcomes],
-                "notifications_sent": 0, "events": []}
+        return {
+            "success": False,
+            "watch_id": watch_id,
+            "error": exc.reason,
+            "collection_state": exc.state,
+            "acquisition_outcomes": [o.model_dump(mode="json") for o in acquisition.outcomes],
+            "notifications_sent": 0,
+            "events": [],
+        }
 
     conn = get_db()
     cursor = conn.cursor()
@@ -439,7 +446,9 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
 
     result: dict[str, Any] = {
         "success": True,
-        "acquisition_outcomes": [outcome.model_dump(mode="json") for outcome in acquisition.outcomes],
+        "acquisition_outcomes": [
+            outcome.model_dump(mode="json") for outcome in acquisition.outcomes
+        ],
         "watch_id": watch_id,
         "first_run": first_run,
         "listings_found": len(filtered_listings),

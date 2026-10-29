@@ -157,7 +157,9 @@ async def remote_reference():
             assert candidate["public_delivered_total"]["state"] == "unknown"
         async with harness.session() as (client, _):
             feed = (await get(client, "/api/discovery/watches"))["candidates"]
-            assert next(c["image"] for c in feed if c["source_listing_id"] == "image-control") == image
+            assert (
+                next(c["image"] for c in feed if c["source_listing_id"] == "image-control") == image
+            )
         assert harness.blocked_edges == []
         assert harness.deliveries == []
 

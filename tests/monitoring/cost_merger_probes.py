@@ -95,4 +95,6 @@ if __name__ == "__main__":
         assert Decimal(a["quantum"]) == Decimal(b["quantum"])
         if Decimal(a["total"]["amount"]) != Decimal(b["total"]["amount"]):
             failures.append(f"{a['quantum']} versus {b['quantum']}: {a['total']} != {b['total']}")
-    assert not failures, "Equivalent FX quanta change verified payable outcomes: " + "; ".join(failures)
+    assert not failures, "Equivalent FX quanta change verified payable outcomes: " + "; ".join(
+        failures
+    )

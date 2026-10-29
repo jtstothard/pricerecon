@@ -203,9 +203,12 @@ def configuration_preference_fit(
     known: dict[str, str] = {}
     for field in ("case_width_mm", "dial"):
         values = [
-            config.values.get(field)
-            if config.state != "rejected" and config.values.get("product_kind") == "complete_watch"
-            else None
+            (
+                config.values.get(field)
+                if config.state != "rejected"
+                and config.values.get("product_kind") == "complete_watch"
+                else None
+            )
             for config in configurations
         ]
         if values and all(value is not None for value in values) and len(set(values)) == 1:
@@ -236,7 +239,8 @@ def configuration_matches_values(observed: dict[str, str], intended: dict[str, s
     from pricerecon.core.qualification import canonical_decimal
 
     return all(
-        field in observed and (
+        field in observed
+        and (
             canonical_decimal(observed[field]) == canonical_decimal(value)
             if field == "case_width_mm"
             else observed[field].strip().casefold() == value.strip().casefold()

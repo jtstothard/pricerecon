@@ -18,6 +18,7 @@ from pricerecon.core.collection_transport import collection_http_client
 from pricerecon.models import NormalizedListing, SourceType
 from pricerecon.models.qualification import EvidenceSearchReport
 
+
 class ShopifyConnector(BaseConnector):
     collection_accounting = "http_v1"
 
