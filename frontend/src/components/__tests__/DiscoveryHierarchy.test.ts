@@ -151,6 +151,108 @@ it('keeps a live envelope claim live and refuses a payload without an explicit m
 })
 
 import { SourceCoverage } from '../discovery/SourceCoverage'
+import type { DiscoveryCandidate } from '../../lib/discovery'
+
+type Offer = DiscoveryCandidate['offers'][number]
+type Coupon = Offer['coupons'][number]
+
+const emptyCostContext: Coupon['context'] = {
+  purchase_scope: null,
+  quantity: null,
+  basket_members: [],
+  consignment_members: [],
+}
+
+function couponEvidence(retention: Coupon['opportunity_evidence'][number]['retention']) {
+  return {
+    id: 'coupon-claim-1', issuer: 'Fixture merchant', issuer_kind: 'seller' as const,
+    extractor: 'fixture-extractor', extractor_kind: 'structured_data' as const,
+    observed_at: null, retrieved_at: '2026-10-27T12:00:00Z', effective_at: null,
+    expires_at: null, capture_id: 'capture-1', route: 'fixture-route', pointer: null,
+    locator: 'fixture-locator', derived_from: [], input_claim_ids: [],
+    permission_reference: 'fixture-rights', retention, context: emptyCostContext,
+  }
+}
+
+function couponWith(retention: Coupon['opportunity_evidence'][number]['retention']): Coupon {
+  return {
+    id: 'coupon-1', revision: 1, label: 'Fixture coupon', state: 'applicable_not_reproduced',
+    category: 'public', applicability: 'supported', lineage: 'observation_only',
+    offer_revision: 1, binding_revision: 1, configuration_revision: 1,
+    policy_version: 'coupon-policy', identity_policy_version: 'identity-policy',
+    captured_at: '2026-10-27T12:00:00Z', context: emptyCostContext, issues: [],
+    opportunity_evidence: [couponEvidence(retention)], terms: null, eligibility: null,
+    application: null, resulting_cost: null, historical_resulting_cost: null,
+  }
+}
+
+function offerWith(coupons: Coupon[]): Offer {
+  return {
+    id: 'offer', revision: 1, binding_id: 'binding', binding_revision: 1,
+    source: 'fixture', source_listing_id: 'listing', source_evidence: null,
+    seller: 'Fixture seller', condition: 'new', condition_description: null,
+    visible_condition: null, quantity: 1, availability: 'unknown', purchase_mode: 'buy_now',
+    item_price: '50.00', currency: 'GBP', destination: 'UK',
+    qualification: { state: 'unresolved', values: {}, evidence_ids: [], issues: [] },
+    comparison: { state: 'unresolved', values: {}, evidence_ids: [], issues: [] },
+    comparison_cohort: null, policy_version: 'offer-policy', evidence: [], coupons,
+    cost_scenarios: [],
+  }
+}
+
+it('warns beside the mounted current-best amount when the envelope claim is synthetic', () => {
+  const candidate = parseDiscoveryFeed(captured).candidates[0]
+  candidate.price_assessments = [
+    parsePriceAssessment(capturedAssessment(capturedClaim(true, false))),
+  ]
+  const html = renderToStaticMarkup(
+    createElement(ProductContent, {
+      candidate,
+      tracking: [],
+      onSaved: async () => {},
+      view: 'history',
+    })
+  )
+  expect(html).toContain('Lowest verified total among offers checked: GBP 45.10')
+  expect(html).toContain('decided by fixture evidence, not a live market fact')
+})
+
+it('keeps the mounted History view unmarked for live claims', () => {
+  const candidate = parseDiscoveryFeed(captured).candidates[0]
+  candidate.price_assessments = [
+    parsePriceAssessment(capturedAssessment(capturedClaim(false, false))),
+  ]
+  const html = renderToStaticMarkup(
+    createElement(ProductContent, {
+      candidate,
+      tracking: [],
+      onSaved: async () => {},
+      view: 'history',
+    })
+  )
+  expect(html).toContain('Lowest verified total among offers checked: GBP 45.10')
+  expect(html).not.toContain('decided by fixture evidence')
+})
+
+it.each(['synthetic', 'minimal_fields'] as const)(
+  'mounted Costs view surfaces Synthetic checkout evidence only when coupon evidence retention is %s',
+  (retention) => {
+    const candidate = parseDiscoveryFeed(captured).candidates[0]
+    candidate.offers = [offerWith([couponWith(retention)])]
+    const html = renderToStaticMarkup(
+      createElement(ProductContent, {
+        candidate,
+        tracking: [],
+        onSaved: async () => {},
+        view: 'costs',
+      })
+    )
+    expect(html).toContain('Fixture coupon')
+    if (retention === 'synthetic') expect(html).toContain('Synthetic checkout evidence')
+    else expect(html).not.toContain('Synthetic checkout evidence')
+  }
+)
+
 it('keeps source gaps ahead of optional acquisition provenance', () => {
   const feed = parseDiscoveryFeed(captured)
   feed.cohort_gaps = ['Marketplace was not checked']

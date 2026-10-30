@@ -168,6 +168,18 @@ function subtotals(values: Record<string, string>) {
   )
 }
 type Cost = DiscoveryCandidate['offers'][number]['cost_scenarios'][number]
+type Coupon = DiscoveryCandidate['offers'][number]['coupons'][number]
+// Same evidence surface the tested CouponPanel marks: opportunity, terms and
+// compatibility, eligibility and application claims.
+function couponSyntheticEvidence(coupon: Coupon) {
+  const claims = [
+    ...coupon.opportunity_evidence,
+    ...(coupon.terms ? [...coupon.terms.evidence, ...coupon.terms.compatibility_evidence] : []),
+    ...(coupon.eligibility ? coupon.eligibility.evidence : []),
+    ...(coupon.application ? coupon.application.evidence : []),
+  ]
+  return claims.some((claim) => claim.retention === 'synthetic')
+}
 function Costs({ costs }: { costs: Cost[] }) {
   return (
     <section>
@@ -404,6 +416,9 @@ export function ProductContent({
                   <h4>
                     {coupon.label}: {coupon.state.replace(/_/g, ' ')}
                   </h4>
+                  {couponSyntheticEvidence(coupon) && (
+                    <p className="discovery-caution">Synthetic checkout evidence.</p>
+                  )}
                   <p>{coupon.applicability}</p>
                   <p>{coupon.terms?.literal}</p>
                   {coupon.category !== 'public' && (
@@ -449,6 +464,12 @@ export function ProductContent({
                     : 'Current comparison unavailable'}
                   . {item.current_best.reason}
                 </p>
+                {item.current_best.synthetic && (
+                  <p className="discovery-caution">
+                    Synthetic verification data: the claimed amount is decided by fixture
+                    evidence, not a live market fact.
+                  </p>
+                )}
                 <p>{item.coverage_reason}</p>
                 <p>
                   Retained dates {item.window_start} to {item.window_end}. This does not establish
