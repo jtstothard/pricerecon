@@ -18,9 +18,10 @@ Ground rules (from the recorded sessions in the buyer guide):
   the expected state. Record the buyer's own words; do not fill the notes with agent
   observations. No narrated data dumps.
 - Every "Expect" line below was cross-checked against the source tree at this revision
-  (main, the base of this kit). UI claims cite `frontend/…:line`; API claims cite
-  `src/…`. Where the screen shows less than the tested component library proves, the
-  line says **Partial:** and names where to confirm instead.
+  (this kit's branch, which mounts the per-amount synthetic evidence markers in the
+  discovery UI on top of main — see S1). UI claims cite `frontend/…:line`; API claims
+  cite `src/…`. Where the screen shows less than the tested component library proves,
+  the line says **Partial:** and names where to confirm instead.
 - If the screen disagrees with an Expect line, record the disagreement as a
   discrepancy. Do not silently prefer either side; that discrepancy is session output.
 
@@ -155,9 +156,9 @@ Story references are the numbered user stories in the
   delivered-price state ("GBP …" or "Total unknown"), the cost state and "freshness
   unvalidated", "UK delivered · no coupon · cashback excluded", supported specs
   (strap · size · movement), any identity/preference caution, and Product-details /
-  Track links (`frontend/src/pages/Discovery.tsx:235-303`). A session banner reads
+  Track links (`frontend/src/pages/Discovery.tsx:247-315`). A session banner reads
   "Synthetic session · prices and buying evidence are test data."
-  (`frontend/src/pages/Discovery.tsx:670-674`).
+  (`frontend/src/pages/Discovery.tsx:691-695`).
 - **Defect if:** a candidate is missing without an explanation; a saved search appears
   as discovery; a price appears without its state and the no-coupon/cashback-excluded
   label.
@@ -203,12 +204,12 @@ Story references are the numbered user stories in the
   their product pages (Overview).
 - **Expect:** "Identity unresolved" caution on the card; "Preference fit unknown" —
   unknown fit is shown as unknown, not as satisfying your rules
-  (`frontend/src/pages/Discovery.tsx:239-248`); configurations listed as "Unresolved
-  configuration" (`frontend/src/pages/Discovery.tsx:325-327`); Militado/Merkur totals
+  (`frontend/src/pages/Discovery.tsx:251-260`); configurations listed as "Unresolved
+  configuration" (`frontend/src/pages/Discovery.tsx:337-339`); Militado/Merkur totals
   read "Total unknown" and are not alert-eligible
   (`tests/monitoring/watch_workflow.py:214-217`). An advertised item price is shown
   as an "Item lead", never as a delivered total
-  (`frontend/src/pages/Discovery.tsx:378-392`) — a £1 item lead does not satisfy a
+  (`frontend/src/pages/Discovery.tsx:390-404`) — a £1 item lead does not satisfy a
   £150 delivered budget.
 - **Defect if:** an unknown dimension shown as satisfied; a preference-fit claim
   without evidence.
@@ -220,7 +221,7 @@ Story references are the numbered user stories in the
   configuration rows with the offer/source-claim rows.
 - **Expect:** reference, generation, movement, size, dial and strap appear as separate
   fields, not merged titles ("Evidenced configuration" / "Unresolved configuration"
-  sections, `frontend/src/pages/Discovery.tsx:322-336`). San Martin's mint
+  sections, `frontend/src/pages/Discovery.tsx:334-348`). San Martin's mint
   configuration versus the "Space Gray" selected dial leaves the merchant selection
   unresolved — the binding is not supported
   (`tests/monitoring/watch_workflow.py:128-131,218`). Casio's exact reference suffix
@@ -255,9 +256,9 @@ Story references are the numbered user stories in the
 - **Do:** Product page → Technical. Read "Capture lineage" and the per-claim evidence
   rows. Do the same on a second candidate discovered from the same query.
 - **Expect:** capture id, source listing id and reported source are retained per lead
-  (`frontend/src/pages/Discovery.tsx:494-500`); each claim shows issuer, extraction
+  (`frontend/src/pages/Discovery.tsx:515-521`); each claim shows issuer, extraction
   route, retrieval time, source observation time, validity context and "Derived from"
-  lineage (`frontend/src/pages/Discovery.tsx:501-513`). Two leads copied from one
+  lineage (`frontend/src/pages/Discovery.tsx:522-534`). Two leads copied from one
   capture read as one acquisition lineage — copied claims never count as independent
   confirmation (pinned by `tests/test_history_workflow.py:44-52`).
 - **Defect if:** lineage missing; repeated or derived claims presented as
@@ -272,8 +273,8 @@ Story references are the numbered user stories in the
   the source-claims block.
 - **Expect:** per offer: seller (or "Seller unknown"), Condition (or "Unknown"),
   Availability, Qualification state and Comparison state
-  (`frontend/src/pages/Discovery.tsx:344-354`); the hero repeats Condition
-  (`frontend/src/pages/Discovery.tsx:600`). Source claims are labelled as claims —
+  (`frontend/src/pages/Discovery.tsx:356-366`); the hero repeats Condition
+  (`frontend/src/pages/Discovery.tsx:621`). Source claims are labelled as claims —
   "Source claims do not certify selected-SKU availability. Missing charges remain
   unknown." (`frontend/src/components/discovery/SourceCoverage.tsx:55-113`).
   Authenticity and internal health are never implied: the model pins both to
@@ -309,7 +310,7 @@ Story references are the numbered user stories in the
   scenario separates "Merchant payable" from "Additional liabilities" subtotals and
   itemises each charge (kind, amount, state, reason); "Observed … Freshness
   unvalidated."; assumption text names currency/destination/dispatch context
-  (`frontend/src/pages/Discovery.tsx:171-223`). The recorded fixture total is item
+  (`frontend/src/pages/Discovery.tsx:183-235`). The recorded fixture total is item
   £68 plus £2.10 shipping (buyer guide, task 2).
 - **Defect if:** a bare total with no component breakdown.
 - ☐ Accepted · Evidence match (yes / partial / no) + your words: \_\_\_\_\_\_\_\_\_\_
@@ -319,10 +320,10 @@ Story references are the numbered user stories in the
 - **Do:** Look at the Militado/Merkur cards and the Casio Costs view (Casio's shipping
   is unknown at this state).
 - **Expect:** "Total unknown" wherever a payable component is missing — on cards
-  (`frontend/src/pages/Discovery.tsx:269-271`) and in cost scenarios
-  (`frontend/src/pages/Discovery.tsx:186-188`); Casio shows its missing shipping as an
+  (`frontend/src/pages/Discovery.tsx:281-283`) and in cost scenarios
+  (`frontend/src/pages/Discovery.tsx:198-200`); Casio shows its missing shipping as an
   `unknown` charge and "Known subtotal GBP 48; incomplete, not a delivered total."
-  (`frontend/src/pages/Discovery.tsx:196-198`, fixture assertion
+  (`frontend/src/pages/Discovery.tsx:208-210`, fixture assertion
   `tests/monitoring/watch_workflow.py:220`). Unknown is never rendered as zero and
   never folded into a total.
 - **Defect if:** a delivered total computed with an unknown component; a subtotal
@@ -364,13 +365,13 @@ Story references are the numbered user stories in the
 #### F1 — An advertised code is not a reduction; the no-coupon path works · seeded fixture → `coupon` (US22, US24)
 
 - **Do (first half, seeded fixture):** Addiesdive Costs shows "No verified applicable
-  public coupon supplied." (`frontend/src/pages/Discovery.tsx:401`) and its base total.
+  public coupon supplied." (`frontend/src/pages/Discovery.tsx:413`) and its base total.
   Confirm the core workflow — compare, track — proceeds with no coupon at all. Then
   conductor runs the `coupon` step; reload.
 - **Do (second half):** Expand the coupon block under the Addiesdive offer.
 - **Expect (after `coupon`):** the coupon appears with its own state (for the
   reproduced receipt, "reproduced at observation"), applicability, literal terms and
-  an issues list (`frontend/src/pages/Discovery.tsx:402-427`). The reproduced public
+  an issues list (`frontend/src/pages/Discovery.tsx:414-442`). The reproduced public
   receipt is GBP 45.10 shown as the coupon's **resulting cost**, while the public
   no-coupon total stays at its own base (GBP 50.10 at that moment in the recorded
   run; fixture assertions `tests/monitoring/watch_workflow.py:310-319`, recorded
@@ -404,10 +405,10 @@ Story references are the numbered user stories in the
 - **Do:** Expand the cashback scenario and any non-public coupon entry.
 - **Expect:** cashback £10 is shown under "Benefits excluded from payable" with its
   conditional state and reason ("Excluded from payable")
-  (`frontend/src/pages/Discovery.tsx:212-218`;
+  (`frontend/src/pages/Discovery.tsx:224-230`;
   `tests/monitoring/watch_workflow.py:114-127`); non-public categories are labelled
   "Conditional benefit excluded from public payable. Cashback is not checkout cash."
-  (`frontend/src/pages/Discovery.tsx:409-414`); personal/payment benefits never enter
+  (`frontend/src/pages/Discovery.tsx:424-429`); personal/payment benefits never enter
   the public payable (pinned by
   `tests/test_assessment_workflow.py:51`).
 - **Defect if:** cashback or a conditional benefit inside a payable total.
@@ -420,10 +421,13 @@ Story references are the numbered user stories in the
 - **Do:** Product page → History ("Comparable prices"). Read the assessment block,
   then check `/api/discovery/assessments`.
 - **Expect:** the scoped claim is labelled and scoped — "Lowest verified total among
-  offers checked: GBP 45.10" (after the coupon step) with its reason; retired
+  offers checked: GBP 45.10" (after the coupon step) with its reason, and — because
+  that fixture amount is synthetic — the mounted warning "Synthetic verification
+  data: the claimed amount is decided by fixture evidence, not a live market fact."
+  directly beneath it (see S1); retired
   revisions read "Historical assessment" / "Current comparison unavailable"; the view
   states "**Usual price unavailable.** … No savings claim."
-  (`frontend/src/pages/Discovery.tsx:437-462`). Retained dates are shown with "This
+  (`frontend/src/pages/Discovery.tsx:452-483`). Retained dates are shown with "This
   does not establish current availability."
 - **Partial:** "Dated observed low" is a separate claim on the API envelope
   (`observed_low`) and is rendered by the tested Comparable-prices detail component
@@ -431,7 +435,7 @@ Story references are the numbered user stories in the
   view at this revision shows the summary above. Confirm the three-way separation via
   `/api/discovery/assessments` (distinct `current_best`, `observed_low`, and
   `usual_price.state: "unavailable"` with `savings: null`) or the Technical record
-  JSON (`frontend/src/pages/Discovery.tsx:521`).
+  JSON (`frontend/src/pages/Discovery.tsx:542`).
 - **Defect if:** a usual price presented as known; an RRP or first capture sold as an
   ordinary price; any savings percentage.
 - ☐ Accepted · Evidence match (yes / partial / no) + your words: \_\_\_\_\_\_\_\_\_\_
@@ -496,7 +500,7 @@ Story references are the numbered user stories in the
   (`frontend/src/components/discovery/CollectionCoverage.tsx:41-43`); per capture,
   the outcome state, listing count, completeness and — where applicable — "Reused
   capture …; no new source observation."
-  (`frontend/src/pages/Discovery.tsx:733-756`). Assessments carry their scope: "Lowest
+  (`frontend/src/pages/Discovery.tsx:754-777`). Assessments carry their scope: "Lowest
   among qualified offers checked in this scope only. Intervals are unobserved; no
   continuous availability, complete market or all-time claim."
   (`src/pricerecon/models/assessments.py:86-90`). The fixture roster has sixteen
@@ -560,7 +564,7 @@ Story references are the numbered user stories in the
 
 - **Do:** After saving, revisit the feed card, Costs, History and the tracking view.
 - **Expect:** the card caution "Old prices withdrawn · matching offer needed"
-  (`frontend/src/pages/Discovery.tsx:249-251`); the delivered total returns to "Total
+  (`frontend/src/pages/Discovery.tsx:261-263`); the delivered total returns to "Total
   unknown" (`tests/monitoring/watch_workflow.py:346`); the coupon state reads
   "invalidated" (`tests/monitoring/watch_workflow.py:347`); assessments go historical
   or withdraw ("Current comparison unavailable"); the alert assessment is "withheld"
@@ -664,7 +668,7 @@ Story references are the numbered user stories in the
   a tracked watch's "Alert eligibility details"; Source coverage's "Source claims:
   review required" block and source receipt for a capture.
 - **Expect:** every claim exposes issuer, extraction, retrieval, validity and derived
-  lineage (`frontend/src/pages/Discovery.tsx:501-513`); source claims are labelled
+  lineage (`frontend/src/pages/Discovery.tsx:522-534`); source claims are labelled
   "Source claims: review required" with "Missing evidence: …"
   (`frontend/src/components/discovery/SourceCoverage.tsx:55-113`); every withholding
   decision names its gate in the alert-eligibility list
@@ -708,15 +712,22 @@ repo treats as defects when broken.
   (`src/pricerecon/models/history.py:130-133`).
 - **UI:** the session banner "Synthetic session · prices and buying evidence are test
   data." appears on the feed and product pages
-  (`frontend/src/pages/Discovery.tsx:606,670-674`). **Partial:** the per-amount
-  warning "Synthetic verification data: the claimed amount is decided by fixture
-  evidence, not a live market fact." is rendered beside the amount by the
+  (`frontend/src/pages/Discovery.tsx:627,691-695`). The per-amount warning
+  "Synthetic verification data: the claimed amount is decided by fixture evidence,
+  not a live market fact." is mounted on the product History view directly beneath
+  the current-best amount whenever that envelope claim is synthetic
+  (`frontend/src/pages/Discovery.tsx:467-472`), and a coupon block whose supplied
+  evidence is retained synthetically surfaces "Synthetic checkout evidence."
+  (`frontend/src/pages/Discovery.tsx:419-421`); live claims and minimal-retention
+  coupon evidence render no marker (mounted-render coverage in
+  `frontend/src/components/__tests__/DiscoveryHierarchy.test.ts`). **Partial:** the
+  mounted History view shows only the current-best amount, so the marker beside
+  `observed_low`, the per-path markers and the fuller per-claim detail remain in the
   Comparable-prices detail component
-  (`frontend/src/components/discovery/PriceAssessments.tsx:7-10`, rendered-regression
-  tested in `frontend/src/components/__tests__/DiscoveryHierarchy.test.ts`) but that
-  component is not mounted in the product views at this revision — confirm the marker
-  in the API envelope or the Technical "Complete retained record" JSON instead of
-  expecting the inline warning.
+  (`frontend/src/components/discovery/PriceAssessments.tsx:7-10`), which is still not
+  mounted in the product views — cross-check those on the API envelope or the
+  Technical "Complete retained record" JSON, and keep the API check above as the
+  cross-check for the mounted marker too.
 - **Parser guard:** the frontend refuses any claim payload without an explicit marker
   rather than reading it as live (`frontend/src/lib/assessments.ts:10-12`).
 - **Red flags:** a fixture amount without `synthetic: true`; a synthetic observation
@@ -727,7 +738,7 @@ repo treats as defects when broken.
 
 - Pick any candidate with an unknown payable component. Its card and cost scenario
   must read "Total unknown" / "Known subtotal …; incomplete, not a delivered total."
-  (`frontend/src/pages/Discovery.tsx:186-198,269-271`). In the API, the scenario's
+  (`frontend/src/pages/Discovery.tsx:198-210,281-283`). In the API, the scenario's
   `total` is null with state `unknown`; the unknown charge keeps amount null.
   Regression anchors: `tests/test_cost_workflow.py:45,69`.
 - **Red flags:** a delivered total containing an unknown component; an unknown charge
@@ -737,7 +748,7 @@ repo treats as defects when broken.
 ### S3 — Savings never render from sparse history
 
 - History view and observations panel must say "Usual price unavailable … No savings
-  claim." (`frontend/src/pages/Discovery.tsx:460-462`,
+  claim." (`frontend/src/pages/Discovery.tsx:481-483`,
   `frontend/src/components/discovery/ObservationHistory.tsx:36-39`). In the API,
   `savings` is null and `usual_price.state` is `"unavailable"` on both the assessment
   and history envelopes; the frontend parsers reject payloads where either is set
