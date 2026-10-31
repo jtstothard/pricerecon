@@ -1,5 +1,8 @@
 """REST API tests for PriceRecon."""
 
+import json
+import sqlite3
+from decimal import Decimal
 from typing import AsyncGenerator, Generator
 
 import pytest
@@ -615,6 +618,140 @@ async def test_get_signals_filtered(client: AsyncClient) -> None:
     assert response.status_code == 200
     data = response.json()
     assert "items" in data
+
+
+async def test_get_signals_serves_real_event_rows(client: AsyncClient) -> None:
+    """Regression (deploy receipt 2026-10-30): /api/signals returned 500 with
+    IndexError on any non-empty events table — the SELECT omitted listing_key,
+    which the row mapping reads. The empty-table tests above never entered the
+    row loop, which is why this stayed green. Seed rows shaped exactly like
+    core.diff_engine._persist_events writes them and require the endpoint to
+    serve them."""
+    watch_data = {
+        "name": "Signals Watch",
+        "query": "test query",
+        "category": "electronics",
+        "sources": [{"connector": "ebay"}],
+        "schedule": {"interval": "1h"},
+        "filters": {},
+        "grouping": {},
+        "notifications": {},
+        "enabled": True,
+    }
+    create_resp = await client.post("/api/watches", json=watch_data)
+    assert create_resp.status_code == 201
+    watch_id = create_resp.json()["id"]
+
+    # Real row shape: listing_key is "source|source_listing_id" and price-drop
+    # payloads carry previous_price/current_price — the keys every production
+    # writer (diff_engine, watch_executor, notifications reader) uses. No
+    # writer ever stores old_price/new_price.
+    rows = [
+        (
+            watch_id,
+            "price_drop",
+            "ebay|111",
+            "info",
+            json.dumps(
+                {
+                    "listing": {
+                        "source": "ebay",
+                        "source_listing_id": "111",
+                        "price": "80.00",
+                        "currency": "GBP",
+                    },
+                    "previous_price": 100.0,
+                    "current_price": 80.0,
+                    "drop_amount": 20.0,
+                    "event_type": "price_drop",
+                }
+            ),
+            "2026-10-30 07:15:00",
+        ),
+        (
+            watch_id,
+            "new_listing",
+            "ebay|222",
+            "info",
+            json.dumps(
+                {
+                    "listing": {
+                        "source": "ebay",
+                        "source_listing_id": "222",
+                        "price": "55.00",
+                        "currency": "GBP",
+                    },
+                    "event_type": "new_listing",
+                }
+            ),
+            "2026-10-30 07:16:00",
+        ),
+        (
+            watch_id,
+            "stock_change",
+            None,
+            "info",
+            json.dumps(
+                {
+                    "listing": {
+                        "source": "ebay",
+                        "source_listing_id": "333",
+                        "price": "42.00",
+                        "currency": "GBP",
+                    },
+                    "previous_in_stock": True,
+                    "current_in_stock": False,
+                    "event_type": "stock_change",
+                }
+            ),
+            "2026-10-30 07:17:00",
+        ),
+    ]
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        with conn:
+            conn.executemany(
+                "INSERT INTO events"
+                " (watch_id, event_type, listing_key, severity, event_json, created_at)"
+                " VALUES (?, ?, ?, ?, ?, ?)",
+                rows,
+            )
+    finally:
+        conn.close()
+
+    response = await client.get("/api/signals")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 3
+    assert len(data["items"]) == 3
+
+    # Newest first (ORDER BY created_at DESC): the stock_change is newest and
+    # exercises the NULL-listing_key branch of the listing_id mapping.
+    assert data["items"][0]["signal_type"] == "stock_change"
+    assert data["items"][0]["listing_id"] is None
+
+    by_listing = {item["listing_id"]: item for item in data["items"]}
+    drop = by_listing["ebay|111"]
+    assert drop["signal_type"] == "price_drop"
+    assert drop["watch_id"] == watch_id
+    assert drop["watch_name"] == "Signals Watch"
+    assert drop["title"] == "Price Drop - Signals Watch"
+    assert Decimal(str(drop["old_price"])) == Decimal("100")
+    assert Decimal(str(drop["new_price"])) == Decimal("80")
+    assert Decimal(str(drop["discount_pct"])) == Decimal("20")
+
+    new = by_listing["ebay|222"]
+    assert new["signal_type"] == "new_listing"
+    assert new["old_price"] is None
+    assert new["new_price"] is None
+    assert new["discount_pct"] is None
+
+    # signal_type filter still narrows to the matching raw event_type.
+    filtered = await client.get("/api/signals?signal_type=price_drop")
+    assert filtered.status_code == 200
+    fdata = filtered.json()
+    assert fdata["total"] == 1
+    assert fdata["items"][0]["signal_type"] == "price_drop"
 
 
 # ============================================================================

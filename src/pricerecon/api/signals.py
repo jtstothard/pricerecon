@@ -98,6 +98,7 @@ async def get_signals(
             e.watch_id,
             w.name as watch_name,
             e.event_type,
+            e.listing_key,
             e.event_json,
             e.created_at
         FROM events e
@@ -135,11 +136,19 @@ async def get_signals(
         listing_id = str(row["listing_key"]) if row["listing_key"] else None
 
         if signal_type == "price_drop":
+            # Price payloads are written by core.diff_engine /
+            # core.watch_executor with previous_price/current_price keys (the
+            # same keys core.notifications reads); no writer stores
+            # old_price/new_price.
             old_price = (
-                Decimal(str(event_json.get("old_price"))) if event_json.get("old_price") else None
+                Decimal(str(event_json.get("previous_price")))
+                if event_json.get("previous_price")
+                else None
             )
             new_price = (
-                Decimal(str(event_json.get("new_price"))) if event_json.get("new_price") else None
+                Decimal(str(event_json.get("current_price")))
+                if event_json.get("current_price")
+                else None
             )
             if old_price and new_price:
                 discount_pct = Decimal(str((old_price - new_price) / old_price * 100))
