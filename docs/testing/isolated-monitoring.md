@@ -390,6 +390,12 @@ all and are unaffected. Pinned in `tests/test_title_matching.py`
   deleted with its run root by the worker's own finally; the one-off live
   grant remains undeletable by construction. Repeated offline checks leave
   the temp directory empty. Pinned in `tests/test_live_pilot.py`.
-- n3 — **open**: `check_public_markers.py` fixture exemption narrowing
-  (`tests/fixtures/` exempt from the public-marker scan); deliberately not
-  addressed in this pass.
+- n3 — **resolved 2026-10-31**: `check_public_markers.py` no longer exempts
+  `tests/fixtures/` wholesale; fixtures are scanned like every other tracked
+  path. One documented per-file exception remains
+  (`tests/fixtures/dell_uk/XPS_byparr.html`): it contains the 13-char private
+  marker's exact byte sequence twice inside Dell's own served CSS/SVG markup —
+  a byte-level collision in publicly authored content, not a leak (sibling
+  dell_uk captures and all other fixtures are clean). Pinned in
+  `tests/test_public_markers_gate.py` (hermetic temp-repo probes; a synthetic
+  marker-bearing fixture fails the gate).
