@@ -55,8 +55,9 @@ Ground rules (from the recorded sessions in the buyer guide):
 
 ### Time
 
-Roughly **two hours** for all eleven clusters plus the honesty spot-checks and the
-verdict form. Clusters A–G and the spot-checks are the comprehension core (~75
+Roughly **two hours** for all **33 tasks (A1–K2)** across the eleven clusters A–K,
+plus the **five honesty spot-checks (S1–S5)** and the verdict form. Clusters A–G and
+the spot-checks are the comprehension core (~75
 minutes); H–K are disclosure checks (~30 minutes); the verdict form (~15 minutes).
 Running in two sittings is fine — restart with a fresh fixture if you do, and say so
 in the session metadata.
@@ -141,6 +142,13 @@ Story references are the numbered user stories in the
   (gate scoping decision, 2026-10-29, in the same document). The fixture runs no
   collection, so this contract is test evidence only
   (`tests/test_source_queries_routing.py`).
+- **Known issue (do not count against this task):** a saved custom interval cannot be
+  restored in-form once changed away —
+  `frontend/src/components/WatchForm.tsx:506-507` derives the "(saved)" option from
+  live form state, so the option disappears with the first change. Abandoning the
+  form, or reloading the page, restores the saved value. This is a recorded app UX
+  finding from the 2026-10-31 agent walkthrough (discrepancy D-8), not a
+  comprehension failure: note it as a follow-up item rather than a defect here.
 - ☐ Accepted · Evidence match (yes / partial / no) + your words: \_\_\_\_\_\_\_\_\_\_
 
 ### Cluster B — Discovery feed & preferences (US3, 4, 5, 7, 8)
@@ -234,15 +242,22 @@ Story references are the numbered user stories in the
 
 #### C3 — Variation binding and accessory/component distinction (US10, US11)
 
-- **Do:** On a product page, expand the offer rows and the source-claims block in
-  Technical (via Source coverage). In the correction form, look at the "Identity
-  field" choices.
+- **Do:** On a product page, expand the offer rows and the Technical record (offer
+  binding scope). In the correction form, look at the "Identity field" choices.
 - **Expect:** selected merchant variations are bound separately from product identity
-  and price scope — "Reported selection and price scope do not establish a qualified
-  binding" (`frontend/src/components/discovery/SourceCoverage.tsx:55-113`); the
-  correction form offers `product_kind` = complete watch / accessory / component
+  and price scope — the offer's price is scoped to the binding, not the parent
+  identity (check the Technical record and `/api/discovery/assessments`;
+  `tests/monitoring/watch_workflow.py:128-131,218`); the correction form offers
+  `product_kind` = complete watch / accessory / component
   (`frontend/src/lib/corrections.ts:2`), and accessory/component listings can never
   surface as complete-watch bargains.
+- **Partial (record, not screen):** the sentence "Reported selection and price scope
+  do not establish a qualified binding" is rendered by `SourceOfferEvidence`
+  (`frontend/src/components/discovery/SourceCoverage.tsx:55-113`), which is **not
+  mounted in any product view at this revision** (only its tests render it), and the
+  walkthrough fixture's offers carry `source_evidence: null` — there is no
+  source-claims block to expand. Confirm the binding separation from the Technical
+  record and the API instead.
 - **Defect if:** a variation price attributed to the parent identity; a strap, part or
   accessory shown as a complete watch.
 - **Note (tested, not demonstrable here):** the walkthrough fixture contains complete
@@ -269,16 +284,21 @@ Story references are the numbered user stories in the
 
 #### D1 — Offers describe what you can actually buy · seeded fixture (US14, US17)
 
-- **Do:** Product page → Overview → Offers; compare with the hero's Condition line and
-  the source-claims block.
+- **Do:** Product page → Overview → Offers; compare with the hero's Condition line.
 - **Expect:** per offer: seller (or "Seller unknown"), Condition (or "Unknown"),
   Availability, Qualification state and Comparison state
   (`frontend/src/pages/Discovery.tsx:356-366`); the hero repeats Condition
-  (`frontend/src/pages/Discovery.tsx:621`). Source claims are labelled as claims —
-  "Source claims do not certify selected-SKU availability. Missing charges remain
-  unknown." (`frontend/src/components/discovery/SourceCoverage.tsx:55-113`).
-  Authenticity and internal health are never implied: the model pins both to
-  "unknown" (`src/pricerecon/models/qualification.py:286-287`).
+  (`frontend/src/pages/Discovery.tsx:621`). Authenticity and internal health are
+  never implied: the model pins both to "unknown"
+  (`src/pricerecon/models/qualification.py:286-287`).
+- **Partial (record, not screen):** the source-claims labelling — "Source claims do
+  not certify selected-SKU availability. Missing charges remain unknown." — is
+  rendered by `SourceOfferEvidence`
+  (`frontend/src/components/discovery/SourceCoverage.tsx:55-113`), which is not
+  mounted in any product view at this revision, and the walkthrough fixture's offers
+  carry `source_evidence: null`, so the block has nothing to show in this session.
+  Confirm the claim/withholding labelling via the Technical record's evidence rows
+  and `/api/discovery/assessments` instead.
 - **Defect if:** a price with no condition/mode/seller context; photo-led assurance
   beyond visible condition.
 - ☐ Accepted · Evidence match (yes / partial / no) + your words: \_\_\_\_\_\_\_\_\_\_
@@ -309,9 +329,14 @@ Story references are the numbered user stories in the
 - **Expect:** "Public total, no coupon: GBP 70.10 — Verified at observation"; the
   scenario separates "Merchant payable" from "Additional liabilities" subtotals and
   itemises each charge (kind, amount, state, reason); "Observed … Freshness
-  unvalidated."; assumption text names currency/destination/dispatch context
+  unvalidated."
   (`frontend/src/pages/Discovery.tsx:183-235`). The recorded fixture total is item
   £68 plus £2.10 shipping (buyer guide, task 2).
+- **Partial (record, not screen):** the Costs view renders scenario-level assumption
+  text only, and the base scenario's `assumptions` list is empty, so its assumption
+  line renders empty. The currency/destination/dispatch context is retained in the
+  scenario's `context` / `context_evidence` — visible in the History/Technical
+  records and the API — not as on-screen assumption text.
 - **Defect if:** a bare total with no component breakdown.
 - ☐ Accepted · Evidence match (yes / partial / no) + your words: \_\_\_\_\_\_\_\_\_\_
 
@@ -346,8 +371,10 @@ Story references are the numbered user stories in the
 - **Do:** Conductor runs the `costs` step. Reload San Martin and Casio (Costs, then
   History / offer cost history).
 - **Expect:** San Martin moves through its states — selected-dial trap, then missing
-  shipping with unknown total, then a **Conditional** regional shipping quote carrying
-  the assumption "Synthetic regional shipping quote requires confirmation"
+  shipping with unknown total, then a **Conditional** regional shipping quote whose
+  component carries the assumption "Synthetic regional shipping quote requires
+  confirmation" in the record (API/Technical JSON — component-level assumption text
+  is not rendered in the Costs view charge rows)
   (`tests/monitoring/watch_workflow.py:140-180`). Casio's USD shipping without payment
   FX stays unknown; with the evidenced synthetic 0.8 GBP/USD payment-FX quote the
   total becomes GBP 49.68 "Verified at observation"
@@ -402,15 +429,22 @@ Story references are the numbered user stories in the
 
 #### F3 — Public, personal, payment and cashback scenarios are separated · seeded fixture → `coupon` (US25)
 
-- **Do:** Expand the cashback scenario and any non-public coupon entry.
-- **Expect:** cashback £10 is shown under "Benefits excluded from payable" with its
-  conditional state and reason ("Excluded from payable")
+- **Do:** Expand the cashback scenario — in the seeded state (as during E1's Costs
+  look), or afterwards via the offer's retained cost history.
+- **Expect (seeded state):** cashback £10 is shown under "Benefits excluded from
+  payable" with its conditional state and reason ("Excluded from payable")
   (`frontend/src/pages/Discovery.tsx:224-230`;
-  `tests/monitoring/watch_workflow.py:114-127`); non-public categories are labelled
-  "Conditional benefit excluded from public payable. Cashback is not checkout cash."
-  (`frontend/src/pages/Discovery.tsx:424-429`); personal/payment benefits never enter
-  the public payable (pinned by
+  `tests/monitoring/watch_workflow.py:114-127`); personal/payment benefits never
+  enter the public payable (pinned by
   `tests/test_assessment_workflow.py:51`).
+- **Partial (fixture-limited):** the price steps replace the offer's cost scenarios,
+  so at this task's scripted checkpoint (after `coupon`) the cashback scenario exists
+  only in retained history — the offer's cost history rev 1 and the seed observation
+  — not in the current Costs view. The non-public label "Conditional benefit excluded
+  from public payable. Cashback is not checkout cash."
+  (`frontend/src/pages/Discovery.tsx:424-429`) has no fixture entry to exercise it in
+  this session (suite-anchored). A missing demonstration here is not a defect;
+  cashback or a conditional benefit inside a payable total is.
 - **Defect if:** cashback or a conditional benefit inside a payable total.
 - ☐ Accepted · Evidence match (yes / partial / no) + your words: \_\_\_\_\_\_\_\_\_\_
 
@@ -530,11 +564,18 @@ Story references are the numbered user stories in the
 - **Do:** After the `stale` step, reload History, the collection panel and a tracked
   watch.
 - **Expect:** last-good evidence is preserved with its grown age and "Freshness
-  unvalidated"; the tracked watch reads "Stale evidence · alerts wait for a fresh
-  offer" (`frontend/src/components/ExactTracking.tsx:65-67`) and its assessment is
-  withheld — stale evidence alone never alerts; where a schedule exists the panel
-  shows "Next eligible …; no catch-up replay."
-  (`frontend/src/components/discovery/CollectionCoverage.tsx:88`).
+  unvalidated"; the tracked watch's assessment is withheld — stale evidence alone
+  never alerts; where a schedule exists the panel shows "Next eligible …; no catch-up
+  replay." (`frontend/src/components/discovery/CollectionCoverage.tsx:88`); no
+  catch-up burst fires (sends and alert events stay flat).
+- **Partial (suite-proven, not session-demonstrable):** the tracked-watch label
+  "Stale evidence · alerts wait for a fresh offer"
+  (`frontend/src/components/ExactTracking.tsx:65-67`) cannot appear in a session run:
+  the fixture's `stale` step advances the clock without re-assessing tracking, and
+  both tracked targets carry non-stale named gates (`evidence_invalidated`,
+  `source_evidence_unavailable`), so the label never renders. That behaviour is
+  pinned by the regression suite; judge this task on the age/freshness,
+  withheld-assessment and no-catch-up evidence above, not on this string.
 - **Defect if:** a stale capture presented as a current verified offer; a duplicate
   alert after recovery.
 - ☐ Accepted · Evidence match (yes / partial / no) + your words: \_\_\_\_\_\_\_\_\_\_
@@ -549,8 +590,9 @@ Story references are the numbered user stories in the
   API 409 rendered by the UI if a competing write happens — buyer guide, task 6.)
 - **Expect:** before saving, the form shows original vs intended values and the
   consequence copy "Old prices stop applying. Your target stays; alerts wait for a
-  matching offer." (`frontend/src/components/discovery/IdentityCorrection.tsx:62,99-102`)
-  — and promises no new price or refresh. After saving, the correction history lists
+  matching offer."
+  (`frontend/src/components/discovery/IdentityCorrection.tsx:62,99-102`). After
+  saving, the correction history lists
   each lineage entry "dial: mint → salmon (corrected)" with your name, rationale and
   time (`frontend/src/components/discovery/IdentityCorrection.tsx:174-211`); no field
   is attributed to an invented actor. A rejected/stale write shows an error and
@@ -617,14 +659,22 @@ Story references are the numbered user stories in the
   GBP 58.10 → "Eligible at target" with reason "Verified delivered total crossed your
   target." and exactly **one** alert event. With webhook selected the marker's
   captured sends run 0 → 1 across these steps (recorded: 0/1/1/2 for
-  baseline/cross/duplicate/drop, buyer guide "Buyer-assisted target crossing"). With
-  no channels selected the crossing is still recorded but nothing is sent ("With no
-  selected channels, no target message is sent."
-  `frontend/src/components/ExactTracking.tsx:278-281`); the recorded event carried
-  status `channels_unset`. Alert events are inspected at `/api/events` and the
+  baseline/cross/duplicate/drop, buyer guide "Buyer-assisted target crossing"). The
+  no-channel Casio target's tracking view states "With no selected channels, no
+  target message is sent."
+  (`frontend/src/components/ExactTracking.tsx:278-281`). Alert events are inspected
+  at `/api/events` and the
   per-channel records at `/api/discovery/tracking/{id}/deliveries`
   (`tests/monitoring/tracking_workflows.py:202-207`; the Event stream page is a
   placeholder at this revision).
+- **Partial (suite-proven, not session-demonstrable):** a no-channel crossing —
+  crossing recorded, nothing sent, event status `channels_unset` — is not
+  reproducible with the shipped fixture steps: the steps move only the Addiesdive
+  price, so the no-channel Casio target never crosses, and editing a target's
+  channels re-baselines it ("First qualified observation recorded; waiting for a
+  qualifying price change."). The `channels_unset` behaviour is pinned by the
+  regression suite and matches the recorded 2026-10-28 receipt; judge this task on
+  the Addiesdive crossing above plus the on-screen no-channel copy.
 - **Defect if:** an alert from an unknown or conditional total; two events for one
   crossing; anything sent without a selected channel.
 - ☐ Accepted · Evidence match (yes / partial / no) + your words: \_\_\_\_\_\_\_\_\_\_
@@ -665,29 +715,39 @@ Story references are the numbered user stories in the
 #### K1 — Expandable evidence and exclusion reasons (US32)
 
 - **Do:** Product page → Technical (evidence rows, then "Complete retained record");
-  a tracked watch's "Alert eligibility details"; Source coverage's "Source claims:
-  review required" block and source receipt for a capture.
+  a tracked watch's "Alert eligibility details"; the Source coverage roster for a
+  capture.
 - **Expect:** every claim exposes issuer, extraction, retrieval, validity and derived
-  lineage (`frontend/src/pages/Discovery.tsx:522-534`); source claims are labelled
-  "Source claims: review required" with "Missing evidence: …"
-  (`frontend/src/components/discovery/SourceCoverage.tsx:55-113`); every withholding
-  decision names its gate in the alert-eligibility list
+  lineage (`frontend/src/pages/Discovery.tsx:522-534`); every withholding decision
+  names its gate in the alert-eligibility list
   (`frontend/src/components/ExactTracking.tsx:20-54`); assessment exclusions and gaps
   are queryable at `/api/discovery/assessments` (`exclusions`, `gaps`).
+- **Partial (record, not screen):** the "Source claims: review required" block with
+  its "Missing evidence: …" list is rendered by `SourceOfferEvidence`
+  (`frontend/src/components/discovery/SourceCoverage.tsx:55-113`), which is not
+  mounted in any product view at this revision, and the walkthrough fixture's offers
+  carry `source_evidence: null`. Confirm the per-claim labelling and the
+  missing-evidence lists from the Technical "Complete retained record" and the API
+  instead.
 - **Defect if:** an offer qualified (or withheld) with no inspectable reason.
 - ☐ Accepted · Evidence match (yes / partial / no) + your words: \_\_\_\_\_\_\_\_\_\_
 
 #### K2 — Receipts and rights prerequisites stay explicit (US45, US46)
 
-- **Do:** Expand a capture's source receipt "Technical evidence" and the roster's
-  "Prerequisites" lines.
-- **Expect:** route and host, page/item/detail limits, discovered vs inspected counts,
-  "Next page present/not reported", content-truncation state, and the rights line:
-  "Use reference …; retention …; history rights unqualified. Retrieval does not grant
-  storage or current freshness."
-  (`frontend/src/components/discovery/SourceCoverage.tsx:14-52`); per-lane
-  prerequisites on the roster (`frontend/src/components/discovery/SourceCoverage.tsx:122-123`).
+- **Do:** Read the Source coverage roster's "Prerequisites" lines for the lanes.
+- **Expect:** per-lane prerequisites on the roster
+  (`frontend/src/components/discovery/SourceCoverage.tsx:122-123`).
   Gate outcomes read as deterministic/offline verification, never as live evidence.
+- **Partial (fixture-limited):** the capture source receipt "Technical evidence" —
+  route and host, page/item/detail limits, discovered vs inspected counts, "Next page
+  present/not reported", content-truncation state, and the rights line: "Use
+  reference …; retention …; history rights unqualified. Retrieval does not grant
+  storage or current freshness."
+  (`frontend/src/components/discovery/SourceCoverage.tsx:14-52`) — renders only when
+  a capture outcome carries `source_evidence`, and the walkthrough fixture populates
+  none (the separate source-evidence fixture/workflows do). The receipt contract is
+  pinned by those workflows and their tests; its absence from this session's fixture
+  is not a defect — record the roster prerequisites as the on-screen evidence.
 - **Defect if:** a successful retrieval presented as continuing-use rights or as a
   gate outcome it is not.
 - ☐ Accepted · Evidence match (yes / partial / no) + your words: \_\_\_\_\_\_\_\_\_\_
