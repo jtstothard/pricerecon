@@ -29,8 +29,37 @@ Fail-closed rules:
 
 The shipped registry contains only the reserved `.invalid` fixture host so
 the offline workflows exercise the real path; it can never resolve to a live
-host. Registering a real manufacturer host is an operator decision requiring
-capture/display/reuse authority for that host, recorded here in review.
+host.
+
+Operator registration policy (recorded 2026-10-31; the registry is
+deliberately empty of real hosts pending the user's explicit input —
+never register one speculatively):
+
+1. A registration is a reviewed code change adding exactly one entry to
+   `MANUFACTURER_SPEC_HOSTS`: `host` (the manufacturer's own
+   specification host, casefolded) → the manufacturer's legal name as
+   attested in their documents. Entries are code, not runtime
+   configuration; no config file, API or CLI can add one.
+2. Before proposing the change, the operator must hold authority over
+   that host's specification documents for the three acts this module
+   performs: capture (fetch the spec index/documents), display (serve
+   them as evidence in the UI/API) and reuse (retain them under the
+   capture's recorded evidence use — permission and retention — and
+   compile them into qualification claims). A host whose terms permit
+   none of these is not registrable; the fail-closed evidence-use gate
+   in this module will refuse its captures regardless.
+3. The review must verify: the host is the manufacturer's own host (not
+   a storefront, CDN mirror or seller listing — the host-agreement check
+   in `compile_manufacturer_spec` proves only that the document came
+   from the recorded capture host); the attested legal name equals the
+   issuer declared in that host's documents (a mismatch fails
+   compilation by design); and the entry stays minimal — host and legal
+   name only, no wildcard, no path.
+4. Once registered, claims stamped `issuer_kind="manufacturer"` from
+   that host become reachable from real acquisition. That reachability
+   is the point of review: treat adding an entry as granting
+   manufacturer-identity authority, and record the decision (and the
+   operator's authority basis) in the commit message.
 """
 
 from urllib.parse import quote_plus, urlsplit

@@ -28,6 +28,18 @@ HOST_AND_NETWORK_MARKERS = (
 
 MARKERS = PRIVATE_MARKERS + HOST_AND_NETWORK_MARKERS
 
+# Adversarial-review finding n3 (PR #142), resolved 2026-10-31: this scan
+# used to skip tests/fixtures/ wholesale. Fixtures are captured third-party
+# content and are now scanned like every other tracked path. The single
+# per-file exception below is a byte-level collision, not private data:
+# tests/fixtures/dell_uk/XPS_byparr.html contains the 13-char private
+# marker's exact byte sequence twice (inside Dell's own served CSS and SVG
+# path markup — publicly authored content captured from dell.com, so the
+# identifier did not leak into the file; the sibling dell_uk captures and
+# every other fixture are clean). Reported to the fix queue with the
+# narrowing; do not widen this set without re-review.
+FIXTURE_SCAN_EXEMPTIONS = frozenset({"tests/fixtures/dell_uk/XPS_byparr.html"})
+
 # Decision of 2026-10-29 (PR #142 adversarial review): the host/network names
 # above already appear in exactly these tracked files, and those existing
 # mentions are accepted as-is. Any other file — new or previously clean —
@@ -70,7 +82,7 @@ tracked = (
 )
 violations: list[str] = []
 for path in filter(None, tracked):
-    if path == "scripts/check_public_markers.py" or path.startswith("tests/fixtures/"):
+    if path == "scripts/check_public_markers.py" or path in FIXTURE_SCAN_EXEMPTIONS:
         continue
     try:
         text = open(path, encoding="utf-8").read()

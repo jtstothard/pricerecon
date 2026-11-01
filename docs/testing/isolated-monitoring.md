@@ -390,6 +390,47 @@ all and are unaffected. Pinned in `tests/test_title_matching.py`
   deleted with its run root by the worker's own finally; the one-off live
   grant remains undeletable by construction. Repeated offline checks leave
   the temp directory empty. Pinned in `tests/test_live_pilot.py`.
-- n3 — **open**: `check_public_markers.py` fixture exemption narrowing
-  (`tests/fixtures/` exempt from the public-marker scan); deliberately not
-  addressed in this pass.
+- n3 — **resolved 2026-10-31**: `check_public_markers.py` no longer exempts
+  `tests/fixtures/` wholesale; fixtures are scanned like every other tracked
+  path. One documented per-file exception remains
+  (`tests/fixtures/dell_uk/XPS_byparr.html`): it contains the 13-char private
+  marker's exact byte sequence twice inside Dell's own served CSS/SVG markup —
+  a byte-level collision in publicly authored content, not a leak (sibling
+  dell_uk captures and all other fixtures are clean). Pinned in
+  `tests/test_public_markers_gate.py` (hermetic temp-repo probes; a synthetic
+  marker-bearing fixture fails the gate).
+
+**`Comparison.claim(require_live=True)` — documented capability, wired when a
+live-fact publisher exists (resolved 2026-10-31).** The fix queue asked for a
+genuine production live-fact call site for the flag or an honest closure. The
+search found none, and no call site was invented:
+
+- `require_live` appears in `src/` only at its definition
+  (`core/comparisons.claim`); the sole production caller of `claim` is
+  `db/assessments.evaluate_comparisons` (the `current_best`/`observed_low`
+  publisher behind `/api/discovery/assessments`), which deliberately marks
+  synthetic amounts on the envelope instead of filtering them — the
+  fixture-marked-claim contract this harness asserts. Switching it to
+  `require_live=True` would change that published API from mark to refuse; a
+  product decision, not a wiring gap.
+- The alert/threshold dispatch path (`core/exact_tracking.py`
+  exact-target-crossing events and their notifications) does not route
+  through `comparisons.claim`: it publishes a single-offer delivered-price
+  fact via its own `assess_offer` at the live acquisition execution seam,
+  where no fixture/synthetic evidence exists as input and there is no
+  comparable-path cohort to filter.
+- `core/notifications.py` dispatch is driven by diff-engine listing events,
+  not comparison claims.
+- Market-history eligibility for the retained observations feeding
+  `observed_low` is enforced upstream by `db/history.get_history`'s own
+  exclusion, so the publisher's mark-not-filter stance is the intended last
+  line, not a missing filter.
+- No other `PriceClaim` producer exists in `src/` (grep: `models/
+  assessments.py` definition, `core/comparisons.claim`,
+  `db/assessments.evaluate_comparisons` only). The other `claim(` symbols in
+  `src/` are the unrelated evidence-adapter helper in
+  `connectors/evidence.py`.
+
+Closure: the flag remains a documented capability with test-only exercise
+(`tests/test_price_claim_provenance.py`), to be wired when a publisher that
+must assert a live market fact (excluding fixture evidence outright) exists.
