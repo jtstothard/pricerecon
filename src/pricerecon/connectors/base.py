@@ -61,7 +61,7 @@ class BaseConnector(ABC):
         constructors do not need backend-specific arguments.
         """
         self._external_browser = ExternalBrowserAdapter.from_config(
-            runtime_config, connector_config
+            runtime_config, connector_config, session_scope=self.connector_id
         )
 
     def has_external_browser(self) -> bool:

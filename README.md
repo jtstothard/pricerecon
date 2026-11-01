@@ -337,6 +337,8 @@ PriceRecon uses SQLite by default. All data is stored in `pricerecon.db`:
 
 ## Documentation
 
+- **[Category deal discovery product map](docs/product/category-discovery/README.md)** — Planning-only brief, source audit, domain proposals and linked investigation tickets
+
 - **[FlareSolverr Deployment Guide](docs/FLARESOLVERR_DEPLOYMENT.md)** — Deploy FlareSolverr for anti-bot protected connectors
 - **[Connector Requirements](docs/CONNECTOR_REQUIREMENTS.md)** — Which connectors need FlareSolverr, auth, or browser access
 - **[Connector Development Guide](docs/connector-development.md)** — Build connectors, understand the diff engine

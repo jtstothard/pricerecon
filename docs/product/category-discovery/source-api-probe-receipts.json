@@ -1,0 +1,101 @@
+{
+  "date": "2026-10-27",
+  "guest_exit": 0,
+  "records": [
+    {
+      "utc": "2026-10-27T10:42:05.417489+00:00",
+      "provider": "ebay",
+      "step": "token",
+      "http": 200,
+      "token_received": true,
+      "error_code": null
+    },
+    {
+      "utc": "2026-10-27T10:42:06.125871+00:00",
+      "provider": "ebay",
+      "step": "search",
+      "http": 200,
+      "query": "Casio MTP-B145D",
+      "marketplace": "EBAY_GB",
+      "requested_delivery_country": "GB",
+      "page_limit": 5,
+      "returned_items": 5,
+      "next_page_present": true,
+      "error_codes": []
+    },
+    {
+      "utc": "2026-10-27T10:42:06.595506+00:00",
+      "provider": "ebay",
+      "step": "detail",
+      "http": 200,
+      "candidate_digest": "fc20c1b5eb984093277e6668f026716576456f0b60102cd03fda40e06871c1a3",
+      "fields": {
+        "itemId": true,
+        "title": true,
+        "price": true,
+        "condition": true,
+        "buyingOptions": true,
+        "seller": true,
+        "shippingOptions": true,
+        "shipToLocations": true,
+        "estimatedAvailabilities": true,
+        "localizedAspects": true,
+        "taxes": true,
+        "itemWebUrl": true,
+        "primaryItemGroup": false
+      },
+      "query_reference_in_title": true,
+      "error_codes": []
+    },
+    {
+      "utc": "2026-10-27T10:42:08.666365+00:00",
+      "provider": "aliexpress",
+      "step": "query",
+      "http": 200,
+      "query": "Militado ML05",
+      "requested_currency": "GBP",
+      "requested_delivery_country": "GB",
+      "page": 1,
+      "page_size": 5,
+      "returned_items": 4,
+      "error_code": null
+    },
+    {
+      "utc": "2026-10-27T10:42:08.666424+00:00",
+      "provider": "aliexpress",
+      "step": "detail",
+      "result": "not_attempted_no_query_candidate"
+    },
+    {
+      "utc": "2026-10-27T10:42:08.666453+00:00",
+      "summary": true,
+      "provider_requests": 4,
+      "maximum": 5,
+      "retries": 0,
+      "redirects_followed": 0,
+      "requests": [
+        {
+          "host": "api.ebay.com",
+          "path": "/identity/v1/oauth2/token",
+          "method": "POST"
+        },
+        {
+          "host": "api.ebay.com",
+          "path": "/buy/browse/v1/item_summary/search",
+          "method": "GET"
+        },
+        {
+          "host": "api.ebay.com",
+          "path": "/buy/browse/v1",
+          "method": "GET"
+        },
+        {
+          "host": "api-sg.aliexpress.com",
+          "path": "/sync",
+          "method": "POST"
+        }
+      ]
+    }
+  ],
+  "probe_script_sha256": "045c458d434d8dd0cd11a3b5d0bde3b7e343d237f728e6e92e6990b9fa576df5"
+}
