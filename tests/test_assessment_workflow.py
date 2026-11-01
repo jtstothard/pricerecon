@@ -76,3 +76,7 @@ def test_duplicate_captures_and_missing_failed_coverage_preserve_only_a_dated_lo
 
 def test_pathless_stored_claim_is_served_synthetic_not_live():
     run_assessment("laundered_marker")
+
+
+def test_stored_total_over_an_unknown_component_is_never_a_delivered_price():
+    run_assessment("forged_total")

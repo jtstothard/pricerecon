@@ -13,6 +13,7 @@ from decimal import Decimal
 from pricerecon.categories.watches import configuration_matches_values, configuration_preference_fit
 from pricerecon.core import notifications
 from pricerecon.core.coupons import public_cost_paths
+from pricerecon.core.costs import reconstruct_total
 from pricerecon.core.qualification import identity_key
 from pricerecon.db.connection import connect
 from pricerecon.db.discovery import get_preferences, load_capture_candidates
@@ -116,10 +117,17 @@ def assess_scenario(
             reasons.append("no_coupon_base_missing")
         else:
             result.base_scenario_id, result.base_scenario_revision = base.id, base.revision
+    # Defense-in-depth for the S2 completeness rule: `evaluate_cost` refuses
+    # to total an incomplete scenario at write time, but the decision layer
+    # consumes stored scenarios it did not produce (legacy/crafted/migrated
+    # state). Re-derive the payable from the evidenced components and refuse
+    # the stored total unless it reproduces exactly — a delivered price is
+    # never allowed to rest on an unknown or fabricated component.
     if (
         cost.state != "verified_at_observation"
         or cost.total is None
         or cost.total.currency != "GBP"
+        or reconstruct_total(cost) != cost.total.amount
     ):
         reasons.append("public_delivered_total_unverified")
     if (

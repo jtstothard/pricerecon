@@ -653,5 +653,53 @@ async def laundered_marker():
             assert harness.deliveries == harness.blocked_edges == []
 
 
+async def forged_total():
+    """F-3 re-attack: a stored verified total over an unknown component.
+
+    `evaluate_cost` refuses to total an incomplete scenario, but a
+    crafted/legacy stored `CostScenario` can carry
+    `state=verified_at_observation` plus a total while a payable component
+    is unknown. The decision layer re-reads such rows on every comparison,
+    so the completeness rule is enforced there too: the forged total is
+    never eligible, never a delivered price.
+    """
+    import json
+    import sqlite3
+    from contextlib import closing
+
+    with MonitoringHarness() as harness:
+        async with harness.session() as (client, _):
+            supplied = policy(harness)
+            await capture(harness, client, [priced_report(harness)], supplied)
+            with closing(sqlite3.connect(harness.database)) as db, db:
+                row = db.execute(
+                    "SELECT id, payload_json FROM discovery_cost_scenarios "
+                    "ORDER BY rowid DESC LIMIT 1"
+                ).fetchone()
+                payload = json.loads(row[1])
+                shipping = next(c for c in payload["components"] if c["kind"] == "shipping")
+                shipping.update(state="unknown", amount=None, currency=None)
+                payload["total"] = {"amount": "45.10", "currency": "GBP"}
+                payload["state"] = "verified_at_observation"
+                db.execute(
+                    "UPDATE discovery_cost_scenarios SET payload_json=? WHERE id=?",
+                    (json.dumps(payload), row[0]),
+                )
+            harness.clock.advance(hours=0.1)
+            await capture(harness, client, [priced_report(harness)], supplied)
+            items = (await get(client, "/api/discovery/assessments"))["items"]
+            result = items[-1]
+            # The forged total never reaches any published claim...
+            assert result["current_best"]["amount"] != "45.10", result["current_best"]
+            assert result["observed_low"]["amount"] != "45.10", result["observed_low"]
+            # ...and the observation that carried it is excluded for exactly
+            # this reason, not silently dropped.
+            exclusions = [
+                reason for exclusion in result["exclusions"] for reason in exclusion["reasons"]
+            ]
+            assert "public_delivered_total_unverified" in exclusions, result["exclusions"]
+            assert harness.deliveries == harness.blocked_edges == []
+
+
 if __name__ == "__main__":
     asyncio.run(globals()[sys.argv[1]]())
