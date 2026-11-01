@@ -217,6 +217,124 @@ it('warns beside the mounted current-best amount when the envelope claim is synt
   expect(html).toContain('decided by fixture evidence, not a live market fact')
 })
 
+it('does not juxtapose unavailability with a current-sounding superlative on historical assessments', () => {
+  const candidate = parseDiscoveryFeed(captured).candidates[0]
+  const historical = capturedAssessment(capturedClaim(true, true)) as {
+    historical: boolean
+    current_best: { state: string; amount: string | null }
+  }
+  historical.historical = true
+  historical.current_best.state = 'historical'
+  candidate.price_assessments = [parsePriceAssessment(historical)]
+  const html = renderToStaticMarkup(
+    createElement(ProductContent, {
+      candidate,
+      tracking: [],
+      onSaved: async () => {},
+      view: 'history',
+    })
+  )
+  expect(html).toContain('Current comparison unavailable')
+  // The dated amount stays visible, labelled as not a current price...
+  expect(html).toContain('GBP 45.10')
+  expect(html).toContain('not a current price')
+  // ...and the unlabelled superlative must not trail the unavailability line.
+  expect(html).not.toContain('Current comparison unavailable. Lowest verified total')
+  expect(html).not.toContain('unavailable. Lowest')
+})
+
+it('does not echo the claim headline as its own reason', () => {
+  const candidate = parseDiscoveryFeed(captured).candidates[0]
+  candidate.price_assessments = [
+    parsePriceAssessment(capturedAssessment(capturedClaim(true, false))),
+  ]
+  const html = renderToStaticMarkup(
+    createElement(ProductContent, {
+      candidate,
+      tracking: [],
+      onSaved: async () => {},
+      view: 'history',
+    })
+  )
+  expect(html).toContain('Lowest verified total among offers checked: GBP 45.10')
+  expect(html).not.toContain('GBP 45.10. Lowest verified total')
+  expect(html).not.toContain('offers checked. Lowest')
+})
+
+it('surfaces the payment-FX basis beside a mixed-currency total', () => {
+  const candidate = parseDiscoveryFeed(captured).candidates[0]
+  candidate.offers = [
+    {
+      ...offerWith([]),
+      cost_scenarios: [
+        {
+          id: 'cost',
+          revision: 1,
+          policy_version: 'technical-cost-policy',
+          offer_id: 'offer',
+          offer_revision: 1,
+          binding_id: 'binding',
+          binding_revision: 1,
+          configuration_id: 'watch',
+          configuration_revision: 1,
+          key: 'cost-key',
+          kind: 'public_no_coupon',
+          state: 'verified_at_observation',
+          captured_at: '2026-10-27T12:00:00Z',
+          context: {
+            purchase_scope: 'standalone',
+            quantity: 1,
+            basket_members: [],
+            consignment_members: [],
+          },
+          context_evidence: [],
+          assumptions: [],
+          issues: [],
+          withdrawn: false,
+          historical_total: null,
+          total: { currency: 'GBP', amount: '49.68' },
+          known_subtotal: { GBP: '48.00', USD: '2.10' },
+          merchant_payable: { GBP: '48.00', USD: '2.10' },
+          additional_liabilities: {},
+          components: [],
+          benefits: [],
+          fx_quotes: [
+            {
+              purpose: 'buyer_payment',
+              from_currency: 'USD',
+              to_currency: 'GBP',
+              rate: '0.8',
+              direction: 'target_per_source',
+              converter: 'synthetic payment provider',
+              spread_included: true,
+              quantum: '0.01',
+              rounding: 'ROUND_HALF_UP',
+              state: 'observed',
+              assumptions: [],
+              evidence: [],
+            },
+          ],
+        },
+      ],
+    },
+  ]
+  const html = renderToStaticMarkup(
+    createElement(ProductContent, {
+      candidate,
+      tracking: [],
+      onSaved: async () => {},
+      view: 'costs',
+    })
+  )
+  // The total and its mixed-currency subtotal are on screen; the conversion
+  // that reconciles them (48 + 2.10 × 0.8) must be visible here too.
+  expect(html).toContain('GBP 49.68')
+  expect(html).toContain('USD 2.10')
+  expect(html).toContain('Payment FX basis')
+  expect(html).toContain('0.8 GBP per USD')
+  expect(html).toContain('rounding step 0.01 GBP')
+})
+
 it('keeps the mounted History view unmarked for live claims', () => {
   const candidate = parseDiscoveryFeed(captured).candidates[0]
   candidate.price_assessments = [
