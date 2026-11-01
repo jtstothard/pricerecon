@@ -72,3 +72,7 @@ def test_persisted_assessments_and_coupon_target_dedup_survive_fresh_process_res
 
 def test_duplicate_captures_and_missing_failed_coverage_preserve_only_a_dated_low():
     run_assessment("duplicates_and_gaps")
+
+
+def test_pathless_stored_claim_is_served_synthetic_not_live():
+    run_assessment("laundered_marker")

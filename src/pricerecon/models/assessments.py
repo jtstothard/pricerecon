@@ -75,6 +75,12 @@ class PriceClaim(TrackingModel):
         """
         if not self.synthetic and any(path.synthetic for path in self.paths):
             self.synthetic = True
+        # A claimed amount with no deciding paths has nothing to re-derive
+        # from: the strip-the-paths laundering shape. Provenance is unknown,
+        # not live, so it fails closed too. Only a claim backed by retained
+        # (non-synthetic) paths keeps a live marker.
+        if self.amount is not None and not self.paths:
+            self.synthetic = True
         return self
 
 

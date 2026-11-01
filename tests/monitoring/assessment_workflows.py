@@ -610,5 +610,48 @@ async def duplicates_and_gaps():
             assert harness.deliveries == harness.blocked_edges == []
 
 
+async def laundered_marker():
+    """F-1 re-attack: a stored claim with stripped paths must not read live.
+
+    A crafted/legacy row in `discovery_price_assessments` that keeps a
+    supported fixture amount but drops the provenance paths (and forces
+    `synthetic:false`) is planted directly in the fixture database, then
+    re-read through the real `/api/discovery/assessments` read path —
+    exactly the threat the marker derivation claims to defend against.
+    """
+    import json
+    import sqlite3
+    from contextlib import closing
+
+    with MonitoringHarness() as harness:
+        async with harness.session() as (client, _):
+            supplied = policy(harness)
+            await capture(harness, client, [priced_report(harness)], supplied)
+            with closing(sqlite3.connect(harness.database)) as db, db:
+                row = db.execute(
+                    "SELECT id, payload_json FROM discovery_price_assessments "
+                    "ORDER BY rowid DESC LIMIT 1"
+                ).fetchone()
+                payload = json.loads(row[1])
+                payload["id"] = row[0] + ":laundered"
+                payload["revision"] = 1
+                for claim in ("current_best", "observed_low"):
+                    payload[claim].update(synthetic=False, paths=[])
+                db.execute(
+                    "INSERT INTO discovery_price_assessments VALUES (?,?,?)",
+                    (payload["id"], 1, json.dumps(payload)),
+                )
+            items = (await get(client, "/api/discovery/assessments"))["items"]
+            planted = next(a for a in items if a["id"].endswith(":laundered"))
+            # The amount survives as a retained record, but it must read
+            # synthetic: no path-less fixture-decided amount is a live fact.
+            assert planted["current_best"]["synthetic"] is True, planted["current_best"]
+            assert planted["observed_low"]["synthetic"] is True, planted["observed_low"]
+            # Control: the honestly derived assessment keeps its marker.
+            honest = next(a for a in items if a["id"] == row[0])
+            assert honest["current_best"]["synthetic"] is True
+            assert harness.deliveries == harness.blocked_edges == []
+
+
 if __name__ == "__main__":
     asyncio.run(globals()[sys.argv[1]]())

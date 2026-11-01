@@ -176,3 +176,34 @@ def test_stored_live_payload_keeps_its_live_marker_on_read():
     }
 
     assert PriceClaim.model_validate(legacy).synthetic is False
+
+
+def test_pathless_stored_amount_fails_closed_as_synthetic():
+    """A claimed amount whose provenance paths were stripped is not live.
+
+    The strip-the-paths laundering move: `synthetic:false` + `paths:[]` +
+    an amount leaves the re-derivation nothing to derive from, so the
+    stored flag would win and re-serve a fixture-decided amount as a live
+    market fact. Unknown provenance fails closed: a claimed amount with
+    no deciding paths presents as synthetic, never live.
+    """
+    stripped = {
+        "state": "supported",
+        "amount": "45.10",
+        "reason": "Provenance stripped by a crafted or legacy writer",
+        "synthetic": False,
+        "observation_count": 0,
+        "paths": [],
+    }
+
+    restored = PriceClaim.model_validate(stripped)
+
+    assert restored.synthetic is True
+
+    # A stored true marker is never downgraded, with or without paths.
+    assert PriceClaim.model_validate({**stripped, "synthetic": True}).synthetic is True
+    # An unmarked pathless payload fails closed the same way.
+    unmarked = PriceClaim.model_validate({k: v for k, v in stripped.items() if k != "synthetic"})
+    assert unmarked.synthetic is True
+    # No amount claimed: nothing is presented, no marker is forced.
+    assert PriceClaim.model_validate({**stripped, "amount": None}).synthetic is False
