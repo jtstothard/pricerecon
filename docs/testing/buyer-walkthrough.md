@@ -382,7 +382,10 @@ Story references are the numbered user stories in the
   never "Verified"; earlier unknown states are retained in the offer's cost history
   and the observations table rather than overwritten (check
   `/api/discovery/offers/{id}/costs` and History if a view shows only the latest
-  scenario).
+  scenario). The Costs view renders the payment-FX basis beside a mixed-currency
+  subtotal (rate, direction, quote state, spread, rounding step, converter —
+  "Payment FX basis" row; 2026-11-01 fix of the adversarial run's F-5, so the
+  GBP 49.68 total reconciles on screen).
 - **Defect if:** GBP display treated as UK-delivery proof; a foreign total presented
   as delivered without an evidenced payment-FX path.
 - ☐ Accepted · Evidence match (yes / partial / no) + your words: \_\_\_\_\_\_\_\_\_\_
@@ -455,11 +458,14 @@ Story references are the numbered user stories in the
 - **Do:** Product page → History ("Comparable prices"). Read the assessment block,
   then check `/api/discovery/assessments`.
 - **Expect:** the scoped claim is labelled and scoped — "Lowest verified total among
-  offers checked: GBP 45.10" (after the coupon step) with its reason, and — because
+  offers checked: GBP 45.10" (after the coupon step) and — because
   that fixture amount is synthetic — the mounted warning "Synthetic verification
   data: the claimed amount is decided by fixture evidence, not a live market fact."
   directly beneath it (see S1); retired
-  revisions read "Historical assessment" / "Current comparison unavailable"; the view
+  revisions read "Historical assessment" / "Current comparison unavailable" with the
+  dated amount labelled "— a dated record, not a current price" (2026-11-01 fix of the
+  adversarial run's F-4/F-6: unavailability no longer trails an unlabelled superlative,
+  and the current claim no longer echoes its generic reason sentence); the view
   states "**Usual price unavailable.** … No savings claim."
   (`frontend/src/pages/Discovery.tsx:452-483`). Retained dates are shown with "This
   does not establish current availability."

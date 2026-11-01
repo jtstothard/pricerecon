@@ -13,6 +13,10 @@ def test_retained_offer_with_synthetic_coupon_stays_out_of_market_history():
     run_cost_history("retained_offer_with_synthetic_coupon_is_not_market_history")
 
 
+def test_synthetic_fx_and_benefit_evidence_keep_a_retained_amount_synthetic():
+    run_cost_history("synthetic_fx_and_benefit_evidence_keep_a_retained_amount_synthetic")
+
+
 def run_cost_history(name, storage=None):
     import os
     import subprocess

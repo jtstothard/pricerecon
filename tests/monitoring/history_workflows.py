@@ -805,5 +805,89 @@ async def retained_offer_with_synthetic_coupon_is_not_market_history():
             assert harness.deliveries == harness.blocked_edges == []
 
 
+async def synthetic_fx_and_benefit_evidence_keep_a_retained_amount_synthetic():
+    """F-2: the marker scan covers every channel that can decide the amount.
+
+    A distinct synthetic FX quote decides the converted payable (the
+    fixture's USD-shipping × rate mechanism), and an excluded benefit
+    carries its own synthetic evidence. Both sit in channels the cost scan
+    must read: with every scanned offer/context/component record retained,
+    the observation still has fixture-decided amounts and must read
+    `evidence_kind: synthetic`, never `retained` market history.
+    """
+    import copy
+
+    with MonitoringHarness() as harness:
+        from pricerecon.models.qualification import MerchantEvidenceReport
+
+        payload = priced_report(harness, "48.00", "fx-hybrid").model_dump(mode="json")
+        scenario = payload["cost_scenarios"][0]
+        scenario["components"][1].update(amount="2.10", currency="USD")
+        # Distinct FX evidence — a normal shape, not the context-evidence
+        # reuse that accidentally masks the gap in the stock fixture.
+        fx_evidence = copy.deepcopy(scenario["context_evidence"])
+        fx_evidence[0]["id"] = "synthetic:fx-hybrid:payment-fx"
+        scenario["fx_quotes"] = [
+            {
+                "purpose": "buyer_payment",
+                "from_currency": "USD",
+                "to_currency": "GBP",
+                "rate": "0.8",
+                "direction": "target_per_source",
+                "converter": "synthetic payment provider",
+                "spread_included": True,
+                "quantum": "0.01",
+                "rounding": "ROUND_HALF_UP",
+                "state": "observed",
+                "assumptions": [],
+                "evidence": fx_evidence,
+            }
+        ]
+        # A conditional benefit cannot live on the public scenario (the write
+        # path refuses it); it is its own payment scenario whose only
+        # synthetic channel is the benefit evidence.
+        payment = copy.deepcopy(payload["cost_scenarios"][0])
+        payment.update(
+            key="payment",
+            kind="payment",
+            fx_quotes=[],
+            assumptions=["Synthetic payment eligibility remains conditional"],
+        )
+        benefit_evidence = copy.deepcopy(payment["context_evidence"])
+        benefit_evidence[0]["id"] = "synthetic:fx-hybrid:payment-benefit"
+        payment["benefits"] = [
+            {
+                "kind": "payment",
+                "amount": "10.00",
+                "currency": "GBP",
+                "state": "conditional",
+                "reason": "Synthetic benefit is not a guaranteed reduction of payable cost",
+                "evidence": benefit_evidence,
+            }
+        ]
+        payload["cost_scenarios"].append(payment)
+        report = MerchantEvidenceReport.model_validate(payload)
+        # Retain every scanned channel: offer claims, context and components.
+        for entry in report.claims:
+            entry.retention = "minimal_fields"
+        for cost in report.cost_scenarios:
+            for entry in cost.context_evidence + [
+                e for part in cost.components for e in part.evidence
+            ]:
+                entry.retention = "minimal_fields"
+        async with harness.session() as (client, _):
+            candidate = (await read_capture(harness, client, [report]))["candidates"][0]
+            scenarios = {c["kind"]: c for c in candidate["offers"][0]["cost_scenarios"]}
+            cost = scenarios["public_no_coupon"]
+            assert cost["state"] == "verified_at_observation", cost["issues"]
+            assert cost["total"] == {"amount": "49.68", "currency": "GBP"}
+            data = await history(client, candidate)
+            observation = data["observations"][0]
+            assert observation["evidence_kind"] == "synthetic", observation
+            assert observation["market_history_eligible"] is False
+            assert data["market_history_eligible_count"] == 0
+            assert harness.deliveries == harness.blocked_edges == []
+
+
 if __name__ == "__main__":
     asyncio.run(globals()[sys.argv[1]]())

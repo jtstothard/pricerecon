@@ -6,6 +6,7 @@ from decimal import Decimal, localcontext
 from pricerecon.core.qualification import identity_key
 from pricerecon.models.costs import (
     CostAmount,
+    CostComponent,
     CostEvidence,
     CostScenario,
     CostScenarioInput,
@@ -305,6 +306,108 @@ def evaluate_cost(
     ):
         evidence.pointer = safe_pointer(evidence.pointer)
     return result
+
+
+def reconstruct_total(scenario: CostScenario) -> Decimal | None:
+    """Re-derive the payable from evidenced components; None when impossible.
+
+    `evaluate_cost` refuses to set a total while any component is missing,
+    unknown or contradictory, but a stored `CostScenario` can predate that
+    rule or bypass it (legacy rows, crafted or migrated state). Decision
+    layers that consume stored scenarios re-derive the total with the same
+    accounting and refuse the stored `total` when it cannot be reproduced
+    exactly: a payable resting on an unknown component or an unevidenced
+    conversion is never a delivered price, on any read path.
+    """
+    with localcontext() as arithmetic:
+        arithmetic.prec = 512
+        accepted: dict[str, CostComponent] = {}
+        kinds = (
+            (*REQUIRED, "basket_other_items")
+            if scenario.context.purchase_scope == "whole_basket"
+            or any(c.kind == "basket_other_items" for c in scenario.components)
+            else REQUIRED
+        )
+        for kind in kinds:
+            parts = [c for c in scenario.components if c.kind == kind]
+            signatures = {c.model_dump_json(exclude={"evidence"}) for c in parts}
+            if len(signatures) != 1:
+                return None
+            component = parts[0]
+            if component.payer != "buyer" or component.state in {
+                "unknown",
+                "conflicting",
+                "conditional",
+                "derived",
+            }:
+                return None
+            if component.state == "not_applicable":
+                if (
+                    kind == "item"
+                    or component.amount is not None
+                    or component.included_in is not None
+                ):
+                    return None
+                accepted[kind] = component
+                continue
+            if component.amount is None or component.currency is None:
+                return None
+            accepted[kind] = component
+        subtotal: dict[str, Decimal] = {}
+        for kind, component in accepted.items():
+            if component.state == "not_applicable":
+                continue
+            amount, currency = component.amount, component.currency
+            if amount is None or currency is None:
+                return None
+            if component.basis == "per_unit":
+                if scenario.context.quantity is None:
+                    return None
+                amount = amount * scenario.context.quantity
+            if component.included_in is not None:
+                parent = accepted.get(component.included_in)
+                if (
+                    parent is None
+                    or parent.included_in is not None
+                    or parent.amount is None
+                    or parent.currency != currency
+                    or component.included_in == kind
+                ):
+                    return None
+                if amount > parent.amount * (
+                    scenario.context.quantity or 1 if parent.basis == "per_unit" else 1
+                ):
+                    return None
+                continue
+            subtotal[currency] = subtotal.get(currency, Decimal(0)) + amount
+        funding = scenario.context.funding_currency
+        if not subtotal or funding is None:
+            return None
+        converted = Decimal(0)
+        for currency, amount in subtotal.items():
+            if currency == funding:
+                converted += amount
+                continue
+            quotes = [
+                q
+                for q in scenario.fx_quotes
+                if q.purpose == "buyer_payment"
+                and q.from_currency == currency
+                and q.to_currency == funding
+            ]
+            quote_signatures = {
+                (q.model_dump_json(exclude={"evidence", "quantum"}), q.quantum) for q in quotes
+            }
+            if len(quote_signatures) != 1:
+                return None
+            quote = quotes[0]
+            if not quote.evidence or quote.state != "observed":
+                return None
+            # The validated quantum is a numeric power of ten; mirror the
+            # write path's exact quantized conversion.
+            quantum = Decimal((0, (1,), quote.quantum.adjusted()))
+            converted += (amount * quote.rate).quantize(quantum, rounding=quote.rounding)
+        return converted
 
 
 def public_summary(offers: list[MerchantOffer]) -> PublicCostSummary:

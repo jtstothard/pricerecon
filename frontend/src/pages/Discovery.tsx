@@ -210,6 +210,18 @@ function Costs({ costs }: { costs: Cost[] }) {
               ],
             ]}
           />
+          {/* A mixed-currency total only reconciles on screen when the rate
+              that converted the foreign charge is shown beside it. */}
+          {cost.fx_quotes.some((fx) => fx.purpose === 'buyer_payment') && (
+            <DetailRows
+              rows={cost.fx_quotes
+                .filter((fx) => fx.purpose === 'buyer_payment')
+                .map((fx, i) => [
+                  `Payment FX basis (${i + 1})`,
+                  `${fx.from_currency} charges convert at ${fx.rate} ${fx.to_currency} per ${fx.from_currency}; ${fx.state.replace(/_/g, ' ')}; spread ${fx.spread_included ? 'included' : 'not stated'}; rounding step ${fx.quantum} ${fx.to_currency}; via ${fx.converter}`,
+                ])}
+            />
+          )}
           <p>{cost.assumptions.join('; ')}</p>
           <ul>
             {cost.issues.map((issue, i) => (
@@ -459,10 +471,20 @@ export function ProductContent({
               <section key={item.id}>
                 <h3>{item.historical ? 'Historical assessment' : 'Scoped price assessment'}</h3>
                 <p>
-                  {item.current_best.state === 'supported' && !item.historical
-                    ? `Lowest verified total among offers checked: GBP ${item.current_best.amount}`
-                    : 'Current comparison unavailable'}
-                  . {item.current_best.reason}
+                  {item.current_best.state === 'supported' && !item.historical ? (
+                    <>Lowest verified total among offers checked: GBP {item.current_best.amount}.</>
+                  ) : item.current_best.amount !== null ? (
+                    // Unavailability must never trail a superlative that reads
+                    // as current: the dated amount stays visible, labelled as
+                    // a record rather than a buying claim.
+                    <>
+                      Current comparison unavailable. When this assessment was current, the
+                      lowest verified total was GBP {item.current_best.amount} — a dated
+                      record, not a current price.
+                    </>
+                  ) : (
+                    <>Current comparison unavailable. {item.current_best.reason}</>
+                  )}
                 </p>
                 {item.current_best.synthetic && (
                   <p className="discovery-caution">
