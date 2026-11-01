@@ -30,7 +30,9 @@ def coupon_evidence(coupon: CouponAssessment) -> list[CostEvidence]:
     """Every evidence entry in a coupon's chain, including its payable proof.
 
     Covers the opportunity, terms, eligibility, application (receipt, lines)
-    and the reproduced `resulting_cost` scenario the coupon owns.
+    and the reproduced `resulting_cost` scenario the coupon owns — every
+    channel of that scenario (context, components, FX quotes, benefits)
+    that can decide the resulting payable.
     """
     chain = list(coupon.opportunity_evidence)
     if coupon.terms is not None:
@@ -43,9 +45,25 @@ def coupon_evidence(coupon: CouponAssessment) -> list[CostEvidence]:
             chain.append(coupon.application.receipt)
         chain += [e for line in coupon.application.lines for e in line.evidence]
     if coupon.resulting_cost is not None:
-        chain += coupon.resulting_cost.context_evidence
-        chain += [e for part in coupon.resulting_cost.components for e in part.evidence]
+        chain += scenario_evidence(coupon.resulting_cost)
     return chain
+
+
+def scenario_evidence(scenario: CostScenario) -> list[CostEvidence]:
+    """Every evidence entry that can decide a scenario's payable amount.
+
+    The synthetic-marker derivation must scan each channel that can decide
+    the claimed amount: context, components, payment-FX quotes (a synthetic
+    rate decides the converted payable) and conditional benefits. Leaving a
+    channel unscanned lets fixture evidence hide there while the observation
+    reads as retained market history.
+    """
+    return (
+        scenario.context_evidence
+        + [e for part in scenario.components for e in part.evidence]
+        + [e for quote in scenario.fx_quotes for e in quote.evidence]
+        + [e for benefit in scenario.benefits for e in benefit.evidence]
+    )
 
 
 def init_history_tables(connection: sqlite3.Connection) -> None:
@@ -180,11 +198,7 @@ def get_history(
                     )
                 )
             claims = [c for c in offer.evidence if c.subject != "configuration"]
-            cost_claims = [
-                e
-                for c in offer.cost_scenarios
-                for e in c.context_evidence + [e for part in c.components for e in part.evidence]
-            ]
+            cost_claims = [e for c in offer.cost_scenarios for e in scenario_evidence(c)]
             # A reproduced coupon can decide the claimed amount through its
             # own `resulting_cost` (`core/comparisons.assess_observation`), so
             # the synthetic scan must cover the coupon chain too: a synthetic
