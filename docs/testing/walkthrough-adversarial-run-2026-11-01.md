@@ -370,3 +370,142 @@ session.
 - This report passes `scripts/check_public_markers.py` (deployed topology referred to
   as "the deployed instance" / "the app VM" / "the hypervisor host's guest-agent route";
   no private IPs or deployment hostnames).
+
+## 7. Fix resolution — 2026-11-01
+
+Fixes for F-1..F-6 landed on this branch (red reproduction first, then the production
+change; no assertions weakened). All findings are **fixed and regression-pinned** except
+where noted. Commit SHAs are on `t3/adversarial-walkthrough-2026-11-01` (this
+branch carries the run record plus its fixes; based on a0d6ef4 whose parent is
+origin/main 2ab78ca).
+
+### F-1 — fixed (commit `6608a99`)
+
+- **Fix.** `PriceClaim.fail_closed_on_unknown_provenance`
+  (`src/pricerecon/models/assessments.py`) now also upgrades `synthetic` to `true` when
+  **an amount is claimed and no paths exist** — the strip-the-paths shape has nothing to
+  re-derive from, so provenance is unknown, not live. Genuinely-live claims (paths with
+  retained, non-synthetic evidence) keep `synthetic:false`; a stored `true` is still
+  never downgraded.
+- **Red → green.** Red on the unfixed tree:
+  `tests/test_price_claim_provenance.py::test_pathless_stored_amount_fails_closed_as_synthetic`
+  (model boundary) and
+  `tests/test_assessment_workflow.py::test_pathless_stored_claim_is_served_synthetic_not_live`
+  (planted SQLite row with `synthetic:false` + `paths:[]` re-read through the real
+  `GET /api/discovery/assessments`; it served
+  `{'state': 'supported', 'amount': '70.10', 'synthetic': False, 'paths': []}`).
+  Both green after the fix.
+- **Focused re-attack (model table, post-fix).**
+
+  | stored claim | served `synthetic` |
+  |---|---|
+  | unmarked + one synthetic path | `true` (upgraded) |
+  | `synthetic:true` + retained path | `true` (never downgraded) |
+  | unmarked + mixed paths | `true` (upgraded) |
+  | unmarked + retained-only path | `false` (live, stays live) |
+  | unmarked + empty paths + amount | `true` (**was `false`**) |
+  | `synthetic:false` + empty paths + amount | `true` (**was `false`**) |
+
+  The planted-row API re-attack now exits 0 with the claim served `synthetic: true`
+  (workflow `laundered_marker`). The attack **failed to falsify** S1 on this shape.
+
+### F-2 — fixed (commit `ae1da76`)
+
+- **Fix.** The history scan (`src/pricerecon/db/history.py`) now reads a single
+  `scenario_evidence()` helper covering **context, component, `fx_quotes[].evidence` and
+  `benefits[].evidence`**, used for both the offer's cost scenarios and the coupon
+  `resulting_cost` chain (which previously also missed FX/benefit channels).
+- **Red → green.**
+  `tests/test_history_workflow.py::test_synthetic_fx_and_benefit_evidence_keep_a_retained_amount_synthetic`
+  was red on the unfixed tree (fixture USD 2.10 shipping × distinct synthetic 0.8
+  payment-FX quote, the exact Casio mechanism, with every scanned channel retained →
+  `evidence_kind: "retained"`, `market_history_eligible: true` on the real
+  `/api/discovery/candidates/{id}/history` read path). Green after the fix:
+  `evidence_kind: "synthetic"`, `market_history_eligible: false`,
+  `market_history_eligible_count: 0`. A synthetic **benefit** on a separate payment
+  scenario is pinned by the same workflow.
+- **Focused re-attack.** The workflow re-run post-fix exits 0 — the FX-laundering
+  attack **failed to falsify** S1 on this channel.
+
+### F-3 — fixed (commit `0906a7e`)
+
+- **Fix.** `assess_scenario` (`src/pricerecon/core/exact_tracking.py`) no longer trusts
+  the stored `state=verified_at_observation` + `total`: it re-derives the payable from
+  the evidenced components with the same accounting as the write path
+  (`core.costs.reconstruct_total`: per-unit quantities, inclusion handling, exact
+  quantized FX conversion) and withholds `public_delivered_total_unverified` unless the
+  stored total reproduces exactly. This covers alerts (`decide`), `assess_offer` and the
+  comparison/claim layer (`assess_observation` → `ComparablePath`).
+- **Red → green.**
+  `tests/test_assessment_workflow.py::test_stored_total_over_an_unknown_component_is_never_a_delivered_price`
+  was red on the unfixed tree (planted scenario: shipping `unknown`/`null` +
+  `total: GBP 45.10` + `state: verified_at_observation` → `observed_low` published the
+  forged 45.10). Green after: no claim carries the forged total and the observation is
+  excluded with reason `public_delivered_total_unverified`.
+- **Focused re-attack.** Workflow `forged_total` re-run post-fix exits 0 — the
+  fabricated-total attack **failed to falsify** S2 at the decision layer.
+- **Residual, honestly left open (reasoned):** the reconstruction gates arithmetic
+  completeness, not every write-path semantic (e.g. it does not re-verify offer/context
+  identity matches, which `evaluate_cost` checks against the live offer). Those
+  offer-level gates remain write-path only; the decision layer's own offer checks
+  (qualification, revision match, destination, evidence freshness) still apply
+  independently.
+
+### F-4 — fixed (commit `227c6ff`)
+
+Historical/withdrawn assessments with an amount now render
+"Current comparison unavailable. When this assessment was current, the lowest verified
+total was GBP 45.10 — a dated record, not a current price." instead of juxtaposing
+unavailability with the unlabelled superlative. Amount-less claims keep their
+informative refusal reasons ("No qualifying comparable observations…"). Red → green:
+`DiscoveryHierarchy.test.ts` "does not juxtapose unavailability with a current-sounding
+superlative…" (red: the old juxtaposition was rendered and the dated amount was not
+shown at all). Kit G1's copy citation updated to match (`buyer-walkthrough.md`).
+
+### F-5 — fixed (commit `227c6ff`)
+
+The Costs summary renders a "Payment FX basis" row beside the subtotal for every
+buyer-payment quote: rate and direction (e.g. "USD charges convert at 0.8 GBP per
+USD"), quote state, spread treatment, rounding step and converter. The Casio total
+(48 + 2.10 × 0.8 = 49.68) is now reconcilable on the Costs screen. Red → green:
+`DiscoveryHierarchy.test.ts` "surfaces the payment-FX basis beside a mixed-currency
+total" (red: no FX basis rendered). Customs-valuation quotes (which never enter the
+payable) remain in the Technical record only, unchanged.
+
+### F-6 — fixed (commit `227c6ff`)
+
+The supported claim no longer appends the generic method sentence it already states:
+the line reads "Lowest verified total among offers checked: GBP 45.10." with no verbatim
+echo. Red → green: `DiscoveryHierarchy.test.ts` "does not echo the claim headline as its
+own reason".
+
+### Write-path reconnaissance (F-1/F-3 reachability) — no live writer found
+
+- `discovery_price_assessments` rows are written **only** by
+  `db/assessments.evaluate_comparisons`; its claims come from `core.comparisons.claim()`,
+  which never emits an amount with empty paths (the amount is computed from the winner
+  paths). No HTTP route writes that table.
+- `discovery_cost_scenarios` rows are written **only** by `db/discovery.py` from
+  acquisition output produced by `core.costs.evaluate_costs`; `evaluate_cost` refuses to
+  set any `total` while an issue exists (including `{kind}:unknown`), so a
+  verified-total-over-unknown-component row cannot be produced by the write path. The
+  discovery API surface for costs/assessments is read-only (GET).
+- Conclusion: the F-1/F-3 fixes are defense-in-depth against legacy/crafted/migrated
+  state, exactly as reported; no additional write-side change was needed.
+
+### Verification matrix (this fix branch, 2026-11-01)
+
+| Check | Result |
+|---|---|
+| Full suite, Py3.14 worktree venv (`PYTHONPATH=src … -m pytest -q`) | 883 passed, 10 skipped, **0 failed** (baseline pre-fix on pristine a0d6ef4: 10 failed / 869 passed — the 10 known pre-existing pilot-subprocess failures did not reproduce post-fix on either venv; delta adds zero failures) |
+| Full suite, Py3.13 `ci-mypy-venv` | 883 passed, 10 skipped, **0 failed** (same baseline comparison) |
+| New red tests (4 backend + 3 frontend) | all red pre-fix, all green post-fix |
+| Focused re-attacks F-1/F-2/F-3 (workflows `laundered_marker`, `synthetic_fx_and_benefit_evidence_keep_a_retained_amount_synthetic`, `forged_total` + model table) | each exits 0; attacks failed to falsify |
+| `black --check src/pricerecon tests` / `ruff check` (ci-mypy-venv) | clean |
+| `mypy src/pricerecon` Py3.13 + Py3.14 | 0 errors both |
+| `npm run build --prefix frontend` + `vitest run` | build clean; 95/95 (92 baseline + 3 new) |
+| `python3 scripts/check_public_markers.py` / `git diff --check` | pass / clean |
+
+Constraint notes: offline throughout (no merchant/provider calls; the deployed instance
+was not touched — all code paths verified on local fixtures/tests); ports 8893–8895
+untouched; the live-pilot marker file never read; no push.
