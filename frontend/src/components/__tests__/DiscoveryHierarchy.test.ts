@@ -462,7 +462,7 @@ it.each(['unknown', 'conditional', 'verified_at_observation'] as const)(
         view: 'costs',
       })
     )
-    expect(html).toContain('Historical cost withdrawn')
+    expect(html).toContain('Historical cost — kept on record, no longer used for pricing')
     const technical = renderToStaticMarkup(
       createElement(ProductContent, {
         candidate,

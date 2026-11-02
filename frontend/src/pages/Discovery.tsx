@@ -160,6 +160,29 @@ const costStateLabel = {
   conditional: 'Conditional',
   unknown: 'Total unknown',
 }
+// F5 — one plain-language family for what a correction does to old
+// evidence; the precise internal term stays available as a tooltip.
+const keptOnRecord = 'kept on record, no longer used for pricing'
+const humanLabel = (value: string) => value.replace(/_/g, ' ')
+const couponStateLabel: Record<string, string> = {
+  unverified_opportunity: 'Unverified opportunity',
+  conditional_eligibility: 'Conditional eligibility',
+  applicable_not_reproduced: 'Applicable, not reproduced',
+  reproduced_at_observation: 'Reproduced at observation',
+  rejected: 'Rejected',
+  invalidated: 'Invalidated — kept on record, no longer used for pricing',
+}
+const couponApplicabilityLabel: Record<string, string> = {
+  unknown: 'unknown',
+  supported: 'supported at observation',
+  conditional: 'conditional',
+  rejected: 'rejected',
+}
+function correctionSummary(candidate: DiscoveryCandidate) {
+  return candidate.corrections
+    .filter((c) => c.requalification === 'required')
+    .flatMap((c) => c.lineage)
+}
 function subtotals(values: Record<string, string>) {
   return (
     Object.entries(values)
@@ -192,9 +215,9 @@ function Costs({ costs }: { costs: Cost[] }) {
           <h4>
             {cost.kind.replace(/_/g, ' ')}: {costStateLabel[cost.state]}
           </h4>
-          <p>
+          <p title="Technical state: withdrawn">
             {cost.withdrawn
-              ? 'Historical cost withdrawn. Not a current payable price.'
+              ? `Historical cost — ${keptOnRecord}. Not a current payable price.`
               : cost.total
                 ? `${cost.total.currency} ${cost.total.amount}`
                 : 'Total unknown'}
@@ -255,13 +278,23 @@ export function Candidate({
   onSaved: () => Promise<void>
 }) {
   const path = `/discover/product/${encodeURIComponent(candidate.id)}`
+  const changedFields = correctionSummary(candidate)
+  const changedText = changedFields
+    .map((entry) => `${humanLabel(entry.field)} ${entry.original_value ?? 'unknown'} → ${entry.value}`)
+    .join(' · ')
   return (
     <article className="comparison-watch" data-candidate={candidate.id}>
       <DiscoveryImage image={candidate.image} compact />
       <div className="discovery-description">
         <h2>{candidate.title}</h2>
         {candidate.identity_state !== 'supported' && (
-          <p className="discovery-caution">Identity {candidate.identity_state}</p>
+          <p
+            className="discovery-caution"
+            title={`Technical identity_state: ${candidate.identity_state}`}
+          >
+            Identity {candidate.identity_state}
+            {changedFields.length > 0 ? ' — awaiting fresh evidence' : ''}
+          </p>
         )}
         {candidate.preference_fit.some((fit) => fit.state === 'outside') ? (
           <p className="discovery-caution">Outside preferences</p>
@@ -270,8 +303,27 @@ export function Candidate({
             <p className="discovery-quiet">Preference fit unknown</p>
           )
         )}
-        {candidate.corrections.some((c) => c.requalification === 'required') && (
-          <p className="discovery-caution">Old prices withdrawn · matching offer needed</p>
+        {/* F9 — name the correction and its cause so the retained reported
+            title is not misread as the change failing. */}
+        {changedFields.length > 0 && (
+          <p
+            className="discovery-caution"
+            title="Technical state: invalidated (kept on record)"
+          >
+            Details corrected ({changedText}) · old prices {keptOnRecord} · awaiting fresh
+            evidence
+          </p>
+        )}
+        {/* F9 — show the corrected value beside the reported title. */}
+        {changedFields.length > 0 && (
+          <p className="discovery-specs">
+            {changedFields
+              .map(
+                (entry) =>
+                  `${humanLabel(entry.field)}: ${entry.value} (was: ${entry.original_value ?? 'unknown'}, as listed)`
+              )
+              .join(' · ')}
+          </p>
         )}
         {candidate.configurations
           .filter((config) => config.state === 'supported')
@@ -321,6 +373,9 @@ export function Candidate({
             ? 'Edit delivered target'
             : 'Track this watch'}
         </a>
+        {/* F1 — the correction entry point, named with the words the buyer
+            is looking for, where the buyer looks first. */}
+        <a href={productNavigation(path, 'correction')}>Wrong watch details?</a>
       </div>
     </article>
   )
@@ -387,10 +442,11 @@ export function ProductContent({
             <div>
               <dt>Public total, no coupon</dt>
               <dd>
+                {/* F10 — do not repeat "Total unknown — Total unknown": the
+                    state label already says it once. */}
                 {candidate.public_total.amount === null
                   ? 'Total unknown'
-                  : `${candidate.public_total.currency} ${candidate.public_total.amount}`}{' '}
-                — {costStateLabel[candidate.public_total.state]}
+                  : `${candidate.public_total.currency} ${candidate.public_total.amount} — ${costStateLabel[candidate.public_total.state]}`}
               </dd>
             </div>
           </dl>
@@ -402,11 +458,17 @@ export function ProductContent({
           {candidate.advertised_item_price !== null && (
             <dl>
               <div>
-                <dt>
-                  {candidate.corrections.some((c) => c.requalification === 'required')
-                    ? 'Historical item lead (withdrawn)'
-                    : 'Item lead'}
-                </dt>
+                <dt
+                title={
+                  candidate.corrections.some((c) => c.requalification === 'required')
+                    ? 'Technical state: withdrawn'
+                    : undefined
+                }
+              >
+                {candidate.corrections.some((c) => c.requalification === 'required')
+                  ? `Historical item lead — ${keptOnRecord}`
+                  : 'Item lead'}
+              </dt>
                 <dd>
                   {candidate.reported_currency ?? 'currency unknown'}{' '}
                   {candidate.advertised_item_price}
@@ -425,13 +487,16 @@ export function ProductContent({
               {offer.coupons.length === 0 && <p>No verified applicable public coupon supplied.</p>}
               {offer.coupons.map((coupon) => (
                 <section key={coupon.id}>
-                  <h4>
-                    {coupon.label}: {coupon.state.replace(/_/g, ' ')}
+                  <h4 title={`Technical state: ${coupon.state}`}>
+                    {coupon.label}: {couponStateLabel[coupon.state] ?? coupon.state.replace(/_/g, ' ')}
                   </h4>
                   {couponSyntheticEvidence(coupon) && (
                     <p className="discovery-caution">Synthetic checkout evidence.</p>
                   )}
-                  <p>{coupon.applicability}</p>
+                  <p title={`Technical applicability: ${coupon.applicability}`}>
+                    Coupon applicability:{' '}
+                    {couponApplicabilityLabel[coupon.applicability] ?? coupon.applicability}
+                  </p>
                   <p>{coupon.terms?.literal}</p>
                   {coupon.category !== 'public' && (
                     <p>
@@ -446,8 +511,9 @@ export function ProductContent({
                   </ul>
                   {coupon.resulting_cost && <Costs costs={[coupon.resulting_cost]} />}
                   {coupon.historical_resulting_cost && (
-                    <p>
-                      Historical coupon result withdrawn; unavailable as a current payable scenario.
+                    <p title="Technical state: withdrawn">
+                      Historical coupon result — {keptOnRecord}; unavailable as a current payable
+                      scenario.
                     </p>
                   )}
                 </section>
@@ -512,6 +578,16 @@ export function ProductContent({
       {view === 'technical' && (
         <>
           <h2>Technical evidence</h2>
+          {/* F1 — bridge the kit's “Technical record” vocabulary and point to
+              the correction form from the dead end the buyer was sent to. */}
+          <p className="discovery-quiet">
+            The walkthrough guide calls this page the “technical record”. Details wrong? Correct
+            them on the{' '}
+            <a href={productNavigation(`/discover/product/${encodeURIComponent(candidate.id)}`, 'correction')}>
+              “Wrong details?” tab
+            </a>
+            .
+          </p>
           <DiscoveryImage image={candidate.image} />
           <dl>
             <div>
@@ -564,7 +640,12 @@ export function ProductContent({
           <pre>{JSON.stringify(candidate, null, 2)}</pre>
         </>
       )}
-      {view === 'correction' && <><h2>Correct watch details</h2><IdentityCorrection candidate={candidate} onSaved={onSaved} /></>}
+      {view === 'correction' && (
+        <>
+          <h2>Correct watch details</h2>
+          <IdentityCorrection candidate={candidate} tracking={tracking} onSaved={onSaved} />
+        </>
+      )}
       {view === 'tracking' && (
         <>
           <h2>Track this exact watch</h2>
@@ -596,6 +677,8 @@ export function ProductDetail() {
   const { id } = useParams()
   const [params] = useSearchParams()
   const views = ['overview', 'costs', 'history', 'tracking', 'correction', 'technical']
+  // F1 — name the tab after the buyer's thought, not the model's noun.
+  const viewLabels: Record<string, string> = { correction: 'Wrong details?' }
   const requestedView = params.get('view') ?? 'overview'
   const view = views.includes(requestedView) ? requestedView : 'overview'
   const [feed, setFeed] = useState<DiscoveryFeed | null>(null)
@@ -630,9 +713,22 @@ export function ProductDetail() {
             <div className="product-buying-brief">
               <h1>{candidate.title}</h1>
               {candidate.image.kind === 'remote_reference' && <p className="discovery-caution">{candidate.image.configuration_note}</p>}
-              <p className={candidate.identity_state === 'supported' ? 'discovery-quiet' : 'discovery-caution'}>
+              <p
+                className={candidate.identity_state === 'supported' ? 'discovery-quiet' : 'discovery-caution'}
+                title={`Technical identity_state: ${candidate.identity_state}`}
+              >
                 Identity {candidate.identity_state}
+                {correctionSummary(candidate).length > 0 ? ' — awaiting fresh evidence' : ''}
               </p>
+              {/* F9 — the corrected value beside the reported title, which is
+                  retained as evidence and otherwise reads as "it ignored my
+                  change". */}
+              {correctionSummary(candidate).length > 0 && (
+                <DetailRows rows={correctionSummary(candidate).map((entry) => [
+                  humanLabel(entry.field),
+                  `${entry.value} (was: ${entry.original_value ?? 'unknown'}, as listed)`,
+                ])} />
+              )}
               {candidate.configurations.filter(c => c.state === 'supported').slice(0, 1).map(config => (
                 <DetailRows key={config.id} rows={Object.entries(config.values).filter(([field]) => ['dial', 'case_width_mm', 'movement', 'strap'].includes(field)).map(([field, value]) => [field.replace(/_/g, ' '), value])} />
               ))}
@@ -641,11 +737,21 @@ export function ProductDetail() {
                 <p className="product-delivered-price">{candidate.public_total.amount === null ? 'Total unknown' : `${candidate.public_total.currency} ${candidate.public_total.amount}`}</p>
                 <p>{costStateLabel[candidate.public_total.state]}. Freshness unvalidated. Cashback excluded.</p>
                 <p>Condition: {[...new Set(candidate.offers.map(offer => offer.condition ?? 'Unknown'))].join(', ') || 'Unknown'}</p>
-                {candidate.corrections.some(c => c.requalification === 'required') && <p className="discovery-caution">Old prices withdrawn; matching offer needed.</p>}
+                {correctionSummary(candidate).length > 0 && (
+                  <p className="discovery-caution" title="Technical state: invalidated (kept on record)">
+                    Details corrected ({correctionSummary(candidate).map((entry) => `${humanLabel(entry.field)} ${entry.original_value ?? 'unknown'} → ${entry.value}`).join(' · ')}) · old prices {keptOnRecord} · awaiting fresh evidence
+                  </p>
+                )}
               </div>
-              <Link className="product-track-action" to={productNavigation(`/discover/product/${encodeURIComponent(candidate.id)}`, 'tracking')}>
-                {feed?.tracking.some(t => t.candidate_id === candidate.id) ? 'Edit delivered target' : 'Track this watch'}
-              </Link>
+              <div className="product-hero-actions">
+                <Link className="product-track-action" to={productNavigation(`/discover/product/${encodeURIComponent(candidate.id)}`, 'tracking')}>
+                  {feed?.tracking.some(t => t.candidate_id === candidate.id) ? 'Edit delivered target' : 'Track this watch'}
+                </Link>
+                {/* F1 — the correction entry point in the hero. */}
+                <Link className="product-wrong-details" to={productNavigation(`/discover/product/${encodeURIComponent(candidate.id)}`, 'correction')}>
+                  Wrong watch details?
+                </Link>
+              </div>
               {feed?.captures.some(capture => capture.mode === 'offline_verification') && <p className="discovery-caution product-session-note">Synthetic session · prices and buying evidence are test data.</p>}
             </div>
           </header>
@@ -659,7 +765,7 @@ export function ProductDetail() {
                   item
                 )}
               >
-                {item.charAt(0).toUpperCase() + item.slice(1)}
+                {viewLabels[item] ?? item.charAt(0).toUpperCase() + item.slice(1)}
               </Link>
             ))}
           </nav>

@@ -1,6 +1,16 @@
 import { useEffect, useState } from 'react'
 import { loadHistory, type ObservationHistory as History } from '../../lib/history'
 
+// F10 — human labels for the observation status column; the technical term
+// stays available as a tooltip. This table is the "nothing was overwritten"
+// proof, so it loads on view instead of hiding behind a button.
+const validityLabel: Record<string, string> = {
+  supported_at_capture: 'current at capture',
+  unqualified: 'unqualified at capture',
+  invalidated: 'withdrawn after correction — kept on record',
+  legacy_unqualified: 'legacy — unqualified',
+}
+
 export function ObservationHistory({
   candidateId,
   technical = false,
@@ -8,11 +18,9 @@ export function ObservationHistory({
   candidateId: string
   technical?: boolean
 }) {
-  const [open, setOpen] = useState(false)
   const [history, setHistory] = useState<History | null>(null)
   const [error, setError] = useState('')
   useEffect(() => {
-    if (!open) return
     const controller = new AbortController()
     setError('')
     loadHistory(candidateId, controller.signal)
@@ -22,20 +30,21 @@ export function ObservationHistory({
           setError(failure instanceof Error ? failure.message : 'History unavailable')
       })
     return () => controller.abort()
-  }, [candidateId, open])
+  }, [candidateId])
   return (
     <section className="discovery-history">
-      <button type="button" onClick={() => setOpen(true)}>
-        Load retained observations
-      </button>
       <h3>Observations and gaps</h3>
       {error && <p role="alert">{error}</p>}
-      {open && !history && !error && <p role="status">Loading retained observations…</p>}
+      {!history && !error && <p role="status">Loading retained observations…</p>}
       {history && (
         <>
           <p>
             Limited retained history. Usual price unavailable. No savings claim. Observations are
             separate from alert events and acquisition failures.
+          </p>
+          <p>
+            Every observation is kept here unchanged, even after a correction — nothing is
+            overwritten.
           </p>
           <p>{history.coverage_reason}</p>
           <p>
@@ -48,7 +57,7 @@ export function ObservationHistory({
             <pre>{JSON.stringify(history, null, 2)}</pre>
           ) : (
             <table>
-              <caption>Retained price observations</caption>
+              <caption>Retained price observations — kept unchanged, never overwritten</caption>
               <thead>
                 <tr>
                   <th>Observed</th>
@@ -60,10 +69,10 @@ export function ObservationHistory({
                 {history.observations.map((observation) => (
                   <tr key={observation.id}>
                     <td>{observation.observed_at ?? observation.captured_at}</td>
-                    <td>
-                      {observation.validity.replace(/_/g, ' ')}
+                    <td title={`Technical validity: ${observation.validity}`}>
+                      {validityLabel[observation.validity] ??
+                        observation.validity.replace(/_/g, ' ')}
                       {observation.duplicate_of && ' · repeated evidence'}
-                      {observation.invalidations.length > 0 && ' · withdrawn'}
                     </td>
                     <td>
                       {observation.costs.map((cost) => (
