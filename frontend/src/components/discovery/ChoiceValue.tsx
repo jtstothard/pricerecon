@@ -8,6 +8,9 @@ export function ChoiceValue({
   onChange,
   required = false,
   name,
+  current,
+  placeholder,
+  customLabel = 'Type another value…',
 }: {
   label: string
   value: string
@@ -15,9 +18,17 @@ export function ChoiceValue({
   onChange: (value: string) => void
   required?: boolean
   name?: string
+  /** Recorded value for this field, offered first and marked as current. */
+  current?: string
+  /** First option text for required selects; no silent "Not set" trap. */
+  placeholder?: string
+  /** Self-describing escape hatch so any value is obviously allowed. */
+  customLabel?: string
 }) {
   const [custom, setCustom] = useState(value !== '' && !choices.includes(value))
   const showCustom = custom || (value !== '' && !choices.includes(value))
+  const suggestions =
+    current && !choices.includes(current) ? [current, ...choices] : choices
   return (
     <label>
       {label}
@@ -32,13 +43,15 @@ export function ChoiceValue({
           if (next !== '__custom') onChange(next)
         }}
       >
-        <option value="">Not set</option>
-        {choices.map((choice) => (
+        <option value="">
+          {required ? (placeholder ?? 'Choose a value…') : 'Not set'}
+        </option>
+        {suggestions.map((choice) => (
           <option key={choice} value={choice}>
-            {choice.replace(/_/g, ' ')}
+            {choice === current ? `${choice} (current)` : choice.replace(/_/g, ' ')}
           </option>
         ))}
-        <option value="__custom">Other / custom</option>
+        <option value="__custom">{customLabel}</option>
       </select>
       {showCustom && (
         <input

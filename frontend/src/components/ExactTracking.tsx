@@ -67,7 +67,11 @@ export function TrackingStatus({ intent }: { intent: ExactTracking }) {
       ) && <p className="discovery-caution">Stale evidence · alerts wait for a fresh offer</p>}
       {intent.assessment.reasons.some(
         (reason) => reason.includes('invalidated') || reason.includes('withdrawn')
-      ) && <p className="discovery-caution">Evidence withdrawn · target retained</p>}
+      ) && (
+        <p className="discovery-caution" title="Technical state: evidence invalidated">
+          Evidence corrected — kept on record, no longer used for alerts · target retained
+        </p>
+      )}
       <section>
         <h3>Alert eligibility details</h3>
         <ul>
@@ -243,9 +247,18 @@ export default function ExactTrackingControl({
           Saving keeps this exact intent. Collection remains staged. A supplied policy and fresh
           qualified evidence are required before verified delivered alerts.
         </p>
-        {configuration.state !== 'supported' && (
-          <p>Exact identity must be resolved before starting exact tracking.</p>
-        )}
+        {configuration.state !== 'supported' &&
+          (intent ? (
+            // F9 — after a correction this line sits directly under a
+            // retained target; it must explain the wait, not read as
+            // "your target is blocked".
+            <p>
+              Your saved target is retained. Alerts wait for fresh evidence for the corrected
+              watch.
+            </p>
+          ) : (
+            <p>Exact identity must be resolved before starting exact tracking.</p>
+          ))}
         <form onSubmit={submit}>
           <ChoiceValue
             label="UK delivered target (£)"

@@ -162,6 +162,13 @@
 .product-price-summary .product-delivered-label { margin: 0; color: var(--text-secondary); font-size: .875rem; }
 .product-price-summary .product-delivered-price { font-size: 1.75rem; font-weight: 600; line-height: 1.2; margin: 8px 0 12px; font-variant-numeric: tabular-nums; }
 .product-page .product-track-action { display: inline-flex; justify-content: center; padding: 12px 24px; margin-top: 12px; background: var(--accent-strong); color: var(--text-inverse); border-radius: var(--radius-xs); font-weight: 650; text-decoration: none; }
+.product-hero-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.product-page .product-wrong-details { display: inline-flex; align-items: center; padding: 12px 24px; margin-top: 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-xs); font-weight: 550; text-decoration: none; }
+.identity-correction .correction-preview { margin: 0; }
+.identity-correction .correction-preview-pending { color: var(--text-tertiary); font-weight: 400; }
+.identity-correction .correction-outcome { border: 1px solid var(--border-strong); border-left: 4px solid var(--accent-strong); padding: 12px 16px; margin-block: 12px; border-radius: var(--radius-xs); }
+.identity-correction .correction-outcome ul { margin: 8px 0 0; padding-left: 1.2rem; display: grid; gap: 4px; }
+.identity-correction .correction-changed { font-weight: 600; }
 .product-page a:focus-visible { outline: 3px solid var(--accent-strong); outline-offset: 4px; }
 .product-session-note { font-size: .875rem; margin-top: 16px; }
 .product-page nav { gap: 8px 28px; padding-block: 8px; }
@@ -183,7 +190,7 @@
 @media (max-width: 700px) {
   .product-page .product-hero { grid-template-columns: minmax(0, 1fr); gap: 24px; margin-block: 24px; }
   .product-hero .discovery-picture img { height: 300px; }
-  .product-page .product-track-action { width: 100%; box-sizing: border-box; }
+  .product-page .product-track-action, .product-page .product-wrong-details { width: 100%; box-sizing: border-box; }
   .product-page nav { gap: 4px 20px; }
   .product-page .product-content dl > div { grid-template-columns: minmax(0, 1fr); gap: 4px; }
   .product-content :is(th, td) { padding: 8px 4px; }
