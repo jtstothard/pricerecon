@@ -22,6 +22,24 @@ export function parseCorrection(value: unknown) {
   }
 }
 export type Correction = ReturnType<typeof parseCorrection>
+export type CorrectionLineage = Correction['lineage'][number]
+
+/** Current buyer-facing values, without discarding the retained lineage chain. */
+export function currentCorrectionSummary(corrections: Correction[]): CorrectionLineage[] {
+  const current = new Map<IdentityField, CorrectionLineage>()
+  for (const correction of corrections) {
+    if (correction.requalification !== 'required') continue
+    for (const entry of correction.lineage) {
+      const first = current.get(entry.field)
+      current.set(
+        entry.field,
+        first ? { ...entry, original_value: first.original_value } : entry
+      )
+    }
+  }
+  return Array.from(current.values())
+}
+
 export async function saveCorrection(candidateId: string, subjectId: string, input: {
   capture_id: string; observed_configuration_id: string; configuration_revision: number; expected_revision: number;
   field: IdentityField; value: string; actor: string; rationale: string; state: 'corrected' | 'disputed';

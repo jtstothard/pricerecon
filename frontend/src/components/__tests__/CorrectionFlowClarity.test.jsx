@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { createRoot } from 'react-dom/client'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { Candidate, ProductContent, ProductDetail } from '../../pages/Discovery'
+import Discovery, { Candidate, ProductContent, ProductDetail } from '../../pages/Discovery'
 import { ObservationHistory } from '../discovery/ObservationHistory'
 import ExactTrackingControl, { TrackingStatus } from '../ExactTracking'
 import { parseDiscoveryFeed } from '../../lib/discovery'
@@ -157,11 +157,110 @@ it('shows the corrected value and explains the state change on the card', async 
   expect(card).not.toContain('Old prices withdrawn · matching offer needed')
 })
 
+// S5 residual 3 — repeated corrections to one field have one current value;
+// the complete chain remains available in correction history.
+it('shows only the latest value and original observation for repeated corrections', async () => {
+  const candidate = correctedCandidate()
+  const secondEntry = {
+    ...lineageEntry,
+    id: '9615feda',
+    revision: 2,
+    value: 'Blue',
+    original_value: 'salmon',
+    previous_correction_id: lineageEntry.id,
+    rationale: 'The source description conflicts with the watch shown.',
+  }
+  candidate.corrections[0].revision = 2
+  candidate.corrections[0].values = { dial: 'Blue', movement: 'Quartz' }
+  candidate.corrections[0].lineage = [lineageEntry, secondEntry]
+  candidate.configurations = [
+    { ...dialConfiguration, values: { dial: 'Blue', movement: 'Quartz' } },
+  ]
+
+  const card = renderToStaticMarkup(<Candidate candidate={candidate} tracking={[]} />)
+  expect(card).toContain('Details corrected (dial mint → Blue)')
+  expect(card).toContain('dial: Blue (was: mint, as listed)')
+  expect(card).not.toContain('dial: salmon (was: mint, as listed)')
+  expect(card).not.toContain('dial: Blue (was: salmon, as listed)')
+  expect(card).not.toContain('dial mint → salmon · dial salmon → Blue')
+
+  const rawCandidate = {
+    ...correctionPayloadFor(candidate),
+    identity_state: 'unresolved',
+    public_delivered_total: {
+      ...captured.candidates[0].public_delivered_total,
+      state: 'unknown',
+      amount: null,
+    },
+    configurations: candidate.configurations,
+    corrections: candidate.corrections,
+  }
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({ ...captured, candidates: [rawCandidate] }),
+  }))
+  await mount(
+    <MemoryRouter initialEntries={[`/discover/product/${candidate.id}`]}>
+      <Routes>
+        <Route path="/discover/product/:id" element={<ProductDetail />} />
+      </Routes>
+    </MemoryRouter>
+  )
+  const hero = container.querySelector('[aria-label="Watch buying summary"]')
+  expect(hero.textContent).toContain('Details corrected (dial mint → Blue)')
+  expect(hero.textContent).toContain('dialBlue (was: mint, as listed)')
+  expect(hero.textContent).not.toContain('dialsalmon (was: mint, as listed)')
+  expect(hero.textContent).not.toContain('dialBlue (was: salmon, as listed)')
+
+  const history = renderToStaticMarkup(
+    <ProductContent
+      candidate={candidate}
+      tracking={[]}
+      onSaved={async () => {}}
+      view="correction"
+    />
+  )
+  expect(history).toContain('mint → salmon')
+  expect(history).toContain('salmon → Blue')
+})
+
+// S5 residual 1 — a corrected target must not fall back to raw withdrawal
+// vocabulary on the feed card.
+it('glosses a withheld corrected target on the feed card and retains its technical state', () => {
+  const candidate = correctedCandidate()
+  const intent = {
+    id: 1,
+    revision: 1,
+    candidate_id: candidate.id,
+    capture_id: candidate.capture_id,
+    configuration_id: 'watch',
+    configuration_revision: 1,
+    target_gbp: '60',
+    notifications: { channels: ['webhook'] },
+    invalidation_revision: 1,
+    invalidation_reason: 'evidence_invalidated',
+    assessment: {
+      state: 'withheld',
+      reasons: ['evidence_invalidated'],
+      assessed_at: '2026-10-27T12:04:48Z',
+      valid_until: '2026-10-27T13:04:48Z',
+      delivered_gbp: null,
+      policy_version: 'policy-v1',
+    },
+  }
+  const card = renderToStaticMarkup(<Candidate candidate={candidate} tracking={[intent]} />)
+  expect(card).toContain('Target £60 · alert withheld')
+  expect(card).toContain('old evidence kept on record, no longer used for alerts')
+  expect(card).toContain('title="Technical state: withheld; reasons: evidence_invalidated"')
+  expect(card).not.toContain('Target £60 · withheld · evidence withdrawn')
+})
+
 // F5 — one plain-language family for the correction event; precise terms
 // stay available second (title tooltips).
 it('uses the kept-on-record vocabulary across Costs consequences', async () => {
   const candidate = correctedCandidate()
   candidate.advertised_item_price = '70.00'
+  candidate.missing_data = ['freshness: freshness_unvalidated']
   candidate.offers = [
     {
       id: 'offer',
@@ -207,7 +306,7 @@ it('uses the kept-on-record vocabulary across Costs consequences', async () => {
             basket_members: [],
             consignment_members: [],
           },
-          issues: [],
+          issues: ['receipt_predates_correction', 'source_revision_superseded'],
           opportunity_evidence: [],
           terms: null,
           eligibility: null,
@@ -234,14 +333,28 @@ it('uses the kept-on-record vocabulary across Costs consequences', async () => {
           context: { purchase_scope: 'standalone', quantity: 1, basket_members: [], consignment_members: [] },
           context_evidence: [],
           assumptions: [],
-          issues: [],
+          issues: ['identity_correction_withdrawn'],
           withdrawn: true,
           historical_total: { currency: 'GBP', amount: '50.10' },
           total: null,
           known_subtotal: { GBP: '50.00' },
           merchant_payable: { GBP: '50.00' },
           additional_liabilities: {},
-          components: [],
+          components: [
+            {
+              kind: 'import_tax',
+              state: 'not_applicable',
+              amount: null,
+              currency: null,
+              basis: 'scenario',
+              included_in: null,
+              payer: 'buyer',
+              collector: 'merchant',
+              reason: 'No import tax applies to this synthetic scenario.',
+              assumptions: [],
+              evidence: [],
+            },
+          ],
           benefits: [],
           fx_quotes: [],
         },
@@ -268,6 +381,78 @@ it('uses the kept-on-record vocabulary across Costs consequences', async () => {
   // Bare enum paragraphs are labelled.
   expect(costs).not.toMatch(/<p>supported<\/p>/)
   expect(costs).toContain('Coupon applicability: supported at observation')
+  // S5 residual 2 — every named raw Costs code has buyer wording and keeps
+  // the precise code available as a technical tooltip, not as visible copy.
+  expect(costs).toContain('Watch details were corrected — this cost is kept on record, no longer used for pricing.')
+  expect(costs).toContain('Coupon receipt predates the correction — kept on record, no longer used for pricing.')
+  expect(costs).toContain('Source revision superseded — coupon receipt kept on record, no longer used for pricing.')
+  expect(costs).toContain('Freshness not validated — current price and availability are not established.')
+  expect(costs).toContain('unknown; not applicable. No import tax applies to this synthetic scenario.')
+  for (const code of [
+    'identity_correction_withdrawn',
+    'receipt_predates_correction',
+    'source_revision_superseded',
+    'freshness: freshness_unvalidated',
+    'not_applicable',
+  ]) {
+    expect(costs).toContain(`title="Technical detail: ${code}"`)
+  }
+  expect(costs).not.toContain('<li>identity_correction_withdrawn</li>')
+  expect(costs).not.toContain('<li>receipt_predates_correction</li>')
+  expect(costs).not.toContain('<li>source_revision_superseded</li>')
+  expect(costs).not.toContain('freshness: freshness_unvalidated</p>')
+  expect(costs).not.toContain('unknown; not_applicable.')
+})
+
+// S5 residual 5 — historical assessments name the correction that made
+// them historical instead of relying on the transient post-save summary.
+it('names correction-driven invalidation on historical assessments', () => {
+  const candidate = correctedCandidate()
+  const claim = {
+    state: 'invalidated',
+    amount: '45.10',
+    reason: 'Identity corrected: dial',
+    observation_count: 6,
+    synthetic: true,
+    paths: [],
+  }
+  candidate.price_assessments = [
+    {
+      id: 'assessment-1',
+      revision: 2,
+      historical: true,
+      assessed_at: '2026-10-27T12:00:36Z',
+      method: 'qualified-payable-minimum-v1',
+      cohort: { condition: 'new', quantity: '1' },
+      policy_version: 'policy-v1',
+      policy_fingerprint: 'fingerprint',
+      window_start: '2026-10-27T12:00:00Z',
+      window_end: '2026-10-27T12:04:48Z',
+      max_age: 3600,
+      allowed_scenarios: ['public_no_coupon', 'public_coupon'],
+      current_best: claim,
+      observed_low: claim,
+      usual_price: { ...claim, state: 'unavailable', amount: null },
+      personal_price: { ...claim, state: 'unavailable', amount: null },
+      invalidation_reasons: ['evidence_revision_withdrawn'],
+      sources: ['fixture'],
+      unchecked_sources: [],
+      coverage_reason: 'Synthetic declared scope.',
+      gaps: [],
+      exclusions: [],
+    },
+  ]
+  const history = renderToStaticMarkup(
+    <ProductContent
+      candidate={candidate}
+      tracking={[]}
+      onSaved={async () => {}}
+      view="history"
+    />
+  )
+  expect(history).toContain('Historical assessment')
+  expect(history).toContain('Why historical: Watch details or supporting evidence were corrected — kept on record, no longer used for pricing.')
+  expect(history).toContain('title="Technical reasons: evidence_revision_withdrawn"')
 })
 
 // F10 — the retained-observations proof is visible without a button.
@@ -404,4 +589,76 @@ it('rewords the tracking block when a corrected target is already retained', asy
   )
   expect(editor).toContain('Your saved target is retained')
   expect(editor).not.toContain('Exact identity must be resolved before starting exact tracking.')
+})
+
+// S5 residual 4 — the retained observation must not look like a conflicting
+// current value beside the corrected hero.
+it('separates retained observed details from the corrected values in Tracking', () => {
+  const candidate = correctedCandidate()
+  const intent = {
+    id: 1,
+    revision: 1,
+    candidate_id: candidate.id,
+    capture_id: candidate.capture_id,
+    configuration_id: 'watch',
+    configuration_revision: 1,
+    target_gbp: '60',
+    notifications: { channels: ['webhook'] },
+    invalidation_revision: 1,
+    invalidation_reason: 'evidence_invalidated',
+    assessment: {
+      state: 'withheld',
+      reasons: ['evidence_invalidated'],
+      assessed_at: '2026-10-27T12:04:48Z',
+      valid_until: '2026-10-27T13:04:48Z',
+      delivered_gbp: null,
+      policy_version: 'policy-v1',
+    },
+  }
+  const retainedConfiguration = {
+    ...originalConfiguration,
+    state: 'unresolved',
+  }
+  const editor = renderToStaticMarkup(
+    <ExactTrackingControl
+      candidate={candidate}
+      configuration={retainedConfiguration}
+      intent={intent}
+      onSaved={async () => {}}
+    />
+  )
+  expect(editor).toContain('Tracked watch — retained observation')
+  expect(editor).toContain('Details as originally observed; kept unchanged as evidence.')
+  expect(editor).toContain('Corrected details — waiting for fresh evidence')
+  expect(editor).toContain('salmon (was: mint, as listed)')
+  expect(editor).not.toContain('<h3>Tracked watch</h3>')
+  expect(editor.indexOf('Tracked watch — retained observation')).toBeLessThan(editor.indexOf('>mint</dd>'))
+  expect(editor.indexOf('>mint</dd>')).toBeLessThan(editor.indexOf('Corrected details — waiting for fresh evidence'))
+})
+
+// S5 residual 6 — equivalent API responses must not rotate the cards between
+// loads while a buyer is following position-based guidance.
+it('renders candidates in the same deterministic order for reversed API responses', async () => {
+  const expected = [...captured.candidates]
+    .sort((left, right) => left.title.localeCompare(right.title) || left.id.localeCompare(right.id))
+    .map((candidate) => candidate.id)
+  async function renderFeed(candidates) {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ ...captured, candidates }),
+    }))
+    await mount(
+      <MemoryRouter initialEntries={['/discover']}>
+        <Discovery />
+      </MemoryRouter>
+    )
+    return Array.from(container.querySelectorAll('[data-candidate]')).map(
+      (card) => card.getAttribute('data-candidate')
+    )
+  }
+
+  expect(await renderFeed(captured.candidates)).toEqual(expected)
+  await act(async () => root.unmount())
+  root = createRoot(container)
+  expect(await renderFeed([...captured.candidates].reverse())).toEqual(expected)
 })

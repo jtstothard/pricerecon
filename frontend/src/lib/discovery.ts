@@ -353,7 +353,9 @@ export function parseDiscoveryFeed(value: unknown) {
   choice(feed.collection_state, ['staged'])
   return {
     collection_reason: text(feed.collection_reason), preferences: parsePreferences(feed.preferences),
-    candidates: list(feed.candidates, parseCandidate),
+    candidates: list(feed.candidates, parseCandidate).sort(
+      (left, right) => left.title.localeCompare(right.title) || left.id.localeCompare(right.id)
+    ),
     tracking: parseTrackingList(feed.tracking),
     source_coverage: list(feed.source_coverage, raw => {
       const row = record(raw)

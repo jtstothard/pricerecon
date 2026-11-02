@@ -11,6 +11,7 @@ import {
   type TrackingChannel,
 } from '../lib/tracking'
 import type { DiscoveryCandidate } from '../lib/discovery'
+import { currentCorrectionSummary } from '../lib/corrections'
 
 const states = {
   eligible: 'Eligible at target',
@@ -202,6 +203,7 @@ export default function ExactTrackingControl({
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const correctedValues = currentCorrectionSummary(candidate.corrections)
   useEffect(() => {
     setTarget(intent?.target_gbp ?? '')
     setSelected(intent?.notifications.channels ?? [])
@@ -236,13 +238,29 @@ export default function ExactTrackingControl({
       {intent && <TrackingStatus intent={intent} />}
       <section className="exact-tracking-editor">
         <h3>{intent ? 'Edit delivered target' : 'Track this watch'}</h3>
-        <h3>Tracked watch</h3>
+        <h3>
+          Tracked watch{correctedValues.length > 0 ? ' — retained observation' : ''}
+        </h3>
+        {correctedValues.length > 0 && (
+          <p>Details as originally observed; kept unchanged as evidence.</p>
+        )}
         <DetailRows
           rows={['reference', 'dial', 'movement', 'strap'].map((field) => [
             field,
             configuration.values[field] ?? 'Unresolved',
           ])}
         />
+        {correctedValues.length > 0 && (
+          <section>
+            <h3>Corrected details — waiting for fresh evidence</h3>
+            <DetailRows
+              rows={correctedValues.map((entry) => [
+                entry.field.replace(/_/g, ' '),
+                `${entry.value} (was: ${entry.original_value ?? 'unknown'}, as listed)`,
+              ])}
+            />
+          </section>
+        )}
         <p>
           Saving keeps this exact intent. Collection remains staged. A supplied policy and fresh
           qualified evidence are required before verified delivered alerts.
