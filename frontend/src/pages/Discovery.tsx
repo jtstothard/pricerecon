@@ -735,7 +735,8 @@ export function ProductDetail() {
               <div className="product-price-summary">
                 <p className="product-delivered-label">UK delivered · no coupon</p>
                 <p className="product-delivered-price">{candidate.public_total.amount === null ? 'Total unknown' : `${candidate.public_total.currency} ${candidate.public_total.amount}`}</p>
-                <p>{costStateLabel[candidate.public_total.state]}. Freshness unvalidated. Cashback excluded.</p>
+                {/* F10 — do not repeat "Total unknown" under a "Total unknown" price. */}
+                <p>{candidate.public_total.amount === null ? '' : `${costStateLabel[candidate.public_total.state]}. `}Freshness unvalidated. Cashback excluded.</p>
                 <p>Condition: {[...new Set(candidate.offers.map(offer => offer.condition ?? 'Unknown'))].join(', ') || 'Unknown'}</p>
                 {correctionSummary(candidate).length > 0 && (
                   <p className="discovery-caution" title="Technical state: invalidated (kept on record)">

@@ -124,6 +124,12 @@ it('names the correction tab after the buyer’s thought', async () => {
   expect(correctionLink.getAttribute('href')).toContain('view=correction')
   const hero = container.querySelector('[aria-label="Watch buying summary"]')
   expect(hero.textContent).toContain('Wrong watch details?')
+  // F10 — the hero must not stutter "Total unknown. … Total unknown."
+  const priceSummary = container.querySelector('.product-price-summary')
+  expect(priceSummary.querySelector('.product-delivered-price').textContent).toBe('Total unknown')
+  expect(
+    priceSummary.querySelector('.product-delivered-price + p').textContent.startsWith('Total unknown')
+  ).toBe(false)
 })
 
 function correctionPayloadFor(candidate) {
