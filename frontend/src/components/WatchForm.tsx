@@ -312,6 +312,11 @@ export default function WatchForm({ open, onClose, onSaved, editingWatch }: Watc
     }))
   }
 
+  // Offer the saved custom interval for the whole edit session instead of
+  // deriving it from live form state, so changing away cannot remove it from
+  // the select while the form stays open (D-8).
+  const savedCustomInterval = editingWatch?.schedule?.interval
+
   if (!open) return null
 
   return (
@@ -503,8 +508,8 @@ export default function WatchForm({ open, onClose, onSaved, editingWatch }: Watc
                 onChange={e => setFormData(prev => ({ ...prev, interval: e.target.value }))}
                 disabled={loading}
               >
-                {!INTERVALS.some(interval => interval.value === formData.interval) && (
-                  <option value={formData.interval}>Every {formData.interval} (saved)</option>
+                {savedCustomInterval && !INTERVALS.some(interval => interval.value === savedCustomInterval) && (
+                  <option value={savedCustomInterval}>Every {savedCustomInterval} (saved)</option>
                 )}
                 {INTERVALS.map(i => <option key={i.value} value={i.value}>{i.label}</option>)}
               </select>
