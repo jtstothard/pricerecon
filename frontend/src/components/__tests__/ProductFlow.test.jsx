@@ -134,10 +134,10 @@ it('submits an explicit correction reason and actor and exposes rejection', asyn
     })
   vi.stubGlobal('fetch', fetch)
   await mount(<IdentityCorrection candidate={candidate()} onSaved={async () => {}} />)
-  await change(container.querySelector('[aria-label="Correct value"]'), 'Green')
+  await change(container.querySelector('[aria-label="What should it be?"]'), 'Green')
   await change(container.querySelector('[name="correction_state"]'), 'disputed')
   await change(
-    container.querySelector('[aria-label="Reason"]'),
+    container.querySelector('[aria-label="Reason (recorded with your name in the correction history)"]'),
     'The recorded specification is incorrect.'
   )
   const actor = container.querySelector('[name="correction_actor"]')
@@ -231,8 +231,8 @@ it('submits custom correction values and buyer-written rationale unchanged', asy
   vi.stubGlobal('fetch', fetch)
   await mount(<IdentityCorrection candidate={candidate()} onSaved={async () => {}} />)
   for (const [label, value] of [
-    ['Correct value', 'Lilac / teal'],
-    ['Reason', 'I checked the selected dial variant.'],
+    ['What should it be?', 'Lilac / teal'],
+    ['Reason (recorded with your name in the correction history)', 'I checked the selected dial variant.'],
   ]) {
     await change(container.querySelector(`[aria-label="${label}"]`), '__custom')
     await act(async () =>

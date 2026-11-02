@@ -7,19 +7,29 @@ import captured from './image-feed.json'
 
 it('offers one concise correction path with required attribution and advanced dispute controls', () => {
   const candidate = parseDiscoveryFeed(captured).candidates[0]
+  candidate.configurations = [
+    {
+      id: 'watch-blue',
+      revision: 1,
+      policy_version: 'fixture',
+      state: 'supported' as const,
+      values: { dial: 'mint' },
+      evidence_ids: [],
+      issues: [],
+    },
+  ]
   const html = renderToStaticMarkup(
     createElement(IdentityCorrection, { candidate, onSaved: async () => {} })
   )
   expect(html).toContain('<h3>Wrong watch details?</h3>')
-  expect(html).toContain(
-    'Old prices stop applying. Your target stays; alerts wait for a matching offer.'
-  )
+  expect(html).toContain('nothing is deleted or overwritten')
   expect(html).not.toContain('For example,')
-  expect(html).toContain('Original acquired dial:')
-  expect(html).toContain('Intended value:')
+  expect(html).toContain('You are changing <strong>dial</strong> from <strong>mint</strong> to')
   expect(html).toContain('name="correction_actor"')
   expect(html).toContain('name="correction_rationale"')
-  expect(html).toContain('<section><h3>Correction state</h3>')
+  expect(html).not.toContain('<section><h3>Correction state</h3>')
+  expect(html).not.toContain('Identity state')
+  expect(html).toContain('How sure are you?')
   expect(html).not.toContain('<details open')
 })
 
@@ -46,15 +56,28 @@ it('explains withdrawn buying evidence beside the saved intended value', () => {
       original_configuration: original,
       original_evidence: [],
       needs: [],
-      lineage: [],
+      lineage: [
+        {
+          id: 'correction-1',
+          revision: 1,
+          field: 'dial',
+          value: 'green',
+          state: 'corrected',
+          original_value: 'blue',
+          actor: 'Buyer',
+          rationale: 'The recorded specification is incorrect.',
+          recorded_at: '2026-10-27T12:04:48Z',
+          previous_correction_id: null,
+        },
+      ],
     },
   ]
   const html = renderToStaticMarkup(
     createElement(IdentityCorrection, { candidate, onSaved: async () => {} })
   )
+  expect(html).toContain('dial: blue → green')
+  expect(html).toContain('Show full intended configuration')
   expect(html).toContain('Intended dial</dt><dd>green')
-  expect(html).toContain(
-    'Old prices stop applying. Your target stays; alerts wait for a matching offer.'
-  )
+  expect(html).toContain('kept on record, no longer used for pricing')
   expect(html).toContain('<h3>Correction history and provenance</h3>')
 })
