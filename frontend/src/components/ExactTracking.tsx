@@ -7,17 +7,13 @@ import {
   resolveDelivery,
   saveTracking,
   type Delivery,
+  trackingStateLabel,
   type ExactTracking,
   type TrackingChannel,
 } from '../lib/tracking'
 import type { DiscoveryCandidate } from '../lib/discovery'
-import { currentCorrectionSummary } from '../lib/corrections'
+import { correctionPresentationState, currentCorrectionSummary } from '../lib/corrections'
 
-const states = {
-  eligible: 'Eligible at target',
-  above_target: 'Above target',
-  withheld: 'Alert withheld',
-}
 const reasons: Record<string, string> = {
   policy_required: 'Freshness and buyer eligibility policy have not been supplied.',
   target_changed_requires_observation: 'Target changed; waiting for a new qualified observation.',
@@ -58,7 +54,7 @@ export function TrackingStatus({ intent }: { intent: ExactTracking }) {
   return (
     <div className="exact-tracking-state" role="status">
       <strong>
-        {states[intent.assessment.state]} · target £{intent.target_gbp} delivered
+        {trackingStateLabel[intent.assessment.state]} · target £{intent.target_gbp} delivered
       </strong>
       {intent.assessment.delivered_gbp !== null && (
         <p>Assessed delivered total £{intent.assessment.delivered_gbp}.</p>
@@ -203,7 +199,16 @@ export default function ExactTrackingControl({
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-  const correctedValues = currentCorrectionSummary(candidate.corrections)
+  const correction = candidate.corrections.find(
+    (item) => item.configuration_id === configuration.id && item.requalification === 'required'
+  )
+  const correctedValues = currentCorrectionSummary(correction ? [correction] : [])
+  const retainedConfiguration = correction?.original_configuration ?? configuration
+  const detailsLabel = {
+    corrected: 'Corrected details',
+    disputed: 'Disputed details',
+    changed: 'Changed details',
+  }[correctionPresentationState(correctedValues)]
   useEffect(() => {
     setTarget(intent?.target_gbp ?? '')
     setSelected(intent?.notifications.channels ?? [])
@@ -247,12 +252,12 @@ export default function ExactTrackingControl({
         <DetailRows
           rows={['reference', 'dial', 'movement', 'strap'].map((field) => [
             field,
-            configuration.values[field] ?? 'Unresolved',
+            retainedConfiguration.values[field] ?? 'Unresolved',
           ])}
         />
         {correctedValues.length > 0 && (
           <section>
-            <h3>Corrected details — waiting for fresh evidence</h3>
+            <h3>{detailsLabel} — waiting for fresh evidence</h3>
             <DetailRows
               rows={correctedValues.map((entry) => [
                 entry.field.replace(/_/g, ' '),
@@ -271,8 +276,7 @@ export default function ExactTrackingControl({
             // retained target; it must explain the wait, not read as
             // "your target is blocked".
             <p>
-              Your saved target is retained. Alerts wait for fresh evidence for the corrected
-              watch.
+              Your saved target is retained. Alerts wait for fresh evidence for this watch.
             </p>
           ) : (
             <p>Exact identity must be resolved before starting exact tracking.</p>

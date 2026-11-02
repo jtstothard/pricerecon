@@ -14,12 +14,12 @@ import {
 } from '../lib/discovery'
 import '../styles/discovery.css'
 import ExactTrackingControl, { TrackingStatus } from '../components/ExactTracking'
-import type { ExactTracking } from '../lib/tracking'
+import { trackingStateLabel, type ExactTracking } from '../lib/tracking'
 import { CollectionCoverage } from '../components/discovery/CollectionCoverage'
 import { IdentityCorrection } from '../components/discovery/IdentityCorrection'
 import { ObservationHistory } from '../components/discovery/ObservationHistory'
 import { SourceCoverage, SourceReceipt } from '../components/discovery/SourceCoverage'
-import { currentCorrectionSummary } from '../lib/corrections'
+import { correctionPresentationState, currentCorrectionSummary } from '../lib/corrections'
 
 const strengthLabel = { hard: 'Hard constraint', soft: 'Soft preference', unset: 'Unset' }
 
@@ -166,14 +166,22 @@ const costStateLabel = {
 const keptOnRecord = 'kept on record, no longer used for pricing'
 const humanLabel = (value: string) => value.replace(/_/g, ' ')
 const costDetailLabel: Record<string, string> = {
-  identity_correction_withdrawn: `Watch details were corrected — this cost is ${keptOnRecord}.`,
-  receipt_predates_correction: `Coupon receipt predates the correction — ${keptOnRecord}.`,
+  identity_correction_withdrawn: `Watch details were corrected or disputed — this cost is ${keptOnRecord}.`,
+  receipt_predates_correction: `Coupon receipt predates the correction or dispute — ${keptOnRecord}.`,
   source_revision_superseded: `Source revision superseded — coupon receipt ${keptOnRecord}.`,
   'freshness: freshness_unvalidated':
     'Freshness not validated — current price and availability are not established.',
 }
 function CostDetail({ value }: { value: string }) {
-  return <span title={`Technical detail: ${value}`}>{costDetailLabel[value] ?? humanLabel(value)}</span>
+  return <span title={`Technical state: ${value}`}>{costDetailLabel[value] ?? humanLabel(value)}</span>
+}
+function MissingDataDetails({ details }: { details: string[] }) {
+  return details.map((detail, index) => (
+    <span key={`${index}:${detail}`}>
+      {index > 0 ? '; ' : ''}
+      <CostDetail value={detail} />
+    </span>
+  ))
 }
 const couponStateLabel: Record<string, string> = {
   unverified_opportunity: 'Unverified opportunity',
@@ -190,7 +198,7 @@ const couponApplicabilityLabel: Record<string, string> = {
   rejected: 'rejected',
 }
 const assessmentCauseLabel: Record<string, string> = {
-  evidence_revision_withdrawn: `Watch details or supporting evidence were corrected — ${keptOnRecord}.`,
+  evidence_revision_withdrawn: `A correction, dispute, or evidence revision made this assessment historical — ${keptOnRecord}.`,
   superseded_assessment: 'A newer assessment replaced this one.',
   comparison_policy_changed_or_unavailable: 'The comparison policy changed or is unavailable.',
   recaptured_requires_assessment: 'A newer capture requires reassessment.',
@@ -270,7 +278,7 @@ function Costs({ costs }: { costs: Cost[] }) {
           <h4>Charges</h4>
           <DetailRows rows={cost.components.map((part, i) => [
             `${part.kind.replace(/_/g, ' ')} (${i + 1})`,
-            <span title={`Technical detail: ${part.state}`}>
+            <span title={`Technical state: ${part.state}`}>
               {part.currency ?? ''} {part.amount ?? 'unknown'}; {humanLabel(part.state)}. {part.reason}
             </span>,
           ])} />
@@ -297,6 +305,11 @@ export function Candidate({
 }) {
   const path = `/discover/product/${encodeURIComponent(candidate.id)}`
   const changedFields = currentCorrectionSummary(candidate.corrections)
+  const detailsLabel = {
+    corrected: 'Details corrected',
+    disputed: 'Details disputed',
+    changed: 'Details changed',
+  }[correctionPresentationState(changedFields)]
   const changedText = changedFields
     .map((entry) => `${humanLabel(entry.field)} ${entry.original_value ?? 'unknown'} → ${entry.value}`)
     .join(' · ')
@@ -328,7 +341,7 @@ export function Candidate({
             className="discovery-caution"
             title="Technical state: invalidated (kept on record)"
           >
-            Details corrected ({changedText}) · old prices {keptOnRecord} · awaiting fresh
+            {detailsLabel} ({changedText}) · old prices {keptOnRecord} · awaiting fresh
             evidence
           </p>
         )}
@@ -381,7 +394,7 @@ export function Candidate({
               title={`Technical state: ${t.assessment.state}; reasons: ${t.assessment.reasons.join(', ')}`}
             >
               Target £{t.target_gbp} ·{' '}
-              {t.assessment.state === 'withheld' ? 'alert withheld' : humanLabel(t.assessment.state)}
+              {trackingStateLabel[t.assessment.state]}
               {t.assessment.reasons.some((r) => /stale|expired/.test(r)) && ' · stale evidence'}
               {t.assessment.reasons.some((r) => /withdrawn|invalidated/.test(r)) &&
                 ' · old evidence kept on record, no longer used for alerts'}
@@ -453,7 +466,9 @@ export function ProductContent({
               ]} />
             </section>
           ))}
-          <p>{candidate.missing_data.join('; ')}</p>
+          <p>
+            <MissingDataDetails details={candidate.missing_data} />
+          </p>
         </>
       )}
       {view === 'costs' && (
@@ -500,13 +515,7 @@ export function ProductContent({
           )}
           <p>
             <strong>Missing data:</strong>{' '}
-            {candidate.missing_data.map((detail, index) => (
-              <span key={detail}>
-                {index > 0 ? '; ' : ''}
-                <CostDetail value={detail} />
-              </span>
-            ))}
-            .
+            <MissingDataDetails details={candidate.missing_data} />
           </p>
           {candidate.offers.map((offer) => (
             <section key={offer.id}>
@@ -736,6 +745,12 @@ export function ProductDetail() {
     return () => controller.abort()
   }, [id])
   const candidate = feed?.candidates.find((c) => c.id === id)
+  const changedFields = candidate ? currentCorrectionSummary(candidate.corrections) : []
+  const detailsLabel = {
+    corrected: 'Details corrected',
+    disputed: 'Details disputed',
+    changed: 'Details changed',
+  }[correctionPresentationState(changedFields)]
   usePageTitle(candidate?.title ?? 'Watch details')
   return (
     <div className="discovery-page product-page">
@@ -757,13 +772,13 @@ export function ProductDetail() {
                 title={`Technical identity_state: ${candidate.identity_state}`}
               >
                 Identity {candidate.identity_state}
-                {currentCorrectionSummary(candidate.corrections).length > 0 ? ' — awaiting fresh evidence' : ''}
+                {changedFields.length > 0 ? ' — awaiting fresh evidence' : ''}
               </p>
               {/* F9 — the corrected value beside the reported title, which is
                   retained as evidence and otherwise reads as "it ignored my
                   change". */}
-              {currentCorrectionSummary(candidate.corrections).length > 0 && (
-                <DetailRows rows={currentCorrectionSummary(candidate.corrections).map((entry) => [
+              {changedFields.length > 0 && (
+                <DetailRows rows={changedFields.map((entry) => [
                   humanLabel(entry.field),
                   `${entry.value} (was: ${entry.original_value ?? 'unknown'}, as listed)`,
                 ])} />
@@ -777,9 +792,9 @@ export function ProductDetail() {
                 {/* F10 — do not repeat "Total unknown" under a "Total unknown" price. */}
                 <p>{candidate.public_total.amount === null ? '' : `${costStateLabel[candidate.public_total.state]}. `}Freshness unvalidated. Cashback excluded.</p>
                 <p>Condition: {[...new Set(candidate.offers.map(offer => offer.condition ?? 'Unknown'))].join(', ') || 'Unknown'}</p>
-                {currentCorrectionSummary(candidate.corrections).length > 0 && (
+                {changedFields.length > 0 && (
                   <p className="discovery-caution" title="Technical state: invalidated (kept on record)">
-                    Details corrected ({currentCorrectionSummary(candidate.corrections).map((entry) => `${humanLabel(entry.field)} ${entry.original_value ?? 'unknown'} → ${entry.value}`).join(' · ')}) · old prices {keptOnRecord} · awaiting fresh evidence
+                    {detailsLabel} ({changedFields.map((entry) => `${humanLabel(entry.field)} ${entry.original_value ?? 'unknown'} → ${entry.value}`).join(' · ')}) · old prices {keptOnRecord} · awaiting fresh evidence
                   </p>
                 )}
               </div>

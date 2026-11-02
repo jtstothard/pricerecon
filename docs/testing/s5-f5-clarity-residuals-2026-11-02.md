@@ -20,3 +20,23 @@ Agent verification on this branch:
 - `git diff --check`: passed.
 
 Scope boundary: deterministic fixture/rendered checks only. No live provider or merchant test, live pilot/discovery activation, browser walkthrough, or deployed-system access was performed. This receipt records agent verification, **not new human comprehension or buyer acceptance**; the historical S5 receipts are unchanged.
+
+## Independent review fixes — 2026-11-02
+
+Rebased first onto `origin/main` @ `b0f7e95`; final verification below was repeated after rebasing onto newer main @ `b1c9029` and restoring its lockfile with `npm ci --offline`. Seven review findings each received red-first regression coverage at the existing component/API-fixture seams:
+
+1. Disputed corrections no longer render as established corrections on the card, Costs, History, or Tracking; mixed journals use neutral “changed” wording.
+2. Current-value summaries follow `previous_correction_id` within each `configuration_id` journal, independent of array order; independent journals never collapse together and retained history remains complete.
+3. Missing data has exactly one terminal period in rendered DOM text.
+4. Overview shares the Costs missing-data gloss and tooltip.
+5. Card and detailed tracking share `trackingStateLabel` for eligible, above-target, and withheld states.
+6. Cost and charge tooltips use the established `Technical state: …` prefix.
+7. Tracking renders the matching journal's `original_configuration`, tested through `ProductContent` with a reversed repeated-correction fixture and a latest-value `candidate.configurations` entry.
+
+Review-fix verification:
+
+- Focused `CorrectionFlowClarity.test.jsx`: **17/17 passed**.
+- Full `npx vitest run`: **129/129 passed** across 12 files.
+- `npm run build --prefix frontend`: passed; existing chunk-size advisory only.
+
+These remain agent-executed deterministic checks, not buyer acceptance or live-source evidence.

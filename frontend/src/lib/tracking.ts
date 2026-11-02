@@ -52,6 +52,11 @@ export function parseTracking(value: unknown) {
   }
 }
 export type ExactTracking = ReturnType<typeof parseTracking>
+export const trackingStateLabel: Record<ExactTracking['assessment']['state'], string> = {
+  eligible: 'Eligible at target',
+  above_target: 'Above target',
+  withheld: 'Alert withheld',
+}
 export function parseTrackingList(value: unknown) { return list(value, parseTracking) }
 
 export async function saveTracking(input: {
