@@ -5,7 +5,8 @@ invalidate on a correction; lineage appends, nothing overwritten) against a fres
 synthetic fixture, and (2) a first-time-buyer comprehension diagnosis of the
 correction flow — the buyer attempted S5 today and reported only "S5 didnt do as
 it is confusing". Diagnosis and ranked recommendations only; **no code was
-changed** (presentation fixes are proposals in §3).
+changed** (presentation fixes are proposals in §3). *Update 2026-11-02: the
+ranked fixes have since been implemented and re-walked — see §6.*
 
 - Branch `t3/s5-flow-diagnosis-2026-11-02` from `origin/main` @ `9470105`.
 - Fresh fixture: `tests.monitoring.discovery_ui_server --workflow` built from this
@@ -362,7 +363,8 @@ that assumes the model the buyer hasn't learned yet.
 
 ## 5. Boundaries
 
-- Docs only; no code changed, no fixes implemented (proposals in §3).
+- Docs only; no code changed, no fixes implemented (proposals in §3) — at
+  diagnosis time. §6 records the fixes applied later the same day.
 - My fixture only (port 8897, started and stopped by me; guard receipt
   `blocked_edges=[]`); the buyer's live session (8896) and ports 8893–8895 were
   never contacted; `~/.local/state/pricerecon/watch-pilot-2026-10-28.consumed` not
@@ -373,3 +375,138 @@ that assumes the model the buyer hasn't learned yet.
   unknown" (F10), raw enum leaks ("required", "supported"), inconsistent card/hero
   caution punctuation, casing mismatch in lineage values ("salmon → Blue").
 - `python3 scripts/check_public_markers.py` passes; `git diff --check` clean.
+
+## 6. Clarity fixes applied — 2026-11-02
+
+The ranked fixes from §3 were implemented on this branch (commits `8b44edb`,
+`3403df7`, `ddb49af`, plus this addendum), presentation-only, TDD red-first
+(`CorrectionFormClarity.test.jsx`, `CorrectionFlowClarity.test.jsx`; updated
+copy assertions in `IdentityCorrection.test.ts`, `ProductFlow.test.jsx`,
+`DiscoveryHierarchy.test.ts`; no assertion weakened). Per-fix confirmation:
+
+- **F1 — discoverability.** "Wrong watch details?" links now sit on the feed
+  card and the product hero; the correction tab is labelled "Wrong details?"
+  (URL param `view=correction` unchanged); the Technical tab opens with "The
+  walkthrough guide calls this page the 'technical record'. Details wrong?
+  Correct them on the 'Wrong details?' tab." — bridging the kit's "Technical
+  record" wording and ending the raw-JSON dead end.
+- **F2 — live preview.** "You are changing dial from mint to [live field
+  value]", greyed out until a value is chosen; a previously saved value is
+  named "Last saved value: …" instead of posing as current. Verified live
+  while typing on the fixture.
+- **F3 — value picker.** The current recorded value is offered and marked
+  ("mint (current)"); the escape hatch is self-describing ("Type another
+  value…"); presets remain suggestions, never a closed list ("Presets never
+  replace arbitrary persisted values" contract untouched).
+- **F4 — outcome feedback.** Post-save summary names each effect *because of*
+  the correction — total withheld ("now 'Total unknown' (was GBP 50.10)"),
+  each invalidated coupon (kept as a dated record), observations kept
+  unchanged in History, each retained target with its £ amount, and the
+  appended lineage entry (nothing overwritten) — each with a jump link to
+  Costs/History/Tracking and an anchor to the history panel.
+- **F5 — vocabulary.** One family across the flow: "kept on record, no longer
+  used for pricing" (card, hero, Costs, coupons, history panel, observations);
+  precise internal terms (`invalidated`, `withdrawn`, `requalification`,
+  identity_state, coupon state/applicability) remain available as `title`
+  tooltips. "Identity corrected · required" → "Corrected — waiting for fresh
+  evidence"; the bare "supported" paragraph → "Coupon applicability: supported
+  at observation"; card/hero caution copy is now one identical string.
+- **F6 — form labels.** "What's wrong?" / "What should it be?" / "How sure are
+  you?" ("It's fixed — re-check prices" / "Not sure — pause buying
+  qualification"); the "Correction state" wrapper heading is gone; the history
+  panel leads with only the changed field ("dial: mint → salmon") and keeps
+  the nine-field intended configuration behind a "Show full intended
+  configuration" disclosure; the needs list gets a "Waiting for:" lead-in.
+- **F7 — reason mechanics.** Label "Reason (recorded with your name in the
+  correction history)"; required selects start at "Choose a reason…" with no
+  "Not set" option anywhere on a required select (browser validation now has
+  an honest surface); custom escape hatch "Write your own reason…".
+- **F8 — button and timing.** Button "Save correction — old prices will be
+  withdrawn"; the pre-form consequence paragraph is gone — consequence copy
+  appears only once a value is pending, and restores the missing promise
+  (D-6): "Saving records your correction; it does not fetch new prices."
+- **F9 — post-correction card/hero.** "Details corrected (dial mint → salmon)
+  · old prices kept on record, no longer used for pricing · awaiting fresh
+  evidence"; corrected value shown beside the retained reported title ("dial:
+  salmon (was: mint, as listed)"); "Identity unresolved — awaiting fresh
+  evidence"; the tracking editor under a retained target reads "Your saved
+  target is retained. Alerts wait for fresh evidence for the corrected
+  watch." instead of "Exact identity must be resolved before starting exact
+  tracking."
+- **F10 — minor.** Retained observations auto-load (no button) with caption
+  "Retained price observations — kept unchanged, never overwritten" and human
+  status ("withdrawn after correction — kept on record"); doubled "Total
+  unknown — Total unknown" fixed in Costs **and** (found during this walk) in
+  the hero state sentence; bare enum paragraphs replaced.
+
+Copy deviations from §3's proposals, with reasons:
+
+- The F4 summary omits the observation count ("6 old observations"): the
+  count lives in the History API, and fetching it from the save path would
+  couple the form to a second endpoint for a number the History link shows
+  immediately. The line names the mechanism ("kept, unchanged, in History").
+- F5's canonical phrase replaces "withdrawn" in state descriptions, so F9's
+  banner says "old prices kept on record, no longer used for pricing" rather
+  than the proposal's "old prices withdrawn to History" — same information,
+  one vocabulary (History is still named via the F4 link and the card's
+  discovery-specs line). The F8 button keeps the proposal's exact wording
+  "old prices will be withdrawn" (a warning, not a state description).
+- With two corrections on one field the card/hero banner lists both lineage
+  steps ("dial mint → salmon · dial salmon → Blue") — verbose but accurate;
+  no fix proposed for multi-entry banners in the diagnosis.
+
+### Post-fix S5 walk (fresh fixture, port 8897)
+
+Same recipe as §"Fresh fixture": frontend rebuilt in this worktree, fixture
+`ticket12-connected-ui-v1`, id `c45a312c4a9146a38c406928418f28d9`,
+`temporary_storage=true`, `automatic_checks=false`, marker gate clean before
+and after; steps `baseline → cross → duplicate → drop → costs → coupon`
+through the run-bound conductor (clock 12:00:36Z → 12:04:48Z); targets saved
+through the UI first (Addiesdive £60 + webhook, Casio £40). Headless Chrome
+session `s5fix-8897`, loopback only. One environment note: the diagnosis
+session's Python venv no longer existed, so the fixture environment was
+rebuilt offline from the local pip wheel cache (no network; the fixture
+stayed zero-outbound, `blocked_edges=[]` at start and in the shutdown guard
+receipt, `notifications_sent=3`, captured transport only).
+
+Correction #1 through the UI exactly as I1 asks: Wrong details? tab → dial →
+"Type another value…" → `salmon` → reason preset "The selected variation
+differs from this watch." → name → **Save correction — old prices will be
+withdrawn**. Correction #2 (dial → `Blue`, reason "The source description
+conflicts with the watch shown.") to re-prove append-only lineage.
+
+- **Behavioral verdict: PASS, unchanged.** Total `public_delivered_total`
+  unknown/null (was GBP 50.10); coupon `invalidated` with the historical
+  result retained; 8/8 assessments historical; tracking #1 withheld
+  (`evidence_invalidated`) with the £60 target retained, Casio £40 untouched;
+  6 observations still `dial: mint` with original totals retained and
+  `validity: invalidated`; correction revision 2 with lineage `mint → salmon`
+  (prev None) **and** `salmon → Blue` (prev #1's id) — append-only, actor/
+  rationale/time on both; `original_configuration.dial` still `mint`.
+- **Presentation verdict: every §3 fix observable.** Preview live while
+  typing ("You are changing dial from mint to salmon"); "Last saved value:
+  salmon." on the second correction before saving; the F4 summary rendered
+  verbatim after both saves; feed card and hero show "Details corrected
+  (dial mint → salmon · dial salmon → Blue) · old prices kept on record, no
+  longer used for pricing · awaiting fresh evidence" with "dial: salmon (was:
+  mint, as listed)"; Costs shows "Total unknown" once, "Historical cost —
+  kept on record, no longer used for pricing.", "Synthetic TEN opportunity:
+  Invalidated — kept on record…", "Coupon applicability: supported at
+  observation", "Historical coupon result — kept on record…"; History's
+  retained-observation table is on screen without a click; Tracking shows
+  "Alert withheld · target £60 delivered", "Evidence corrected — kept on
+  record, no longer used for alerts · target retained", "Your saved target is
+  retained."; Technical carries the pointer line. Screenshots retained at
+  `/tmp/s5fix-{before-save,after-save,final-correction,final-feed}.png`.
+- Browser validation correctly blocked an incomplete submit during the walk
+  (empty required name) — the F7 "trap" fix behaving as intended.
+
+Verification: `npx vitest run` 109/109 green (95 baseline-equivalent + 14 new);
+`npm run build --prefix frontend` clean (tsc + vite); `python3
+scripts/check_public_markers.py` passes; `git diff --check` clean. No backend,
+API, parser or test-logic changes beyond the copy surfaces above; the
+correction payload (`field/value/actor/rationale/state`) is byte-identical.
+This addendum cross-references the buyer-session record on branch
+`t3/buyer-session-2026-11-02` (`docs/testing/buyer-session-2026-11-02.md`,
+untouched — it lives on that branch). The kit's "Do not conclude" gates
+(§4) still stand: this is offline fixture-scope presentation work only.
