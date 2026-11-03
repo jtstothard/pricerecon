@@ -62,11 +62,14 @@ export function TrackingStatus({ intent }: { intent: ExactTracking }) {
       {intent.assessment.reasons.some(
         (reason) => reason.includes('stale') || reason.includes('expired')
       ) && <p className="discovery-caution">Stale evidence · alerts wait for a fresh offer</p>}
+      {/* Neutral on purpose: a disputed save or a bare revision withdrawal also
+          lands here, so the wording must not claim the evidence was "corrected". */}
       {intent.assessment.reasons.some(
         (reason) => reason.includes('invalidated') || reason.includes('withdrawn')
       ) && (
         <p className="discovery-caution" title="Technical state: evidence invalidated">
-          Evidence corrected — kept on record, no longer used for alerts · target retained
+          Prior evidence no longer applies — kept on record, no longer used for alerts · target
+          retained
         </p>
       )}
       <section>

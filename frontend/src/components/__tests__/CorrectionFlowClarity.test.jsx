@@ -256,8 +256,19 @@ it('distinguishes disputed details across card, Costs, History and Tracking', ()
     />
   )
   expect(tracking).toContain('Disputed details — waiting for fresh evidence')
+  expect(tracking).toContain('Prior evidence no longer applies — kept on record, no longer used for alerts · target retained')
+  expect(tracking).not.toContain('Evidence corrected — kept on record, no longer used for alerts · target retained')
   expect(tracking).not.toContain('Corrected details')
   expect(tracking).not.toContain('fresh evidence for the corrected watch')
+})
+
+it('uses neutral retained-evidence status for a pure evidence revision withdrawal', () => {
+  const candidate = correctedCandidate()
+  const intent = trackingIntent(candidate)
+  intent.assessment.reasons = ['evidence_revision_withdrawn']
+  const status = renderToStaticMarkup(<TrackingStatus intent={intent} />)
+  expect(status).toContain('Prior evidence no longer applies — kept on record, no longer used for alerts · target retained')
+  expect(status).not.toContain('Evidence corrected — kept on record, no longer used for alerts · target retained')
 })
 
 // S5 residual 3 — repeated corrections to one field have one current value;
@@ -554,7 +565,7 @@ it('uses the kept-on-record vocabulary across Costs consequences', async () => {
   expect(costs).toContain('Watch details were corrected or disputed — this cost is kept on record, no longer used for pricing.')
   expect(costs).toContain('Coupon receipt predates the correction or dispute — kept on record, no longer used for pricing.')
   expect(costs).toContain('Source revision superseded — coupon receipt kept on record, no longer used for pricing.')
-  expect(costs).toContain('Freshness not validated — current price and availability are not established.')
+  expect(costs).toContain('Freshness not validated — current price and availability are not established')
   expect(costs).toContain('unknown; not applicable. No import tax applies to this synthetic scenario.')
   for (const code of [
     'identity_correction_withdrawn',
@@ -589,6 +600,62 @@ it('renders Missing data with exactly one terminal period', async () => {
   expect(missing.textContent).not.toContain('..')
 })
 
+// Review 5 — the list is one sentence: glosses carry no terminal period of
+// their own, entries are joined by "; ", and the list ends in exactly one ".".
+const missingDataMix = [
+  'coupon_terms_unverified',
+  'freshness: freshness_unvalidated',
+  'delivery_cost_unknown.',
+]
+const missingDataSentence =
+  'coupon terms unverified; Freshness not validated — current price and availability are not established; delivery cost unknown.'
+it('renders a multi-entry Missing data list in Costs as one clean sentence', async () => {
+  const candidate = correctedCandidate()
+  candidate.missing_data = missingDataMix
+  await mount(
+    <ProductContent candidate={candidate} tracking={[]} onSaved={async () => {}} view="costs" />
+  )
+  const missing = Array.from(container.querySelectorAll('p')).find(
+    (paragraph) => paragraph.textContent.startsWith('Missing data:')
+  )
+  expect(missing.textContent).toBe(`Missing data: ${missingDataSentence}`)
+  expect(missing.textContent).not.toContain('.;')
+  expect(missing.textContent).not.toContain('..')
+})
+it('renders a multi-entry Missing data list in Overview as one clean sentence', async () => {
+  const candidate = correctedCandidate()
+  candidate.missing_data = missingDataMix
+  await mount(
+    <ProductContent candidate={candidate} tracking={[]} onSaved={async () => {}} view="overview" />
+  )
+  const missing = Array.from(container.querySelectorAll('p')).find(
+    (paragraph) => paragraph.textContent.startsWith('coupon terms unverified')
+  )
+  expect(missing.textContent).toBe(missingDataSentence)
+  expect(missing.textContent).not.toContain('.;')
+  expect(missing.textContent).not.toContain('..')
+})
+it('keeps one terminal period when the glossed Missing data entry is last', async () => {
+  const candidate = correctedCandidate()
+  candidate.missing_data = ['delivery_cost_unknown', 'freshness: freshness_unvalidated']
+  const sentence =
+    'delivery cost unknown; Freshness not validated — current price and availability are not established.'
+  await mount(
+    <ProductContent candidate={candidate} tracking={[]} onSaved={async () => {}} view="costs" />
+  )
+  const costs = Array.from(container.querySelectorAll('p')).find(
+    (paragraph) => paragraph.textContent.startsWith('Missing data:')
+  )
+  expect(costs.textContent).toBe(`Missing data: ${sentence}`)
+  await mount(
+    <ProductContent candidate={candidate} tracking={[]} onSaved={async () => {}} view="overview" />
+  )
+  const overview = Array.from(container.querySelectorAll('p')).find(
+    (paragraph) => paragraph.textContent.startsWith('delivery cost unknown')
+  )
+  expect(overview.textContent).toBe(sentence)
+})
+
 // Review 4 — Overview shares the Costs gloss instead of exposing raw codes.
 it('uses the buyer-facing Missing data wording and technical tooltip in Overview', () => {
   const candidate = correctedCandidate()
@@ -596,7 +663,7 @@ it('uses the buyer-facing Missing data wording and technical tooltip in Overview
   const overview = renderToStaticMarkup(
     <ProductContent candidate={candidate} tracking={[]} onSaved={async () => {}} view="overview" />
   )
-  expect(overview).toContain('Freshness not validated — current price and availability are not established.')
+  expect(overview).toContain('Freshness not validated — current price and availability are not established')
   expect(overview).toContain('title="Technical state: freshness: freshness_unvalidated"')
   expect(overview).not.toContain('<p>freshness: freshness_unvalidated</p>')
 })
@@ -649,7 +716,8 @@ it('names correction-driven invalidation on historical assessments', () => {
   )
   expect(history).toContain('Historical assessment')
   expect(history).toContain('Why historical: A correction, dispute, or evidence revision made this assessment historical — kept on record, no longer used for pricing.')
-  expect(history).toContain('title="Technical reasons: evidence_revision_withdrawn"')
+  expect(history).toContain('title="Technical state: historical; reasons: evidence_revision_withdrawn"')
+  expect(history).not.toContain('Technical reasons:')
 })
 
 // F10 — the retained-observations proof is visible without a button.
@@ -786,6 +854,73 @@ it('rewords the tracking block when a corrected target is already retained', asy
   )
   expect(editor).toContain('Your saved target is retained')
   expect(editor).not.toContain('Exact identity must be resolved before starting exact tracking.')
+})
+
+// Review 5 — a journal that mixes corrected and disputed values is called the
+// same neutral thing on the card, hero, Tracking and the correction tab.
+it('uses one neutral word for a mixed corrected+disputed journal on every surface', async () => {
+  const candidate = correctedCandidate()
+  const strapEntry = {
+    ...lineageEntry,
+    id: 'strap-1', revision: 2, field: 'strap', value: 'steel', state: 'disputed',
+    original_value: 'leather', previous_correction_id: lineageEntry.id,
+    rationale: 'The strap is disputed.',
+  }
+  candidate.corrections[0].revision = 2
+  candidate.corrections[0].state = 'disputed'
+  candidate.corrections[0].values = { dial: 'salmon', movement: 'Quartz', strap: 'steel' }
+  candidate.corrections[0].lineage = [{ ...lineageEntry }, strapEntry]
+
+  const card = renderToStaticMarkup(<Candidate candidate={candidate} tracking={[]} />)
+  expect(card).toContain('Details changed (dial mint → salmon · strap leather → steel)')
+  expect(card).not.toContain('Details corrected')
+  expect(card).not.toContain('Details disputed')
+
+  const rawCandidate = {
+    ...correctionPayloadFor(candidate),
+    identity_state: 'unresolved',
+    public_delivered_total: {
+      ...captured.candidates[0].public_delivered_total,
+      state: 'unknown',
+      amount: null,
+    },
+    configurations: candidate.configurations,
+    corrections: candidate.corrections,
+  }
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({ ...captured, candidates: [rawCandidate] }),
+  }))
+  await mount(
+    <MemoryRouter initialEntries={[`/discover/product/${candidate.id}`]}>
+      <Routes>
+        <Route path="/discover/product/:id" element={<ProductDetail />} />
+      </Routes>
+    </MemoryRouter>
+  )
+  const hero = container.querySelector('[aria-label="Watch buying summary"]')
+  expect(hero.textContent).toContain('Details changed (dial mint → salmon · strap leather → steel)')
+
+  const tracking = renderToStaticMarkup(
+    <ProductContent
+      candidate={candidate}
+      tracking={[trackingIntent(candidate)]}
+      onSaved={async () => {}}
+      view="tracking"
+    />
+  )
+  expect(tracking).toContain('Changed details — waiting for fresh evidence')
+
+  const correction = renderToStaticMarkup(
+    <ProductContent candidate={candidate} tracking={[]} onSaved={async () => {}} view="correction" />
+  )
+  expect(correction).toContain('Changed — waiting for fresh evidence')
+  expect(correction).not.toContain('Disputed — waiting for fresh evidence')
+  expect(correction).not.toContain('Corrected — waiting for fresh evidence')
+  // Per-entry states stay exact: the established correction is not hidden and
+  // the disputed value is not upgraded.
+  expect(correction).toContain('dial: mint → salmon (corrected)')
+  expect(correction).toContain('strap: leather → steel (disputed)')
 })
 
 // S5 residual 4 — the retained observation must not look like a conflicting

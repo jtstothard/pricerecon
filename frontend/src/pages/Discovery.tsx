@@ -172,16 +172,24 @@ const costDetailLabel: Record<string, string> = {
   'freshness: freshness_unvalidated':
     'Freshness not validated — current price and availability are not established.',
 }
-function CostDetail({ value }: { value: string }) {
-  return <span title={`Technical state: ${value}`}>{costDetailLabel[value] ?? humanLabel(value)}</span>
+function CostDetail({ value, bare = false }: { value: string; bare?: boolean }) {
+  const text = costDetailLabel[value] ?? humanLabel(value)
+  return <span title={`Technical state: ${value}`}>{bare ? text.replace(/\.+$/, '') : text}</span>
 }
+// The whole list is one sentence: entries drop their own terminal period, are
+// joined by "; ", and the list ends in exactly one ".".
 function MissingDataDetails({ details }: { details: string[] }) {
-  return details.map((detail, index) => (
-    <span key={`${index}:${detail}`}>
-      {index > 0 ? '; ' : ''}
-      <CostDetail value={detail} />
-    </span>
-  ))
+  return (
+    <>
+      {details.map((detail, index) => (
+        <span key={`${index}:${detail}`}>
+          {index > 0 ? '; ' : ''}
+          <CostDetail value={detail} bare />
+        </span>
+      ))}
+      {details.length > 0 && '.'}
+    </>
+  )
 }
 const couponStateLabel: Record<string, string> = {
   unverified_opportunity: 'Unverified opportunity',
@@ -577,7 +585,7 @@ export function ProductContent({
               <section key={item.id}>
                 <h3>{item.historical ? 'Historical assessment' : 'Scoped price assessment'}</h3>
                 {item.invalidation_reasons.length > 0 && (
-                  <p title={`Technical reasons: ${item.invalidation_reasons.join(', ')}`}>
+                  <p title={`Technical state: ${item.historical ? 'historical' : 'current'}; reasons: ${item.invalidation_reasons.join(', ')}`}>
                     Why historical:{' '}
                     {item.invalidation_reasons
                       .map((reason) => assessmentCauseLabel[reason] ?? humanLabel(reason))

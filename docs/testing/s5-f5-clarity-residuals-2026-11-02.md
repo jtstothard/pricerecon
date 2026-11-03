@@ -40,3 +40,24 @@ Review-fix verification:
 - `npm run build --prefix frontend`: passed; existing chunk-size advisory only.
 
 These remain agent-executed deterministic checks, not buyer acceptance or live-source evidence.
+
+## Second independent review fixes — 2026-11-03
+
+Four further findings were implemented from the PR head `3723c58`, each with regression coverage written and run red on the unfixed code first (three tests carried over from an interrupted worker were re-verified red before any production edit). No API, payload, backend, lineage, WatchForm or dependency change; historical receipts are unchanged.
+
+1. **Neutral retained-evidence wording.** `TrackingStatus` now says “Prior evidence no longer applies — kept on record, no longer used for alerts · target retained” instead of “Evidence corrected …”, so disputed saves and a bare `evidence_revision_withdrawn` are not described as corrections. The post-save outcome in `IdentityCorrection` now says “alerts wait for fresh evidence for this watch”. Tests assert the complete phrases at `TrackingStatus`, `ProductContent` (Tracking) and a real form-submit of a disputed save.
+2. **Missing data punctuation.** Entries drop their own terminal period, are joined by “; ”, and the list ends with exactly one “.” in Overview and Costs. Multi-entry tests put a glossed entry in the middle, an unmapped entry last (one with its own trailing period), and a glossed entry last.
+3. **Technical-state convention.** Historical-assessment tooltips read `Technical state: historical; reasons: …` instead of `Technical reasons: …`. The existing assertion that encoded the old title was updated accordingly.
+4. **Mixed corrected+disputed journal.** The correction-tab heading now uses the shared `correctionPresentationState` over the journal's current values, so it reads “Changed” on a mixed journal like the card (“Details changed”), hero and Tracking (“Changed details”). Per-entry `(corrected)` / `(disputed)` states in the history list are unchanged. One test covers all four surfaces through the real components.
+
+Two earlier markup-fragment assertions that included the final period of the Freshness gloss now assert the phrase without it, because the period is rendered once for the whole list; the rendered-text tests assert the period.
+
+Agent verification (run sequentially):
+
+- Focused `CorrectionFlowClarity.test.jsx` + `CorrectionFormClarity.test.jsx`: **31/31 passed**.
+- Full `npx vitest run`: **135/135 passed** across 12 files.
+- `npm run build --prefix frontend`: passed; existing chunk-size advisory only.
+- `python3 scripts/check_public_markers.py`: passed.
+- `git diff --check`: passed.
+
+These remain agent-executed deterministic checks, not buyer acceptance or live-source evidence.

@@ -307,6 +307,83 @@ it('reports what happened because of the correction, linking each effect', async
   )
 })
 
+it('uses neutral target wording after a disputed save', async () => {
+  const start = baseCandidate()
+  const disputedRecord = {
+    ...correctionRecord,
+    state: 'disputed',
+    lineage: [{ ...lineageEntry, state: 'disputed' }],
+  }
+  const saved = baseCandidate()
+  saved.configurations = [
+    { ...dialConfiguration, state: 'conflicting', values: { dial: 'salmon', movement: 'Quartz' } },
+  ]
+  saved.corrections = [disputedRecord]
+  saved.public_total = { ...saved.public_total, state: 'unknown', amount: null, currency: 'GBP' }
+  const tracking = {
+    id: 1,
+    revision: 1,
+    candidate_id: start.id,
+    capture_id: start.capture_id,
+    configuration_id: 'watch',
+    configuration_revision: 1,
+    target_gbp: '60',
+    notifications: { channels: ['webhook'] },
+    invalidation_revision: 0,
+    invalidation_reason: null,
+    assessment: {
+      state: 'withheld',
+      reasons: ['evidence_invalidated'],
+      assessed_at: '2026-10-27T12:04:48Z',
+      valid_until: '2026-10-27T13:04:48Z',
+      delivered_gbp: null,
+      policy_version: 'policy-v1',
+    },
+  }
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+    ok: true,
+    json: async () => correctionResponse(saved),
+  }))
+  function Harness() {
+    const [candidate, setCandidate] = React.useState(start)
+    return (
+      <IdentityCorrection
+        candidate={candidate}
+        tracking={[tracking]}
+        onSaved={async () => setCandidate(saved)}
+      />
+    )
+  }
+  await mount(<Harness />)
+  await change(container.querySelector('[aria-label="What should it be?"]'), '__custom')
+  await act(async () =>
+    Simulate.change(container.querySelector('[aria-label="What should it be? custom value"]'), {
+      target: { value: 'salmon' },
+    })
+  )
+  await change(container.querySelector('[name="correction_state"]'), 'disputed')
+  await act(async () =>
+    Simulate.change(container.querySelector('[name="correction_actor"]'), {
+      target: { value: 'Buyer' },
+    })
+  )
+  await act(async () =>
+    container
+      .querySelector('form')
+      .dispatchEvent(new dom.window.Event('submit', { bubbles: true, cancelable: true }))
+  )
+  const summary = container.querySelector('.correction-outcome')
+  const targetOutcome = Array.from(summary.querySelectorAll('li')).find((item) =>
+    item.textContent.includes('target stays saved')
+  )
+  expect(targetOutcome.textContent).toBe(
+    'your £60 target stays saved; alerts wait for fresh evidence for this watch · see Tracking'
+  )
+  expect(targetOutcome.textContent).not.toBe(
+    'your £60 target stays saved; alerts wait for evidence for the corrected watch · see Tracking'
+  )
+})
+
 function invalidatedCouponOffer() {
   return {
     id: 'offer',
@@ -338,7 +415,7 @@ function invalidatedCouponOffer() {
 
 function correctionResponse(candidate) {
   return {
-    ...correctionRecord,
+    ...candidate.corrections[0],
     candidate_id: candidate.id,
   }
 }

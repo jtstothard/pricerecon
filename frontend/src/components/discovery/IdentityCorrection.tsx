@@ -3,7 +3,13 @@ import { useState, type FormEvent } from 'react'
 import type { DiscoveryCandidate } from '../../lib/discovery'
 import type { ExactTracking } from '../../lib/tracking'
 import { productNavigation } from '../../lib/productNavigation'
-import { identityFields, saveCorrection, type IdentityField } from '../../lib/corrections'
+import {
+  correctionPresentationState,
+  currentCorrectionSummary,
+  identityFields,
+  saveCorrection,
+  type IdentityField,
+} from '../../lib/corrections'
 
 const label = (value: string) => value.replace(/_/g, ' ')
 // F5 — one plain-language family for what a correction does to old evidence;
@@ -13,6 +19,19 @@ const requalificationLabel: Record<string, string> = {
   required: 'waiting for fresh evidence',
   supported_by_fresh_evidence: 'fresh evidence verified',
   not_required: 'no fresh evidence needed',
+}
+// Same neutral wording as the card, hero and Tracking: a journal whose current
+// values mix corrected and disputed entries is "Changed", never upgraded.
+function journalHeading(item: DiscoveryCandidate['corrections'][number]) {
+  const current = currentCorrectionSummary([item])
+  const entries = current.length > 0 ? current : item.lineage
+  const state =
+    entries.length > 0
+      ? correctionPresentationState(entries)
+      : item.state === 'corrected'
+        ? 'corrected'
+        : 'disputed'
+  return { corrected: 'Corrected', disputed: 'Disputed', changed: 'Changed' }[state]
 }
 export function IdentityCorrection({
   candidate,
@@ -248,8 +267,8 @@ export function IdentityCorrection({
             </li>
             {retainedTargets.map((intent) => (
               <li key={intent.id}>
-                your £{intent.target_gbp} target stays saved; alerts wait for evidence for the
-                corrected watch · see <a href={productPath('tracking')}>Tracking</a>
+                your £{intent.target_gbp} target stays saved; alerts wait for fresh evidence for
+                this watch · see <a href={productPath('tracking')}>Tracking</a>
               </li>
             ))}
             <li>
@@ -265,7 +284,7 @@ export function IdentityCorrection({
         {candidate.corrections.map((item) => (
           <section key={item.configuration_id}>
             <h3 title={`Technical record: state ${item.state} · requalification ${item.requalification}`}>
-              {item.state === 'corrected' ? 'Corrected' : 'Disputed'} —{' '}
+              {journalHeading(item)} —{' '}
               {requalificationLabel[item.requalification] ?? label(item.requalification)}
             </h3>
             <p title={`Technical state: ${item.state} · ${item.requalification}`}>
