@@ -5,7 +5,7 @@ import type { ExactTracking } from '../../lib/tracking'
 import { productNavigation } from '../../lib/productNavigation'
 import {
   correctionPresentationState,
-  currentCorrectionSummary,
+  currentJournalSummary,
   identityFields,
   saveCorrection,
   type IdentityField,
@@ -23,7 +23,7 @@ const requalificationLabel: Record<string, string> = {
 // Same neutral wording as the card, hero and Tracking: a journal whose current
 // values mix corrected and disputed entries is "Changed", never upgraded.
 function journalHeading(item: DiscoveryCandidate['corrections'][number]) {
-  const current = currentCorrectionSummary([item])
+  const current = currentJournalSummary(item)
   const state =
     current.length > 0
       ? correctionPresentationState(current)

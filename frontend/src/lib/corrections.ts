@@ -66,9 +66,23 @@ function orderedLineage(entries: CorrectionLineage[]): CorrectionLineage[] {
   return ordered
 }
 
-/** Current values within each independent configuration journal. */
+/** Current values in one journal, regardless of fresh-evidence status. */
+export function currentJournalSummary(correction: Correction): CorrectionSummaryEntry[] {
+  const current = new Map<IdentityField, CorrectionSummaryEntry>()
+  for (const entry of orderedLineage(correction.lineage)) {
+    const first = current.get(entry.field)
+    current.set(entry.field, {
+      ...entry,
+      original_value: first ? first.original_value : entry.original_value,
+      configuration_id: correction.configuration_id,
+    })
+  }
+  return Array.from(current.values())
+}
+
+/** Current values within each independent journal awaiting fresh evidence. */
 export function currentCorrectionSummary(corrections: Correction[]): CorrectionSummaryEntry[] {
-  const journals = corrections
+  return corrections
     .filter((correction) => correction.requalification === 'required')
     .sort((left, right) =>
       left.configuration_id.localeCompare(right.configuration_id) ||
@@ -76,18 +90,7 @@ export function currentCorrectionSummary(corrections: Correction[]): CorrectionS
         right.lineage.map((entry) => entry.id).sort().join(',')
       )
     )
-  return journals.flatMap((correction) => {
-    const current = new Map<IdentityField, CorrectionSummaryEntry>()
-    for (const entry of orderedLineage(correction.lineage)) {
-      const first = current.get(entry.field)
-      current.set(entry.field, {
-        ...entry,
-        original_value: first ? first.original_value : entry.original_value,
-        configuration_id: correction.configuration_id,
-      })
-    }
-    return Array.from(current.values())
-  })
+    .flatMap(currentJournalSummary)
 }
 
 export async function saveCorrection(candidateId: string, subjectId: string, input: {

@@ -79,3 +79,15 @@ The new assertions were run before the production edits: **5 failed, 18 passed**
 - `git diff --check`: passed.
 
 These remain agent-executed deterministic checks, not buyer acceptance or live-source evidence.
+
+### Final-review follow-up
+
+A final focused review found that the first heading fallback could still call a mixed corrected+disputed journal “Disputed” after fresh-evidence verification. A new mixed-field verified-journal test failed before the fix (**1 failed, 23 passed**) and passed after `journalHeading` was moved to a shared `currentJournalSummary` helper that follows current field values regardless of requalification. The same helper remains used by the awaiting-evidence summary, whose filtering is unchanged.
+
+Follow-up verification:
+
+- Focused `CorrectionFlowClarity.test.jsx` + `CorrectionFormClarity.test.jsx`: **33/33 passed**.
+- Full `npx vitest run`: **137/137 passed** across 12 files.
+- `npm run build --prefix frontend`: passed; existing chunk-size advisory only.
+- `python3 scripts/check_public_markers.py`: passed.
+- `git diff --check`: passed.

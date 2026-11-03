@@ -958,6 +958,34 @@ it('keeps the current corrected state after fresh evidence verifies a formerly d
   expect(correction).not.toContain('Disputed — fresh evidence verified')
 })
 
+it('keeps mixed current-field wording after fresh evidence verification', () => {
+  const candidate = correctedCandidate()
+  const strapEntry = {
+    ...lineageEntry,
+    id: 'strap-1',
+    revision: 2,
+    field: 'strap',
+    value: 'steel',
+    state: 'disputed',
+    original_value: 'leather',
+    previous_correction_id: lineageEntry.id,
+  }
+  candidate.corrections[0].revision = 2
+  candidate.corrections[0].state = 'disputed'
+  candidate.corrections[0].requalification = 'supported_by_fresh_evidence'
+  candidate.corrections[0].values = { dial: 'salmon', movement: 'Quartz', strap: 'steel' }
+  candidate.corrections[0].lineage = [{ ...lineageEntry }, strapEntry]
+
+  const correction = renderToStaticMarkup(
+    <ProductContent candidate={candidate} tracking={[]} onSaved={async () => {}} view="correction" />
+  )
+  expect(correction).toContain('Changed — fresh evidence verified')
+  expect(correction).not.toContain('Disputed — fresh evidence verified')
+  expect(correction).not.toContain('Corrected — fresh evidence verified')
+  expect(correction).toContain('dial: mint → salmon (corrected)')
+  expect(correction).toContain('strap: leather → steel (disputed)')
+})
+
 // S5 residual 4 — the retained observation must not look like a conflicting
 // current value beside the corrected hero.
 it('separates retained observed details from the corrected values in Tracking', () => {
