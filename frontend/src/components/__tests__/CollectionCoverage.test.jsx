@@ -44,6 +44,32 @@ const status = (over) => ({
   ...over,
 })
 
+// Backend states (src/pricerecon/db/collection.py collection_status): a policy is
+// only retained for supplied, expired/not-yet-started and operating_policy_changed.
+// invalid, ambiguous and required select no policy, so scope_id/stops_at are null
+// and usage/provider_usage are empty. The helper refuses to build the impossible
+// combination so a fixture cannot assert rows the backend cannot produce.
+const TAIL = ['live_activation_not_authorized', 'production_operating_envelope_unproven']
+const NO_POLICY_GATES = ['operating_policy_invalid', 'operating_policy_ambiguous', 'operating_policy_required']
+const rejected = (gate, over = {}) => {
+  if (!NO_POLICY_GATES.includes(gate)) throw new Error(`${gate} retains a policy`)
+  const body = status({
+    state: 'blocked',
+    gates: [gate, ...TAIL],
+    scope_id: null,
+    version: null,
+    stops_at: null,
+    usage: [],
+    provider_usage: [],
+    ...over,
+  })
+  if (body.scope_id || body.stops_at || body.usage.length || body.provider_usage.length)
+    throw new Error(`${gate} cannot carry a policy, scope, stop time or usage rows`)
+  return body
+}
+const changed = (over = {}) =>
+  status({ state: 'blocked', gates: ['operating_policy_changed', ...TAIL], ...over })
+
 let root, container, dom
 beforeEach(() => {
   dom = new JSDOM('<div id="root"></div>', { url: 'http://localhost/discover' })
@@ -101,33 +127,86 @@ it('says how much is held back from discovery when reserves are nonzero', async 
   expect(text).toContain('requests: 1 used or reserved of 1; tracking reserve 0.')
   expect(text).toContain('cex requests: 1 of 1; tracking reserve 0.')
 })
-it('makes no reserve claim when no operating envelope is supplied', async () => {
-  const text = await show(status({ state: 'blocked', scope_id: null, stops_at: null, usage: [], provider_usage: [] }))
-  expect(text).not.toMatch(reserveClaim)
-  expect(text).not.toContain('No capacity is carved out')
-  expect(text).toContain('No operating envelope is supplied, so no tracking reserve is defined.')
-  expect(text).toContain('Admission is closed')
+it('cannot build an invalid/ambiguous/required fixture that carries usage rows', () => {
+  for (const gate of NO_POLICY_GATES) {
+    expect(() => rejected(gate, { usage: [resource('requests', 3, 100, 0)] })).toThrow(/cannot carry/)
+    expect(() => rejected(gate, { scope_id: 'synthetic-finite-study' })).toThrow(/cannot carry/)
+    expect(() => rejected(gate, { provider_usage: [{ source: 'ebay', used: 0, limit: 7, tracking_reserve: 0 }] })).toThrow(/cannot carry/)
+  }
+  expect(() => rejected('operating_policy_changed')).toThrow(/retains a policy/)
 })
-it('does not claim discovery capacity once the envelope has expired, even with zero reserves', async () => {
-  const text = await show(status({ state: 'expired', stops_at: '2026-11-02T12:00:00Z' }))
-  expect(text).not.toMatch(reserveClaim)
-  expect(text).not.toMatch(/discovery and tracking draw|whole shared allowance|No capacity is carved out/i)
+const NO_CLAIM = /discovery and tracking draw|whole shared allowance|No capacity is carved out|have reserved capacity|capacity is reserved/i
+it('says a rejected (invalid) envelope was supplied but is unusable, with no policy rows', async () => {
+  const text = await show(rejected('operating_policy_invalid'))
+  expect(text).toContain('Operating policy: blocked.')
   expect(text).toContain(
-    'The operating envelope has expired: admission is closed and there is no current operating envelope, so no tracking reserve currently applies. The recorded figures below are exact but nothing can use them.'
+    'A supplied operating envelope was rejected as invalid, so there is no usable operating envelope and no tracking reserve is defined. Admission is closed.'
+  )
+  expect(text).not.toContain('No operating envelope is supplied')
+  expect(text).not.toMatch(NO_CLAIM)
+  expect(text).not.toContain('used or reserved of')
+  expect(text).not.toContain('Envelope ')
+  expect(text).toContain('operating policy invalid')
+})
+it('says an ambiguous envelope selection cannot be resolved, with no policy rows', async () => {
+  const text = await show(rejected('operating_policy_ambiguous'))
+  expect(text).toContain(
+    'More than one operating envelope is stored and none can be chosen, so there is no usable operating envelope and no tracking reserve is defined. Admission is closed.'
+  )
+  expect(text).not.toContain('No operating envelope is supplied')
+  expect(text).not.toMatch(NO_CLAIM)
+  expect(text).not.toContain('used or reserved of')
+  expect(text).toContain('operating policy ambiguous')
+})
+it('says a required envelope is missing, with no policy rows', async () => {
+  const text = await show(rejected('operating_policy_required'))
+  expect(text).toContain(
+    'An operating envelope is required and none usable is available, so no tracking reserve is defined. Admission is closed.'
+  )
+  expect(text).not.toMatch(NO_CLAIM)
+  expect(text).not.toContain('used or reserved of')
+  expect(text).toContain('operating policy required')
+})
+it('keeps the retained envelope and its exact rows when the supplied policy changed', async () => {
+  const text = await show(
+    changed({
+      usage: [resource('requests', 3, 100, 0), resource('pages', 1, 20, 2)],
+      provider_usage: [{ source: 'ebay', used: 4, limit: 7, tracking_reserve: 1 }],
+    })
+  )
+  expect(text).toContain(
+    'The supplied operating policy differs from the retained envelope, so admission is closed and no tracking reserve currently applies. The retained envelope is shown for reference; nothing can use its figures.'
+  )
+  expect(text).not.toMatch(NO_CLAIM)
+  expect(text).not.toMatch(/no current operating envelope|No operating envelope is supplied|rejected as invalid/)
+  // The envelope row does not contradict the sentence above it.
+  expect(text).toContain(
+    `Retained envelope synthetic-finite-study is not in force; recorded stop time ${stamp('2026-10-28T12:00:00Z')}.`
   )
   expect(text).toContain('requests: 3 used or reserved of 100; tracking reserve 0.')
+  expect(text).toContain('pages: 1 used or reserved of 20; tracking reserve 2.')
+  expect(text).toContain('ebay requests: 4 of 7; tracking reserve 1.')
+  expect(text).toContain('operating policy changed')
 })
-it('does not claim discovery capacity while the operating policy is blocked, with figures still shown', async () => {
-  for (const gates of [['operating_policy_changed'], ['operating_policy_invalid']]) {
-    const text = await show(status({ state: 'blocked', gates }))
-    expect(text).not.toMatch(/discovery and tracking draw|whole shared allowance|No capacity is carved out/i)
+it('does not claim an expiry before the envelope starts (expired state covers not-yet-started)', async () => {
+  for (const stops_at of ['2026-11-02T12:00:00Z', '2026-11-30T12:00:00Z']) {
+    const text = await show(status({ state: 'expired', gates: ['operating_policy_expired', ...TAIL], stops_at }))
+    expect(text).not.toMatch(NO_CLAIM)
+    expect(text).not.toMatch(/has expired|have expired|already expired/)
     expect(text).toContain(
-      'The operating policy is blocked: admission is closed and there is no current operating envelope, so no tracking reserve currently applies. The recorded figures below are exact but nothing can use them.'
+      'The operating envelope is not active now (its window has closed or has not opened yet): admission is closed, so no tracking reserve currently applies. The recorded figures below are exact but nothing can use them.'
     )
-    expect(text).toContain('pages: 1 used or reserved of 20; tracking reserve 0.')
+    expect(text).toContain(`Retained envelope synthetic-finite-study is not in force; recorded stop time ${stamp(stops_at)}.`)
+    expect(text).toContain('requests: 3 used or reserved of 100; tracking reserve 0.')
     await act(async () => root.unmount())
     root = createRoot(container)
   }
+})
+it('describes a supplied envelope that sets no limits without calling it unsupplied', async () => {
+  const text = await show(status({ usage: [], provider_usage: [] }))
+  expect(text).toContain('The supplied operating envelope sets no limits, so no tracking reserve is defined.')
+  expect(text).not.toContain('No operating envelope is supplied')
+  expect(text).toContain('Envelope synthetic-finite-study; stops')
 })
 it('says a supplied envelope with a limit used up is already at its limit, not open capacity', async () => {
   const text = await show(
@@ -219,7 +298,7 @@ it('shows the lease for a running attempt rather than a retry time', async () =>
   expect(text).toContain(
     `This source is held for the running attempt until ${stamp(lease)} (${BROWSER}, lease still ahead); ${SERVER}; ${NOT_SCHEDULED}.`
   )
-  expect(text).not.toContain('lease expired')
+  expect(text).not.toContain('Lease expired')
 })
 it('does not say the source is held when a running attempt lease has passed (crashed process)', async () => {
   const lease = '2026-11-03T08:30:00Z'
@@ -266,7 +345,7 @@ it('says nothing about retry timing when the API records none', async () => {
     status({ attempts: [attempt({ state: 'capped', reason: 'recovery_spacing', next_eligible_at: null })] })
   )
   expect(text).not.toContain('Next eligible')
-  expect(text).not.toContain('No spacing wait remains')
+  expect(text).not.toContain('no spacing wait remains')
   expect(text).not.toContain('Source spacing')
 })
 it('exposes the exact recorded next_eligible_at as a technical tooltip', async () => {

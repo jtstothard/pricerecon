@@ -103,19 +103,40 @@ const canonical = [
     '${spent} of ${limits.length} limits are already used up, so further attempts that need them are capped.',
   ],
   [
-    'H2 expired',
+    'H2 expired or not yet started',
     'coverage',
-    'The operating envelope has expired: admission is closed and there is no current operating envelope, so no tracking reserve currently applies. The recorded figures below are exact but nothing can use them.',
+    'The operating envelope is not active now (its window has closed or has not opened yet): admission is closed, so no tracking reserve currently applies. The recorded figures below are exact but nothing can use them.',
   ],
   [
-    'H2 blocked',
+    'H2 changed policy',
     'coverage',
-    'The operating policy is blocked: admission is closed and there is no current operating envelope, so no tracking reserve currently applies. The recorded figures below are exact but nothing can use them.',
+    'The supplied operating policy differs from the retained envelope, so admission is closed and no tracking reserve currently applies. The retained envelope is shown for reference; nothing can use its figures.',
   ],
   [
-    'H2 no envelope',
+    'H2 invalid policy',
     'coverage',
-    'No operating envelope is supplied, so no tracking reserve is defined. Admission is closed.',
+    'A supplied operating envelope was rejected as invalid, so there is no usable operating envelope and no tracking reserve is defined. Admission is closed.',
+  ],
+  [
+    'H2 ambiguous policy',
+    'coverage',
+    'More than one operating envelope is stored and none can be chosen, so there is no usable operating envelope and no tracking reserve is defined. Admission is closed.',
+  ],
+  [
+    'H2 required policy',
+    'coverage',
+    'An operating envelope is required and none usable is available, so no tracking reserve is defined. Admission is closed.',
+  ],
+  [
+    'H2 supplied without limits',
+    'coverage',
+    'The supplied operating envelope sets no limits, so no tracking reserve is defined.',
+  ],
+  [
+    'H2 retained envelope row',
+    'coverage',
+    'Retained envelope … is not in force; recorded stop time',
+    'Retained envelope ${status.scope_id} is not in force; recorded stop time',
   ],
   [
     'H3 elapsed retry time',
@@ -197,10 +218,30 @@ const stale = [
   'Source spacing: not retried before',
   'No spacing wait remains (earliest next attempt was',
   'CollectionCoverage.tsx:41-43',
+  'there is no current operating envelope',
+  'The operating policy is blocked',
+  'The operating envelope has expired',
+  'No operating envelope is supplied',
+  'A crashed process leaves such a row until the next attempt starts',
 ]
 it.each(stale)('the kit no longer quotes the retired wording %j', (text) => {
   expect(kit).not.toContain(text)
   for (const file of Object.values(src)) expect(file).not.toContain(text)
+})
+
+// The backend keeps a policy (and its rows) only for supplied, outside-window and
+// operating_policy_changed; invalid, ambiguous and required select none, so the
+// kit must not pair rows with them (src/pricerecon/db/collection.py).
+it('pairs retained-policy wording with retained rows and rejected wording with none', () => {
+  const h2 = kit.slice(kit.indexOf('#### H2 '), kit.indexOf('#### H3 '))
+  expect(h2).toMatch(/operating_policy_changed[^.]*retained/)
+  expect(h2).toMatch(/invalid[^.]*ambiguous[^.]*required[^.]*(no policy|no usage rows|no rows)/i)
+  expect(h2).not.toMatch(/changed or invalid/)
+})
+it('describes the crash lease reading precisely: only the latest row per scope and source is cleared', () => {
+  const h3 = kit.slice(kit.indexOf('#### H3 '), kit.indexOf('#### H4 ') > 0 ? kit.indexOf('#### H4 ') : undefined)
+  expect(h3).toContain('only the latest')
+  expect(h3).toContain('older')
 })
 
 it('keeps no line reference into the collection panel, which is assembled from functions', () => {

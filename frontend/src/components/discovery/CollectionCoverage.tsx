@@ -6,16 +6,32 @@ import { parseCollection, type CollectionStatus } from '../../lib/collection'
 // shared allowance. That says nothing about admission: debit() refuses every
 // request unless the operating policy is supplied and inside its window, so any
 // claim about usable capacity is made only for state "supplied".
+//
+// Which policy the API still carries (db/collection.py collection_status):
+//  - supplied: the policy in force, with its rows.
+//  - expired: backend state for a retained policy outside its window, which is
+//    both "ended" and "not started yet"; the API sends no start time, so the
+//    wording must not claim it has expired.
+//  - blocked + operating_policy_changed: the retained policy and its rows.
+//  - blocked + invalid / ambiguous / required: no policy is selected, so there
+//    are no scope, stop time or rows at all.
+function rejectedStatement(gate: string | undefined) {
+  if (gate === 'operating_policy_invalid')
+    return 'A supplied operating envelope was rejected as invalid, so there is no usable operating envelope and no tracking reserve is defined. Admission is closed.'
+  if (gate === 'operating_policy_ambiguous')
+    return 'More than one operating envelope is stored and none can be chosen, so there is no usable operating envelope and no tracking reserve is defined. Admission is closed.'
+  return 'An operating envelope is required and none usable is available, so no tracking reserve is defined. Admission is closed.'
+}
 function reserveStatement(status: CollectionStatus) {
-  if (status.state === 'expired')
-    return 'The operating envelope has expired: admission is closed and there is no current operating envelope, so no tracking reserve currently applies. The recorded figures below are exact but nothing can use them.'
   const limits = [...status.usage, ...status.provider_usage]
+  const retained = status.scope_id !== null
+  if (status.state === 'expired')
+    return 'The operating envelope is not active now (its window has closed or has not opened yet): admission is closed, so no tracking reserve currently applies. The recorded figures below are exact but nothing can use them.'
   if (status.state === 'blocked') {
-    if (limits.length === 0)
-      return 'No operating envelope is supplied, so no tracking reserve is defined. Admission is closed.'
-    return 'The operating policy is blocked: admission is closed and there is no current operating envelope, so no tracking reserve currently applies. The recorded figures below are exact but nothing can use them.'
+    if (!retained) return rejectedStatement(status.gates.find((gate) => gate.startsWith('operating_policy_')))
+    return 'The supplied operating policy differs from the retained envelope, so admission is closed and no tracking reserve currently applies. The retained envelope is shown for reference; nothing can use its figures.'
   }
-  if (limits.length === 0) return 'No operating envelope is supplied, so no tracking reserve is defined.'
+  if (limits.length === 0) return 'The supplied operating envelope sets no limits, so no tracking reserve is defined.'
   const held = limits.filter((limit) => limit.tracking_reserve > 0).length
   const spent = limits.filter((limit) => limit.used >= limit.limit).length
   const exhausted =
@@ -95,7 +111,9 @@ export function CollectionCoverage() {
           </p>
           {status.scope_id && (
             <p>
-              Envelope {status.scope_id}; stops{' '}
+              {status.state === 'supplied'
+                ? `Envelope ${status.scope_id}; stops`
+                : `Retained envelope ${status.scope_id} is not in force; recorded stop time`}{' '}
               {status.stops_at ? new Date(status.stops_at).toLocaleString() : 'unknown'}.
             </p>
           )}

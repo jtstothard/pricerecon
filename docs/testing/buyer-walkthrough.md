@@ -581,15 +581,37 @@ Story references are the numbered user stories in the
   limit is used up." — a zero reserve is a statement about carve-outs, never an
   admission guarantee, and any limit already at its used figure adds "N of M limits
   are already used up, so further attempts that need them are capped."; with some
-  nonzero reserves it counts how many limits hold capacity back from discovery; when
-  the envelope has expired it reads "The operating envelope has expired: admission is
-  closed and there is no current operating envelope, so no tracking reserve currently
-  applies. The recorded figures below are exact but nothing can use them."; when the
-  policy is blocked (changed or invalid) it reads "The operating policy is blocked:
-  admission is closed and there is no current operating envelope, so no tracking
-  reserve currently applies. The recorded figures below are exact but nothing can use
-  them."; with no envelope at all it says "No operating envelope is supplied, so no
-  tracking reserve is defined. Admission is closed."
+  nonzero reserves it counts how many limits hold capacity back from discovery. When
+  admission is closed the sentence follows the backend's real state
+  (`collection_status` in `src/pricerecon/db/collection.py`), which keeps a policy and
+  its rows only for some of them:
+  - **Outside its window** (state `expired`, gate `operating_policy_expired`; the API
+    covers both an ended window and one that has not opened yet and sends no start
+    time, so the panel claims neither): "The operating envelope is not active now (its
+    window has closed or has not opened yet): admission is closed, so no tracking
+    reserve currently applies. The recorded figures below are exact but nothing can use
+    them." The retained envelope's exact resource and provider rows stay visible.
+  - **Supplied policy changed** (state `blocked`, gate `operating_policy_changed`): the
+    retained envelope is kept, so its exact rows are shown under "The supplied
+    operating policy differs from the retained envelope, so admission is closed and no
+    tracking reserve currently applies. The retained envelope is shown for reference;
+    nothing can use its figures."
+  - **Rejected, ambiguous or required** (state `blocked`, gates
+    `operating_policy_invalid`, `operating_policy_ambiguous`,
+    `operating_policy_required`): the backend selects no policy, so there is no
+    envelope id, no stop time and no usage rows at all — expect none. Invalid reads "A
+    supplied operating envelope was rejected as invalid, so there is no usable
+    operating envelope and no tracking reserve is defined. Admission is closed.";
+    ambiguous reads "More than one operating envelope is stored and none can be
+    chosen, so there is no usable operating envelope and no tracking reserve is
+    defined. Admission is closed."; required reads "An operating envelope is required
+    and none usable is available, so no tracking reserve is defined. Admission is
+    closed."
+  - A supplied envelope that sets no limits reads "The supplied operating envelope sets
+    no limits, so no tracking reserve is defined."
+  - Under any closed state the envelope line reads "Retained envelope … is not in
+    force; recorded stop time …", never "stops …", which is reserved for a supplied
+    envelope.
   (`reserveStatement` in `frontend/src/components/discovery/CollectionCoverage.tsx`;
   the walkthrough fixture reports `tracking_reserve: 0` throughout under a supplied
   envelope, so expect the first form there); and the closing
@@ -601,7 +623,9 @@ Story references are the numbered user stories in the
   an unproven gate (section 4) — nothing here is a commitment.
 - **Defect if:** fixture allowances presented as operating capacity; a sentence
   claiming reserved capacity beside reserves of 0; any claim that discovery can use
-  capacity while the envelope is expired or blocked.
+  capacity while admission is closed; a rejected, ambiguous or required policy shown
+  with usage rows or an envelope id (the backend produces none); a supplied-but-rejected
+  envelope described as "not supplied".
 - ☐ Accepted · Evidence match (yes / partial / no) + your words: \_\_\_\_\_\_\_\_\_\_
 
 #### H3 — Age, staleness and no catch-up bursts · after `stale` (US43, US44)
@@ -626,8 +650,12 @@ Story references are the numbered user stories in the
   periods are not replayed." until its lease passes, then "Lease expired, unconfirmed:
   the running attempt's lease ended … (by this browser's clock) with no recorded
   finish; the server decides admission when an attempt starts; no run is scheduled and
-  missed periods are not replayed." (a crashed process leaves such a row until the next
-  attempt starts; `retryTiming` in
+  missed periods are not replayed." (a crashed process can leave such a row as
+  "running": `begin()` in `src/pricerecon/core/rate_limiter.py` marks only the latest
+  attempt row for that scope and source `interrupted` (`lease_expired_unconfirmed`),
+  and only when the next attempt starts with its lease already passed and no spacing
+  wait ahead; older running rows are never cleared and keep reading "Lease expired,
+  unconfirmed"; `retryTiming` in
   `frontend/src/components/discovery/CollectionCoverage.tsx`; the exact recorded value
   is the hover title); no
   catch-up burst fires (sends and alert events stay flat).
