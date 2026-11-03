@@ -555,7 +555,9 @@ Story references are the numbered user stories in the
   (`frontend/src/components/discovery/SourceCoverage.tsx:106-155`); cohort gaps in
   caution text; "Capped, blocked and failed attempts leave gaps; an empty result means
   the declared search completed."
-  (`frontend/src/components/discovery/CollectionCoverage.tsx:41-43`); per capture,
+  (the closing sentence of the "Collection limits and coverage" reserve paragraph in
+  `frontend/src/components/discovery/CollectionCoverage.tsx`; no line reference is kept
+  because the paragraph is assembled from `reserveStatement`); per capture,
   the outcome state, listing count, completeness and — where applicable — "Reused
   capture …; no new source observation."
   (`frontend/src/pages/Discovery.tsx:754-777`). Assessments carry their scope: "Lowest
@@ -572,14 +574,25 @@ Story references are the numbered user stories in the
 - **Do:** "Collection limits and coverage" panel (same view).
 - **Expect:** operating policy state, activation state and pending gates; usage rows
   "… used or reserved of …; tracking reserve …" showing the exact reserve per
-  resource and provider, under a sentence that follows those numbers: when every
-  reserve is 0 it reads "No capacity is held back for tracking or potential-alert
-  verification: every tracking reserve is 0, so discovery can use the whole shared
-  allowance."; with some nonzero reserves it counts how many limits hold capacity back
-  from discovery; with no envelope it says no tracking reserve is defined
+  resource and provider, under a sentence that follows those numbers and the policy
+  state. With a supplied envelope and every reserve 0 it reads "No capacity is carved
+  out of the shared allowance for tracking or potential-alert verification: every
+  tracking reserve is 0, so discovery and tracking draw on the same allowance until a
+  limit is used up." — a zero reserve is a statement about carve-outs, never an
+  admission guarantee, and any limit already at its used figure adds "N of M limits
+  are already used up, so further attempts that need them are capped."; with some
+  nonzero reserves it counts how many limits hold capacity back from discovery; when
+  the envelope has expired it reads "The operating envelope has expired: admission is
+  closed and there is no current operating envelope, so no tracking reserve currently
+  applies. The recorded figures below are exact but nothing can use them."; when the
+  policy is blocked (changed or invalid) it reads "The operating policy is blocked:
+  admission is closed and there is no current operating envelope, so no tracking
+  reserve currently applies. The recorded figures below are exact but nothing can use
+  them."; with no envelope at all it says "No operating envelope is supplied, so no
+  tracking reserve is defined. Admission is closed."
   (`reserveStatement` in `frontend/src/components/discovery/CollectionCoverage.tsx`;
-  the walkthrough fixture reports `tracking_reserve: 0` throughout, so expect the
-  first form there); and the closing
+  the walkthrough fixture reports `tracking_reserve: 0` throughout under a supplied
+  envelope, so expect the first form there); and the closing
   honest note: "Collection also requires finite measured budgets, physical
   storage/WAL/log/backup limits, retention/deletion/restore qualification and a named
   maintenance owner. Fixture allowances do not supply these operating prerequisites."
@@ -587,7 +600,8 @@ Story references are the numbered user stories in the
 - **Honesty:** the numbers shown are fixture allowances. Measured operating limits are
   an unproven gate (section 4) — nothing here is a commitment.
 - **Defect if:** fixture allowances presented as operating capacity; a sentence
-  claiming reserved capacity beside reserves of 0.
+  claiming reserved capacity beside reserves of 0; any claim that discovery can use
+  capacity while the envelope is expired or blocked.
 - ☐ Accepted · Evidence match (yes / partial / no) + your words: \_\_\_\_\_\_\_\_\_\_
 
 #### H3 — Age, staleness and no catch-up bursts · after `stale` (US43, US44)
@@ -598,13 +612,24 @@ Story references are the numbered user stories in the
   unvalidated"; the tracked watch's assessment is withheld — stale evidence alone
   never alerts; each attempt's `next_eligible_at` is the earliest permitted retry for that source
   (attempt end plus recovery spacing; the lease end while running), never a scheduled
-  run. The panel therefore reads "No spacing wait remains (earliest next attempt was
-  …); no run is scheduled and missed periods are not replayed." once that time has
-  passed — in the walkthrough fixture it equals the attempt's own time, so expect
-  this form even after `stale` — and "Source spacing: not retried before …; no
-  catch-up replay and no run is scheduled." while a wait is still ahead
-  (`retryTiming` in `frontend/src/components/discovery/CollectionCoverage.tsx`; the
-  exact recorded value is the hover title); no
+  run. The API sends no server time, so the panel compares the recorded value with
+  this browser's clock and says so. Once the time has passed it reads "By this
+  browser's clock no spacing wait remains (recorded earliest next attempt: …); the
+  server decides admission when an attempt starts; no run is scheduled and missed
+  periods are not replayed." — in the walkthrough fixture it equals the attempt's own
+  time, so expect this form even after `stale` — and "Source spacing: recorded earliest
+  next attempt is … (by this browser's clock, still ahead); the server decides
+  admission when an attempt starts; no run is scheduled and missed periods are not
+  replayed." while a wait is still ahead. A running attempt reads "This source is held
+  for the running attempt until … (by this browser's clock, lease still ahead); the
+  server decides admission when an attempt starts; no run is scheduled and missed
+  periods are not replayed." until its lease passes, then "Lease expired, unconfirmed:
+  the running attempt's lease ended … (by this browser's clock) with no recorded
+  finish; the server decides admission when an attempt starts; no run is scheduled and
+  missed periods are not replayed." (a crashed process leaves such a row until the next
+  attempt starts; `retryTiming` in
+  `frontend/src/components/discovery/CollectionCoverage.tsx`; the exact recorded value
+  is the hover title); no
   catch-up burst fires (sends and alert events stay flat).
 - **Partial (suite-proven, not session-demonstrable):** the tracked-watch label
   "Stale evidence · alerts wait for a fresh offer"

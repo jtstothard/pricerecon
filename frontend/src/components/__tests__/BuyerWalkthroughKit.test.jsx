@@ -2,51 +2,163 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { expect, it } from 'vitest'
 
-// The buyer walkthrough kit quotes UI copy and API field paths. This pins every
-// quotation to the source that renders or emits it, so a copy change cannot
-// silently leave the kit asserting text the product no longer shows. It checks
-// agent-verifiable wording only; it establishes no human comprehension.
+// The buyer walkthrough kit quotes UI copy and API field paths. This pins each
+// refreshed quotation, as the full sentence, to the source that renders it, so a
+// copy change cannot silently leave the kit asserting text the product no longer
+// shows. It checks agent-verifiable wording only; it establishes no human
+// comprehension.
 const root = fileURLToPath(new URL('../../../../', import.meta.url))
-const squash = (text) => text.replace(/\s+/g, ' ')
-const read = (path) => squash(readFileSync(`${root}${path}`, 'utf8'))
-const kit = read('docs/testing/buyer-walkthrough.md')
-const src = {
-  correction: read('frontend/src/components/discovery/IdentityCorrection.tsx'),
-  discovery: read('frontend/src/pages/Discovery.tsx'),
-  tracking: read('frontend/src/components/ExactTracking.tsx'),
-  history: read('frontend/src/components/discovery/ObservationHistory.tsx'),
-  historyLib: read('frontend/src/lib/history.ts'),
-  assessmentsLib: read('frontend/src/lib/assessments.ts'),
-  coverage: read('frontend/src/components/discovery/CollectionCoverage.tsx'),
+const squash = (text) => text.replace(/\s+/g, ' ').trim()
+const raw = (path) => readFileSync(`${root}${path}`, 'utf8')
+// Source as the product would render it: comments removed (so a comment cannot
+// satisfy a pin), JSX markup tags removed, JSX space expressions and same-file
+// string constants resolved, whitespace collapsed. Dynamic {expressions} stay in
+// place, which is why entries with dynamic parts pin the static text around them.
+function rendered(path) {
+  let code = raw(path).replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/.*$/gm, '$1')
+  for (const [, name, value] of code.matchAll(/const (\w+) = '([^']*)'/g))
+    code = code.replaceAll('${' + name + '}', value).replaceAll('{' + name + '}', value)
+  return squash(code.replace(/\{' '\}/g, ' ').replace(/<\/?[A-Za-z][^>]*>/g, ''))
+}
+const kit = squash(raw('docs/testing/buyer-walkthrough.md'))
+const files = {
+  correction: 'frontend/src/components/discovery/IdentityCorrection.tsx',
+  discovery: 'frontend/src/pages/Discovery.tsx',
+  tracking: 'frontend/src/components/ExactTracking.tsx',
+  history: 'frontend/src/components/discovery/ObservationHistory.tsx',
+  historyLib: 'frontend/src/lib/history.ts',
+  assessmentsLib: 'frontend/src/lib/assessments.ts',
+  coverage: 'frontend/src/components/discovery/CollectionCoverage.tsx',
+}
+const src = Object.fromEntries(Object.entries(files).map(([name, path]) => [name, rendered(path)]))
+// True when every static part appears in the source, in order.
+function inOrder(code, parts) {
+  let at = 0
+  for (const part of parts) {
+    const found = code.indexOf(part, at)
+    if (found < 0) return false
+    at = found + part.length
+  }
+  return true
 }
 
-// Quotation present in both the kit and the file that produces it.
+// [label, file, kit quotation, source form]. The kit quotation is the complete
+// sentence as the kit prints it. The source form is the same sentence with "…"
+// for each dynamic value the source computes; it defaults to the kit quotation.
+const D = '…'
 const canonical = [
-  ['I1 consequence copy', 'correction', 'Saving this correction withdraws the prices recorded for the old details'],
-  ['I1 consequence copy', 'correction', 'Saving records your correction; it does not fetch new prices.'],
-  ['I1 shared vocabulary', 'correction', 'kept on record, no longer used for pricing'],
+  ['I1 preview', 'correction', 'You are changing dial from mint to …', 'You are changing … from … to'],
+  [
+    'I1 consequence copy',
+    'correction',
+    'Saving this correction withdraws the prices recorded for the old details — they are kept on record, no longer used for pricing, kept in History. Saving records your correction; it does not fetch new prices.',
+  ],
   ['I1 save button', 'correction', 'Save correction — old prices will be withdrawn'],
-  ['I1 post-save summary', 'correction', 'Correction saved'],
-  ['I1 post-save summary', 'correction', 'old observations were marked withdrawn — kept, unchanged, in'],
-  ['I1 history sentence', 'correction', 'Your target stays; alerts wait for a fresh matching offer.'],
+  ['I1 post-save block', 'correction', 'Correction saved — a history entry was added below.'],
+  ['I1 post-save surface', 'correction', 'old observations were marked withdrawn — kept, unchanged, in History'],
+  [
+    'I1 history sentence',
+    'correction',
+    'Old prices, coupons and buying assessments are kept on record, no longer used for pricing. Your target stays; alerts wait for a fresh matching offer.',
+  ],
   ['I1 rejected write', 'correction', 'Reload the feed before retrying.'],
-  ['I2 card caution', 'discovery', 'Details corrected'],
-  ['I2 card caution', 'discovery', '· awaiting fresh evidence'],
-  ['I3 tracking label', 'tracking', 'Prior evidence no longer applies — kept on record, no longer used for alerts · target retained'],
+  [
+    'I2 card caution',
+    'discovery',
+    'Details corrected (dial mint → salmon) · old prices kept on record, no longer used for pricing · awaiting fresh evidence',
+    '… (…) · old prices kept on record, no longer used for pricing · awaiting fresh evidence',
+  ],
+  ['I2 card label', 'discovery', 'Details corrected (dial', "corrected: 'Details corrected'"],
+  [
+    'I3 tracking label',
+    'tracking',
+    'Prior evidence no longer applies — kept on record, no longer used for alerts · target retained',
+  ],
   ['I3 intended values', 'correction', 'Show full intended configuration'],
-  ['G2 status label', 'history', 'withdrawn after correction — kept on record'],
+  ['I3 intended label', 'correction', 'Intended dial', 'Intended {label(key)}'],
+  ['G2 status label', 'history', 'current at capture', "supported_at_capture: 'current at capture'"],
+  ['G2 status label', 'history', 'unqualified at capture', "unqualified: 'unqualified at capture'"],
+  ['G2 status label', 'history', 'legacy — unqualified', "legacy_unqualified: 'legacy — unqualified'"],
+  [
+    'G2 status label',
+    'history',
+    'withdrawn after correction — kept on record',
+    "invalidated: 'withdrawn after correction — kept on record'",
+  ],
   ['G2 repeat marker', 'history', '· repeated evidence'],
-  ['H2 reserve sentence', 'coverage', 'No capacity is held back for tracking or potential-alert verification'],
-  ['H3 elapsed retry time', 'coverage', 'No spacing wait remains'],
-  ['H3 future retry time', 'coverage', 'Source spacing: not retried before'],
+  [
+    'H1 gaps sentence',
+    'coverage',
+    'Capped, blocked and failed attempts leave gaps; an empty result means the declared search completed.',
+  ],
+  [
+    'H2 supplied, reserves 0',
+    'coverage',
+    'No capacity is carved out of the shared allowance for tracking or potential-alert verification: every tracking reserve is 0, so discovery and tracking draw on the same allowance until a limit is used up.',
+  ],
+  [
+    'H2 limits used up',
+    'coverage',
+    'N of M limits are already used up, so further attempts that need them are capped.',
+    '${spent} of ${limits.length} limits are already used up, so further attempts that need them are capped.',
+  ],
+  [
+    'H2 expired',
+    'coverage',
+    'The operating envelope has expired: admission is closed and there is no current operating envelope, so no tracking reserve currently applies. The recorded figures below are exact but nothing can use them.',
+  ],
+  [
+    'H2 blocked',
+    'coverage',
+    'The operating policy is blocked: admission is closed and there is no current operating envelope, so no tracking reserve currently applies. The recorded figures below are exact but nothing can use them.',
+  ],
+  [
+    'H2 no envelope',
+    'coverage',
+    'No operating envelope is supplied, so no tracking reserve is defined. Admission is closed.',
+  ],
+  [
+    'H3 elapsed retry time',
+    'coverage',
+    "By this browser's clock no spacing wait remains (recorded earliest next attempt: …); the server decides admission when an attempt starts; no run is scheduled and missed periods are not replayed.",
+    "By this browser's clock no spacing wait remains (recorded earliest next attempt: ${when}); the server decides admission when an attempt starts; no run is scheduled and missed periods are not replayed.",
+  ],
+  [
+    'H3 future retry time',
+    'coverage',
+    "Source spacing: recorded earliest next attempt is … (by this browser's clock, still ahead); the server decides admission when an attempt starts; no run is scheduled and missed periods are not replayed.",
+    "Source spacing: recorded earliest next attempt is ${when} (by this browser's clock, still ahead); the server decides admission when an attempt starts; no run is scheduled and missed periods are not replayed.",
+  ],
+  [
+    'H3 running lease ahead',
+    'coverage',
+    "This source is held for the running attempt until … (by this browser's clock, lease still ahead); the server decides admission when an attempt starts; no run is scheduled and missed periods are not replayed.",
+    "This source is held for the running attempt until ${when} (by this browser's clock, lease still ahead); the server decides admission when an attempt starts; no run is scheduled and missed periods are not replayed.",
+  ],
+  [
+    'H3 running lease expired',
+    'coverage',
+    "Lease expired, unconfirmed: the running attempt's lease ended … (by this browser's clock) with no recorded finish; the server decides admission when an attempt starts; no run is scheduled and missed periods are not replayed.",
+    "Lease expired, unconfirmed: the running attempt's lease ended ${when} (by this browser's clock) with no recorded finish; the server decides admission when an attempt starts; no run is scheduled and missed periods are not replayed.",
+  ],
 ]
-it.each(canonical)('%s is quoted by the kit and still produced by the source: %s', (_label, file, text) => {
-  expect(src[file]).toContain(text)
-  expect(kit).toContain(text)
+it.each(canonical)('%s is quoted in full by the kit and still produced by the source: %s', (_label, file, quotation, form = quotation) => {
+  expect(kit).toContain(quotation)
+  expect(inOrder(src[file], form.split(D).filter(Boolean))).toBe(true)
+})
+
+// The helper must not accept a comment, a reordering or a partial match.
+it('does not let a comment, a truncation or a reordering satisfy a source pin', () => {
+  const commentOnly = rendered('frontend/src/components/discovery/CollectionCoverage.tsx')
+  expect(commentOnly).not.toContain('debit() refuses every')
+  expect(commentOnly).not.toContain('only for state "supplied"')
+  expect(inOrder('abc def ghi', ['def', 'abc'])).toBe(false)
+  expect(inOrder('Correction saved', ['Correction saved — a history entry was added below.'])).toBe(false)
 })
 
 // Field paths and row labels: the kit names them in prose; the source must still
-// carry the same names.
+// carry the same names (comments removed, markup left as written).
+const code = (path) => squash(raw(path).replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/.*$/gm, '$1'))
 const emitted = [
   ['G2 direction field', 'historyLib', "change: choice(item.change, ['initial', 'unchanged', 'increased', 'decreased', 'not_comparable'])"],
   ['K1 gaps path', 'assessmentsLib', 'gaps: list(coverage.gaps'],
@@ -55,7 +167,7 @@ const emitted = [
   ['C2 offer row', 'discovery', "['Comparison', offer.comparison.state]"],
 ]
 it.each(emitted)('%s is still emitted by the source: %s', (_label, file, text) => {
-  expect(src[file]).toContain(text)
+  expect(code(files[file])).toContain(text)
 })
 
 it('quotes the canonical field paths and values instead of the old names', () => {
@@ -80,10 +192,19 @@ const stale = [
   'Next eligible',
   '(`exclusions`, `gaps`)',
   'leaves the merchant selection unresolved',
+  'No capacity is held back for tracking',
+  'discovery can use the whole shared allowance',
+  'Source spacing: not retried before',
+  'No spacing wait remains (earliest next attempt was',
+  'CollectionCoverage.tsx:41-43',
 ]
 it.each(stale)('the kit no longer quotes the retired wording %j', (text) => {
   expect(kit).not.toContain(text)
   for (const file of Object.values(src)) expect(file).not.toContain(text)
+})
+
+it('keeps no line reference into the collection panel, which is assembled from functions', () => {
+  expect(kit).not.toMatch(/CollectionCoverage\.tsx:\d/)
 })
 
 it('keeps the human-acceptance record untouched: every box blank, verdict form present', () => {
