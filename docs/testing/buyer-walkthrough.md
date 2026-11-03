@@ -154,13 +154,10 @@ Story references are the numbered user stories in the
   (gate scoping decision, 2026-10-29, in the same document). The fixture runs no
   collection, so this contract is test evidence only
   (`tests/test_source_queries_routing.py`).
-- **Known issue (do not count against this task):** a saved custom interval cannot be
-  restored in-form once changed away —
-  `frontend/src/components/WatchForm.tsx:506-507` derives the "(saved)" option from
-  live form state, so the option disappears with the first change. Abandoning the
-  form, or reloading the page, restores the saved value. This is a recorded app UX
-  finding from the 2026-10-31 agent walkthrough (discrepancy D-8), not a
-  comprehension failure: note it as a follow-up item rather than a defect here.
+- **Resolved follow-up (verified 2026-11-03):** the saved custom interval remains
+  selectable after changing away and resubmits correctly. This was discrepancy D-8;
+  it was fixed in PR #162 and is no longer a known issue. If the option resets
+  silently, record it as a defect.
 - ☐ Accepted · Evidence match (yes / partial / no) + your words: \_\_\_\_\_\_\_\_\_\_
 
 ### Cluster B — Discovery feed & preferences (US3, 4, 5, 7, 8)
