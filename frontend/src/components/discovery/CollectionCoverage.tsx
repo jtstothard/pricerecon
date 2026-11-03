@@ -1,6 +1,30 @@
 import { useEffect, useState } from 'react'
 import { parseCollection, type CollectionStatus } from '../../lib/collection'
 
+// What a tracking reserve means (src/pricerecon/core/rate_limiter.py): it is
+// withheld from discovery only, so a reserve of 0 holds nothing back.
+function reserveStatement(status: CollectionStatus) {
+  const limits = [...status.usage, ...status.provider_usage]
+  if (limits.length === 0) return 'No operating envelope is supplied, so no tracking reserve is defined.'
+  const held = limits.filter((limit) => limit.tracking_reserve > 0).length
+  if (held === 0)
+    return 'No capacity is held back for tracking or potential-alert verification: every tracking reserve is 0, so discovery can use the whole shared allowance.'
+  return `Capacity is held back from discovery for tracking and potential-alert verification on ${held} of ${limits.length} limits; a tracking reserve of 0 holds nothing back.`
+}
+// next_eligible_at is the earliest permitted retry for the source (attempt end
+// plus recovery spacing), or the lease end while running. It is never a
+// scheduled run, so an elapsed value is stated as "no wait remains".
+function retryTiming(attempt: CollectionStatus['attempts'][number]) {
+  if (!attempt.next_eligible_at) return null
+  const at = new Date(attempt.next_eligible_at)
+  const when = at.toLocaleString()
+  if (attempt.state === 'running')
+    return `This source is held for the running attempt until ${when}; no catch-up replay and no run is scheduled.`
+  if (at.getTime() > Date.now())
+    return `Source spacing: not retried before ${when}; no catch-up replay and no run is scheduled.`
+  return `No spacing wait remains (earliest next attempt was ${when}); no run is scheduled and missed periods are not replayed.`
+}
+
 export function CollectionCoverage() {
   const [status, setStatus] = useState<CollectionStatus | null>(null)
   const [error, setError] = useState('')
@@ -38,8 +62,8 @@ export function CollectionCoverage() {
             </ul>
           )}
           <p>
-            Tracking and potential-alert verification have reserved capacity. Capped, blocked and
-            failed attempts leave gaps; an empty result means the declared search completed.
+            {reserveStatement(status)} Capped, blocked and failed attempts leave gaps; an empty
+            result means the declared search completed.
           </p>
           <p>
             Transport health does not renew offer evidence. Retained observations keep their
@@ -84,8 +108,14 @@ export function CollectionCoverage() {
                   ? `${new Date(attempt.last_good_at).toLocaleString()} (${attempt.last_good_age_seconds} seconds old)`
                   : 'unavailable'}
                 ; qualification is not inferred.
-                {attempt.next_eligible_at &&
-                  ` Next eligible ${new Date(attempt.next_eligible_at).toLocaleString()}; no catch-up replay.`}
+                {attempt.next_eligible_at && (
+                  <>
+                    {' '}
+                    <span title={`Technical field next_eligible_at: ${attempt.next_eligible_at}`}>
+                      {retryTiming(attempt)}
+                    </span>
+                  </>
+                )}
               </li>
             ))}
           </ul>
