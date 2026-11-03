@@ -24,10 +24,9 @@ const requalificationLabel: Record<string, string> = {
 // values mix corrected and disputed entries is "Changed", never upgraded.
 function journalHeading(item: DiscoveryCandidate['corrections'][number]) {
   const current = currentCorrectionSummary([item])
-  const entries = current.length > 0 ? current : item.lineage
   const state =
-    entries.length > 0
-      ? correctionPresentationState(entries)
+    current.length > 0
+      ? correctionPresentationState(current)
       : item.state === 'corrected'
         ? 'corrected'
         : 'disputed'

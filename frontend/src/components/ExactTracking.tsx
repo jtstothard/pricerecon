@@ -24,7 +24,7 @@ const reasons: Record<string, string> = {
   duplicate_or_older_evidence: 'Duplicate or older evidence; no new alert.',
   above_target: 'Verified at observation, above your delivered target.',
   evidence_stale_or_expired: 'Evidence is stale or expired; a fresh check is required.',
-  evidence_invalidated: 'Evidence was withdrawn or corrected; intent retained.',
+  evidence_invalidated: 'Prior evidence no longer applies; target retained.',
   preferences_changed_requires_observation:
     'Preferences changed; waiting for a qualified observation.',
   preference_mismatch_or_unknown:
@@ -47,7 +47,7 @@ const reasons: Record<string, string> = {
     'Acquisition routes disagree about the same offer total; alert withheld.',
   acquisition_partial_or_reused:
     'Acquisition is partial or reuses a cached capture; a fresh complete check is required.',
-  evidence_revision_withdrawn: 'A required evidence revision was withdrawn; alert withheld.',
+  evidence_revision_withdrawn: 'Supporting evidence no longer applies; alert withheld.',
 }
 
 export function TrackingStatus({ intent }: { intent: ExactTracking }) {

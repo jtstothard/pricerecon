@@ -247,17 +247,23 @@ it('distinguishes disputed details across card, Costs, History and Tracking', ()
   expect(history).toContain('A correction, dispute, or evidence revision made this assessment historical')
   expect(history).not.toContain('Watch details or supporting evidence were corrected')
 
+  const intent = trackingIntent(candidate)
+  intent.assessment.reasons = ['evidence_invalidated', 'evidence_revision_withdrawn']
   const tracking = renderToStaticMarkup(
     <ProductContent
       candidate={candidate}
-      tracking={[trackingIntent(candidate)]}
+      tracking={[intent]}
       onSaved={async () => {}}
       view="tracking"
     />
   )
   expect(tracking).toContain('Disputed details — waiting for fresh evidence')
   expect(tracking).toContain('Prior evidence no longer applies — kept on record, no longer used for alerts · target retained')
+  expect(tracking).toContain('Prior evidence no longer applies; target retained.')
+  expect(tracking).toContain('Supporting evidence no longer applies; alert withheld.')
   expect(tracking).not.toContain('Evidence corrected — kept on record, no longer used for alerts · target retained')
+  expect(tracking).not.toContain('Evidence was withdrawn or corrected; intent retained.')
+  expect(tracking).not.toContain('A required evidence revision was withdrawn; alert withheld.')
   expect(tracking).not.toContain('Corrected details')
   expect(tracking).not.toContain('fresh evidence for the corrected watch')
 })
@@ -268,7 +274,9 @@ it('uses neutral retained-evidence status for a pure evidence revision withdrawa
   intent.assessment.reasons = ['evidence_revision_withdrawn']
   const status = renderToStaticMarkup(<TrackingStatus intent={intent} />)
   expect(status).toContain('Prior evidence no longer applies — kept on record, no longer used for alerts · target retained')
+  expect(status).toContain('Supporting evidence no longer applies; alert withheld.')
   expect(status).not.toContain('Evidence corrected — kept on record, no longer used for alerts · target retained')
+  expect(status).not.toContain('A required evidence revision was withdrawn; alert withheld.')
 })
 
 // S5 residual 3 — repeated corrections to one field have one current value;
@@ -431,6 +439,8 @@ it.each([
   const card = renderToStaticMarkup(<Candidate candidate={candidate} tracking={[intent]} />)
   const status = renderToStaticMarkup(<TrackingStatus intent={intent} />)
   expect(card).toContain(`Target £60 · ${label}`)
+  expect(card).toContain(`title="Technical state: ${state}"`)
+  expect(card).not.toContain('reasons: ')
   expect(status).toContain(label)
 })
 
@@ -921,6 +931,31 @@ it('uses one neutral word for a mixed corrected+disputed journal on every surfac
   // the disputed value is not upgraded.
   expect(correction).toContain('dial: mint → salmon (corrected)')
   expect(correction).toContain('strap: leather → steel (disputed)')
+})
+
+it('keeps the current corrected state after fresh evidence verifies a formerly disputed value', () => {
+  const candidate = correctedCandidate()
+  const disputedEntry = { ...lineageEntry, state: 'disputed' }
+  const correctedEntry = {
+    ...lineageEntry,
+    id: '9615feda',
+    revision: 2,
+    value: 'Blue',
+    original_value: 'salmon',
+    previous_correction_id: lineageEntry.id,
+  }
+  candidate.corrections[0].revision = 2
+  candidate.corrections[0].state = 'corrected'
+  candidate.corrections[0].requalification = 'supported_by_fresh_evidence'
+  candidate.corrections[0].values = { dial: 'Blue', movement: 'Quartz' }
+  candidate.corrections[0].lineage = [disputedEntry, correctedEntry]
+
+  const correction = renderToStaticMarkup(
+    <ProductContent candidate={candidate} tracking={[]} onSaved={async () => {}} view="correction" />
+  )
+  expect(correction).toContain('Corrected — fresh evidence verified')
+  expect(correction).not.toContain('Changed — fresh evidence verified')
+  expect(correction).not.toContain('Disputed — fresh evidence verified')
 })
 
 // S5 residual 4 — the retained observation must not look like a conflicting

@@ -399,7 +399,7 @@ export function Candidate({
           .map((t) => (
             <p
               key={t.id}
-              title={`Technical state: ${t.assessment.state}; reasons: ${t.assessment.reasons.join(', ')}`}
+              title={`Technical state: ${t.assessment.state}${t.assessment.reasons.length > 0 ? `; reasons: ${t.assessment.reasons.join(', ')}` : ''}`}
             >
               Target £{t.target_gbp} ·{' '}
               {trackingStateLabel[t.assessment.state]}

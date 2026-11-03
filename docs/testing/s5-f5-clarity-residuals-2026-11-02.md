@@ -61,3 +61,21 @@ Agent verification (run sequentially):
 - `git diff --check`: passed.
 
 These remain agent-executed deterministic checks, not buyer acceptance or live-source evidence.
+
+## Third independent review fixes — 2026-11-03
+
+Three findings from the independent review of `3584ee1` were fixed directly at the existing render seams:
+
+1. Tracking alert-eligibility details no longer describe disputed evidence as “withdrawn or corrected”; both invalidated-evidence and revision-withdrawal reasons use neutral retained-evidence wording.
+2. A dispute followed by a correction and fresh-evidence verification keeps the current “Corrected” heading instead of deriving “Changed” from superseded lineage entries.
+3. Eligible and above-target card tooltips omit the reasons clause when no reasons exist; the existing non-empty-reason tooltip assertion remains unchanged.
+
+The new assertions were run before the production edits: **5 failed, 18 passed** in `CorrectionFlowClarity.test.jsx`, with each failure matching its reported defect. After the fixes:
+
+- Focused `CorrectionFlowClarity.test.jsx` + `CorrectionFormClarity.test.jsx`: **32/32 passed**.
+- Full `npx vitest run`: **136/136 passed** across 12 files.
+- `npm run build --prefix frontend`: passed; existing chunk-size advisory only.
+- `python3 scripts/check_public_markers.py`: passed.
+- `git diff --check`: passed.
+
+These remain agent-executed deterministic checks, not buyer acceptance or live-source evidence.
