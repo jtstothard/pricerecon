@@ -25,6 +25,18 @@ Ground rules (from the recorded sessions in the buyer guide):
 - If the screen disagrees with an Expect line, record the disagreement as a
   discrepancy. Do not silently prefer either side; that discrepancy is session output.
 
+**Copy refresh (2026-11-03, agent verification only).** The quoted UI copy and API
+field paths for tasks C2, G2, H1 (one reference), H2, H3, I1, I2, I3 and K1 were re-checked against the
+current frontend and API after the F1–F10 and F5-residual fixes, the dry run
+[offline-buyer-walkthrough-agent-dry-run-2026-11-03](offline-buyer-walkthrough-agent-dry-run-2026-11-03.md)
+§4 (D-1 to D-3) and the follow-up that made the collection panel follow its data.
+This refresh establishes no human comprehension: it ticks no box, signs no cluster or
+overall verdict, and leaves the verdict form and acknowledgement in section 5 as they
+were. Quoted strings and function names are authoritative; inline `file:line`
+references outside those tasks were not re-verified. A frontend test
+(`BuyerWalkthroughKit.test.jsx`) pins each corrected quotation to the source that
+produces it.
+
 ## 1. Session setup
 
 ### Have running
@@ -230,11 +242,14 @@ Story references are the numbered user stories in the
 - **Expect:** reference, generation, movement, size, dial and strap appear as separate
   fields, not merged titles ("Evidenced configuration" / "Unresolved configuration"
   sections, `frontend/src/pages/Discovery.tsx:334-348`). San Martin's mint
-  configuration versus the "Space Gray" selected dial leaves the merchant selection
-  unresolved — the binding is not supported
-  (`tests/monitoring/watch_workflow.py:128-131,218`). Casio's exact reference suffix
+  configuration versus the "Space Gray" selected dial is a conflict, not a merge: in
+  the API the binding resolution is `rejected` with issue `configuration_mismatch`
+  (`tests/monitoring/watch_workflow.py:128-131,218`; `src/pricerecon/categories/watches.py`),
+  and on the offer rows Qualification reads "unresolved" while Comparison reads
+  "rejected" (`frontend/src/pages/Discovery.tsx:472-473`). Casio's exact reference suffix
   is retained. Unresolved and conflicting states render as labels ("unresolved",
-  "conflicting"), never as certainty.
+  "conflicting"), never as certainty. San Martin is the "rejected" case, not an
+  unresolved one: its comparison is refused, not pending.
 - **Defect if:** similar names merged into one candidate; a conflicting claim hidden;
   a parent-listing's cheapest option assigned to the watch (pinned by
   `tests/test_qualification_workflow.py:41`).
@@ -487,13 +502,16 @@ Story references are the numbered user stories in the
   session script the table holds the seed capture plus each step capture (the coupon
   step adds a further row), and unchanged observations are retained as rows too, not
   filtered down to drops (`frontend/src/components/discovery/ObservationHistory.tsx:50-83`).
-  Each row shows its delivered total or "Total unknown"; "repeated evidence" and
-  "· withdrawn" markers appear where applicable. The panel states
+  Each row shows its delivered total or "Total unknown"; the status column reads
+  "current at capture", "unqualified at capture", "legacy — unqualified" or
+  "withdrawn after correction — kept on record", and "· repeated evidence" is appended
+  to a repeated capture. The panel states
   "Limited retained history. Usual price unavailable. No savings claim. Observations
   are separate from alert events and acquisition failures."
   (`frontend/src/components/discovery/ObservationHistory.tsx:36-39`).
-- **Partial:** the direction label itself (`initial` / `unchanged` / `increased` /
-  `decreased`) is carried per observation in the API record rather than the table
+- **Partial:** the price direction is the API field `change`
+  (`initial` / `unchanged` / `increased` / `decreased` / `not_comparable`), carried
+  per observation in the record rather than the table
   (`frontend/src/lib/history.ts:31`) — confirm it at
   `/api/discovery/candidates/{id}/history` if you want the labels. The buyer-fixture
   steps contain no price **increase**; rising observations are retained too, pinned by
@@ -537,7 +555,9 @@ Story references are the numbered user stories in the
   (`frontend/src/components/discovery/SourceCoverage.tsx:106-155`); cohort gaps in
   caution text; "Capped, blocked and failed attempts leave gaps; an empty result means
   the declared search completed."
-  (`frontend/src/components/discovery/CollectionCoverage.tsx:41-43`); per capture,
+  (the closing sentence of the "Collection limits and coverage" reserve paragraph in
+  `frontend/src/components/discovery/CollectionCoverage.tsx`; no line reference is kept
+  because the paragraph is assembled from `reserveStatement`); per capture,
   the outcome state, listing count, completeness and — where applicable — "Reused
   capture …; no new source observation."
   (`frontend/src/pages/Discovery.tsx:754-777`). Assessments carry their scope: "Lowest
@@ -553,16 +573,59 @@ Story references are the numbered user stories in the
 
 - **Do:** "Collection limits and coverage" panel (same view).
 - **Expect:** operating policy state, activation state and pending gates; usage rows
-  "… used or reserved of …; tracking reserve …" with the note "Tracking and
-  potential-alert verification have reserved capacity."
-  (`frontend/src/components/discovery/CollectionCoverage.tsx:33-78`); and the closing
+  "… used or reserved of …; tracking reserve …" showing the exact reserve per
+  resource and provider, under a sentence that follows those numbers and the policy
+  state. With a supplied envelope and every reserve 0 it reads "No capacity is carved
+  out of the shared allowance for tracking or potential-alert verification: every
+  tracking reserve is 0, so discovery and tracking draw on the same allowance until a
+  limit is used up." — a zero reserve is a statement about carve-outs, never an
+  admission guarantee, and any limit already at its used figure adds "N of M limits
+  are already used up, so further attempts that need them are capped."; with some
+  nonzero reserves it counts how many limits hold capacity back from discovery. When
+  admission is closed the sentence follows the backend's real state
+  (`collection_status` in `src/pricerecon/db/collection.py`), which keeps a policy and
+  its rows only for some of them:
+  - **Outside its window** (state `expired`, gate `operating_policy_expired`; the API
+    covers both an ended window and one that has not opened yet and sends no start
+    time, so the panel claims neither): "The operating envelope is not active now (its
+    window has closed or has not opened yet): admission is closed, so no tracking
+    reserve currently applies. The recorded figures below are exact but nothing can use
+    them." The retained envelope's exact resource and provider rows stay visible.
+  - **Supplied policy changed** (state `blocked`, gate `operating_policy_changed`): the
+    retained envelope is kept, so its exact rows are shown under "The supplied
+    operating policy differs from the retained envelope, so admission is closed and no
+    tracking reserve currently applies. The retained envelope is shown for reference;
+    nothing can use its figures."
+  - **Rejected, ambiguous or required** (state `blocked`, gates
+    `operating_policy_invalid`, `operating_policy_ambiguous`,
+    `operating_policy_required`): the backend selects no policy, so there is no
+    envelope id, no stop time and no usage rows at all — expect none. Invalid reads "The
+    stored operating envelope fails validation, so there is no usable
+    operating envelope and no tracking reserve is defined. Admission is closed.";
+    ambiguous reads "More than one operating envelope is stored and none can be
+    chosen, so there is no usable operating envelope and no tracking reserve is
+    defined. Admission is closed."; required reads "An operating envelope is required
+    and none usable is available, so no tracking reserve is defined. Admission is
+    closed."
+  - A supplied envelope that sets no limits reads "The supplied operating envelope sets
+    no limits, so no tracking reserve is defined."
+  - Under any closed state the envelope line reads "Retained envelope … is not in
+    force; recorded stop time …", never "stops …", which is reserved for a supplied
+    envelope.
+  (`reserveStatement` in `frontend/src/components/discovery/CollectionCoverage.tsx`;
+  the walkthrough fixture reports `tracking_reserve: 0` throughout under a supplied
+  envelope, so expect the first form there); and the closing
   honest note: "Collection also requires finite measured budgets, physical
   storage/WAL/log/backup limits, retention/deletion/restore qualification and a named
   maintenance owner. Fixture allowances do not supply these operating prerequisites."
   (`frontend/src/components/discovery/SourceCoverage.tsx:149-151`).
 - **Honesty:** the numbers shown are fixture allowances. Measured operating limits are
   an unproven gate (section 4) — nothing here is a commitment.
-- **Defect if:** fixture allowances presented as operating capacity.
+- **Defect if:** fixture allowances presented as operating capacity; a sentence
+  claiming reserved capacity beside reserves of 0; any claim that discovery can use
+  capacity while admission is closed; a rejected, ambiguous or required policy shown
+  with usage rows or an envelope id (the backend produces none); a supplied-but-rejected
+  envelope described as "not supplied".
 - ☐ Accepted · Evidence match (yes / partial / no) + your words: \_\_\_\_\_\_\_\_\_\_
 
 #### H3 — Age, staleness and no catch-up bursts · after `stale` (US43, US44)
@@ -571,8 +634,30 @@ Story references are the numbered user stories in the
   watch.
 - **Expect:** last-good evidence is preserved with its grown age and "Freshness
   unvalidated"; the tracked watch's assessment is withheld — stale evidence alone
-  never alerts; where a schedule exists the panel shows "Next eligible …; no catch-up
-  replay." (`frontend/src/components/discovery/CollectionCoverage.tsx:88`); no
+  never alerts; each attempt's `next_eligible_at` is the earliest permitted retry for that source
+  (attempt end plus recovery spacing; the lease end while running), never a scheduled
+  run. The API sends no server time, so the panel compares the recorded value with
+  this browser's clock and says so. Once the time has passed it reads "By this
+  browser's clock no spacing wait remains (recorded earliest next attempt: …); the
+  server decides admission when an attempt starts; no run is scheduled and missed
+  periods are not replayed." — in the walkthrough fixture it equals the attempt's own
+  time, so expect this form even after `stale` — and "Source spacing: recorded earliest
+  next attempt is … (by this browser's clock, still ahead); the server decides
+  admission when an attempt starts; no run is scheduled and missed periods are not
+  replayed." while a wait is still ahead. A running attempt reads "This source is held
+  for the running attempt until … (by this browser's clock, lease still ahead); the
+  server decides admission when an attempt starts; no run is scheduled and missed
+  periods are not replayed." until its lease passes, then "Lease expired, unconfirmed:
+  the running attempt's lease ended … (by this browser's clock) with no recorded
+  finish; the server decides admission when an attempt starts; no run is scheduled and
+  missed periods are not replayed." (a crashed process can leave such a row as
+  "running": `begin()` in `src/pricerecon/core/rate_limiter.py` marks only the latest
+  attempt row for that scope and source `interrupted` (`lease_expired_unconfirmed`),
+  and only when the next attempt starts with its lease already passed and no spacing
+  wait ahead; older running rows are never cleared and keep reading "Lease expired,
+  unconfirmed"; `retryTiming` in
+  `frontend/src/components/discovery/CollectionCoverage.tsx`; the exact recorded value
+  is the hover title); no
   catch-up burst fires (sends and alert events stay flat).
 - **Partial (suite-proven, not session-demonstrable):** the tracked-watch label
   "Stale evidence · alerts wait for a fresh offer"
@@ -594,16 +679,23 @@ Story references are the numbered user stories in the
   from mint to salmon; enter your name and a reason ("The selected variation differs
   from this watch."); save; reload. (The retained conflict screenshots show an actual
   API 409 rendered by the UI if a competing write happens — buyer guide, task 6.)
-- **Expect:** before saving, the form shows original vs intended values and the
-  consequence copy "Old prices stop applying. Your target stays; alerts wait for a
-  matching offer."
-  (`frontend/src/components/discovery/IdentityCorrection.tsx:62,99-102`). After
-  saving, the correction history lists
+- **Expect:** before saving, the form shows the live preview "You are changing dial
+  from mint to …", and once a value is chosen the consequence copy "Saving this
+  correction withdraws the prices recorded for the old details — they are kept on
+  record, no longer used for pricing, kept in History. Saving records your
+  correction; it does not fetch new prices." The button reads "Save correction — old
+  prices will be withdrawn"
+  (`frontend/src/components/discovery/IdentityCorrection.tsx:186-193,232`). After
+  saving, a status block starts "Correction saved — a history entry was added below."
+  and lists each dependent surface ("old observations were marked withdrawn — kept,
+  unchanged, in History"), and the correction history says "Old prices, coupons and
+  buying assessments are kept on record, no longer used for pricing. Your target
+  stays; alerts wait for a fresh matching offer." and lists
   each lineage entry "dial: mint → salmon (corrected)" with your name, rationale and
-  time (`frontend/src/components/discovery/IdentityCorrection.tsx:174-211`); no field
+  time (`frontend/src/components/discovery/IdentityCorrection.tsx:328-340`); no field
   is attributed to an invented actor. A rejected/stale write shows an error and
   "Reload the feed before retrying." — never a success message
-  (`frontend/src/components/discovery/IdentityCorrection.tsx:169`).
+  (`frontend/src/components/discovery/IdentityCorrection.tsx:235`).
 - **Defect if:** lineage erased or overwritten; an anonymous correction; success
   claimed on a rejected write.
 - ☐ Accepted · Evidence match (yes / partial / no) + your words: \_\_\_\_\_\_\_\_\_\_
@@ -611,8 +703,9 @@ Story references are the numbered user stories in the
 #### I2 — Dependent evidence is withdrawn, not transferred (US34)
 
 - **Do:** After saving, revisit the feed card, Costs, History and the tracking view.
-- **Expect:** the card caution "Old prices withdrawn · matching offer needed"
-  (`frontend/src/pages/Discovery.tsx:261-263`); the delivered total returns to "Total
+- **Expect:** the card caution "Details corrected (dial mint → salmon) · old prices
+  kept on record, no longer used for pricing · awaiting fresh evidence"
+  (`frontend/src/pages/Discovery.tsx:349-354`); the delivered total returns to "Total
   unknown" (`tests/monitoring/watch_workflow.py:346`); the coupon state reads
   "invalidated" (`tests/monitoring/watch_workflow.py:347`); assessments go historical
   or withdraw ("Current comparison unavailable"); the alert assessment is "withheld"
@@ -626,10 +719,11 @@ Story references are the numbered user stories in the
 #### I3 — Tracking intent survives the correction (US35)
 
 - **Do:** Check **Saved targets** and the tracking view.
-- **Expect:** the £60 target is retained with "Evidence withdrawn · target retained"
-  (`frontend/src/components/ExactTracking.tsx:68-70`); the correction history shows
-  "Intended dial: salmon"
-  (`frontend/src/components/discovery/IdentityCorrection.tsx:184-191`) and the API
+- **Expect:** the £60 target is retained with "Prior evidence no longer applies —
+  kept on record, no longer used for alerts · target retained"
+  (`frontend/src/components/ExactTracking.tsx:65-74`); under "Show full intended
+  configuration" the correction history lists "Intended dial" with the value salmon
+  (`frontend/src/components/discovery/IdentityCorrection.tsx:308-316`) and the API
   tracking record carries `intended_values.dial = "salmon"`; the separate Casio £40
   target is untouched
   (`tests/monitoring/watch_workflow.py:348-356`).
@@ -727,7 +821,8 @@ Story references are the numbered user stories in the
   lineage (`frontend/src/pages/Discovery.tsx:522-534`); every withholding decision
   names its gate in the alert-eligibility list
   (`frontend/src/components/ExactTracking.tsx:20-54`); assessment exclusions and gaps
-  are queryable at `/api/discovery/assessments` (`exclusions`, `gaps`).
+  are queryable at `/api/discovery/assessments`, per assessment under `exclusions`
+  and `coverage.gaps`.
 - **Partial (record, not screen):** the "Source claims: review required" block with
   its "Missing evidence: …" list is rendered by `SourceOfferEvidence`
   (`frontend/src/components/discovery/SourceCoverage.tsx:55-113`), which is not
