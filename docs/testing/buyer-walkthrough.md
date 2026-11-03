@@ -599,8 +599,8 @@ Story references are the numbered user stories in the
   - **Rejected, ambiguous or required** (state `blocked`, gates
     `operating_policy_invalid`, `operating_policy_ambiguous`,
     `operating_policy_required`): the backend selects no policy, so there is no
-    envelope id, no stop time and no usage rows at all — expect none. Invalid reads "A
-    supplied operating envelope was rejected as invalid, so there is no usable
+    envelope id, no stop time and no usage rows at all — expect none. Invalid reads "The
+    stored operating envelope fails validation, so there is no usable
     operating envelope and no tracking reserve is defined. Admission is closed.";
     ambiguous reads "More than one operating envelope is stored and none can be
     chosen, so there is no usable operating envelope and no tracking reserve is

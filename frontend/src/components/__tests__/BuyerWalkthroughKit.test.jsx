@@ -115,7 +115,7 @@ const canonical = [
   [
     'H2 invalid policy',
     'coverage',
-    'A supplied operating envelope was rejected as invalid, so there is no usable operating envelope and no tracking reserve is defined. Admission is closed.',
+    'The stored operating envelope fails validation, so there is no usable operating envelope and no tracking reserve is defined. Admission is closed.',
   ],
   [
     'H2 ambiguous policy',

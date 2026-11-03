@@ -140,7 +140,7 @@ it('says a rejected (invalid) envelope was supplied but is unusable, with no pol
   const text = await show(rejected('operating_policy_invalid'))
   expect(text).toContain('Operating policy: blocked.')
   expect(text).toContain(
-    'A supplied operating envelope was rejected as invalid, so there is no usable operating envelope and no tracking reserve is defined. Admission is closed.'
+    'The stored operating envelope fails validation, so there is no usable operating envelope and no tracking reserve is defined. Admission is closed.'
   )
   expect(text).not.toContain('No operating envelope is supplied')
   expect(text).not.toMatch(NO_CLAIM)

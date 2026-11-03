@@ -17,7 +17,7 @@ import { parseCollection, type CollectionStatus } from '../../lib/collection'
 //    are no scope, stop time or rows at all.
 function rejectedStatement(gate: string | undefined) {
   if (gate === 'operating_policy_invalid')
-    return 'A supplied operating envelope was rejected as invalid, so there is no usable operating envelope and no tracking reserve is defined. Admission is closed.'
+    return 'The stored operating envelope fails validation, so there is no usable operating envelope and no tracking reserve is defined. Admission is closed.'
   if (gate === 'operating_policy_ambiguous')
     return 'More than one operating envelope is stored and none can be chosen, so there is no usable operating envelope and no tracking reserve is defined. Admission is closed.'
   return 'An operating envelope is required and none usable is available, so no tracking reserve is defined. Admission is closed.'
