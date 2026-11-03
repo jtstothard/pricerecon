@@ -513,7 +513,7 @@ async def acquire(*args, **kwargs):
 root = sys.argv[1]
 sys.argv = ['worker', '--synthetic', root]
 with patch.object(worker, 'acquire_once', acquire), patch.object(ui, 'serve_ui', serve), patch.object(worker, 'install_storage_guard', guard):
-    worker.main()
+    worker.run()
 """.replace("getattr(signal, sys.argv[2])", f"signal.{stop_signal}")
     root = tmp_path / "stop"
     command = [sys.executable, "-c", script, str(root)]
@@ -567,6 +567,55 @@ with patch.object(worker, 'acquire_once', acquire), patch.object(ui, 'serve_ui',
     assert again.returncode == 0, again.stderr
     assert not root.with_suffix(".consumed").exists()
     assert "synthetic-memory-only" not in result.stdout
+
+
+def test_operator_stop_receipt_does_not_wait_on_interpreter_finalization(tmp_path):
+    # Flake root cause (pilot-subprocess-flakes): after the worker prints its
+    # terminal receipt, CPython still runs interpreter finalization (module
+    # teardown and GC over the pydantic/fastapi/uvicorn object graph). That is
+    # ~0.1s on an idle host but grows ~10x under host contention (measured
+    # median 1.2s, max 2.4s), eating the supervisor's fixed 2s stop budget, so
+    # a worker that had already stopped, cleaned up and reported
+    # operator_stopped was classified operator_stop_failed. Slow finalization is
+    # simulated deterministically with an atexit sleep longer than that budget.
+    # The real `python -m pricerecon.pilot_worker` __main__ path must not run it.
+    from pricerecon.pilot_supervisor import supervise
+
+    script = """
+import asyncio, atexit, os, runpy, signal, sys, time
+import pricerecon.pilot_ui as ui
+async def stalled_ui_check(app):
+    # Hold the worker mid-run, then deliver the operator stop to the supervisor
+    # (our parent), which forwards INT to this process group.
+    os.kill(os.getppid(), signal.SIGINT)
+    await asyncio.sleep(30)
+ui.check_ui = stalled_ui_check
+atexit.register(time.sleep, 3)  # stand-in for slow interpreter finalization
+sys.argv = ['pilot_worker', '--synthetic', '--ui-check', sys.argv[1]]
+runpy.run_module('pricerecon.pilot_worker', run_name='__main__')
+"""
+    root = tmp_path / "slow-finalization"
+    receipt = supervise([sys.executable, "-c", script, str(root)], root, timeout=20)
+    assert receipt["state"] == "operator_stopped"
+    assert receipt["cleanup"] is True
+    assert not root.exists()
+
+
+def test_worker_entry_failure_still_exits_nonzero_after_fast_exit_change(tmp_path):
+    # The fast exit after the receipt must never mask a failed run: an invalid
+    # (already existing) run directory still fails closed with a non-zero status.
+    existing = tmp_path / "exists"
+    existing.mkdir()
+    result = subprocess.run(
+        [sys.executable, "-m", "pricerecon.pilot_worker", "--synthetic", str(existing)],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+    assert result.returncode != 0
+    assert result.stdout == ""
+    assert existing.exists()
 
 
 def test_abnormal_worker_exit_cannot_promote_receipt_to_success(tmp_path):

@@ -364,5 +364,24 @@ def main() -> None:
     print(json.dumps(receipt, sort_keys=True))
 
 
-if __name__ == "__main__":
+def run() -> None:
+    """Process entry: run, flush the terminal receipt, skip interpreter finalization.
+
+    Once ``main`` returns, the receipt is the worker's last act: the run root and
+    any synthetic tombstone are already deleted, the live grant was fsynced
+    before acquisition, and no non-daemon thread remains. What is left is
+    CPython finalization (module teardown and GC over the pydantic/fastapi/
+    uvicorn graph), ~0.1s idle but measured at a 1.2s median / 2.4s max under
+    host contention. The supervisor's operator-stop budget is a fixed 2s, so
+    that latency alone turned a completed ``operator_stopped`` run into
+    ``operator_stop_failed``. Exceptions from ``main`` propagate unchanged
+    (non-zero exit); only a run that already printed its receipt exits early.
+    """
     main()
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(0)
+
+
+if __name__ == "__main__":
+    run()
