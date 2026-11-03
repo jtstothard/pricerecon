@@ -7,16 +7,13 @@ import {
   resolveDelivery,
   saveTracking,
   type Delivery,
+  trackingStateLabel,
   type ExactTracking,
   type TrackingChannel,
 } from '../lib/tracking'
 import type { DiscoveryCandidate } from '../lib/discovery'
+import { correctionPresentationState, currentCorrectionSummary } from '../lib/corrections'
 
-const states = {
-  eligible: 'Eligible at target',
-  above_target: 'Above target',
-  withheld: 'Alert withheld',
-}
 const reasons: Record<string, string> = {
   policy_required: 'Freshness and buyer eligibility policy have not been supplied.',
   target_changed_requires_observation: 'Target changed; waiting for a new qualified observation.',
@@ -27,7 +24,7 @@ const reasons: Record<string, string> = {
   duplicate_or_older_evidence: 'Duplicate or older evidence; no new alert.',
   above_target: 'Verified at observation, above your delivered target.',
   evidence_stale_or_expired: 'Evidence is stale or expired; a fresh check is required.',
-  evidence_invalidated: 'Evidence was withdrawn or corrected; intent retained.',
+  evidence_invalidated: 'Prior evidence no longer applies; target retained.',
   preferences_changed_requires_observation:
     'Preferences changed; waiting for a qualified observation.',
   preference_mismatch_or_unknown:
@@ -50,14 +47,14 @@ const reasons: Record<string, string> = {
     'Acquisition routes disagree about the same offer total; alert withheld.',
   acquisition_partial_or_reused:
     'Acquisition is partial or reuses a cached capture; a fresh complete check is required.',
-  evidence_revision_withdrawn: 'A required evidence revision was withdrawn; alert withheld.',
+  evidence_revision_withdrawn: 'Supporting evidence no longer applies; alert withheld.',
 }
 
 export function TrackingStatus({ intent }: { intent: ExactTracking }) {
   return (
     <div className="exact-tracking-state" role="status">
       <strong>
-        {states[intent.assessment.state]} · target £{intent.target_gbp} delivered
+        {trackingStateLabel[intent.assessment.state]} · target £{intent.target_gbp} delivered
       </strong>
       {intent.assessment.delivered_gbp !== null && (
         <p>Assessed delivered total £{intent.assessment.delivered_gbp}.</p>
@@ -65,11 +62,14 @@ export function TrackingStatus({ intent }: { intent: ExactTracking }) {
       {intent.assessment.reasons.some(
         (reason) => reason.includes('stale') || reason.includes('expired')
       ) && <p className="discovery-caution">Stale evidence · alerts wait for a fresh offer</p>}
+      {/* Neutral on purpose: a disputed save or a bare revision withdrawal also
+          lands here, so the wording must not claim the evidence was "corrected". */}
       {intent.assessment.reasons.some(
         (reason) => reason.includes('invalidated') || reason.includes('withdrawn')
       ) && (
         <p className="discovery-caution" title="Technical state: evidence invalidated">
-          Evidence corrected — kept on record, no longer used for alerts · target retained
+          Prior evidence no longer applies — kept on record, no longer used for alerts · target
+          retained
         </p>
       )}
       <section>
@@ -202,6 +202,16 @@ export default function ExactTrackingControl({
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const correction = candidate.corrections.find(
+    (item) => item.configuration_id === configuration.id && item.requalification === 'required'
+  )
+  const correctedValues = currentCorrectionSummary(correction ? [correction] : [])
+  const retainedConfiguration = correction?.original_configuration ?? configuration
+  const detailsLabel = {
+    corrected: 'Corrected details',
+    disputed: 'Disputed details',
+    changed: 'Changed details',
+  }[correctionPresentationState(correctedValues)]
   useEffect(() => {
     setTarget(intent?.target_gbp ?? '')
     setSelected(intent?.notifications.channels ?? [])
@@ -236,13 +246,29 @@ export default function ExactTrackingControl({
       {intent && <TrackingStatus intent={intent} />}
       <section className="exact-tracking-editor">
         <h3>{intent ? 'Edit delivered target' : 'Track this watch'}</h3>
-        <h3>Tracked watch</h3>
+        <h3>
+          Tracked watch{correctedValues.length > 0 ? ' — retained observation' : ''}
+        </h3>
+        {correctedValues.length > 0 && (
+          <p>Details as originally observed; kept unchanged as evidence.</p>
+        )}
         <DetailRows
           rows={['reference', 'dial', 'movement', 'strap'].map((field) => [
             field,
-            configuration.values[field] ?? 'Unresolved',
+            retainedConfiguration.values[field] ?? 'Unresolved',
           ])}
         />
+        {correctedValues.length > 0 && (
+          <section>
+            <h3>{detailsLabel} — waiting for fresh evidence</h3>
+            <DetailRows
+              rows={correctedValues.map((entry) => [
+                entry.field.replace(/_/g, ' '),
+                `${entry.value} (was: ${entry.original_value ?? 'unknown'}, as listed)`,
+              ])}
+            />
+          </section>
+        )}
         <p>
           Saving keeps this exact intent. Collection remains staged. A supplied policy and fresh
           qualified evidence are required before verified delivered alerts.
@@ -253,8 +279,7 @@ export default function ExactTrackingControl({
             // retained target; it must explain the wait, not read as
             // "your target is blocked".
             <p>
-              Your saved target is retained. Alerts wait for fresh evidence for the corrected
-              watch.
+              Your saved target is retained. Alerts wait for fresh evidence for this watch.
             </p>
           ) : (
             <p>Exact identity must be resolved before starting exact tracking.</p>
