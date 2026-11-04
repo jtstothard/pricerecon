@@ -468,6 +468,9 @@ class AliExpressConnector(BaseConnector):
                 raise ValueError("browser_product_ids must name products in this discovery result")
             targets = list(dict.fromkeys(requested_ids))[:limit]
         offers = []
+        requested_variant = filters.get("browser_variant", self.config.get("browser_variant", {}))
+        if not isinstance(requested_variant, dict):
+            requested_variant = {}
         for target in targets:
             result = await self.navigate_external_browser(
                 f"https://www.aliexpress.com/item/{target}.html"
@@ -484,6 +487,11 @@ class AliExpressConnector(BaseConnector):
             if match_kind == "none":
                 offer = replace(offer, issues=(*offer.issues, "query_title_mismatch"))
             offers.append(offer)
+            if not offer.qualification_issues(requested_variant):
+                # Cost bound: every extra PDP open costs seconds and raises
+                # slider-captcha exposure. Stop at the first offer that
+                # clears every fatal qualification dimension.
+                break
         report = BrowserSearchReport(
             discovery_url, len(pids), len(offers), len(targets) < len(pids), tuple(offers)
         )

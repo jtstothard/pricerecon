@@ -267,7 +267,16 @@ def parse_offer(pid: str, result: ExternalBrowserResult) -> BrowserOfferEvidence
                 if match := re.fullmatch(r"SKU(?: ID)?:\s*(\d{6,30})", label, re.IGNORECASE):
                     sku = match[1]
         text = " ".join(lines)
-        quantity_match = re.search(r'spinbutton "quantity"[^\n]*:\s*"?(\d+)', "\n".join(lines))
+        joined = "\n".join(lines)
+        quantity_match = re.search(r'spinbutton "quantity"[^\n]*:\s*"?(\d+)', joined)
+        if not quantity_match:
+            # Observed live (2026-11-04): the quantity spinner is a labelled
+            # textbox, e.g. "- text: Quantity" followed by '- textbox [e22]: "1"'.
+            quantity_match = re.search(
+                r"-\s*text:\s*Quantity[^\n]*\n(?:\s*-\s*img[^\n]*\n)*"
+                r'\s*-\s*(?:textbox|spinbutton)[^\n]*:\s*"?(\d+)"?',
+                joined,
+            )
         quantity = int(quantity_match[1]) if quantity_match else None
     if not title:
         issues.append("product_title_unresolved")
@@ -275,11 +284,33 @@ def parse_offer(pid: str, result: ExternalBrowserResult) -> BrowserOfferEvidence
     if amount is not None and (not amount.is_finite() or amount <= 0):
         amount = None
         issues.append("invalid_display_price")
+    # A quantity pack row ("Color: 1 piece") is a bundle size, never a dial:
+    # recording it would masquerade as verified dial evidence (observed live).
+    if re.fullmatch(r"\d+\s?pieces?", selected.get("dial", ""), re.IGNORECASE):
+        selected.pop("dial")
     # A selected color label can itself expose a movement conflict. Never use
     # a VH31 title to overwrite an explicit 2035 label (observed live).
     movement = re.search(r"\b(VH31|VH65|2035|515)\b", " ".join(selected.values()), re.IGNORECASE)
     if movement and "movement" not in selected:
         selected["movement"] = movement[1].upper()
+    if "movement" not in selected and title:
+        # PDP titles assert calibres ("San Martin 39mm NH34 ..."). Only used
+        # when no explicit selected label carries a movement; an explicit
+        # label always wins (same doctrine as the VH31/2035 rule above).
+        caliber = re.search(
+            r"\b(?:NH3[4-9]|7S26|7S36|4R35|4R36|VK6[34]|PT5000|9015|9039|2824|2892|"
+            r"HZ64\d{2}|VH3[15]|VH65|2035|515|MIYOTA\s*\d{4})\b",
+            title,
+            re.IGNORECASE,
+        )
+        if caliber:
+            selected["movement"] = caliber[0].upper()
+    if "size" not in selected and title:
+        # PDP titles state case size ("... 39mm ..."); PDP-level evidence, and
+        # only recorded when the seller's own SKU properties did not.
+        size = re.search(r"\b(\d{2}(?:[.,]\d+)?)\s?mm\b", title, re.IGNORECASE)
+        if size:
+            selected["size"] = size[1].replace(",", ".") + "mm"
     destination = (
         "GB" if re.search(r"(?:Ship|Deliver) to:\s*United Kingdom\b", text, re.IGNORECASE) else None
     )
