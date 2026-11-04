@@ -35,6 +35,68 @@ _PRODUCT_HOSTS = {"aliexpress.com", "www.aliexpress.com", "m.aliexpress.com"}
 _PID_RE = re.compile(r"\b(\d{10,20})\b")
 _PRICE_RE = re.compile(r"(?P<currency>GBP|£|\$|USD|EUR|€)?\s*(?P<amount>\d+(?:\.\d{1,2})?)")
 
+_QUERY_STOPWORDS = frozenset(
+    {
+        "amd",
+        "intel",
+        "cpu",
+        "processor",
+        "motherboard",
+        "board",
+        "memory",
+        "ram",
+        "desktop",
+        "used",
+        "new",
+        "for",
+        "with",
+        "and",
+        "the",
+        "socket",
+        "series",
+        "gb",
+        "mhz",
+        "am4",
+        "am5",
+    }
+)
+# Reference parts may be re-separated in keyword-salad titles: the catalogue
+# writes "PX1692-YunS", a title may read "PX1692 YUNS".
+_SEPARATOR_CLASS = r"[\s\-_.+]+"
+_SEPARATORS = re.compile(r"[\s\-_.+]+")
+
+# How a discovery title matched the search query, and what that is worth:
+# an exact reference or an exact product id established identity, a substring
+# hit only suggested it, and an unconstrained query tested nothing at all.
+# Confidence inflation here is what deal alerts would inherit.
+_CONFIDENCE_BY_TITLE_MATCH: dict[str, tuple[bool, VariantMatchConfidence]] = {
+    "product_id": (True, VariantMatchConfidence.HIGH),
+    "word": (True, VariantMatchConfidence.HIGH),
+    "substring": (False, VariantMatchConfidence.MEDIUM),
+    "unconstrained": (False, VariantMatchConfidence.LOW),
+    "none": (False, VariantMatchConfidence.LOW),
+}
+
+
+def _is_model_reference(token: str) -> bool:
+    """A token carrying a digit names a model reference: "ml05", "sn0150-g3"."""
+    return any(ch.isdigit() for ch in token)
+
+
+def _reference_pattern(token: str) -> str:
+    """Word-bounded, separator-flexible pattern for one model reference.
+
+    Parts keep word boundaries and stay adjacent: "ml05" must not swallow
+    "ml05s", "sn0150-g3" must not swallow "sn0150-g34", and the PX1692-YunS
+    listing must never answer a PX1692-ST query.
+    """
+    parts = [re.escape(part) for part in _SEPARATORS.split(token) if part]
+    return rf"(?<!\w){_SEPARATOR_CLASS.join(parts)}(?!\w)"
+
+
+def _word_boundary_pattern(token: str) -> str:
+    return rf"(?<!\w){re.escape(token)}(?!\w)"
+
 
 class AliExpressConnector(BaseConnector):
     collection_accounting = "http_v1"
@@ -345,8 +407,7 @@ class AliExpressConnector(BaseConnector):
         if isinstance(capture, SourceReceipt):
             capture.page_limit = 1
             capture.detail_limit = limit
-        manual = query if query.isdigit() else self._extract_pid_from_url(query)
-        pid = self._normalize_pid(manual) if manual else None
+        pid = self._query_product_id(query)
         discovery_url = None
         if pid:
             pids = [pid]
@@ -419,7 +480,8 @@ class AliExpressConnector(BaseConnector):
                     {"reason": "browser_product_failed", "product_id": target},
                 )
             offer = parse_offer(target, result)
-            if not pid and not self._title_matches_query(offer.title, query):
+            match_kind = "product_id" if pid else self._title_match_kind(offer.title, query)
+            if match_kind == "none":
                 offer = replace(offer, issues=(*offer.issues, "query_title_mismatch"))
             offers.append(offer)
         report = BrowserSearchReport(
@@ -463,43 +525,74 @@ class AliExpressConnector(BaseConnector):
                 report.discovered_count,
             )
         warnings = [offer.verification_warnings(requested) for offer in report.offers]
-        return [
-            NormalizedListing(
-                source=self.connector_id,
-                source_type=SourceType.MARKETPLACE,
-                source_listing_id=f"{offer.pid}:{offer.selected_sku or 'pdp'}",
-                title_raw=offer.title or query,
-                price=offer.displayed_price,
-                currency="GBP",
-                url=f"https://www.aliexpress.com/item/{offer.pid}.html",
-                timestamp_seen=datetime.now(UTC),
-                exact_variant_confirmed=True,
-                variant_match_confidence=VariantMatchConfidence.HIGH,
-                shipping_cost=None,
-                total_landed_cost=None,
-                in_stock=None,
-                risk_flags=["UK_TOTAL_UNVERIFIED"],
-                product_normalized=None,
-                condition=None,
-                condition_raw=None,
-                seller_or_store=None,
-                seller_feedback_score=None,
-                seller_feedback_pct=None,
-                location=None,
-                stock_state=None,
-                image_url=None,
-                mismatch_flags=None,
-                category=None,
-                variant_normalized={
-                    "aliexpress_source_lane": "browser_first",
-                    "browser_evidence": {
-                        **offer.summary(),
-                        "verification_warnings": warning,
-                    },
-                },
+        pid_query = self._query_product_id(query)
+        listings: list[NormalizedListing] = []
+        for offer, warning in zip(report.offers, warnings):
+            match_kind = "product_id" if pid_query else self._title_match_kind(offer.title, query)
+            exact_variant_confirmed, confidence = _CONFIDENCE_BY_TITLE_MATCH.get(
+                match_kind, (False, VariantMatchConfidence.LOW)
             )
-            for offer, warning in zip(report.offers, warnings)
-        ]
+            risk_flags = ["UK_TOTAL_UNVERIFIED"]
+            if not offer.price_bound_to_sku:
+                # A displayed price is not a selected offer: nothing on this page
+                # ties it to a purchasable selection (an offer that exposes a SKU
+                # without binding its price was already rejected as fatal above).
+                # The row keeps the number for review, but never as an asserted
+                # deal price — the flag, price_scope and log line say so loudly.
+                risk_flags.append("DISPLAYED_PRICE_UNBOUND_TO_SKU")
+                logger.warning(
+                    "AliExpress %s: surfaced price %s %s is a page display with no "
+                    "selected SKU behind it (selected_sku=%s)",
+                    offer.pid,
+                    offer.displayed_price,
+                    offer.currency,
+                    offer.selected_sku,
+                )
+            listings.append(
+                NormalizedListing(
+                    source=self.connector_id,
+                    source_type=SourceType.MARKETPLACE,
+                    source_listing_id=f"{offer.pid}:{offer.selected_sku or 'pdp'}",
+                    title_raw=offer.title or query,
+                    price=offer.displayed_price,
+                    currency="GBP",
+                    url=f"https://www.aliexpress.com/item/{offer.pid}.html",
+                    timestamp_seen=datetime.now(UTC),
+                    exact_variant_confirmed=exact_variant_confirmed,
+                    variant_match_confidence=confidence,
+                    shipping_cost=None,
+                    total_landed_cost=None,
+                    in_stock=None,
+                    risk_flags=risk_flags,
+                    product_normalized=None,
+                    condition=None,
+                    condition_raw=None,
+                    seller_or_store=None,
+                    seller_feedback_score=None,
+                    seller_feedback_pct=None,
+                    location=None,
+                    stock_state=None,
+                    image_url=None,
+                    mismatch_flags=None,
+                    category=None,
+                    variant_normalized={
+                        "aliexpress_source_lane": "browser_first",
+                        "browser_evidence": {
+                            **offer.summary(),
+                            "verification_warnings": warning,
+                            # Why the confidence above is what it is, and
+                            # whether the price belongs to a selection.
+                            "title_match": match_kind,
+                            "price_scope": (
+                                "selected_variation"
+                                if offer.price_bound_to_sku
+                                else "display_unbound"
+                            ),
+                        },
+                    },
+                )
+            )
+        return listings
 
     def _is_affiliate_search_enabled(self, filters: dict[str, Any]) -> bool:
         if filters.get("affiliate_only") is False:
@@ -738,53 +831,72 @@ class AliExpressConnector(BaseConnector):
         """Exact word match first; substring fallback for keyword-salad titles.
 
         AliExpress titles concatenate modifiers ("Wristwatch", "SN0150-G3"),
-        so a strict word-boundary check rejects real matches.
+        so a strict word-boundary check rejects real matches. Only plain word
+        tokens get that fallback — model references keep word-boundary
+        semantics, see _title_match_kind.
+        """
+        return self._title_match_kind(title, query) != "none"
+
+    def _title_match_kind(self, title: str | None, query: str) -> str:
+        """Classify how a discovery title matched the query.
+
+        "word"          every strong token matched on a word boundary
+        "substring"     every reference matched on a boundary, but a plain
+                        word token only matched inside a compound word
+        "none"          a reference, or a qualifier pinning one, is absent
+        "unconstrained" the query carries no strong token, so nothing tested
         """
         strong_tokens = self._query_strong_tokens(query)
         if not strong_tokens:
-            return True
+            return "unconstrained"
         lowered = (title or "").casefold()
         if not lowered:
-            return False
-        if all(
-            re.search(rf"(?<!\w){re.escape(token)}(?!\w)", lowered) for token in strong_tokens
-        ):
-            return True
-        return all(token in lowered for token in strong_tokens)
+            return "none"
+        references = [token for token in strong_tokens if _is_model_reference(token)]
+        words = [token for token in strong_tokens if not _is_model_reference(token)]
+        # A model reference is never relaxed to a bare substring match: that is
+        # how "ml05" would claim "ml05S", "sn0150-g3" would claim "sn0150-G34",
+        # and one PX1692 listing would claim its sibling's.
+        if not all(re.search(_reference_pattern(token), lowered) for token in references):
+            return "none"
+        if references:
+            # Short qualifiers the strong-token filter drops ("YunS", "ST")
+            # are exactly what separates two listings on one reference, so a
+            # reference query only matches titles that carry them as words.
+            qualifiers = [
+                token
+                for token in self._query_tokens(query)
+                if token not in strong_tokens and len(token) >= 2
+            ]
+            if not all(re.search(_word_boundary_pattern(token), lowered) for token in qualifiers):
+                return "none"
+        if all(re.search(_word_boundary_pattern(token), lowered) for token in words):
+            return "word"
+        if all(token in lowered for token in words):
+            return "substring"
+        return "none"
+
+    def _query_product_id(self, query: str) -> str | None:
+        """Resolve a query that is itself a product id or product URL."""
+        manual = query if query.isdigit() else self._extract_pid_from_url(query)
+        return self._normalize_pid(manual) if manual else None
+
+    def _query_tokens(self, query: str) -> list[str]:
+        """Query tokens after stopword removal, in order, deduplicated."""
+        tokens: list[str] = []
+        for token in re.findall(r"[a-z0-9+.-]+", (query or "").casefold()):
+            normalized = token.strip("-._")
+            if normalized and normalized not in _QUERY_STOPWORDS and normalized not in tokens:
+                tokens.append(normalized)
+        return tokens
 
     def _query_strong_tokens(self, query: str) -> list[str]:
-        stopwords = {
-            "amd",
-            "intel",
-            "cpu",
-            "processor",
-            "motherboard",
-            "board",
-            "memory",
-            "ram",
-            "desktop",
-            "used",
-            "new",
-            "for",
-            "with",
-            "and",
-            "the",
-            "socket",
-            "series",
-            "gb",
-            "mhz",
-            "am4",
-            "am5",
-        }
-        tokens = [token.lower() for token in re.findall(r"[a-z0-9+.-]+", (query or "").casefold())]
-        strong: list[str] = []
-        for token in tokens:
-            normalized = token.strip("-._")
-            if not normalized or normalized in stopwords:
-                continue
-            if any(ch.isdigit() for ch in normalized) or len(normalized) >= 5:
-                strong.append(normalized)
-        return list(dict.fromkeys(strong))
+        """Tokens that carry identity: model references and longer words."""
+        return [
+            token
+            for token in self._query_tokens(query)
+            if _is_model_reference(token) or len(token) >= 5
+        ]
 
     async def _affiliate_search(
         self, query: str, filters: dict[str, Any]
