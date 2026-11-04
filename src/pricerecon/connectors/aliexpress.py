@@ -419,10 +419,7 @@ class AliExpressConnector(BaseConnector):
                     {"reason": "browser_product_failed", "product_id": target},
                 )
             offer = parse_offer(target, result)
-            if not pid and any(
-                not re.search(rf"(?<!\w){re.escape(token)}(?!\w)", offer.title or "", re.IGNORECASE)
-                for token in self._query_strong_tokens(query)
-            ):
+            if not pid and not self._title_matches_query(offer.title, query):
                 offer = replace(offer, issues=(*offer.issues, "query_title_mismatch"))
             offers.append(offer)
         report = BrowserSearchReport(
@@ -445,7 +442,7 @@ class AliExpressConnector(BaseConnector):
             raise ValueError("browser_variant must contain explicit string configuration values")
         report = await self.inspect_browser_search(query, filters)
         issues = [offer.qualification_issues(requested) for offer in report.offers]
-        if report.capped or any(issues):
+        if any(issues):
             raise ConnectorDegradedError(
                 ConnectorStatus.parse_error,
                 "AliExpress browser offers need configuration review",
@@ -454,15 +451,23 @@ class AliExpressConnector(BaseConnector):
                     "reason": "unqualified_browser_offer",
                     "discovered_count": report.discovered_count,
                     "inspected_count": report.inspected_count,
-                    "capped": report.capped,
                     "issues": issues,
                 },
             )
+        if report.capped:
+            # Bounded inspection is partial success, not a quality failure: the
+            # cap (1..10) is always below discovery depth on popular queries.
+            logger.info(
+                "AliExpress browser inspection capped: %s of %s discovered products inspected",
+                report.inspected_count,
+                report.discovered_count,
+            )
+        warnings = [offer.verification_warnings(requested) for offer in report.offers]
         return [
             NormalizedListing(
                 source=self.connector_id,
                 source_type=SourceType.MARKETPLACE,
-                source_listing_id=f"{offer.pid}:{offer.selected_sku}",
+                source_listing_id=f"{offer.pid}:{offer.selected_sku or 'pdp'}",
                 title_raw=offer.title or query,
                 price=offer.displayed_price,
                 currency="GBP",
@@ -487,10 +492,13 @@ class AliExpressConnector(BaseConnector):
                 category=None,
                 variant_normalized={
                     "aliexpress_source_lane": "browser_first",
-                    "browser_evidence": offer.summary(),
+                    "browser_evidence": {
+                        **offer.summary(),
+                        "verification_warnings": warning,
+                    },
                 },
             )
-            for offer in report.offers
+            for offer, warning in zip(report.offers, warnings)
         ]
 
     def _is_affiliate_search_enabled(self, filters: dict[str, Any]) -> bool:
@@ -725,6 +733,24 @@ class AliExpressConnector(BaseConnector):
     def _listing_matches_query(self, listing: NormalizedListing) -> bool:
         mismatch_flags = set(listing.mismatch_flags or [])
         return "QUERY_MISMATCH" not in mismatch_flags
+
+    def _title_matches_query(self, title: str | None, query: str) -> bool:
+        """Exact word match first; substring fallback for keyword-salad titles.
+
+        AliExpress titles concatenate modifiers ("Wristwatch", "SN0150-G3"),
+        so a strict word-boundary check rejects real matches.
+        """
+        strong_tokens = self._query_strong_tokens(query)
+        if not strong_tokens:
+            return True
+        lowered = (title or "").casefold()
+        if not lowered:
+            return False
+        if all(
+            re.search(rf"(?<!\w){re.escape(token)}(?!\w)", lowered) for token in strong_tokens
+        ):
+            return True
+        return all(token in lowered for token in strong_tokens)
 
     def _query_strong_tokens(self, query: str) -> list[str]:
         stopwords = {

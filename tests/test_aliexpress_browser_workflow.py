@@ -37,7 +37,7 @@ def selected_offer(sku="1001", price_sku="1001", currency="£"):
     Deliver to: United Kingdom. Shipping: Free. Price includes VAT."""
 
 
-def connector_for(html, *, truncated=False, status=200):
+def connector_for(html, *, truncated=False, status=200, discovery_html=None):
     calls = []
 
     def handler(request):
@@ -46,7 +46,9 @@ def connector_for(html, *, truncated=False, status=200):
         body = json.loads(request.content)
         calls.append(body["url"])
         if "/w/wholesale-" in body["url"]:
-            content = f'<a href="{URL}">ML05</a><a href="https://evil.test/item/1005007071090999.html">trap</a>'
+            content = discovery_html or (
+                f'<a href="{URL}">ML05</a><a href="https://evil.test/item/1005007071090999.html">trap</a>'
+            )
         else:
             content = html
         return httpx.Response(
@@ -228,3 +230,63 @@ def test_real_snapshot_quotes_preserve_selected_conflict_without_using_other_opt
     assert offer.selected_options == {"dial": "Grey with logo 2035", "movement": "2035"}
     assert "movement_mismatch" in offer.qualification_issues(VARIANT)
     assert offer.selected_sku is None
+
+
+UNBOUND_PDP = """<h1>Militado ML05 38mm Wristwatch</h1>
+<span class="price--currentPriceText--live">￡35.82</span>
+<input name="quantity" value="1">Deliver to: United Kingdom"""
+
+
+async def test_capped_inspection_is_partial_success_not_degradation():
+    second = f'<a href="https://www.aliexpress.com/item/1005007071090777.html">ML05 alt</a>'
+    discovery = f'<a href="{URL}">ML05</a>{second}<a href="https://evil.test/item/1005007071090999.html">trap</a>'
+    connector, calls = connector_for(selected_offer(), discovery_html=discovery)
+    try:
+        rows = await connector.search(
+            "Militado ML05", {"browser_variant": {}, "browser_max_products": 1}
+        )
+        report = connector._last_browser_report
+        assert report.capped is True  # 2 discovered > limit 1: partial success now
+        assert report.discovered_count == 2 and report.inspected_count == 1
+        assert len(rows) == 1 and rows[0].price == Decimal("42.00")
+        assert calls.count(URL) == 1  # only the bounded target's PDP was opened
+    finally:
+        await connector.cleanup()
+        await connector._client.aclose()
+
+
+async def test_unrequested_dimensions_and_absent_sku_warn_without_gating():
+    connector, _ = connector_for(UNBOUND_PDP)
+    try:
+        rows = await connector.search("Militado ML05", {"browser_max_products": 1})
+        assert len(rows) == 1
+        evidence = rows[0].variant_normalized["browser_evidence"]
+        assert evidence["selected_sku"] is None
+        assert "selected_sku_unverified" in evidence["verification_warnings"]
+        assert "strap_unverified" in evidence["verification_warnings"]
+        assert "uk_destination_unverified" not in evidence["verification_warnings"]
+        assert rows[0].source_listing_id == f"{PID}:pdp"
+    finally:
+        await connector.cleanup()
+        await connector._client.aclose()
+
+
+async def test_explicit_multi_unit_quantity_is_fatal():
+    html = selected_offer().replace('name="quantity" value="1"', 'name="quantity" value="2"')
+    connector, _ = connector_for(html)
+    try:
+        with pytest.raises(ConnectorDegradedError):
+            await connector.search("Militado ML05", {"browser_max_products": 1})
+    finally:
+        await connector.cleanup()
+        await connector._client.aclose()
+
+
+def test_compound_title_matches_via_substring_fallback():
+    connector = AliExpressConnector()
+    # "watch" inside "Wristwatch" and "ml05" inside "ML05S" are real matches.
+    assert connector._title_matches_query("Militado ML05S Wristwatch", "Militado ML05 watch")
+    assert connector._title_matches_query("SAN MARTIN SN0150-G3 automatic", "San Martin SN0150")
+    assert not connector._title_matches_query("Tissot Le Locle Powermatic", "San Martin SN0150")
+    assert not connector._title_matches_query(None, "San Martin SN0150")
+    assert connector._title_matches_query("anything", "the and for")  # no strong tokens
