@@ -11,6 +11,17 @@ hand-constructed markup. Provenance:
   fixture PDP is the first PID.
 - ``pdp_1005009154171954.txt`` — Aqara sensor PDP whose selected row is a
   pack size ("Color: 1 piece"), which must never be recorded as a dial.
+
+Discovery fixtures added for the two-cap regression cases, each labelled with
+its own provenance header:
+
+- ``discovery_two_pids_watch_first.txt`` — TRIMMED from the live discovery
+  capture above (first two of its 26 product links, verbatim). Not itself a
+  live capture.
+- ``discovery_two_pids_sensor_first.txt`` — SYNTHETIC two-link assembly: the
+  live Aqara sensor PDP's PID first (that PID is absent from the
+  san-martin-gmt capture) and the live San Martin discovery link second, so the
+  first candidate cannot qualify.
 """
 
 from __future__ import annotations
@@ -91,7 +102,7 @@ def test_live_variant_request_still_gates_on_missing_dimensions() -> None:
     assert "strap_unverified" in issues
 
 
-def camofox_fixture_connector(handler) -> AliExpressConnector:
+def camofox_fixture_connector(handler, connector_config: dict | None = None) -> AliExpressConnector:
     config = {
         "browser_backends": {
             "camo": {
@@ -103,7 +114,8 @@ def camofox_fixture_connector(handler) -> AliExpressConnector:
         "browser_default": "camo",
     }
     connector = AliExpressConnector(
-        http_client=httpx.AsyncClient(transport=httpx.MockTransport(handler))
+        connector_config,
+        http_client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
     )
     connector.configure_external_browser(config)
     connector._external_browser = ExternalBrowserAdapter.from_config(
@@ -114,9 +126,21 @@ def camofox_fixture_connector(handler) -> AliExpressConnector:
     return connector
 
 
-def fixture_handler(opened: list[str]):
-    """Camofox transport serving the live discovery page and its PDPs."""
+def fixture_handler(
+    opened: list[str],
+    *,
+    discovery: str = "discovery_san_martin_gmt.txt",
+    pdps: dict[str, str] | None = None,
+):
+    """Camofox transport serving a discovery page and one PDP snapshot per PID.
+
+    ``pdps`` maps a discovered PID to the snapshot filename the transport must
+    serve for it; a PID without a mapping fails the test loudly instead of
+    silently serving the wrong product. The default mirrors the original
+    handler: the live San Martin PDP is the only PDP served.
+    """
     current: dict[str, str] = {}
+    snapshots: dict[str, str] = {WATCH_PID: f"pdp_{WATCH_PID}.txt"} if pdps is None else pdps
 
     def handler(request: httpx.Request) -> httpx.Response:
         if request.method == "POST" and request.url.path == "/tabs":
@@ -126,9 +150,13 @@ def fixture_handler(opened: list[str]):
         if request.method == "GET" and request.url.path.endswith("/snapshot"):
             url = current["url"]
             if "/w/wholesale-" in url:
-                snapshot = (FIXTURES / "discovery_san_martin_gmt.txt").read_text()
+                snapshot = (FIXTURES / discovery).read_text()
             else:
-                snapshot = (FIXTURES / f"pdp_{WATCH_PID}.txt").read_text()
+                match = re.search(r"/item/(\d+)\.html", url)
+                pid = match[1] if match else None
+                if pid not in snapshots:
+                    raise AssertionError(f"no PDP snapshot mapped for {url}")
+                snapshot = (FIXTURES / snapshots[pid]).read_text()
             return httpx.Response(
                 200,
                 json={"url": url, "snapshot": snapshot, "truncated": False, "refsCount": 1},
@@ -195,3 +223,128 @@ def test_live_fixture_snapshots_are_complete_and_untruncated(pid: str) -> None:
     assert len(snapshot) > 5_000
     assert "heading" in snapshot
     assert pid != ""  # fixtures are addressed by real PIDs captured live
+
+
+# --- Regression tests for the PR #169 review findings (MAJOR 1 / MAJOR 2) ---
+
+# Evidence-lane authority for these synthetic transport runs; the report is
+# built in-process and never leaves the test.
+EVIDENCE_USE = {
+    "permission_reference": "aliexpress live-capture fixtures 2026-11-04 (tests only)",
+    "retention": "synthetic",
+}
+TWO_PID_DISCOVERY = "discovery_two_pids_watch_first.txt"
+SENSOR_FIRST_DISCOVERY = "discovery_two_pids_sensor_first.txt"
+
+
+async def test_early_exit_is_capped_from_inspected_not_planned_targets() -> None:
+    """MAJOR 2: a run truncated by the early exit stays capped.
+
+    The trimmed discovery fixture holds exactly two PIDs and
+    ``browser_max_products`` allows two targets, so the planned-target cap
+    (``len(targets) < len(pids)``) was False while only one PDP was opened.
+    #168 requires that truncated run to stay capped and keep the
+    ``product_inspection_capped`` receipt issue.
+    """
+    opened: list[str] = []
+    handler = fixture_handler(opened, discovery=TWO_PID_DISCOVERY)
+    connector = camofox_fixture_connector(handler, {"evidence_use": EVIDENCE_USE})
+    try:
+        report = await connector.search_with_evidence(QUERY, {"browser_max_products": 2})
+        browser = connector._last_browser_report
+        assert browser is not None
+        # Discovery depth, plan depth and inspection depth deliberately differ.
+        assert browser.discovered_count == 2
+        assert browser.inspected_count == 1
+        assert len([url for url in opened if "/item/" in url]) == 1
+        # Discovered == planned (2 == 2), but inspected < discovered: capped.
+        assert browser.capped is True
+        receipt = report.source_evidence
+        assert receipt is not None
+        assert receipt.discovered_count == 2
+        assert receipt.inspected_count == 1
+        assert "product_inspection_capped" in receipt.issues
+        assert receipt.completeness == "partial"
+        assert report.completeness == "partial"
+        assert len(report.evidence) == 1
+    finally:
+        await connector.cleanup()
+        await connector._client.aclose()
+
+
+async def test_inspection_loop_continues_past_a_conflicting_first_pdp() -> None:
+    """The cost bound stops at a qualifying PDP, never before the next one.
+
+    Discovery leads with a PID whose PDP cannot satisfy the requested movement,
+    so the loop must open the second PDP as well; both discovered products are
+    inspected and nothing is cut short (``capped is False``).
+    """
+    opened: list[str] = []
+    handler = fixture_handler(
+        opened,
+        discovery=SENSOR_FIRST_DISCOVERY,
+        pdps={
+            SENSOR_PID: f"pdp_{SENSOR_PID}.txt",
+            WATCH_PID: f"pdp_{WATCH_PID}.txt",
+        },
+    )
+    connector = camofox_fixture_connector(handler)
+    try:
+        report = await connector.inspect_browser_search(
+            QUERY,
+            {"browser_max_products": 2, "browser_variant": {"movement": "NH34"}},
+        )
+        assert report.discovered_count == 2
+        assert [offer.pid for offer in report.offers] == [SENSOR_PID, WATCH_PID]
+        assert [url for url in opened if "/item/" in url] == [
+            f"https://www.aliexpress.com/item/{SENSOR_PID}.html",
+            f"https://www.aliexpress.com/item/{WATCH_PID}.html",
+        ]
+        assert report.inspected_count == 2
+        # The first PDP conflicts with the query and the requested movement,
+        # so it must not trigger the early exit.
+        assert "query_title_mismatch" in report.offers[0].issues
+        assert report.offers[0].qualification_issues({"movement": "NH34"})
+        # The second PDP qualifies — proof the loop carried on to it.
+        assert report.offers[1].qualification_issues({"movement": "NH34"}) == []
+        assert report.offers[1].selected_options["movement"] == "NH34"
+        # Two inspected == two discovered: this run is not capped.
+        assert report.capped is False
+    finally:
+        await connector.cleanup()
+        await connector._client.aclose()
+
+
+async def test_title_derived_claims_declare_seller_provenance() -> None:
+    """MAJOR 1: seller copy is never graded as a visible observation.
+
+    ``movement`` and ``size`` are read out of the seller-authored PDP title on
+    this capture, while ``dial`` comes from a displayed selection control.
+    """
+    opened: list[str] = []
+    connector = camofox_fixture_connector(fixture_handler(opened), {"evidence_use": EVIDENCE_USE})
+    try:
+        report = await connector.search_with_evidence(QUERY, {"browser_max_products": 1})
+        browser = connector._last_browser_report
+        assert browser is not None
+        watch = next(offer for offer in browser.offers if offer.pid == WATCH_PID)
+        evidence = next(item for item in report.evidence if item.source_listing_id == WATCH_PID)
+        claims = {claim.field: claim for claim in evidence.claims}
+        # Title-derived selection: seller-authored copy, not an observation.
+        assert claims["movement"].value == "NH34"
+        assert claims["movement"].issuer == "AliExpress product title"
+        assert claims["movement"].issuer_kind == "seller"
+        # A genuinely displayed control keeps the observation grade.
+        assert claims["dial"].issuer == "AliExpress displayed control"
+        assert claims["dial"].issuer_kind == "visible_observation"
+        assert claims["item_price"].issuer_kind == "visible_observation"
+        # ``size`` is title-derived too. It is not an IdentityField, so the
+        # report carries no size claim at all — its provenance is observable
+        # only on the offer, never as an invented field.
+        assert {"movement", "size"} <= set(watch.title_derived)
+        assert watch.selected_options["size"] == "39mm"
+        assert "size" not in claims
+        assert "strap" not in claims  # no strap control on this capture
+    finally:
+        await connector.cleanup()
+        await connector._client.aclose()

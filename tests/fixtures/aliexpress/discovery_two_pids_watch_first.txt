@@ -1,0 +1,14 @@
+# PROVENANCE (trimmed, not a live capture): the first two product links of
+# tests/fixtures/aliexpress/discovery_san_martin_gmt.txt (camofox capture
+# 2026-11-04T20:49:22Z, lines 293-300), verbatim apart from this header.
+# 26 discovered products reduced to 2 so a browser_max_products=2 run plans
+# exactly as many targets as it discovers. discovery_ids() reads only lines
+# matching "- /url:" and ignores this header.
+- link "product ￡287.57" [e10]:
+  - /url: https://www.aliexpress.com/item/1005009065415382.html?pdp_ext_f=%7B%22sku_id%22%3A%2212000059104461398%22%7D
+  - img "product"
+  - text: ￡287.57
+- link "product ￡232.93" [e11]:
+  - /url: https://www.aliexpress.com/item/1005013002814134.html?pdp_ext_f=%7B%22sku_id%22%3A%2212000060114840713%22%7D
+  - img "product"
+  - text: ￡232.93

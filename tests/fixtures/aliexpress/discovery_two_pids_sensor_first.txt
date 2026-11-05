@@ -1,0 +1,16 @@
+# PROVENANCE (SYNTHETIC two-link discovery snapshot - NOT a live capture).
+# Second link: verbatim first product link of the live
+# discovery_san_martin_gmt.txt capture (San Martin SN0109, 1005009065415382).
+# First link: the PDP URL of the live-captured Aqara sensor snapshot
+# pdp_1005009154171954.txt (captured 2026-11-04); that PID does not appear in
+# the san-martin-gmt discovery capture, so the two links are assembled here and
+# ordered sensor-first on purpose: the first candidate cannot qualify for this
+# query, which is what forces the inspection loop to open a second PDP.
+# discovery_ids() reads only lines matching "- /url:" and ignores this header.
+- link "product" [e10]:
+  - /url: https://www.aliexpress.com/item/1005009154171954.html
+  - img "product"
+- link "product ￡287.57" [e11]:
+  - /url: https://www.aliexpress.com/item/1005009065415382.html?pdp_ext_f=%7B%22sku_id%22%3A%2212000059104461398%22%7D
+  - img "product"
+  - text: ￡287.57
