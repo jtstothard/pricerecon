@@ -191,3 +191,45 @@ def test_gate_strap_first_40mm_case_satisfies_40mm_request():
         selected_options={"size": size_from_title(title) or ""},
     )
     assert "size_mismatch" not in offer.qualification_issues({"size": "40mm"})
+
+
+# --- Re-review #4 fail-open: a strap-led preceding figure must not make the
+# case word a trailing label. "Strap 20mm Case 40mm ..." — the 20mm is already
+# the strap, so "Case" leads 40mm; the veto must not reject it.
+
+
+def test_size_strap_led_preceding_does_not_veto_leading_case():
+    assert size_from_title("Strap 20mm Case 40mm Strap 22mm") == "40mm"
+
+
+def test_size_strap_led_preceding_with_bracelet():
+    assert size_from_title("Watch Strap 20mm Case 40mm Bracelet Silver") == "40mm"
+
+
+def test_size_silicone_strap_case_bracelet():
+    assert size_from_title("Silicone Strap 20mm Case 40mm Bracelet 22mm Men Watch") == "40mm"
+
+
+def test_size_leather_strap_case_band():
+    assert size_from_title("Leather Strap 20mm Case 40mm Band Brown Automatic") == "40mm"
+
+
+def test_size_strap_case_lugs():
+    assert size_from_title("Strap 20mm Case 40mm Lugs 22mm Diver Watch") == "40mm"
+
+
+def test_size_strap_case_strap_minimal():
+    assert size_from_title("Strap 20mm Case 40mm Strap") == "40mm"
+
+
+def test_gate_strap_led_preceding_40mm_never_satisfies_20mm_request():
+    title = "Strap 20mm Case 40mm Strap 22mm"
+    offer = BrowserOfferEvidence(
+        pid="1",
+        title=title,
+        displayed_price=Decimal("10.00"),
+        currency="GBP",
+        selected_options={"size": size_from_title(title) or ""},
+    )
+    assert offer.selected_options["size"] == "40mm"
+    assert "size_mismatch" in offer.qualification_issues({"size": "20mm"})

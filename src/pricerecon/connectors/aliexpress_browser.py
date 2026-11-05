@@ -312,8 +312,11 @@ def size_from_title(title: str) -> str | None:
             end <= figure[0] and _plain_gap(title[end : figure[0]]) for _start, end in strap_words
         )
 
-    def figure_immediately_precedes(pos: int) -> bool:
-        return any(end <= pos and _plain_gap(title[end:pos]) for _start, end, _v in figures)
+    def preceding_figure(pos: int) -> tuple[int, int, str] | None:
+        for figure in figures:
+            if figure[1] <= pos and _plain_gap(title[figure[1] : pos]):
+                return figure
+        return None
 
     if case_words:
         # Tier 1: leading anchor — the figure a case word introduces.
@@ -323,7 +326,17 @@ def size_from_title(title: str) -> str | None:
                 if figure[0] >= case_end and _lead_gap(title[case_end : figure[0]]):
                     if followed_by_thickness(figure):
                         break
-                    if figure_immediately_precedes(case_start) and strap_trails(figure):
+                    # The veto only applies when the preceding figure is itself
+                    # unlabelled. If the preceding figure is strap-led (e.g.
+                    # "Strap 20mm Case 40mm"), the case word is a leading label
+                    # for the following figure, not a trailing label for the
+                    # strap width — so the leading figure is the case.
+                    preceding = preceding_figure(case_start)
+                    if (
+                        preceding is not None
+                        and not strap_leads(preceding)
+                        and strap_trails(figure)
+                    ):
                         break
                     accepted.append(figure)
                     break
