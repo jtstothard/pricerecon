@@ -80,6 +80,10 @@ class BrowserOfferEvidence:
     issues: tuple[str, ...] = ()
     quantity: int | None = None
     destination_literal: str | None = None
+    # Which selected options were read out of the seller-authored h1 title
+    # rather than off a displayed control. The evidence lane claims these as
+    # seller statements, never as visible observations (see aliexpress.py).
+    title_derived: frozenset[str] = field(default_factory=frozenset)
 
     @property
     def total_landed_cost(self) -> None:
@@ -133,6 +137,7 @@ class BrowserOfferEvidence:
             ),
             "currency": self.currency,
             "selected_options": self.selected_options,
+            "title_derived": sorted(self.title_derived),
             "selected_sku": self.selected_sku,
             "price_bound_to_sku": self.price_bound_to_sku,
             "destination": self.destination,
@@ -171,9 +176,199 @@ def money(text: str) -> tuple[Decimal | None, str | None]:
     return Decimal(match[2].replace(",", "")), currency
 
 
+# A PDP title is marketing prose: a bare number may be a calibre, a marketing
+# counter ("New 2024 515 Style") or a piece count ("2824 pieces"). A number
+# sitting against one of these words counts styles or pieces, never a
+# movement, so it is not a calibre.
+_MARKETING_NEIGHBOURS = frozenset(
+    {
+        "style",
+        "styles",
+        "piece",
+        "pieces",
+        "pcs",
+        "design",
+        "designs",
+        "pattern",
+        "patterns",
+        "pack",
+        "packs",
+        "lot",
+        "lots",
+    }
+)
+_TITLE_CALIBRE = re.compile(
+    r"\b(?:NH3[4-9]|7S26|7S36|4R35|4R36|VK6[34]|PT5000|9015|9039|2824|2892|"
+    r"HZ64\d{2}|VH3[15]|VH65|2035|515|MIYOTA\s*\d{4})\b",
+    re.IGNORECASE,
+)
+
+
+def calibre_from_title(title: str) -> str | None:
+    """The first title token that is a calibre, not a marketing number.
+
+    ``"New 2024 515 Style"`` must not yield ``515`` and ``"39mm watch 2824
+    pieces"`` must not yield ``2824``: those numbers are qualified by a
+    marketing word and count styles or pieces. A real calibre is not written
+    that way ("San Martin 39mm NH34 Automatic ..."), so only the words
+    immediately around the token are examined.
+    """
+    for match in _TITLE_CALIBRE.finditer(title):
+        before = title[: match.start()].casefold().split()
+        after = title[match.end() :].casefold().split()
+        neighbours = set()
+        if before:
+            neighbours.add(before[-1].strip(".,-/"))
+        if after:
+            neighbours.add(after[0].strip(".,-/"))
+        if neighbours & _MARKETING_NEIGHBOURS:
+            continue
+        return match.group(0)
+    return None
+
+
+# Case diameter is an identity dimension; a strap or band width is a different
+# measurement of the same watch, and both read as "NNmm" in one title.
+_DIMENSION_TOKEN = re.compile(
+    r"\b(\d{2,3}(?:[.,]\d+)?)\s?mm\b"
+    r"|\b(case|cases|strap|straps|band|bands|bracelet|bracelets|lugs?|bezel)\b",
+    re.IGNORECASE,
+)
+_STRAP_WORDS = frozenset(
+    {"strap", "straps", "band", "bands", "bracelet", "bracelets", "lug", "lugs"}
+)
+_CASE_WORDS = frozenset({"case", "cases"})
+_THICKNESS_WORDS = frozenset({"thick", "thickness"})
+
+
+def _integer_digits(value: str) -> int:
+    return len(value.split(".", 1)[0])
+
+
+def _plain_gap(text: str) -> bool:
+    """Immediate adjacency: whitespace/colon/dash only, no comma, no words."""
+    return re.fullmatch(r"[\s:\-]*", text) is not None
+
+
+def _lead_gap(text: str) -> bool:
+    """Gap between a case word and the figure it leads: no comma; whitespace,
+    colon or dash, optionally with a single qualifier word (``Case Diameter
+    40mm``). A comma means the case word is a noun, not a size label."""
+    if "," in text:
+        return False
+    return _plain_gap(text) or re.fullmatch(r"[\s:\-]*[A-Za-z]+[\s:\-]+", text) is not None
+
+
+def size_from_title(title: str) -> str | None:
+    """The case size stated in a PDP title, never the strap width.
+
+    The anchor is directional. A figure is the case size when a ``case`` word
+    *introduces* it (``Case 40mm``, ``Case: 40mm``, ``Case Diameter 40mm``) or
+    *immediately follows* it (``38.5mm Case``, ``105mm case``). A single
+    ``case`` word sitting between two figures is adjacent to both, so a
+    non-directional anchor is ambiguous exactly when it matters most.
+
+    Fail-open guards:
+
+    * When a figure immediately precedes the case word, that case word is a
+      trailing label for the preceding figure; a strap-trailed leading figure
+      is then the strap, not the case, so it is rejected (``40mm case 20mm
+      strap`` -> ``40mm``, never ``20mm``).
+    * A figure immediately followed by a thickness word is a case thickness,
+      not a diameter, so it is rejected (``Case 12mm thick 40mm diameter`` ->
+      ``None``).
+    * When the anchored set is ambiguous, return ``None`` rather than falling
+      through to a positional first-figure rule.
+
+    Only when the title carries no case word at all does the watch-title
+    convention apply: the first two-digit figure that is not a strap width.
+    The two-digit bound keeps a ``105mm`` box or shipping dimension out.
+    """
+    figures: list[tuple[int, int, str]] = []
+    case_words: list[tuple[int, int]] = []
+    strap_words: list[tuple[int, int]] = []
+    for match in _DIMENSION_TOKEN.finditer(title):
+        if match[1] is not None:
+            figures.append((match.start(), match.end(), match[1]))
+        else:
+            word = match[2].casefold()
+            if word in _CASE_WORDS:
+                case_words.append((match.start(), match.end()))
+            elif word in _STRAP_WORDS:
+                strap_words.append((match.start(), match.end()))
+
+    def followed_by_thickness(figure: tuple[int, int, str]) -> bool:
+        after = title[figure[1] :].casefold().split()
+        return bool(after) and after[0].strip(".,:-") in _THICKNESS_WORDS
+
+    def strap_trails(figure: tuple[int, int, str]) -> bool:
+        return any(
+            figure[1] <= start and _plain_gap(title[figure[1] : start])
+            for start, _end in strap_words
+        )
+
+    def strap_leads(figure: tuple[int, int, str]) -> bool:
+        return any(
+            end <= figure[0] and _plain_gap(title[end : figure[0]]) for _start, end in strap_words
+        )
+
+    def preceding_figure(pos: int) -> tuple[int, int, str] | None:
+        for figure in figures:
+            if figure[1] <= pos and _plain_gap(title[figure[1] : pos]):
+                return figure
+        return None
+
+    if case_words:
+        # Tier 1: leading anchor — the figure a case word introduces.
+        accepted: list[tuple[int, int, str]] = []
+        for case_start, case_end in case_words:
+            for figure in figures:
+                if figure[0] >= case_end and _lead_gap(title[case_end : figure[0]]):
+                    if followed_by_thickness(figure):
+                        break
+                    # The veto only applies when the preceding figure is itself
+                    # unlabelled. If the preceding figure is strap-led (e.g.
+                    # "Strap 20mm Case 40mm"), the case word is a leading label
+                    # for the following figure, not a trailing label for the
+                    # strap width — so the leading figure is the case.
+                    preceding = preceding_figure(case_start)
+                    if (
+                        preceding is not None
+                        and not strap_leads(preceding)
+                        and strap_trails(figure)
+                    ):
+                        break
+                    accepted.append(figure)
+                    break
+        distinct = {figure[2] for figure in accepted}
+        if len(distinct) == 1:
+            return accepted[0][2].replace(",", ".") + "mm"
+        if len(distinct) > 1:
+            return None
+        # Tier 2: trailing anchor — the figure a case word immediately follows.
+        trails = [
+            figure
+            for figure in figures
+            for case_start, _case_end in case_words
+            if figure[1] <= case_start and _plain_gap(title[figure[1] : case_start])
+        ]
+        distinct = {figure[2] for figure in trails}
+        if len(distinct) == 1:
+            return trails[0][2].replace(",", ".") + "mm"
+        return None
+
+    # No case word: watch titles state the case size first. First two-digit
+    # figure that is not a strap width.
+    for figure in figures:
+        if _integer_digits(figure[2]) == 2 and not strap_leads(figure):
+            return figure[2].replace(",", ".") + "mm"
+    return None
+
+
 def parse_offer(pid: str, result: ExternalBrowserResult) -> BrowserOfferEvidence:
     title: str | None = None
     selected: dict[str, str] = {}
+    title_derived: set[str] = set()
     sku: str | None = None
     bound = False
     price_text = ""
@@ -267,7 +462,16 @@ def parse_offer(pid: str, result: ExternalBrowserResult) -> BrowserOfferEvidence
                 if match := re.fullmatch(r"SKU(?: ID)?:\s*(\d{6,30})", label, re.IGNORECASE):
                     sku = match[1]
         text = " ".join(lines)
-        quantity_match = re.search(r'spinbutton "quantity"[^\n]*:\s*"?(\d+)', "\n".join(lines))
+        joined = "\n".join(lines)
+        quantity_match = re.search(r'spinbutton "quantity"[^\n]*:\s*"?(\d+)', joined)
+        if not quantity_match:
+            # Observed live (2026-11-04): the quantity spinner is a labelled
+            # textbox, e.g. "- text: Quantity" followed by '- textbox [e22]: "1"'.
+            quantity_match = re.search(
+                r"-\s*text:\s*Quantity[^\n]*\n(?:\s*-\s*img[^\n]*\n)*"
+                r'\s*-\s*(?:textbox|spinbutton)[^\n]*:\s*"?(\d+)"?',
+                joined,
+            )
         quantity = int(quantity_match[1]) if quantity_match else None
     if not title:
         issues.append("product_title_unresolved")
@@ -275,11 +479,30 @@ def parse_offer(pid: str, result: ExternalBrowserResult) -> BrowserOfferEvidence
     if amount is not None and (not amount.is_finite() or amount <= 0):
         amount = None
         issues.append("invalid_display_price")
+    # A quantity pack row ("Color: 1 piece") is a bundle size, never a dial:
+    # recording it would masquerade as verified dial evidence (observed live).
+    if re.fullmatch(r"\d+\s?pieces?", selected.get("dial", ""), re.IGNORECASE):
+        selected.pop("dial")
     # A selected color label can itself expose a movement conflict. Never use
     # a VH31 title to overwrite an explicit 2035 label (observed live).
     movement = re.search(r"\b(VH31|VH65|2035|515)\b", " ".join(selected.values()), re.IGNORECASE)
     if movement and "movement" not in selected:
         selected["movement"] = movement[1].upper()
+    if "movement" not in selected and title:
+        # PDP titles assert calibres ("San Martin 39mm NH34 ..."). Only used
+        # when no explicit selected label carries a movement; an explicit
+        # label always wins (same doctrine as the VH31/2035 rule above).
+        caliber = calibre_from_title(title)
+        if caliber:
+            selected["movement"] = caliber.upper()
+            title_derived.add("movement")
+    if "size" not in selected and title:
+        # PDP titles state case size ("... 39mm ..."); PDP-level evidence, and
+        # only recorded when the seller's own SKU properties did not.
+        size = size_from_title(title)
+        if size:
+            selected["size"] = size
+            title_derived.add("size")
     destination = (
         "GB" if re.search(r"(?:Ship|Deliver) to:\s*United Kingdom\b", text, re.IGNORECASE) else None
     )
@@ -302,4 +525,5 @@ def parse_offer(pid: str, result: ExternalBrowserResult) -> BrowserOfferEvidence
             if (match := re.search(r"(?:Ship|Deliver) to:\s*([^.;\n]{1,100})", text, re.IGNORECASE))
             else None
         ),
+        frozenset(title_derived),
     )

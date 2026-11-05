@@ -1,0 +1,386 @@
+- link "AliExpress logo" [e1]:
+  - /url: https://www.aliexpress.com
+  - text: AliExpress
+- button "All Categories" [e2]:
+  - img "All Categories"
+- combobox "You can type an item name or keyword to search."
+- button "Search by image" [e3]
+- button "You can click this button to search." [e4]
+- button "You can scan the QR code to download the AliExpress app." [e5]:
+  - img
+  - text: Download the AliExpress app
+- button "You can select a country, region or language for shopping on AliExpress uk. The current language is English." [e6]:
+  - text: EN/ GBP
+  - img
+- button "You can register, sign in or view more information about your account." [e7]:
+  - img
+  - text: Welcome Sign in / Register
+  - img
+- link "0 items in cart." [e8]:
+  - /url: //www.aliexpress.com/p/shoppingcart/index.html
+  - img
+  - text: 0 Cart
+- img
+- heading "San Martin 39mm NH34 Mechanical GMT Watch For Man Automatic Wristwatch 3H Date Waterproof 10Bar Reloj BGW9 Lume часы SN0109" [level=1]
+- link "4.9" [e9]:
+  - /url: "#nav-review"
+  - img
+  - img
+  - img
+  - img
+  - img
+  - img
+  - img
+  - img
+  - img
+  - img
+  - strong: "4.9"
+- link "19 Reviews" [e10]:
+  - /url: "#nav-review"
+- text: ౹ 52 sold ￡287.57
+- strong:
+  - img
+  - text: Save ￡270.23
+- text: ￡557.80 10+ pieces, extra 10% off Price includes VAT ; Extra 2% off with coins
+- link "Up to £40 off with PayPal Pay Later. T&Cs apply." [e11]:
+  - /url: https://www.aliexpress.com/ssr/300000437/pWJJTzbMSb?disableNav=YES&pha_manifest=ssr&_immersiveMode=true&wh_ttid=adc&isSmbShow=false&skipPopHalfH5=yes&adc_popup_ratio=0.8&adc_popup=true
+  - img
+  - text: Up to £40 off with PayPal Pay Later. T&Cs apply.
+  - img
+  - img
+- text: ￡42.00 off on ￡250.00
+- img
+- text: "Color: Black Steel"
+- img "Black Steel"
+- link "Customer Reviews (19)" [e12]:
+  - /url: "#nav-review"
+  - img
+  - text: Customer Reviews (19)
+- link "Specifications" [e13]:
+  - /url: "#nav-specification"
+- link "Description" [e14]:
+  - /url: "#nav-description"
+- link "Store" [e15]:
+  - /url: "#nav-store"
+- link "More to love" [e16]:
+  - /url: "#nav-moretolove"
+- text: Reviews | 4.9
+- img
+- img
+- img
+- img
+- img
+- text: 19 ratings
+- img
+- text: All from verified purchases
+- button "All ratings":
+  - text: All ratings
+  - img
+- img
+- text: (9) (2)
+- img
+- text: (0) excellent quality (5) sturdy clasp (1) elegant design (1) fantastic-looking (1) beautiful dial (1) super quality (1)
+- button "Sort by default":
+  - text: Sort by default
+  - img
+- text: Show original language
+- img
+- img
+- img
+- img
+- img
+- text: Color:Black Brown My first san martin but not my last, i cannot believe how well finished this watch is given the price. the bezel was sticking when i got it but some lukewarm water fixed it and now it turns perfectly. AliExpress Shopper | 24 Sep 2026
+- img
+- text: Helpful (0)
+- img
+- img
+- img
+- img
+- img
+- img
+- text: Color:Black Red A fantastic-looking gmt watch, so much nicer in person. Now one of my favourites. The on-fly clasp works perfectly for me once i removed two links. AliExpress Shopper | 18 Nov 2025
+- img
+- text: Helpful (0)
+- img
+- img
+- img
+- img
+- img
+- img
+- text: Color:Black Brown Luxury at a fair price. GMT caller with sapphire and reliable mechanism. Elegant and well-made, I can't say it's top-notch craftsmanship as it's far from comparable to high-end watchmaking, but the level of satisfaction with San Martin is high. I already have 7 watches that have been 7 joys. AliExpress Shopper | 16 Aug 2026
+- img
+- text: Helpful (0)
+- img
+- button "View more" [e17]
+- heading "Related items" [level=2]
+- img
+- heading "Specifications" [level=2]
+- list:
+  - listitem: High-concerned chemical none Display Type Numberless
+  - listitem: Case Shape Round Case Thickness 13mm
+  - listitem: Movement origin Jp(origin) Band Width 20 to 24 mm
+- button "View more"
+- heading "Description" [level=2]
+- link "report" [e18]:
+  - /url: https://report.aliexpress.com/health/reportIndex.htm?product_id=1005009065415382
+- heading "Additional regulatory information" [level=2]
+- text: For items delivered from outside the European Union, you may be subject to additional charges for VAT and, when applicable, customs duties in your country. If AliExpress is obliged by law to collect VAT, you will see the VAT inclusive price at checkout. For more information about these costs, please contact the tax and customs authorities in your country.
+- heading "Product compliance information" [level=2]:
+  - text: Product compliance information
+  - img
+- link "Sold By Sanmartin Store (Trader)" [e19]:
+  - /url: //www.aliexpress.com/store/910354136
+  - text: Sold By Sanmartin Store (Trader)
+  - img
+- link "Message" [e20]:
+  - /url: https://message.aliexpress.com/message/new.htm?messageType=product&memberType=seller&productId=1005009065415382&sellerSeq=244153575&sellerAdminSeq=244153575&digest=2bf6318ac61d7fe17573b84b087e77f1b9244d3848e2a0077eadb166d8928573
+  - img
+  - text: Message
+- link "Service commitment" [e21]:
+  - /url: https://www.aliexpress.com/ssr/300002748/T4TarnaZzw?disableNav=YES&pha_manifest=ssr&_immersiveMode=true&businessCode=guide&adc_popup=true&adc_popup_ratio=0.75
+  - text: Service commitment
+  - img
+- strong: "Standard:"
+- strong: Free shipping
+- strong: "Delivery: Nov 14 - 18"
+- img
+- text: Fast delivery ￡2.00 coupon code if delayed Refund if package lost Refund if items damaged Refund if no delivery in 40 days
+- img
+- text: Best Price Guarantee
+- img
+- text: Free returns within 90 days
+- img
+- text: "Security & Privacy secure personal details Safe payments: We do not share your personal details with any third parties without your consent. Secure personal details: We protect your privacy and keep your personal details safe and secure."
+- img
+- text: Sustainability
+- img
+- text: Quantity
+- img
+- textbox [e22]: "1"
+- img
+- text: Max. 3 pcs/shopper at this price
+- button "Buy now" [e23]
+- button "Add to cart" [e24]
+- img
+- text: Share
+- img
+- text: "409"
+- link "store" [e25]:
+  - /url: //www.aliexpress.com/store/910354136
+- link "Sanmartin Store" [e26]:
+  - /url: //www.aliexpress.com/store/910354136
+- strong: 97.4%
+- text: Positive Feedback |
+- strong: 22.0K
+- text: Followers
+- img
+- text: Follow
+- link "Message" [e27]:
+  - /url: https://message.aliexpress.com/message/new.htm?messageType=product&memberType=seller&productId=1005009065415382&sellerSeq=244153575&sellerAdminSeq=244153575&digest=2bf6318ac61d7fe17573b84b087e77f1b9244d3848e2a0077eadb166d8928573
+  - img
+  - text: Message
+- heading "People also searched" [level=2]
+- text: This product belongs to
+- link "Home" [e28]:
+  - /url: //www.aliexpress.com/
+- link "survey" [e29]:
+  - /url: https://survey.aliexpress.com/uone/sg/survey/S-0NoCkKs
+- contentinfo:
+  - term:
+    - heading "Help" [level=4]
+  - definition:
+    - link "Help Center" [e30]:
+      - /url: //so.aliexpress.com/s/ByrCmn?language=en_US
+    - text: ","
+    - link "Disputes & Reports" [e31]:
+      - /url: //report.aliexpress.com
+    - text: ","
+    - link "Return&refund policy" [e32]:
+      - /url: https://www.aliexpress.com/ssr/300000437/PinKTaDpEb?disableNav=YES&pha_manifest=ssr&_immersiveMode=true
+    - text: ","
+    - link "Report IPR infringement" [e33]:
+      - /url: https://ipp.aidcgroup.net/#/ippHome
+    - text: ","
+    - link "DSA/OSA Information" [e34]:
+      - /url: https://www.aliexpress.com/p/transparencycenter/dsa.html
+    - text: ","
+    - link "Information and contacts for Brazil" [e35]:
+      - /url: https://www.aliexpress.com/ssr/300000414/informaes-e-contato-para-o-brasil-e57p63?disableNav=YES&pha_manifest=ssr&_immersiveMode=true
+    - text: ","
+    - link "Integrity Compliance" [e36]:
+      - /url: https://aidc.jubao.alibaba.com
+    - text: ","
+    - link "Transparency Center" [e37]:
+      - /url: https://www.aliexpress.com/p/transparencycenter/index.html
+    - text: ","
+    - link "Submit report (non-registered users)" [e38]:
+      - /url: https://m.aliexpress.com/p/complaint-center/index.html#/complaint/report
+    - text: ","
+    - link "Return Policy" [e39]:
+      - /url: https://www.aliexpress.com/ssr/300000437/G7ZED4yXte?disableNav=YES&pha_manifest=ssr&_immersiveMode=true
+  - term:
+    - heading "AliExpress Multi-Language Sites" [level=4]
+  - definition:
+    - link "Russian" [e40]:
+      - /url: //ru.aliexpress.com
+    - text: ","
+    - link "Portuguese" [e41]:
+      - /url: //pt.aliexpress.com
+    - text: ","
+    - link "Spanish" [e42]:
+      - /url: //es.aliexpress.com
+    - text: ","
+    - link "French" [e43]:
+      - /url: //fr.aliexpress.com
+    - text: ","
+    - link "German" [e44]:
+      - /url: //de.aliexpress.com
+    - text: ","
+    - link "Italian" [e45]:
+      - /url: //it.aliexpress.com
+    - text: ","
+    - link "Dutch" [e46]:
+      - /url: //nl.aliexpress.com
+    - text: ","
+    - link "Turkish" [e47]:
+      - /url: //tr.aliexpress.com
+    - text: ","
+    - link "Japanese" [e48]:
+      - /url: //ja.aliexpress.com
+    - text: ","
+    - link "Korean" [e49]:
+      - /url: //ko.aliexpress.com
+    - text: ","
+    - link "Thai" [e50]:
+      - /url: //th.aliexpress.com
+    - text: ","
+    - link "Arabic" [e51]:
+      - /url: //ar.aliexpress.com
+    - text: ","
+    - link "Hebrew" [e52]:
+      - /url: //he.aliexpress.com
+    - text: ","
+    - link "Polish" [e53]:
+      - /url: //pl.aliexpress.com
+  - term:
+    - heading "Browse by Category" [level=4]
+  - definition:
+    - link "All Popular" [e54]:
+      - /url: //www.aliexpress.com/popular.html
+    - text: ","
+    - link "Product" [e55]:
+      - /url: //www.aliexpress.com/wholesale.html
+    - text: ","
+    - link "Promotion" [e56]:
+      - /url: //www.aliexpress.com/promotion.html
+    - text: ","
+    - link "Low Price" [e57]:
+      - /url: //www.aliexpress.com/price.html
+    - text: ","
+    - link "Great Value" [e58]:
+      - /url: //www.aliexpress.com/cheap.html
+    - text: ","
+    - link "Reviews" [e59]:
+      - /url: //www.aliexpress.com/reviews.html
+    - text: ","
+    - link "Wiki" [e60]:
+      - /url: https://www.aliexpress.com/p/wiki/home.html
+    - text: ","
+    - link "Blog" [e61]:
+      - /url: https://www.aliexpress.com/p/blog/home.html
+    - text: ","
+    - link "Video" [e62]:
+      - /url: https://www.aliexpress.com/p/video/home.html
+  - term:
+    - heading "Alibaba Group" [level=4]
+  - definition:
+    - link "Alibaba Group Website" [e63]:
+      - /url: http://www.alibabagroup.com/en/global/home
+    - text: ","
+    - link "AliExpress" [e64]:
+      - /url: //www.aliexpress.com/
+    - text: ","
+    - link "Alimama" [e65]:
+      - /url: http://www.alimama.com/
+    - text: ","
+    - link "Fliggy" [e66]:
+      - /url: http://www.fliggy.com/
+    - text: ","
+    - link "Alibaba Cloud" [e67]:
+      - /url: http://www.alibabacloud.com
+    - text: ","
+    - link "Alibaba International" [e68]:
+      - /url: http://www.alibaba.com/
+    - text: ","
+    - link "AliTelecom" [e69]:
+      - /url: http://aliqin.tmall.com/
+    - text: ","
+    - link "DingTalk" [e70]:
+      - /url: http://www.dingtalk.com/
+    - text: ","
+    - link "Juhuasuan" [e71]:
+      - /url: http://ju.taobao.com/
+    - text: ","
+    - link "Taobao Marketplace" [e72]:
+      - /url: http://www.taobao.com/
+    - text: ","
+    - link "Tmall" [e73]:
+      - /url: http://www.tmall.com/
+    - text: ","
+    - link "Taobao Global" [e74]:
+      - /url: https://world.taobao.com/
+    - text: ","
+    - link "AliOS" [e75]:
+      - /url: http://www.alios.cn/
+    - text: ","
+    - link "1688" [e76]:
+      - /url: http://www.1688.com/
+  - link "Intellectual Property Protection" [e77]:
+    - /url: https://ipp.aidcgroup.net/#/ippHome
+  - text: "-"
+  - link "Privacy Policy" [e78]:
+    - /url: https://campaign.aliexpress.com/wow/gcp/app-redirect-terms/index
+  - text: "-"
+  - link "Cookie Preferences" [e79]:
+    - /url: //www.aliexpress.com/p/cookie-setting/index.html
+  - text: "-"
+  - link "Sitemap" [e80]:
+    - /url: https://www.aliexpress.com/sitemap.html
+  - text: "-"
+  - link "Terms of Use" [e81]:
+    - /url: https://terms.alicdn.com/legal-agreement/terms/suit_bu1_aliexpress/suit_bu1_aliexpress202204182115_66077.html
+  - text: "-"
+  - link "Information for EU consumers" [e82]:
+    - /url: https://cdn.contract.alibaba.com/terms/c_platform_service_agreement/20260106183827470/20260106183827470.html?lng=en
+  - text: "-"
+  - link "Legal Information / Imprint" [e83]:
+    - /url: https://terms.alicdn.com/legal-agreement/terms/c_end_product_protocol/20230928165112460/20230928165112460.html
+  - text: "-"
+  - link "Transaction Services Agreement for non-EU/UK Consumers" [e84]:
+    - /url: https://rulechannel.alibaba.com/icbu?type=detail&ruleId=2054&cId=1304#/rule/detail?cId=1304&ruleId=2054
+  - text: "-"
+  - link "Terms and Conditions for EU/EEA/UK Consumers" [e85]:
+    - /url: https://campaign.aliexpress.com/wow/gcp-plus/ae/tupr?_immersiveMode=true&pha_manifest=upr&disableNav=YES&wh_pid=300000414/pt8AMcBikk
+  - text: "-"
+  - link "User Information Legal Enquiry Guide" [e86]:
+    - /url: https://terms.alicdn.com/legal-agreement/terms/data_processing_agreement_others/20231101174825691/20231101174825691.html
+  - text: ©️2010-2025 AliExpress.com. All rights reserved.
+  - link "增值电信业务经营许可证" [e87]:
+    - /url: https://zzlz.gsxt.gov.cn/businessCheck/verifKey.do?showType=p&serial=91330108MACUEGT78K-SAIC_SHOW_10000091330108MACUEGT78K1783934792025&signData=MEYCIQDhB1Y1o7gD9/BMgwkWkQZ2ROKRFMviBExfpVBcWz3t7gIhANBC1pvM9xUuadcvYA6nIppH8wrAy/iPJ/sqb0oijfyP
+    - img "增值电信业务经营许可证"
+  - link "增值电信业务经营许可证 浙B2-20120091-8" [e88]:
+    - /url: https://beian.miit.gov.cn/
+  - link "浙公网安备 浙公网安备33010802014622号" [e89]:
+    - /url: https://beian.mps.gov.cn/#/query/webSearch?code=33010802014622
+    - img "浙公网安备"
+    - text: 浙公网安备33010802014622号
+  - link "浙ICP备2024067534号-11" [e90]:
+    - /url: https://beian.miit.gov.cn/
+- heading "Cookie preferences" [level=3]
+- text: Later We use cookies and similar technologies to improve your experience and for ads personalisation. This allows us and third parties to offer you content, marketing, and advertisements that you may like, both on and off our sites. See our
+- link "Cookie Notice":
+  - /url: https://terms.alicdn.com/legal-agreement/terms/c_platform_service_agreement/20240401172006520/20240401172006520.html
+- text: for more details.
+- button "Personalize cookies"
+- button "Reject cookies"
+- button "Accept cookies"

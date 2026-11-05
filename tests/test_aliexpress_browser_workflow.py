@@ -38,7 +38,9 @@ def selected_offer(sku="1001", price_sku="1001", currency="£"):
     Deliver to: United Kingdom. Shipping: Free. Price includes VAT."""
 
 
-def connector_for(html, *, truncated=False, status=200, discovery_html=None):
+def connector_for(
+    html, *, truncated=False, status=200, discovery_html=None, pdp_html=None, config=None
+):
     calls = []
 
     def handler(request):
@@ -51,7 +53,8 @@ def connector_for(html, *, truncated=False, status=200, discovery_html=None):
                 f'<a href="{URL}">ML05</a><a href="https://evil.test/item/1005007071090999.html">trap</a>'
             )
         else:
-            content = html
+            pid = body["url"].split("/item/", 1)[1].split(".", 1)[0]
+            content = (pdp_html or {}).get(pid, html)
         return httpx.Response(
             200,
             json={
@@ -65,7 +68,7 @@ def connector_for(html, *, truncated=False, status=200, discovery_html=None):
         )
 
     connector = AliExpressConnector(
-        http_client=httpx.AsyncClient(transport=httpx.MockTransport(handler))
+        config, http_client=httpx.AsyncClient(transport=httpx.MockTransport(handler))
     )
     connector.configure_external_browser(CONFIG)
     connector._external_browser = ExternalBrowserAdapter.from_config(
