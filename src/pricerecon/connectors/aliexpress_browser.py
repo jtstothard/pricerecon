@@ -87,12 +87,17 @@ class BrowserOfferEvidence:
         return None
 
     def qualification_issues(self, requested: dict[str, str]) -> list[str]:
+        """Fatal issues: the offer must not enter price comparison."""
         issues = list(self.issues)
-        if not self.selected_sku or not self.price_bound_to_sku:
+        if self.selected_sku and not self.price_bound_to_sku:
+            # A page that exposes a selected SKU must bind the price to it;
+            # an unbound price on such a page is a misbinding risk.
             issues.append("selected_sku_price_unverified")
         for name in ("movement", "dial", "strap", "size"):
             actual, expected = self.selected_options.get(name), requested.get(name)
-            if not actual or not expected:
+            if not expected:
+                continue  # nothing requested for this dimension: nothing to fail on
+            if not actual:
                 issues.append(f"{name}_unverified")
             elif actual.casefold().strip() != expected.casefold().strip():
                 issues.append(f"{name}_mismatch")
@@ -100,11 +105,24 @@ class BrowserOfferEvidence:
             issues.append("sku_mismatch")
         if self.currency != "GBP" or self.displayed_price is None:
             issues.append("gbp_item_price_unverified")
-        if self.destination != "GB":
-            issues.append("uk_destination_unverified")
-        if self.quantity != 1:
-            issues.append("unit_quantity_unverified")
+        if self.quantity is not None and self.quantity != 1:
+            # An explicit multi-unit quantity makes the displayed price misleading.
+            issues.append("unit_quantity_conflict")
         return issues
+
+    def verification_warnings(self, requested: dict[str, str]) -> list[str]:
+        """Non-fatal verification gaps, recorded on the listing but not gating."""
+        warnings: list[str] = []
+        if not self.selected_sku:
+            warnings.append("selected_sku_unverified")
+        for name in ("movement", "dial", "strap", "size"):
+            if not requested.get(name) and name not in self.selected_options:
+                warnings.append(f"{name}_unverified")
+        if self.destination != "GB":
+            warnings.append("uk_destination_unverified")
+        if self.quantity is None:
+            warnings.append("unit_quantity_unverified")
+        return warnings
 
     def summary(self) -> dict[str, object]:
         return {
@@ -244,6 +262,10 @@ def parse_offer(pid: str, result: ExternalBrowserResult) -> BrowserOfferEvidence
                     re.IGNORECASE,
                 ):
                     selected[OPTION_NAMES[match[1].casefold()]] = match[2].strip()
+                # Only an explicit SKU label counts; an arbitrary number in the
+                # accessibility tree is never a selected SKU.
+                if match := re.fullmatch(r"SKU(?: ID)?:\s*(\d{6,30})", label, re.IGNORECASE):
+                    sku = match[1]
         text = " ".join(lines)
         quantity_match = re.search(r'spinbutton "quantity"[^\n]*:\s*"?(\d+)', "\n".join(lines))
         quantity = int(quantity_match[1]) if quantity_match else None
