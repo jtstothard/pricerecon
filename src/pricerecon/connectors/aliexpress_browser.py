@@ -80,6 +80,10 @@ class BrowserOfferEvidence:
     issues: tuple[str, ...] = ()
     quantity: int | None = None
     destination_literal: str | None = None
+    # Which selected options were read out of the seller-authored h1 title
+    # rather than off a displayed control. The evidence lane claims these as
+    # seller statements, never as visible observations (see aliexpress.py).
+    title_derived: frozenset[str] = field(default_factory=frozenset)
 
     @property
     def total_landed_cost(self) -> None:
@@ -133,6 +137,7 @@ class BrowserOfferEvidence:
             ),
             "currency": self.currency,
             "selected_options": self.selected_options,
+            "title_derived": sorted(self.title_derived),
             "selected_sku": self.selected_sku,
             "price_bound_to_sku": self.price_bound_to_sku,
             "destination": self.destination,
@@ -171,9 +176,132 @@ def money(text: str) -> tuple[Decimal | None, str | None]:
     return Decimal(match[2].replace(",", "")), currency
 
 
+# A PDP title is marketing prose: a bare number may be a calibre, a marketing
+# counter ("New 2024 515 Style") or a piece count ("2824 pieces"). A number
+# sitting against one of these words counts styles or pieces, never a
+# movement, so it is not a calibre.
+_MARKETING_NEIGHBOURS = frozenset(
+    {
+        "style",
+        "styles",
+        "piece",
+        "pieces",
+        "pcs",
+        "design",
+        "designs",
+        "pattern",
+        "patterns",
+        "pack",
+        "packs",
+        "lot",
+        "lots",
+    }
+)
+_TITLE_CALIBRE = re.compile(
+    r"\b(?:NH3[4-9]|7S26|7S36|4R35|4R36|VK6[34]|PT5000|9015|9039|2824|2892|"
+    r"HZ64\d{2}|VH3[15]|VH65|2035|515|MIYOTA\s*\d{4})\b",
+    re.IGNORECASE,
+)
+
+
+def calibre_from_title(title: str) -> str | None:
+    """The first title token that is a calibre, not a marketing number.
+
+    ``"New 2024 515 Style"`` must not yield ``515`` and ``"39mm watch 2824
+    pieces"`` must not yield ``2824``: those numbers are qualified by a
+    marketing word and count styles or pieces. A real calibre is not written
+    that way ("San Martin 39mm NH34 Automatic ..."), so only the words
+    immediately around the token are examined.
+    """
+    for match in _TITLE_CALIBRE.finditer(title):
+        before = title[: match.start()].casefold().split()
+        after = title[match.end() :].casefold().split()
+        neighbours = set()
+        if before:
+            neighbours.add(before[-1].strip(".,-/"))
+        if after:
+            neighbours.add(after[0].strip(".,-/"))
+        if neighbours & _MARKETING_NEIGHBOURS:
+            continue
+        return match.group(0)
+    return None
+
+
+# Case diameter is an identity dimension; a strap or band width is a different
+# measurement of the same watch, and both read as "NNmm" in one title.
+_DIMENSION_TOKEN = re.compile(
+    r"\b(\d{2,3}(?:[.,]\d+)?)\s?mm\b"
+    r"|\b(case|cases|strap|straps|band|bands|bracelet|bracelets|lugs?|bezel)\b",
+    re.IGNORECASE,
+)
+_STRAP_WORDS = frozenset(
+    {"strap", "straps", "band", "bands", "bracelet", "bracelets", "lug", "lugs"}
+)
+
+
+def _integer_digits(value: str) -> int:
+    return len(value.split(".", 1)[0])
+
+
+def size_from_title(title: str) -> str | None:
+    """The case size stated in a PDP title, never the strap width.
+
+    ``"20mm strap 39mm case"`` yields ``"39mm"``. Each figure collects the
+    qualifier words directly attached to it: a word after a figure belongs to
+    that figure, a word before it belongs to that figure only when it is not
+    already attached to the figure in front of it. A figure qualified by both
+    case and strap is ambiguous and is never recorded; a bare figure is used
+    only when no qualifier is attached at all.
+
+    Digit width is a deliberate decision: a bare figure keeps the original
+    two-digit bound, so ``"105mm"`` on a watch PDP (a strap length, a box or a
+    shipping dimension) is not recorded as a case diameter, while an
+    explicitly case-qualified three-digit figure is accepted because the title
+    itself asserts the dimension.
+    """
+    tokens = [
+        (
+            (match.start(), match.end(), match[1], None)
+            if match[1] is not None
+            else (match.start(), match.end(), None, match[2].casefold())
+        )
+        for match in _DIMENSION_TOKEN.finditer(title)
+    ]
+    measures: list[tuple[str, frozenset[str]]] = []
+    pending: set[str] = set()
+    index = 0
+    while index < len(tokens):
+        end, value, qualifier = tokens[index][1], tokens[index][2], tokens[index][3]
+        if value is None:
+            # A qualifier already attached to the figure in front was consumed
+            # there; anything left introduces the figure that follows.
+            pending.add(qualifier or "")
+            index += 1
+            continue
+        kinds = set(pending)
+        pending = set()
+        index += 1
+        while (
+            index < len(tokens)
+            and tokens[index][2] is None
+            and title[end : tokens[index][0]].strip() == ""
+        ):
+            kinds.add(tokens[index][3] or "")
+            index += 1
+        measures.append((value, frozenset(kinds)))
+    for value, kinds in measures:
+        if "case" in kinds and not kinds & _STRAP_WORDS:
+            return value.replace(",", ".") + "mm"
+    for value, kinds in measures:
+        if not kinds and _integer_digits(value) == 2:
+            return value.replace(",", ".") + "mm"
+    return None
+
+
 def parse_offer(pid: str, result: ExternalBrowserResult) -> BrowserOfferEvidence:
     title: str | None = None
     selected: dict[str, str] = {}
+    title_derived: set[str] = set()
     sku: str | None = None
     bound = False
     price_text = ""
@@ -297,20 +425,17 @@ def parse_offer(pid: str, result: ExternalBrowserResult) -> BrowserOfferEvidence
         # PDP titles assert calibres ("San Martin 39mm NH34 ..."). Only used
         # when no explicit selected label carries a movement; an explicit
         # label always wins (same doctrine as the VH31/2035 rule above).
-        caliber = re.search(
-            r"\b(?:NH3[4-9]|7S26|7S36|4R35|4R36|VK6[34]|PT5000|9015|9039|2824|2892|"
-            r"HZ64\d{2}|VH3[15]|VH65|2035|515|MIYOTA\s*\d{4})\b",
-            title,
-            re.IGNORECASE,
-        )
+        caliber = calibre_from_title(title)
         if caliber:
-            selected["movement"] = caliber[0].upper()
+            selected["movement"] = caliber.upper()
+            title_derived.add("movement")
     if "size" not in selected and title:
         # PDP titles state case size ("... 39mm ..."); PDP-level evidence, and
         # only recorded when the seller's own SKU properties did not.
-        size = re.search(r"\b(\d{2}(?:[.,]\d+)?)\s?mm\b", title, re.IGNORECASE)
+        size = size_from_title(title)
         if size:
-            selected["size"] = size[1].replace(",", ".") + "mm"
+            selected["size"] = size
+            title_derived.add("size")
     destination = (
         "GB" if re.search(r"(?:Ship|Deliver) to:\s*United Kingdom\b", text, re.IGNORECASE) else None
     )
@@ -333,4 +458,5 @@ def parse_offer(pid: str, result: ExternalBrowserResult) -> BrowserOfferEvidence
             if (match := re.search(r"(?:Ship|Deliver) to:\s*([^.;\n]{1,100})", text, re.IGNORECASE))
             else None
         ),
+        frozenset(title_derived),
     )
