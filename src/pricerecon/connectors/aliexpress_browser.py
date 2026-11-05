@@ -237,6 +237,7 @@ _DIMENSION_TOKEN = re.compile(
 _STRAP_WORDS = frozenset(
     {"strap", "straps", "band", "bands", "bracelet", "bracelets", "lug", "lugs"}
 )
+_CASE_WORDS = frozenset({"case", "cases"})
 
 
 def _integer_digits(value: str) -> int:
@@ -246,55 +247,46 @@ def _integer_digits(value: str) -> int:
 def size_from_title(title: str) -> str | None:
     """The case size stated in a PDP title, never the strap width.
 
-    ``"20mm strap 39mm case"`` yields ``"39mm"``. Each figure collects the
-    qualifier words directly attached to it: a word after a figure belongs to
-    that figure, a word before it belongs to that figure only when it is not
-    already attached to the figure in front of it. A figure qualified by both
-    case and strap is ambiguous and is never recorded; a bare figure is used
-    only when no qualifier is attached at all.
+    A figure is the case size when a ``case`` word labels it — immediately
+    before or after, with only whitespace or label punctuation between. The
+    case anchor wins even when a strap word also trails the same figure: in
+    ``"Case 40mm Strap 20mm"`` the strap introduces the *following* figure,
+    so ``40mm`` stays the case. The previous rule glued ``strap`` onto
+    ``40mm``, marked it ambiguous, and fell through to the bare ``20mm`` — a
+    fail-open where a 40mm-case listing satisfied a ``20mm`` request.
 
-    Digit width is a deliberate decision: a bare figure keeps the original
-    two-digit bound, so ``"105mm"`` on a watch PDP (a strap length, a box or a
-    shipping dimension) is not recorded as a case diameter, while an
-    explicitly case-qualified three-digit figure is accepted because the title
+    When no case word anchors a figure, watch titles state the case size
+    first, so the first two-digit figure is used. The two-digit bound keeps a
+    ``"105mm"`` box or shipping dimension out, while an explicitly
+    case-qualified three-digit figure is still accepted because the title
     itself asserts the dimension.
     """
-    tokens = [
-        (
-            (match.start(), match.end(), match[1], None)
-            if match[1] is not None
-            else (match.start(), match.end(), None, match[2].casefold())
-        )
-        for match in _DIMENSION_TOKEN.finditer(title)
-    ]
-    measures: list[tuple[str, frozenset[str]]] = []
-    pending: set[str] = set()
-    index = 0
-    while index < len(tokens):
-        end, value, qualifier = tokens[index][1], tokens[index][2], tokens[index][3]
-        if value is None:
-            # A qualifier already attached to the figure in front was consumed
-            # there; anything left introduces the figure that follows.
-            pending.add(qualifier or "")
-            index += 1
-            continue
-        kinds = set(pending)
-        pending = set()
-        index += 1
-        while (
-            index < len(tokens)
-            and tokens[index][2] is None
-            and title[end : tokens[index][0]].strip() == ""
-        ):
-            kinds.add(tokens[index][3] or "")
-            index += 1
-        measures.append((value, frozenset(kinds)))
-    for value, kinds in measures:
-        if "case" in kinds and not kinds & _STRAP_WORDS:
-            return value.replace(",", ".") + "mm"
-    for value, kinds in measures:
-        if not kinds and _integer_digits(value) == 2:
-            return value.replace(",", ".") + "mm"
+    figures: list[tuple[int, int, str]] = []
+    case_words: list[tuple[int, int]] = []
+    for match in _DIMENSION_TOKEN.finditer(title):
+        if match[1] is not None:
+            figures.append((match.start(), match.end(), match[1]))
+        else:
+            word = match[2].casefold()
+            if word in _CASE_WORDS:
+                case_words.append((match.start(), match.end()))
+
+    def adjacent(word: tuple[int, int], figure: tuple[int, int, str]) -> bool:
+        if word[1] <= figure[0]:
+            between = title[word[1] : figure[0]]
+        elif figure[1] <= word[0]:
+            between = title[figure[1] : word[0]]
+        else:
+            return False
+        return re.fullmatch(r"[\s:,.\-]*", between) is not None
+
+    anchored = [f for f in figures if any(adjacent(w, f) for w in case_words)]
+    if len(anchored) == 1:
+        return anchored[0][2].replace(",", ".") + "mm"
+
+    for figure in figures:
+        if _integer_digits(figure[2]) == 2:
+            return figure[2].replace(",", ".") + "mm"
     return None
 
 
