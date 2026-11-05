@@ -97,3 +97,97 @@ def test_gate_40mm_case_satisfies_40mm_request():
         selected_options={"size": size_from_title(title) or ""},
     )
     assert "size_mismatch" not in offer.qualification_issues({"size": "40mm"})
+
+
+# --- Re-review #3 blocking table: Strap-first ordering (commonest AliExpress
+# spec form). The non-directional anchor returned the strap width here, a
+# fail-open where a 40mm-case listing satisfied a 20mm request with zero issues.
+
+
+def test_size_strap_first_label_ordering():
+    assert size_from_title("Strap 20mm Case 40mm Diver Watch") == "40mm"
+
+
+def test_size_strap_first_with_colons():
+    assert size_from_title("Strap: 20mm Case: 40mm Automatic Watch") == "40mm"
+
+
+def test_size_strap_width_case_diameter():
+    assert size_from_title("Strap Width 20mm Case Diameter 40mm Watch") == "40mm"
+
+
+def test_size_strap_first_mid_title():
+    assert size_from_title("Men Watch Strap 20mm Case 40mm Sapphire Crystal") == "40mm"
+
+
+def test_size_band_first_case_second():
+    assert size_from_title("Leather band 20mm case 40mm automatic") == "40mm"
+
+
+def test_size_case_as_noun_not_a_size_label():
+    # "case," with a comma is a noun, not a size label; no case diameter stated.
+    assert size_from_title("Stainless steel case, 20mm strap, 22mm lugs") is None
+
+
+def test_size_case_only_no_diameter():
+    assert size_from_title("Case only Strap 20mm") is None
+
+
+# --- Ambiguous orderings: the case word is a trailing label, so a strap-trailed
+# leading figure is the strap and must be rejected.
+
+
+def test_size_case_word_trailing_rejects_strap_trailed_lead():
+    assert size_from_title("40mm case 20mm strap") == "40mm"
+
+
+def test_size_case_word_trailing_after_strap():
+    assert size_from_title("40mm strap 20mm case") == "20mm"
+
+
+def test_size_small_case_large_strap():
+    assert size_from_title("20mm case 40mm strap") == "20mm"
+
+
+# --- Thickness guard: a figure followed by a thickness word is not a diameter.
+
+
+def test_size_thickness_is_not_diameter():
+    assert size_from_title("Case 12mm thick 40mm diameter 20mm strap") is None
+
+
+# --- Glued token: "Case40mm" has no word boundary, so the case word is invisible
+# and the strap fallback must not grab the strap width.
+
+
+def test_size_glued_case_token_does_not_grab_strap():
+    assert size_from_title("Case40mm Strap 20mm") is None
+
+
+# --- Gate-level proof for the Strap-first ordering: a 20mm request against a
+# 40mm-case title must now produce size_mismatch, never an empty issue list.
+
+
+def test_gate_strap_first_40mm_case_never_satisfies_20mm_request():
+    title = "Strap 20mm Case 40mm Diver Watch"
+    offer = BrowserOfferEvidence(
+        pid="1",
+        title=title,
+        displayed_price=Decimal("10.00"),
+        currency="GBP",
+        selected_options={"size": size_from_title(title) or ""},
+    )
+    assert offer.selected_options["size"] == "40mm"
+    assert "size_mismatch" in offer.qualification_issues({"size": "20mm"})
+
+
+def test_gate_strap_first_40mm_case_satisfies_40mm_request():
+    title = "Strap Width 20mm Case Diameter 40mm Watch"
+    offer = BrowserOfferEvidence(
+        pid="1",
+        title=title,
+        displayed_price=Decimal("10.00"),
+        currency="GBP",
+        selected_options={"size": size_from_title(title) or ""},
+    )
+    assert "size_mismatch" not in offer.qualification_issues({"size": "40mm"})

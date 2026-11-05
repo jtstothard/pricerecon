@@ -238,31 +238,55 @@ _STRAP_WORDS = frozenset(
     {"strap", "straps", "band", "bands", "bracelet", "bracelets", "lug", "lugs"}
 )
 _CASE_WORDS = frozenset({"case", "cases"})
+_THICKNESS_WORDS = frozenset({"thick", "thickness"})
 
 
 def _integer_digits(value: str) -> int:
     return len(value.split(".", 1)[0])
 
 
+def _plain_gap(text: str) -> bool:
+    """Immediate adjacency: whitespace/colon/dash only, no comma, no words."""
+    return re.fullmatch(r"[\s:\-]*", text) is not None
+
+
+def _lead_gap(text: str) -> bool:
+    """Gap between a case word and the figure it leads: no comma; whitespace,
+    colon or dash, optionally with a single qualifier word (``Case Diameter
+    40mm``). A comma means the case word is a noun, not a size label."""
+    if "," in text:
+        return False
+    return _plain_gap(text) or re.fullmatch(r"[\s:\-]*[A-Za-z]+[\s:\-]+", text) is not None
+
+
 def size_from_title(title: str) -> str | None:
     """The case size stated in a PDP title, never the strap width.
 
-    A figure is the case size when a ``case`` word labels it — immediately
-    before or after, with only whitespace or label punctuation between. The
-    case anchor wins even when a strap word also trails the same figure: in
-    ``"Case 40mm Strap 20mm"`` the strap introduces the *following* figure,
-    so ``40mm`` stays the case. The previous rule glued ``strap`` onto
-    ``40mm``, marked it ambiguous, and fell through to the bare ``20mm`` — a
-    fail-open where a 40mm-case listing satisfied a ``20mm`` request.
+    The anchor is directional. A figure is the case size when a ``case`` word
+    *introduces* it (``Case 40mm``, ``Case: 40mm``, ``Case Diameter 40mm``) or
+    *immediately follows* it (``38.5mm Case``, ``105mm case``). A single
+    ``case`` word sitting between two figures is adjacent to both, so a
+    non-directional anchor is ambiguous exactly when it matters most.
 
-    When no case word anchors a figure, watch titles state the case size
-    first, so the first two-digit figure is used. The two-digit bound keeps a
-    ``"105mm"`` box or shipping dimension out, while an explicitly
-    case-qualified three-digit figure is still accepted because the title
-    itself asserts the dimension.
+    Fail-open guards:
+
+    * When a figure immediately precedes the case word, that case word is a
+      trailing label for the preceding figure; a strap-trailed leading figure
+      is then the strap, not the case, so it is rejected (``40mm case 20mm
+      strap`` -> ``40mm``, never ``20mm``).
+    * A figure immediately followed by a thickness word is a case thickness,
+      not a diameter, so it is rejected (``Case 12mm thick 40mm diameter`` ->
+      ``None``).
+    * When the anchored set is ambiguous, return ``None`` rather than falling
+      through to a positional first-figure rule.
+
+    Only when the title carries no case word at all does the watch-title
+    convention apply: the first two-digit figure that is not a strap width.
+    The two-digit bound keeps a ``105mm`` box or shipping dimension out.
     """
     figures: list[tuple[int, int, str]] = []
     case_words: list[tuple[int, int]] = []
+    strap_words: list[tuple[int, int]] = []
     for match in _DIMENSION_TOKEN.finditer(title):
         if match[1] is not None:
             figures.append((match.start(), match.end(), match[1]))
@@ -270,22 +294,60 @@ def size_from_title(title: str) -> str | None:
             word = match[2].casefold()
             if word in _CASE_WORDS:
                 case_words.append((match.start(), match.end()))
+            elif word in _STRAP_WORDS:
+                strap_words.append((match.start(), match.end()))
 
-    def adjacent(word: tuple[int, int], figure: tuple[int, int, str]) -> bool:
-        if word[1] <= figure[0]:
-            between = title[word[1] : figure[0]]
-        elif figure[1] <= word[0]:
-            between = title[figure[1] : word[0]]
-        else:
-            return False
-        return re.fullmatch(r"[\s:,.\-]*", between) is not None
+    def followed_by_thickness(figure: tuple[int, int, str]) -> bool:
+        after = title[figure[1] :].casefold().split()
+        return bool(after) and after[0].strip(".,:-") in _THICKNESS_WORDS
 
-    anchored = [f for f in figures if any(adjacent(w, f) for w in case_words)]
-    if len(anchored) == 1:
-        return anchored[0][2].replace(",", ".") + "mm"
+    def strap_trails(figure: tuple[int, int, str]) -> bool:
+        return any(
+            figure[1] <= start and _plain_gap(title[figure[1] : start])
+            for start, _end in strap_words
+        )
 
+    def strap_leads(figure: tuple[int, int, str]) -> bool:
+        return any(
+            end <= figure[0] and _plain_gap(title[end : figure[0]]) for _start, end in strap_words
+        )
+
+    def figure_immediately_precedes(pos: int) -> bool:
+        return any(end <= pos and _plain_gap(title[end:pos]) for _start, end, _v in figures)
+
+    if case_words:
+        # Tier 1: leading anchor — the figure a case word introduces.
+        accepted: list[tuple[int, int, str]] = []
+        for case_start, case_end in case_words:
+            for figure in figures:
+                if figure[0] >= case_end and _lead_gap(title[case_end : figure[0]]):
+                    if followed_by_thickness(figure):
+                        break
+                    if figure_immediately_precedes(case_start) and strap_trails(figure):
+                        break
+                    accepted.append(figure)
+                    break
+        distinct = {figure[2] for figure in accepted}
+        if len(distinct) == 1:
+            return accepted[0][2].replace(",", ".") + "mm"
+        if len(distinct) > 1:
+            return None
+        # Tier 2: trailing anchor — the figure a case word immediately follows.
+        trails = [
+            figure
+            for figure in figures
+            for case_start, _case_end in case_words
+            if figure[1] <= case_start and _plain_gap(title[figure[1] : case_start])
+        ]
+        distinct = {figure[2] for figure in trails}
+        if len(distinct) == 1:
+            return trails[0][2].replace(",", ".") + "mm"
+        return None
+
+    # No case word: watch titles state the case size first. First two-digit
+    # figure that is not a strap width.
     for figure in figures:
-        if _integer_digits(figure[2]) == 2:
+        if _integer_digits(figure[2]) == 2 and not strap_leads(figure):
             return figure[2].replace(",", ".") + "mm"
     return None
 
