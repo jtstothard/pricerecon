@@ -60,5 +60,10 @@ class SourceOfferEvidence(BaseModel):
     purchase_modes: list[str] = Field(default_factory=list)
     shipping_claim: str | None = None
     vat_included_claim: bool | None = None
+    # What was actually read: the product detail page ("pdp"), or — when the
+    # site served a bot-wall/interstitial instead — the search/listing card
+    # that linked to it ("discovery_card"). A card-derived row is never a
+    # product-page observation.
+    inspection_source: str | None = None
     other_price_claims: dict[str, str] = Field(default_factory=dict)
     missing_fields: list[str] = Field(default_factory=list)

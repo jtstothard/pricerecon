@@ -17,7 +17,15 @@ from urllib.parse import ParseResult, parse_qs, urljoin, urlparse
 
 import httpx
 
-from pricerecon.connectors.aliexpress_browser import BrowserSearchReport, discovery_ids, parse_offer
+from pricerecon.connectors.aliexpress_browser import (
+    BrowserOfferEvidence,
+    BrowserSearchReport,
+    DiscoveryCard,
+    card_offer,
+    discovery_cards,
+    discovery_ids,
+    parse_offer,
+)
 from pricerecon.connectors.base import BaseConnector
 from pricerecon.connectors.browser_client import BrowserClient
 from pricerecon.connectors.status import ConnectorDegradedError, ConnectorStatus
@@ -285,7 +293,18 @@ class AliExpressConnector(BaseConnector):
             capture.issues.append("product_inspection_capped")
         listings, evidence = [], []
         for offer in report.offers:
-            pointer = f"https://www.aliexpress.com/item/{offer.pid}.html"
+            item_pointer = f"https://www.aliexpress.com/item/{offer.pid}.html"
+            if offer.inspection_source == "pdp":
+                pointer = item_pointer
+            else:
+                # The product page was never observed, so its claims point at
+                # the search page that actually rendered the card.
+                pointer = report.discovery_url or item_pointer
+            price_issuer = (
+                "AliExpress search result price"
+                if offer.inspection_source != "pdp"
+                else "AliExpress displayed price"
+            )
             context = EvidenceContext(
                 scope="generic_listing",
                 merchant_key="aliexpress",
@@ -327,7 +346,7 @@ class AliExpressConnector(BaseConnector):
                         subject="offer",
                         field="item_price",
                         value=str(offer.displayed_price),
-                        issuer="AliExpress displayed price",
+                        issuer=price_issuer,
                         issuer_kind="visible_observation",
                         pointer=pointer,
                         locator=f"{offer.pid}:displayed_price",
@@ -374,6 +393,9 @@ class AliExpressConnector(BaseConnector):
                             str(offer.shipping_claim) if offer.shipping_claim is not None else None
                         ),
                         vat_included_claim=True if offer.vat_included_claim else None,
+                        # What was actually read: the PDP, or the search card
+                        # that linked to it when the PDP was bot-walled.
+                        inspection_source=offer.inspection_source,
                         missing_fields=list(
                             dict.fromkeys(
                                 [
@@ -384,6 +406,14 @@ class AliExpressConnector(BaseConnector):
                                     "history_rights",
                                 ]
                                 + ([] if offer.selected_sku else ["selected_sku"])
+                                # The strict lane's warning, surfaced in the
+                                # evidence sink too: a fallback offer's price
+                                # came from the search card, not the PDP.
+                                + (
+                                    ["pdp_blocked_search_result_price"]
+                                    if offer.inspection_source != "pdp"
+                                    else []
+                                )
                             )
                         ),
                     ),
@@ -418,6 +448,7 @@ class AliExpressConnector(BaseConnector):
             capture.detail_limit = limit
         pid = self._query_product_id(query)
         discovery_url = None
+        cards: dict[str, DiscoveryCard] = {}
         if pid:
             pids = [pid]
         else:
@@ -457,6 +488,10 @@ class AliExpressConnector(BaseConnector):
                     self.connector_id,
                     {"reason": "partial_browser_discovery"},
                 ) from None
+            # The search page is the one page AliExpress keeps serving while
+            # it walls product pages, so its cards are held as the only
+            # honest fallback evidence (see the product loop below).
+            cards = discovery_cards(result)
             if not pids and not re.search(
                 r"no results|no matching|couldn't find",
                 result.rendered.html + result.rendered.snapshot,
@@ -485,13 +520,49 @@ class AliExpressConnector(BaseConnector):
                 f"https://www.aliexpress.com/item/{target}.html"
             )
             if result is None or result.degraded:
-                raise ConnectorDegradedError(
-                    ConnectorStatus.parse_error,
-                    "AliExpress product browser failed",
-                    self.connector_id,
-                    {"reason": "browser_product_failed", "product_id": target},
-                )
-            offer = parse_offer(target, result)
+                # The product page never arrived (bot wall, timeout, empty
+                # render). The search card that linked to it still carries
+                # its own title and price; without one there is nothing
+                # honest to report for this product — but one unreachable
+                # product must not sink its siblings, so the failure is
+                # recorded on the offer and inspection moves on. parse_error
+                # means nothing at all qualified (see _search_browser_first),
+                # not that one product failed to load.
+                card = cards.get(target)
+                if card is not None and card.usable:
+                    logger.warning(
+                        "AliExpress %s: product page degraded (%s); using the search-result card",
+                        target,
+                        result.degradation.value if result is not None else "no_browser_result",
+                    )
+                    offer = card_offer(target, card)
+                else:
+                    logger.warning(
+                        "AliExpress %s: product page degraded (%s) and the search "
+                        "card carries no usable title and price; skipping this product",
+                        target,
+                        result.degradation.value if result is not None else "no_browser_result",
+                    )
+                    offer = BrowserOfferEvidence(
+                        target,
+                        None,
+                        None,
+                        None,
+                        issues=("product_page_unreachable",),
+                    )
+            else:
+                offer = parse_offer(target, result)
+                if offer.title is None and offer.displayed_price is None:
+                    # AliExpress served its TMD punish stub (484 bytes) or an
+                    # unrendered shell: nothing on the product page to read.
+                    card = cards.get(target)
+                    if card is not None and card.usable:
+                        logger.warning(
+                            "AliExpress %s: product page yielded no title and no price; "
+                            "falling back to the search-result card",
+                            target,
+                        )
+                        offer = card_offer(target, card)
             match_kind = "product_id" if pid else self._title_match_kind(offer.title, query)
             if match_kind == "none":
                 offer = replace(offer, issues=(*offer.issues, "query_title_mismatch"))
@@ -529,7 +600,16 @@ class AliExpressConnector(BaseConnector):
             raise ValueError("browser_variant must contain explicit string configuration values")
         report = await self.inspect_browser_search(query, filters)
         issues = [offer.qualification_issues(requested) for offer in report.offers]
-        if any(issues):
+        # Every gate still decides per offer, and only offers that clear all
+        # of them can become listings. One walled or mismatching product page
+        # must not sink a sibling that qualified: parse_error now means what
+        # it says — nothing at all qualified.
+        qualified = [
+            (offer, offer_issues)
+            for offer, offer_issues in zip(report.offers, issues)
+            if not offer_issues
+        ]
+        if not qualified:
             raise ConnectorDegradedError(
                 ConnectorStatus.parse_error,
                 "AliExpress browser offers need configuration review",
@@ -549,15 +629,19 @@ class AliExpressConnector(BaseConnector):
                 report.inspected_count,
                 report.discovered_count,
             )
-        warnings = [offer.verification_warnings(requested) for offer in report.offers]
+        warnings = [offer.verification_warnings(requested) for offer, _offer_issues in qualified]
         pid_query = self._query_product_id(query)
         listings: list[NormalizedListing] = []
-        for offer, warning in zip(report.offers, warnings):
+        for (offer, _offer_issues), warning in zip(qualified, warnings):
             match_kind = "product_id" if pid_query else self._title_match_kind(offer.title, query)
             exact_variant_confirmed, confidence = _CONFIDENCE_BY_TITLE_MATCH.get(
                 match_kind, (False, VariantMatchConfidence.LOW)
             )
             risk_flags = ["UK_TOTAL_UNVERIFIED"]
+            if offer.inspection_source != "pdp":
+                # The product page was never read: this row's title and price
+                # came from the search card that linked to it.
+                risk_flags.append("PDP_NOT_INSPECTED")
             if not offer.price_bound_to_sku:
                 # A displayed price is not a selected offer: nothing on this page
                 # ties it to a purchasable selection (an offer that exposes a SKU
