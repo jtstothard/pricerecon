@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Any
@@ -24,6 +25,44 @@ OPTION_NAMES = {
     "size": "size",
 }
 MONEY = re.compile(r"(GBP|USD|EUR|US\$|£|￡|€|\$)\s*([0-9]+(?:,[0-9]{3})*(?:\.[0-9]{1,2})?)")
+
+# A savings, coupon or badge figure shares the card text with the real price
+# ("Save ￡287.36", "￡50 Coupon", "-￡20 off"). A money token beside one of
+# these words, or introduced by a minus/dash, is that badge figure — never
+# the product price.
+_BADGE_BEFORE = frozenset({"save", "saved", "saving", "was", "were", "off", "discount", "coupon"})
+_BADGE_AFTER = frozenset({"coupon", "off", "discount"})
+_DASH_CHARS = "-\u2212\u2013\u2014"
+
+
+def _is_badge_money(text: str, match: re.Match[str]) -> bool:
+    """True when a money match is a savings/coupon/badge figure, not a price."""
+    before = text[: match.start()]
+    if before.rstrip() and before.rstrip()[-1] in _DASH_CHARS:
+        return True  # a leading minus/dash marks a deduction, never a price
+    word_before = re.search(r"([A-Za-z]+)[^A-Za-z0-9]*$", before)
+    if word_before and word_before[1].casefold() in _BADGE_BEFORE:
+        return True
+    word_after = re.match(r"[^A-Za-z0-9]*([A-Za-z]+)", text[match.end() :])
+    return bool(word_after and word_after[1].casefold() in _BADGE_AFTER)
+
+
+def product_price_text(chunks: Iterable[str]) -> str | None:
+    """The PRODUCT price token in a card's text stream, never a badge figure.
+
+    A card's text mixes the real price with savings and coupon badges
+    ("Save ￡287.36", "￡50 Coupon", "-￡20 off"). The price is the first money
+    token that is not such a badge; when a card carries only badges it has no
+    usable price and this returns ``None``, so the card is dropped instead
+    of fabricating a price from a saving. The snapshot parser feeds one
+    chunk per ``- text:`` line and the HTML parser the anchor text: a badge
+    word only marks the money token beside it inside the same chunk.
+    """
+    for chunk in chunks:
+        for match in MONEY.finditer(chunk):
+            if not _is_badge_money(chunk, match):
+                return match.group(0)
+    return None
 
 
 def product_id(url: str) -> str | None:
@@ -67,10 +106,10 @@ def discovery_ids(result: ExternalBrowserResult) -> list[str]:
 
 
 # A search card is only fallback evidence when it carries a real product
-# title: a stripped card ("product ￡287.57") says nothing the
-# query_title_mismatch gate could be graded against, and a price the page
-# never displayed must never be invented.
-_MIN_CARD_TITLE = 15
+# title: a stripped card ("product ￡287.57") or a bare brand-and-model
+# designation ("San Martin SN0129") is not a product title, and a price the
+# page never displayed must never be invented.
+_MIN_CARD_TITLE = 20
 
 
 @dataclass(frozen=True)
@@ -124,7 +163,9 @@ def _snapshot_cards(snapshot: str) -> list[DiscoveryCard]:
         if not isinstance(current, dict) or not current.get("pid"):
             return
         title = current.get("title") or _card_title(str(current.get("name") or ""), "")
-        cards.append(DiscoveryCard(str(current["pid"]), title, current.get("price_text")))
+        cards.append(
+            DiscoveryCard(str(current["pid"]), title, product_price_text(current["text_lines"]))
+        )
 
     for line in snapshot.splitlines():
         stripped = line.lstrip(" ")
@@ -135,7 +176,7 @@ def _snapshot_cards(snapshot: str) -> list[DiscoveryCard]:
             current = {
                 "pid": None,
                 "title": None,
-                "price_text": None,
+                "text_lines": [],
                 "indent": indent,
                 "name": name[1] if name else "",
             }
@@ -158,10 +199,11 @@ def _snapshot_cards(snapshot: str) -> list[DiscoveryCard]:
             heading = re.search(r'- heading "(.*)"\s*\[level=', stripped)
             if heading:
                 current["title"] = heading[1]
-        if not current.get("price_text") and stripped.startswith("- text:"):
-            price = MONEY.search(stripped)
-            if price:
-                current["price_text"] = price.group(0)
+        if stripped.startswith("- text:"):
+            # Collect every visible text line: the first money token that is
+            # not a savings/coupon badge is the price (see product_price_text),
+            # and it may sit on any line of the card, not just the first.
+            current["text_lines"].append(stripped[len("- text:") :].strip())
     flush()
     return cards
 
@@ -185,8 +227,10 @@ def discovery_cards(result: ExternalBrowserResult) -> dict[str, DiscoveryCard]:
             text = node.get_text(" ", strip=True)
             heading = node.select_one('[class*="title"], h2, h3, h4')
             title = heading.get_text(" ", strip=True) if heading else _card_title(text, text)
-            price = MONEY.search(text)
-            found.append(DiscoveryCard(pid, title, price.group(0) if price else None))
+            # The anchor text carries the title before the price, and the
+            # title may itself contain a coupon figure ("… ￡50 Coupon …"):
+            # only a non-badge money token is the product price.
+            found.append(DiscoveryCard(pid, title, product_price_text([text])))
     else:
         found = _snapshot_cards(result.rendered.snapshot)
     cards: dict[str, DiscoveryCard] = {}

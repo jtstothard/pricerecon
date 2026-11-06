@@ -21,7 +21,12 @@ import httpx
 import pytest
 
 from pricerecon.connectors.aliexpress import AliExpressConnector
-from pricerecon.connectors.aliexpress_browser import DiscoveryCard, card_offer, discovery_cards
+from pricerecon.connectors.aliexpress_browser import (
+    DiscoveryCard,
+    card_offer,
+    discovery_cards,
+    product_price_text,
+)
 from pricerecon.connectors.external_browser import (
     ExternalBrowserAdapter,
     ExternalBrowserResult,
@@ -81,17 +86,24 @@ def good_pdp_snapshot(title: str, price: str) -> str:
     )
 
 
-def connector_for(discovery: str, pdps: dict[str, tuple[str, str]], connector_config=None):
+def connector_for(
+    discovery: str, pdps: dict[str, tuple[str, str]], connector_config=None, fail_tabs_pids=()
+):
     """Camofox transport: one discovery snapshot, one served URL per PDP.
 
     ``pdps`` maps a discovered pid to the ``(final_url, snapshot)`` the
     transport must serve for it; an unmapped pid fails the test loudly.
+    ``fail_tabs_pids`` makes the tab open for that pid fail hard (500).
     """
     opened: list[str] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
         if request.method == "POST" and request.url.path == "/tabs":
-            opened.append(str(json.loads(request.content)["url"]))
+            url = str(json.loads(request.content)["url"])
+            for pid in fail_tabs_pids:
+                if f"/item/{pid}.html" in url:
+                    return httpx.Response(500, text="camofox exploded")
+            opened.append(url)
             return httpx.Response(200, json={"id": "tab-1"})
         if request.method == "GET" and request.url.path.endswith("/snapshot"):
             url = opened[-1]
@@ -284,3 +296,203 @@ def test_card_offer_claims_nothing_the_card_did_not_show() -> None:
     assert offer.title_derived == frozenset({"movement", "size"})
     assert offer.qualification_issues({}) == []
     assert offer.qualification_issues({"movement": "VH31"}) == ["movement_mismatch"]
+
+
+def test_product_price_text_skips_savings_and_coupon_badges() -> None:
+    """A badge figure is never the product price; only a non-badge money is."""
+    # Price-first live shape must stay correct (regression guard).
+    assert product_price_text(["￡299.49 4.5 115 sold Save ￡287.36 Free shipping"]) == "￡299.49"
+    # Badge-first shape: the Save line must not win.
+    assert product_price_text(["Save ￡287.36", "￡299.49 4.5 115 sold"]) == "￡299.49"
+    # Title-coupon shape: the coupon inside the title must not win.
+    assert (
+        product_price_text(["Watch SN0129 ￡50 Coupon 1111 Sale ￡299.49 4.5 sold"]) == "￡299.49"
+    )
+    for badge in [
+        "Save ￡10.00",
+        "Saved ￡10.00",
+        "Saving ￡10.00",
+        "Was ￡10.00",
+        "Were ￡10.00",
+        "Off ￡10.00",
+        "Discount ￡10.00",
+        "Coupon ￡10.00",
+        "-￡10.00",
+        "Was -￡10.00",
+        "￡10.00 Off",
+        "￡10.00 Coupon",
+        "￡10.00 discount",
+    ]:
+        assert product_price_text([badge]) is None, badge
+        assert product_price_text([badge, "￡299.49 4.5 sold"]) == "￡299.49", badge
+
+
+def test_badge_first_snapshot_card_prices_the_product_not_the_savings() -> None:
+    """A `Save …` text line before the price line must not become the price."""
+    snapshot = (
+        f'- link "Report fraud item {WATCH_TITLE}":\n'
+        f"  - /url: //www.aliexpress.com/item/{WATCH_PID}.html?x=1\n"
+        f'  - heading "{WATCH_TITLE}" [level=3]\n'
+        "  - text: Save ￡287.36\n"
+        "  - text: ￡299.49 4.5 115 sold\n"
+    )
+    result = ExternalBrowserResult(
+        selected_backend="camofox",
+        attempts=(),
+        rendered=RenderedContent(snapshot=snapshot, snapshot_truncated=False),
+    )
+    card = discovery_cards(result)[WATCH_PID]
+    assert card.usable
+    assert card.price_text == "￡299.49"
+    offer = card_offer(WATCH_PID, card)
+    assert offer.displayed_price == Decimal("299.49") and offer.currency == "GBP"
+
+
+def test_title_coupon_html_card_prices_the_product_not_the_coupon() -> None:
+    """A coupon figure inside the title must not become the price."""
+    html = (
+        f'<a href="//www.aliexpress.com/item/{WATCH_PID}.html?x=1">'
+        f"<h3>{WATCH_TITLE} ￡50 Coupon 1111 Sale</h3>"
+        "<span>￡299.49</span><span>4.5 sold</span></a>"
+    )
+    result = ExternalBrowserResult(
+        selected_backend="cloakbrowser",
+        attempts=(),
+        rendered=RenderedContent(html=html),
+    )
+    card = discovery_cards(result)[WATCH_PID]
+    assert card.usable
+    assert card.price_text == "￡299.49"
+    offer = card_offer(WATCH_PID, card)
+    assert offer.displayed_price == Decimal("299.49") and offer.currency == "GBP"
+
+
+def test_price_first_card_still_prices_the_product_in_both_branches() -> None:
+    """The live price-first fixture shape must still parse to 299.49."""
+    snapshot = (
+        f'- link "Report fraud item {WATCH_TITLE} ￡299.49 4.5 115 sold Save ￡287.36 '
+        f'Free shipping":\n'
+        f"  - /url: //www.aliexpress.com/item/{WATCH_PID}.html?x=1\n"
+        f'  - heading "{WATCH_TITLE}" [level=3]\n'
+        "  - text: ￡299.49 4.5 115 sold Save ￡287.36 Free shipping\n"
+    )
+    result = ExternalBrowserResult(
+        selected_backend="camofox",
+        attempts=(),
+        rendered=RenderedContent(snapshot=snapshot, snapshot_truncated=False),
+    )
+    card = discovery_cards(result)[WATCH_PID]
+    assert card.price_text == "￡299.49"
+    html = (
+        f'<a href="//www.aliexpress.com/item/{WATCH_PID}.html?x=1">'
+        f"<h3>{WATCH_TITLE}</h3>"
+        "<span>￡299.49 4.5 115 sold Save ￡287.36 Free shipping</span></a>"
+    )
+    result = ExternalBrowserResult(
+        selected_backend="cloakbrowser",
+        attempts=(),
+        rendered=RenderedContent(html=html),
+    )
+    assert discovery_cards(result)[WATCH_PID].price_text == "￡299.49"
+
+
+def test_badge_only_card_is_dropped_never_priced_from_the_badge() -> None:
+    """A card with only a savings/coupon badge has no usable price."""
+    snapshot = (
+        f'- link "Report fraud item {WATCH_TITLE}":\n'
+        f"  - /url: //www.aliexpress.com/item/{WATCH_PID}.html?x=1\n"
+        f'  - heading "{WATCH_TITLE}" [level=3]\n'
+        "  - text: Save ￡287.36\n"
+    )
+    result = ExternalBrowserResult(
+        selected_backend="camofox",
+        attempts=(),
+        rendered=RenderedContent(snapshot=snapshot, snapshot_truncated=False),
+    )
+    card = discovery_cards(result)[WATCH_PID]
+    assert card.price_text is None
+    assert not card.usable
+    html = (
+        f'<a href="//www.aliexpress.com/item/{WATCH_PID}.html?x=1">'
+        f"<h3>{WATCH_TITLE} ￡50 Coupon 1111 Sale</h3></a>"
+    )
+    result = ExternalBrowserResult(
+        selected_backend="cloakbrowser",
+        attempts=(),
+        rendered=RenderedContent(html=html),
+    )
+    card = discovery_cards(result)[WATCH_PID]
+    assert card.price_text is None
+    assert not card.usable
+
+
+async def test_badge_only_card_never_becomes_a_listing() -> None:
+    """End to end: no real product price means parse_error, never a badge price."""
+    discovery = (
+        f'- link "Report fraud item {WATCH_TITLE}":\n'
+        f"  - /url: //www.aliexpress.com/item/{WATCH_PID}.html?algo_pvid=abc\n"
+        f'  - heading "{WATCH_TITLE}" [level=3]\n'
+        "  - text: Save ￡287.36\n"
+    )
+    connector, _ = connector_for(discovery, {WATCH_PID: (PUNISH_URL, PUNISH_STUB)})
+    try:
+        with pytest.raises(ConnectorDegradedError) as error:
+            await connector.search(QUERY, {"browser_max_products": 1})
+        assert error.value.status.value == "parse_error"
+    finally:
+        await connector.cleanup()
+        await connector._client.aclose()
+
+
+def test_brand_and_model_fragment_is_not_a_usable_card_title() -> None:
+    """A designation ("San Martin SN0129") is not a product title."""
+    assert not DiscoveryCard(WATCH_PID, "San Martin SN0129", "￡299.49").usable
+
+
+async def test_evidence_report_carries_the_botwall_marker_for_fallback_offers() -> None:
+    """F2: the evidence sink records that a fallback price came from the card."""
+    discovery = card_block(WATCH_PID, WATCH_TITLE, "￡299.49")
+    connector, _ = connector_for(
+        discovery,
+        {WATCH_PID: (PUNISH_URL, PUNISH_STUB)},
+        {"evidence_use": EVIDENCE_USE},
+    )
+    try:
+        report = await connector.search_with_evidence(
+            QUERY, {"browser_max_products": 1, "evidence_use": EVIDENCE_USE}
+        )
+        source = report.evidence[0].source_evidence
+        assert source is not None
+        assert "pdp_blocked_search_result_price" in source.missing_fields
+        assert source.inspection_source == "discovery_card"
+        dump = report.model_dump_json()
+        assert "pdp_blocked_search_result_price" in dump
+        assert "discovery_card" in dump
+    finally:
+        await connector.cleanup()
+        await connector._client.aclose()
+
+
+async def test_degraded_navigation_on_one_product_does_not_sink_a_sibling() -> None:
+    """One unreachable product must not sink a sibling that qualifies."""
+    discovery = card_block(WATCH_PID, None, "￡287.57") + card_block(
+        OTHER_PID, OTHER_TITLE, "￡311.59"
+    )
+    connector, _ = connector_for(
+        discovery,
+        {
+            WATCH_PID: (PUNISH_URL, PUNISH_STUB),
+            OTHER_PID: (
+                f"https://www.aliexpress.com/item/{OTHER_PID}.html",
+                good_pdp_snapshot(OTHER_TITLE, "￡311.59"),
+            ),
+        },
+        fail_tabs_pids=(WATCH_PID,),
+    )
+    try:
+        rows = await connector.search(QUERY, {"browser_max_products": 2})
+        assert [row.source_listing_id for row in rows] == [f"{OTHER_PID}:pdp"]
+        assert rows[0].price == Decimal("311.59")
+    finally:
+        await connector.cleanup()
+        await connector._client.aclose()

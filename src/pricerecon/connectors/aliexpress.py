@@ -18,6 +18,7 @@ from urllib.parse import ParseResult, parse_qs, urljoin, urlparse
 import httpx
 
 from pricerecon.connectors.aliexpress_browser import (
+    BrowserOfferEvidence,
     BrowserSearchReport,
     DiscoveryCard,
     card_offer,
@@ -392,6 +393,9 @@ class AliExpressConnector(BaseConnector):
                             str(offer.shipping_claim) if offer.shipping_claim is not None else None
                         ),
                         vat_included_claim=True if offer.vat_included_claim else None,
+                        # What was actually read: the PDP, or the search card
+                        # that linked to it when the PDP was bot-walled.
+                        inspection_source=offer.inspection_source,
                         missing_fields=list(
                             dict.fromkeys(
                                 [
@@ -402,6 +406,14 @@ class AliExpressConnector(BaseConnector):
                                     "history_rights",
                                 ]
                                 + ([] if offer.selected_sku else ["selected_sku"])
+                                # The strict lane's warning, surfaced in the
+                                # evidence sink too: a fallback offer's price
+                                # came from the search card, not the PDP.
+                                + (
+                                    ["pdp_blocked_search_result_price"]
+                                    if offer.inspection_source != "pdp"
+                                    else []
+                                )
                             )
                         ),
                     ),
@@ -511,21 +523,33 @@ class AliExpressConnector(BaseConnector):
                 # The product page never arrived (bot wall, timeout, empty
                 # render). The search card that linked to it still carries
                 # its own title and price; without one there is nothing
-                # honest to report, so this stays a parse failure.
+                # honest to report for this product — but one unreachable
+                # product must not sink its siblings, so the failure is
+                # recorded on the offer and inspection moves on. parse_error
+                # means nothing at all qualified (see _search_browser_first),
+                # not that one product failed to load.
                 card = cards.get(target)
-                if card is None or not card.usable:
-                    raise ConnectorDegradedError(
-                        ConnectorStatus.parse_error,
-                        "AliExpress product browser failed",
-                        self.connector_id,
-                        {"reason": "browser_product_failed", "product_id": target},
+                if card is not None and card.usable:
+                    logger.warning(
+                        "AliExpress %s: product page degraded (%s); using the search-result card",
+                        target,
+                        result.degradation.value if result is not None else "no_browser_result",
                     )
-                logger.warning(
-                    "AliExpress %s: product page degraded (%s); using the search-result card",
-                    target,
-                    result.degradation.value if result is not None else "no_browser_result",
-                )
-                offer = card_offer(target, card)
+                    offer = card_offer(target, card)
+                else:
+                    logger.warning(
+                        "AliExpress %s: product page degraded (%s) and the search "
+                        "card carries no usable title and price; skipping this product",
+                        target,
+                        result.degradation.value if result is not None else "no_browser_result",
+                    )
+                    offer = BrowserOfferEvidence(
+                        target,
+                        None,
+                        None,
+                        None,
+                        issues=("product_page_unreachable",),
+                    )
             else:
                 offer = parse_offer(target, result)
                 if offer.title is None and offer.displayed_price is None:
