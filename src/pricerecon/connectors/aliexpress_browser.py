@@ -184,11 +184,7 @@ def discovery_cards(result: ExternalBrowserResult) -> dict[str, DiscoveryCard]:
                 continue
             text = node.get_text(" ", strip=True)
             heading = node.select_one('[class*="title"], h2, h3, h4')
-            title = (
-                heading.get_text(" ", strip=True)
-                if heading
-                else _card_title(text, text)
-            )
+            title = heading.get_text(" ", strip=True) if heading else _card_title(text, text)
             price = MONEY.search(text)
             found.append(DiscoveryCard(pid, title, price.group(0) if price else None))
     else:

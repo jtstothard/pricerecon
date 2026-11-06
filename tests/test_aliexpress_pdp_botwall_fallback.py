@@ -132,9 +132,7 @@ def connector_for(discovery: str, pdps: dict[str, tuple[str, str]], connector_co
 
 async def test_walled_pdp_falls_back_to_the_search_card_without_touching_gates():
     discovery = card_block(WATCH_PID, WATCH_TITLE, "￡299.49")
-    connector, _ = connector_for(
-        discovery, {WATCH_PID: (PUNISH_URL, PUNISH_STUB)}
-    )
+    connector, _ = connector_for(discovery, {WATCH_PID: (PUNISH_URL, PUNISH_STUB)})
     try:
         rows = await connector.search(QUERY, {"browser_max_products": 1})
         assert len(rows) == 1
@@ -186,8 +184,8 @@ async def test_walled_pdp_without_a_usable_card_still_fails_to_parse():
 
 async def test_one_walled_sibling_no_longer_sinks_a_qualified_offer():
     """parse_error must mean *nothing* qualified, not *something* didn't."""
-    discovery = (
-        card_block(WATCH_PID, None, "￡287.57") + card_block(OTHER_PID, OTHER_TITLE, "￡311.59")
+    discovery = card_block(WATCH_PID, None, "￡287.57") + card_block(
+        OTHER_PID, OTHER_TITLE, "￡311.59"
     )
     connector, _ = connector_for(
         discovery,
@@ -233,10 +231,7 @@ async def test_evidence_lane_points_card_claims_at_the_search_page():
         assert claim.issuer == "AliExpress search result price"
         assert claim.pointer.startswith("https://www.aliexpress.com/w/wholesale-")
         movement = next(
-            claim
-            for item in report.evidence
-            for claim in item.claims
-            if claim.field == "movement"
+            claim for item in report.evidence for claim in item.claims if claim.field == "movement"
         )
         assert movement.issuer == "AliExpress product title"
         assert movement.issuer_kind == "seller"

@@ -605,9 +605,7 @@ class AliExpressConnector(BaseConnector):
                 report.inspected_count,
                 report.discovered_count,
             )
-        warnings = [
-            offer.verification_warnings(requested) for offer, _offer_issues in qualified
-        ]
+        warnings = [offer.verification_warnings(requested) for offer, _offer_issues in qualified]
         pid_query = self._query_product_id(query)
         listings: list[NormalizedListing] = []
         for (offer, _offer_issues), warning in zip(qualified, warnings):
