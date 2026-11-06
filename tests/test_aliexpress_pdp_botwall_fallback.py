@@ -98,7 +98,9 @@ def connector_for(discovery: str, pdps: dict[str, tuple[str, str]], connector_co
             if "/w/wholesale-" in url:
                 payload = {"url": url, "snapshot": discovery, "truncated": False}
             else:
-                pid = re.search(r"/item/(\d+)\.html", url)[1]
+                match = re.search(r"/item/(\d+)\.html", url)
+                assert match is not None
+                pid = match.group(1)
                 assert pid in pdps, f"no PDP mapped for {url}"
                 final_url, snapshot = pdps[pid]
                 payload = {"url": final_url, "snapshot": snapshot, "truncated": False}
