@@ -6,6 +6,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from decimal import Decimal
+from typing import Any
 from urllib.parse import urljoin, urlsplit
 
 from bs4 import BeautifulSoup
@@ -65,6 +66,143 @@ def discovery_ids(result: ExternalBrowserResult) -> list[str]:
     )
 
 
+# A search card is only fallback evidence when it carries a real product
+# title: a stripped card ("product ￡287.57") says nothing the
+# query_title_mismatch gate could be graded against, and a price the page
+# never displayed must never be invented.
+_MIN_CARD_TITLE = 15
+
+
+@dataclass(frozen=True)
+class DiscoveryCard:
+    """One search-result card: the title and displayed price beside its link."""
+
+    pid: str
+    title: str | None = None
+    price_text: str | None = None
+
+    @property
+    def usable(self) -> bool:
+        if not self.title or len(self.title.strip()) < _MIN_CARD_TITLE:
+            return False
+        amount, _currency = money(self.price_text or "")
+        return amount is not None and amount.is_finite() and amount > 0
+
+
+def _card_title(name: str, text: str) -> str | None:
+    """The product title from a card's accessible name or its child text."""
+    # Live capture 2026-11-06: the ranked card's link name reads
+    # ``Report fraud item <title> ￡299.49 4.5 115 sold Save ￡287.36 …`` —
+    # the title ends where the first price starts.
+    name = re.sub(r"^Report fraud item\s+", "", name or "").strip()
+    for candidate in (name, text):
+        match = MONEY.search(candidate)
+        if match:
+            candidate = candidate[: match.start()].strip()
+        if candidate:
+            return candidate
+    return None
+
+
+def _snapshot_cards(snapshot: str) -> list[DiscoveryCard]:
+    """Cards from a camofox accessibility snapshot.
+
+    Live structure (both the 2026-11-04 and 2026-11-06 captures):
+
+        - link "Report fraud item <title> ￡299.49 … sold …":
+          - /url: //www.aliexpress.com/item/<pid>.html?…
+          - heading "<title>" [level=3]
+          - text: ￡299.49 4.5 115 sold Save ￡287.36 Free shipping
+
+    The heading child is the title of record; the link's accessible name is
+    only a fallback for cards that render no heading.
+    """
+    cards: list[DiscoveryCard] = []
+    current: dict[str, Any] | None = None
+
+    def flush() -> None:
+        if not isinstance(current, dict) or not current.get("pid"):
+            return
+        title = current.get("title") or _card_title(str(current.get("name") or ""), "")
+        cards.append(DiscoveryCard(str(current["pid"]), title, current.get("price_text")))
+
+    for line in snapshot.splitlines():
+        stripped = line.lstrip(" ")
+        indent = len(line) - len(stripped)
+        if stripped.startswith("- link "):
+            flush()
+            name = re.search(r'- link "(.*)"', stripped)
+            current = {
+                "pid": None,
+                "title": None,
+                "price_text": None,
+                "indent": indent,
+                "name": name[1] if name else "",
+            }
+            continue
+        if current is None:
+            continue
+        if indent <= int(current["indent"]) and stripped.startswith("- "):
+            # A sibling line closes the card block; the sibling belongs to
+            # whatever block opens next, if any.
+            flush()
+            current = None
+            continue
+        if stripped.startswith("- /url:"):
+            href = stripped[len("- /url:") :].strip()
+            current["pid"] = product_id(urljoin("https://www.aliexpress.com/", href))
+            continue
+        if not current.get("pid"):
+            continue
+        if not current.get("title") and stripped.startswith("- heading "):
+            heading = re.search(r'- heading "(.*)"\s*\[level=', stripped)
+            if heading:
+                current["title"] = heading[1]
+        if not current.get("price_text") and stripped.startswith("- text:"):
+            price = MONEY.search(stripped)
+            if price:
+                current["price_text"] = price.group(0)
+    flush()
+    return cards
+
+
+def discovery_cards(result: ExternalBrowserResult) -> dict[str, DiscoveryCard]:
+    """Title and displayed price beside each product link on a search page.
+
+    AliExpress serves its TMD risk-control stub (``/_____tmd_____/punish``)
+    for product pages while the search page still renders normally, so the
+    search card is the only honest fallback evidence for a blocked product
+    page — see ``card_offer``. Cards that do not carry both a title and a
+    price are dropped rather than guessed at.
+    """
+    found: list[DiscoveryCard] = []
+    if result.rendered.html:
+        soup = BeautifulSoup(result.rendered.html, "html.parser")
+        for node in soup.select("a[href]"):
+            pid = product_id(urljoin("https://www.aliexpress.com/", str(node.get("href", ""))))
+            if not pid:
+                continue
+            text = node.get_text(" ", strip=True)
+            heading = node.select_one('[class*="title"], h2, h3, h4')
+            title = (
+                heading.get_text(" ", strip=True)
+                if heading
+                else _card_title(text, text)
+            )
+            price = MONEY.search(text)
+            found.append(DiscoveryCard(pid, title, price.group(0) if price else None))
+    else:
+        found = _snapshot_cards(result.rendered.snapshot)
+    cards: dict[str, DiscoveryCard] = {}
+    for card in found:
+        # The first card for a pid wins unless a later block is the one that
+        # carries both fields: a richer block must upgrade, never downgrade.
+        existing = cards.get(card.pid)
+        if existing is None or (card.usable and not existing.usable):
+            cards[card.pid] = card
+    return cards
+
+
 @dataclass(frozen=True)
 class BrowserOfferEvidence:
     pid: str
@@ -84,6 +222,10 @@ class BrowserOfferEvidence:
     # rather than off a displayed control. The evidence lane claims these as
     # seller statements, never as visible observations (see aliexpress.py).
     title_derived: frozenset[str] = field(default_factory=frozenset)
+    # What was actually read: the product page, or — when AliExpress served
+    # its TMD risk-control stub instead of the page — the search-result card
+    # that linked to it. Never claimed as a product-page observation.
+    inspection_source: str = "pdp"
 
     @property
     def total_landed_cost(self) -> None:
@@ -117,6 +259,11 @@ class BrowserOfferEvidence:
     def verification_warnings(self, requested: dict[str, str]) -> list[str]:
         """Non-fatal verification gaps, recorded on the listing but not gating."""
         warnings: list[str] = []
+        if self.inspection_source != "pdp":
+            # The product page was never read, so nothing on it is verified:
+            # this row carries the search card's displayed title and price
+            # only. Loud, but not fatal — the same gates grade it as any offer.
+            warnings.append("pdp_blocked_search_result_price")
         if not self.selected_sku:
             warnings.append("selected_sku_unverified")
         for name in ("movement", "dial", "strap", "size"):
@@ -146,6 +293,7 @@ class BrowserOfferEvidence:
             "shipping_claim": str(self.shipping_claim) if self.shipping_claim is not None else None,
             "vat_included_claim": self.vat_included_claim,
             "total_landed_cost": None,
+            "inspection_source": self.inspection_source,
             "issues": list(self.issues),
         }
 
@@ -526,4 +674,59 @@ def parse_offer(pid: str, result: ExternalBrowserResult) -> BrowserOfferEvidence
             else None
         ),
         frozenset(title_derived),
+    )
+
+
+def card_offer(pid: str, card: DiscoveryCard) -> BrowserOfferEvidence:
+    """An offer read from the search-result card, never from the product page.
+
+    Used only when AliExpress served the product-page bot-wall stub (its TMD
+    ``/_____tmd_____/punish`` interstitial, observed at 484 bytes) or an
+    unrendered shell instead of the page: the search page still shows this
+    card's own title and price.
+
+    Nothing else is claimed — no selected control, no SKU, no destination, no
+    shipping, no quantity — so every gate still has to pass on what the card
+    actually displayed, ``query_title_mismatch`` among them. The grade of the
+    evidence travels with the offer in ``inspection_source``.
+    """
+    title = (card.title or "").strip() or None
+    issues: list[str] = []
+    if not title:
+        issues.append("product_title_unresolved")
+    amount, currency = money(card.price_text or "")
+    if amount is not None and (not amount.is_finite() or amount <= 0):
+        amount = None
+        issues.append("invalid_display_price")
+    selected: dict[str, str] = {}
+    title_derived: set[str] = set()
+    if title:
+        # Same seller-copy reading as the product page parser: a calibre or
+        # case size stated in the title is a seller statement, and the
+        # evidence lane grades it as one (title_derived), never as a
+        # displayed control.
+        caliber = calibre_from_title(title)
+        if caliber:
+            selected["movement"] = caliber.upper()
+            title_derived.add("movement")
+        size = size_from_title(title)
+        if size:
+            selected["size"] = size
+            title_derived.add("size")
+    return BrowserOfferEvidence(
+        pid,
+        title,
+        amount,
+        currency,
+        selected,
+        None,
+        False,
+        None,
+        None,
+        False,
+        tuple(issues),
+        None,
+        None,
+        frozenset(title_derived),
+        "discovery_card",
     )
