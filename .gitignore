@@ -12,3 +12,11 @@ docs/prds/
 sketches/
 # Local runtime config with secrets
 config.local.yml
+
+# Never commit live session/credential material
+.scratch/
+**/storageState*
+**/*.storageState.*
+*.storageState.*
+__pycache__/
+*.pyc
