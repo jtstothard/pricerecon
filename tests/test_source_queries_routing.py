@@ -1,22 +1,23 @@
 """Test per-connector query routing in watch_executor."""
 
 import logging
-import pytest
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Any
+from typing import Any, ClassVar
+
+import pytest
 
 from pricerecon.core import watch_executor
 from pricerecon.models import (
-    Watch,
+    NormalizedListing,
     SourceConfig,
-    WatchFilters,
+    SourceType,
     SpecMatch,
-    WatchSchedule,
+    Watch,
+    WatchFilters,
     WatchGrouping,
     WatchNotification,
-    NormalizedListing,
-    SourceType,
+    WatchSchedule,
 )
 
 
@@ -24,10 +25,10 @@ class FakeDiffResult:
     """Mock diff result for testing."""
 
     has_events = False
-    new_listings: list[Any] = []
-    price_drops: list[Any] = []
-    stock_changes: list[Any] = []
-    listings_gone: list[Any] = []
+    new_listings: ClassVar[list[Any]] = []
+    price_drops: ClassVar[list[Any]] = []
+    stock_changes: ClassVar[list[Any]] = []
+    listings_gone: ClassVar[list[Any]] = []
 
 
 class FakeConnector:
@@ -53,7 +54,7 @@ class FakeConnector:
                 price=Decimal("99.99"),
                 currency="GBP",
                 url=f"https://example.com/{self.connector_id}/1",
-                timestamp_seen=datetime.now(timezone.utc),
+                timestamp_seen=datetime.now(UTC),
                 product_normalized=None,
                 variant_normalized=None,
                 condition=None,
@@ -101,7 +102,7 @@ class FakeConn:
 @pytest.mark.asyncio
 async def test_source_queries_override_per_connector(monkeypatch: Any) -> None:
     """Each connector receives its override from source_queries[connector_id]."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     # Track connector instances and constructor arguments for the live eBay path.
     connector_instances: dict[str, FakeConnector] = {}
@@ -217,7 +218,7 @@ async def test_source_queries_override_per_connector(monkeypatch: Any) -> None:
 @pytest.mark.asyncio
 async def test_source_queries_fallback_to_default(monkeypatch: Any) -> None:
     """Connectors without overrides fall back to watch.query."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     connector_instances: dict[str, FakeConnector] = {}
 
@@ -323,7 +324,7 @@ async def test_source_queries_fallback_to_default(monkeypatch: Any) -> None:
 @pytest.mark.asyncio
 async def test_source_queries_no_overrides_all_fallback(monkeypatch: Any) -> None:
     """When source_queries is empty, all connectors use default query."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     connector_instances: dict[str, FakeConnector] = {}
 
@@ -426,7 +427,7 @@ async def test_source_queries_no_overrides_all_fallback(monkeypatch: Any) -> Non
 @pytest.mark.asyncio
 async def test_source_queries_mixed_connectors(monkeypatch: Any) -> None:
     """Test mixed-source watch with some overrides and some fallback."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     connector_instances: dict[str, FakeConnector] = {}
 
@@ -538,7 +539,7 @@ async def test_source_queries_mixed_connectors(monkeypatch: Any) -> None:
 @pytest.mark.asyncio
 async def test_source_queries_raw_strings_passed_unchanged(monkeypatch: Any) -> None:
     """Raw connector-native query strings are passed unchanged (no parsing/translation)."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     # Use raw connector-specific syntax
     raw_queries = {
@@ -645,7 +646,7 @@ async def test_source_queries_raw_strings_passed_unchanged(monkeypatch: Any) -> 
 @pytest.mark.asyncio
 async def test_source_queries_with_price_max_filter(monkeypatch: Any) -> None:
     """Query routing works correctly with connector filters (e.g., price_max)."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     connector_instances: dict[str, FakeConnector] = {}
 
@@ -759,13 +760,13 @@ def titled_listing(source: str, listing_id: str, title: str) -> NormalizedListin
         price=Decimal("99.99"),
         currency="GBP",
         url=f"https://example.com/{source}/{listing_id}",
-        timestamp_seen=datetime.now(timezone.utc),
+        timestamp_seen=datetime.now(UTC),
         in_stock=True,
     )
 
 
 def _scoped_gate_watch(watch_id: int, name: str, source_queries: dict[str, str]) -> Watch:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return Watch(
         id=watch_id,
         name=name,
