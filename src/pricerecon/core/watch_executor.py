@@ -138,6 +138,17 @@ def apply_price_floor_filter(
     return result
 
 
+def _has_real_price(listing: NormalizedListing) -> bool:
+    """True when the listing carries a real (finite, positive) price."""
+    price = listing.price
+    if price is None:
+        return False
+    try:
+        return bool(price.is_finite() and price > 0)
+    except (AttributeError, TypeError):
+        return False
+
+
 def get_db() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -344,6 +355,7 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
     # without synonym groups) keep the pre-ADR watch-path behavior of
     # origin/main: no query-term title gate (gate scoping decision,
     # 2026-10-29).
+    gate_dropped_priced_count = 0
     if (
         watch.source_queries
         and not watch.synonym_groups
@@ -351,11 +363,32 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
     ):
         from pricerecon.core.title_matching import legacy_query_match
 
-        filtered_listings = [
-            listing
-            for listing in filtered_listings
-            if legacy_query_match(listing.title_raw, watch.query)
-        ]
+        kept_listings: list[NormalizedListing] = []
+        gate_dropped_priced: list[NormalizedListing] = []
+        for listing in filtered_listings:
+            if legacy_query_match(listing.title_raw, watch.query):
+                kept_listings.append(listing)
+            elif _has_real_price(listing):
+                gate_dropped_priced.append(listing)
+        filtered_listings = kept_listings
+        # Observability only: the gate's filtering behaviour is unchanged.
+        # A non-zero count means the top-level watch.query and a
+        # source_queries override have drifted apart (e.g. a stray token in
+        # watch.query), and priced connector listings are being dropped with
+        # listings_found: 0 as the only symptom.
+        gate_dropped_priced_count = len(gate_dropped_priced)
+        if gate_dropped_priced_count:
+            logger.warning(
+                "adr0001_gate_dropped_priced_listings",
+                extra={
+                    "watch_id": watch_id,
+                    "watch_query": watch.query,
+                    "dropped_count": gate_dropped_priced_count,
+                    "dropped_source_listing_ids": [
+                        listing.source_listing_id for listing in gate_dropped_priced
+                    ],
+                },
+            )
     # Keep shadow evaluation against the complete post-fetch set for auditing,
     # then enforce P1 component pattern + price floors before the alert pipeline.
     shadow_entries = evaluate_shadow_filters(all_listings, watch.filters, watch_id)
@@ -468,6 +501,7 @@ async def execute_watch(watch_id: int) -> dict[str, Any]:
         "events": [],
         "notifications_sent": len(notifications_dispatched),
         "shadow_filters_logged": len(shadow_entries),
+        "gate_dropped_priced_listings": gate_dropped_priced_count,
     }
 
     events: list[dict[str, Any]] = result["events"]

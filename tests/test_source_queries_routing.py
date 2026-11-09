@@ -1,5 +1,6 @@
 """Test per-connector query routing in watch_executor."""
 
+import logging
 import pytest
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -890,3 +891,81 @@ async def test_source_queries_watch_still_drops_titles_lacking_watch_query_terms
     assert queries == ["thinkpad t14 (16gb, 32gb)"]
     # ...and only the title containing the watch query term survived.
     assert result["listings_found"] == 1
+
+
+def _listing_with_price(
+    source: str, listing_id: str, title: str, price: Decimal | None
+) -> NormalizedListing:
+    return titled_listing(source, listing_id, title).model_copy(update={"price": price})
+
+
+@pytest.mark.asyncio
+async def test_gate_dropped_priced_listings_emit_warning(monkeypatch: Any, caplog: Any) -> None:
+    """Observability: priced listings dropped by the ADR-0001 gate are surfaced.
+
+    When the top-level ``watch.query`` drifts from a ``source_queries``
+    override, the gate silently drops priced connector listings and the only
+    symptom is ``listings_found: 0`` (watch 344 debugging case). The gate's
+    filtering behaviour is unchanged here — this asserts the WARNING log and
+    the check-result counter only.
+    """
+    watch = _scoped_gate_watch(9, "Drifted override watch", source_queries={"ebay": "thinkpad t14"})
+    listings = [
+        # Passes the gate: title contains the watch query term "laptop".
+        titled_listing("ebay", "1", "Lenovo ThinkPad T14 Laptop 16GB RAM"),
+        # Dropped by the gate, priced: must be surfaced.
+        _listing_with_price(
+            "ebay", "2", "Lenovo ThinkPad T14 16GB RAM 512GB SSD", Decimal("599.99")
+        ),
+        # Dropped by the gate, no real price: stays silent.
+        _listing_with_price("ebay", "3", "ASUS TUF Gaming A15 Notebook", None),
+    ]
+    queries = _patch_scoped_gate_seams(monkeypatch, watch, listings)
+
+    with caplog.at_level(logging.WARNING, logger="pricerecon.core.watch_executor"):
+        result = await watch_executor.execute_watch(9)
+
+    assert result["success"] is True
+    # The raw override reached the connector unchanged...
+    assert queries == ["thinkpad t14"]
+    # ...and filtering behaviour is unchanged: only the query-term match survives.
+    assert result["listings_found"] == 1
+    # Only the priced drop is surfaced in the check result.
+    assert result["gate_dropped_priced_listings"] == 1
+
+    warnings = [
+        record
+        for record in caplog.records
+        if record.getMessage() == "adr0001_gate_dropped_priced_listings"
+    ]
+    assert len(warnings) == 1
+    record = warnings[0]
+    assert record.levelno == logging.WARNING
+    assert record.watch_id == 9
+    assert record.watch_query == "laptop"
+    assert record.dropped_count == 1
+    assert record.dropped_source_listing_ids == ["2"]
+
+
+@pytest.mark.asyncio
+async def test_gate_dropped_unpriced_listings_do_not_warn(monkeypatch: Any, caplog: Any) -> None:
+    """Drops without a real price stay silent: no WARNING, counter stays 0."""
+    watch = _scoped_gate_watch(10, "Unpriced drops watch", source_queries={"ebay": "thinkpad t14"})
+    listings = [
+        _listing_with_price("ebay", "1", "Lenovo ThinkPad T14 16GB RAM 512GB SSD", None),
+        _listing_with_price("ebay", "2", "ASUS TUF Gaming A15 Notebook", Decimal("0.00")),
+    ]
+    _patch_scoped_gate_seams(monkeypatch, watch, listings)
+
+    with caplog.at_level(logging.WARNING, logger="pricerecon.core.watch_executor"):
+        result = await watch_executor.execute_watch(10)
+
+    assert result["success"] is True
+    # Both listings are still dropped — the gate behaviour is unchanged.
+    assert result["listings_found"] == 0
+    assert result["gate_dropped_priced_listings"] == 0
+    assert not [
+        record
+        for record in caplog.records
+        if record.getMessage() == "adr0001_gate_dropped_priced_listings"
+    ]
