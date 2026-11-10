@@ -1,21 +1,23 @@
 """Test per-connector query routing in watch_executor."""
 
-import pytest
-from datetime import datetime, timezone
+import logging
+from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Any
+from typing import Any, ClassVar
+
+import pytest
 
 from pricerecon.core import watch_executor
 from pricerecon.models import (
-    Watch,
+    NormalizedListing,
     SourceConfig,
-    WatchFilters,
+    SourceType,
     SpecMatch,
-    WatchSchedule,
+    Watch,
+    WatchFilters,
     WatchGrouping,
     WatchNotification,
-    NormalizedListing,
-    SourceType,
+    WatchSchedule,
 )
 
 
@@ -23,10 +25,10 @@ class FakeDiffResult:
     """Mock diff result for testing."""
 
     has_events = False
-    new_listings: list[Any] = []
-    price_drops: list[Any] = []
-    stock_changes: list[Any] = []
-    listings_gone: list[Any] = []
+    new_listings: ClassVar[list[Any]] = []
+    price_drops: ClassVar[list[Any]] = []
+    stock_changes: ClassVar[list[Any]] = []
+    listings_gone: ClassVar[list[Any]] = []
 
 
 class FakeConnector:
@@ -52,7 +54,7 @@ class FakeConnector:
                 price=Decimal("99.99"),
                 currency="GBP",
                 url=f"https://example.com/{self.connector_id}/1",
-                timestamp_seen=datetime.now(timezone.utc),
+                timestamp_seen=datetime.now(UTC),
                 product_normalized=None,
                 variant_normalized=None,
                 condition=None,
@@ -100,7 +102,7 @@ class FakeConn:
 @pytest.mark.asyncio
 async def test_source_queries_override_per_connector(monkeypatch: Any) -> None:
     """Each connector receives its override from source_queries[connector_id]."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     # Track connector instances and constructor arguments for the live eBay path.
     connector_instances: dict[str, FakeConnector] = {}
@@ -216,7 +218,7 @@ async def test_source_queries_override_per_connector(monkeypatch: Any) -> None:
 @pytest.mark.asyncio
 async def test_source_queries_fallback_to_default(monkeypatch: Any) -> None:
     """Connectors without overrides fall back to watch.query."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     connector_instances: dict[str, FakeConnector] = {}
 
@@ -322,7 +324,7 @@ async def test_source_queries_fallback_to_default(monkeypatch: Any) -> None:
 @pytest.mark.asyncio
 async def test_source_queries_no_overrides_all_fallback(monkeypatch: Any) -> None:
     """When source_queries is empty, all connectors use default query."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     connector_instances: dict[str, FakeConnector] = {}
 
@@ -425,7 +427,7 @@ async def test_source_queries_no_overrides_all_fallback(monkeypatch: Any) -> Non
 @pytest.mark.asyncio
 async def test_source_queries_mixed_connectors(monkeypatch: Any) -> None:
     """Test mixed-source watch with some overrides and some fallback."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     connector_instances: dict[str, FakeConnector] = {}
 
@@ -537,7 +539,7 @@ async def test_source_queries_mixed_connectors(monkeypatch: Any) -> None:
 @pytest.mark.asyncio
 async def test_source_queries_raw_strings_passed_unchanged(monkeypatch: Any) -> None:
     """Raw connector-native query strings are passed unchanged (no parsing/translation)."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     # Use raw connector-specific syntax
     raw_queries = {
@@ -644,7 +646,7 @@ async def test_source_queries_raw_strings_passed_unchanged(monkeypatch: Any) -> 
 @pytest.mark.asyncio
 async def test_source_queries_with_price_max_filter(monkeypatch: Any) -> None:
     """Query routing works correctly with connector filters (e.g., price_max)."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     connector_instances: dict[str, FakeConnector] = {}
 
@@ -758,13 +760,13 @@ def titled_listing(source: str, listing_id: str, title: str) -> NormalizedListin
         price=Decimal("99.99"),
         currency="GBP",
         url=f"https://example.com/{source}/{listing_id}",
-        timestamp_seen=datetime.now(timezone.utc),
+        timestamp_seen=datetime.now(UTC),
         in_stock=True,
     )
 
 
 def _scoped_gate_watch(watch_id: int, name: str, source_queries: dict[str, str]) -> Watch:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return Watch(
         id=watch_id,
         name=name,
@@ -890,3 +892,81 @@ async def test_source_queries_watch_still_drops_titles_lacking_watch_query_terms
     assert queries == ["thinkpad t14 (16gb, 32gb)"]
     # ...and only the title containing the watch query term survived.
     assert result["listings_found"] == 1
+
+
+def _listing_with_price(
+    source: str, listing_id: str, title: str, price: Decimal | None
+) -> NormalizedListing:
+    return titled_listing(source, listing_id, title).model_copy(update={"price": price})
+
+
+@pytest.mark.asyncio
+async def test_gate_dropped_priced_listings_emit_warning(monkeypatch: Any, caplog: Any) -> None:
+    """Observability: priced listings dropped by the ADR-0001 gate are surfaced.
+
+    When the top-level ``watch.query`` drifts from a ``source_queries``
+    override, the gate silently drops priced connector listings and the only
+    symptom is ``listings_found: 0`` (watch 344 debugging case). The gate's
+    filtering behaviour is unchanged here — this asserts the WARNING log and
+    the check-result counter only.
+    """
+    watch = _scoped_gate_watch(9, "Drifted override watch", source_queries={"ebay": "thinkpad t14"})
+    listings = [
+        # Passes the gate: title contains the watch query term "laptop".
+        titled_listing("ebay", "1", "Lenovo ThinkPad T14 Laptop 16GB RAM"),
+        # Dropped by the gate, priced: must be surfaced.
+        _listing_with_price(
+            "ebay", "2", "Lenovo ThinkPad T14 16GB RAM 512GB SSD", Decimal("599.99")
+        ),
+        # Dropped by the gate, no real price: stays silent.
+        _listing_with_price("ebay", "3", "ASUS TUF Gaming A15 Notebook", None),
+    ]
+    queries = _patch_scoped_gate_seams(monkeypatch, watch, listings)
+
+    with caplog.at_level(logging.WARNING, logger="pricerecon.core.watch_executor"):
+        result = await watch_executor.execute_watch(9)
+
+    assert result["success"] is True
+    # The raw override reached the connector unchanged...
+    assert queries == ["thinkpad t14"]
+    # ...and filtering behaviour is unchanged: only the query-term match survives.
+    assert result["listings_found"] == 1
+    # Only the priced drop is surfaced in the check result.
+    assert result["gate_dropped_priced_listings"] == 1
+
+    warnings = [
+        record
+        for record in caplog.records
+        if record.getMessage() == "adr0001_gate_dropped_priced_listings"
+    ]
+    assert len(warnings) == 1
+    record = warnings[0]
+    assert record.levelno == logging.WARNING
+    assert record.watch_id == 9
+    assert record.watch_query == "laptop"
+    assert record.dropped_count == 1
+    assert record.dropped_source_listing_ids == ["2"]
+
+
+@pytest.mark.asyncio
+async def test_gate_dropped_unpriced_listings_do_not_warn(monkeypatch: Any, caplog: Any) -> None:
+    """Drops without a real price stay silent: no WARNING, counter stays 0."""
+    watch = _scoped_gate_watch(10, "Unpriced drops watch", source_queries={"ebay": "thinkpad t14"})
+    listings = [
+        _listing_with_price("ebay", "1", "Lenovo ThinkPad T14 16GB RAM 512GB SSD", None),
+        _listing_with_price("ebay", "2", "ASUS TUF Gaming A15 Notebook", Decimal("0.00")),
+    ]
+    _patch_scoped_gate_seams(monkeypatch, watch, listings)
+
+    with caplog.at_level(logging.WARNING, logger="pricerecon.core.watch_executor"):
+        result = await watch_executor.execute_watch(10)
+
+    assert result["success"] is True
+    # Both listings are still dropped — the gate behaviour is unchanged.
+    assert result["listings_found"] == 0
+    assert result["gate_dropped_priced_listings"] == 0
+    assert not [
+        record
+        for record in caplog.records
+        if record.getMessage() == "adr0001_gate_dropped_priced_listings"
+    ]
