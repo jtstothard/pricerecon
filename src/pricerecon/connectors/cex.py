@@ -9,6 +9,7 @@ Maps Grade A/B/C to Excellent/Good/Fair.
 from decimal import Decimal
 import json
 from typing import Any, Optional
+from urllib.parse import urlencode
 
 import httpx
 
@@ -139,9 +140,9 @@ class CexConnector(BaseConnector):
             # Missing required fields
             return None
 
-        # Build product URL
-        slug = hit.get("slug", box_id.lower())
-        url = f"https://uk.webuy.com/product-detail/{slug}/{box_id}.html"
+        # Build product URL. uk.webuy.com only serves product-detail/?id=<boxId>;
+        # the /product-detail/<slug>/<boxId>.html form returns 404.
+        url = f"https://uk.webuy.com/product-detail/?{urlencode({'id': box_id})}"
 
         # Map grade to condition
         grades = hit.get("Grade", [])
