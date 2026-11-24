@@ -1,15 +1,19 @@
 name: ccl
 source_type: retailer
 base_url: https://www.cclonline.com
-search_url: https://www.cclonline.com/search/{query}
+# The site's own search form submits GET /search?query=...; the older
+# /search/{query} path now returns CCL's "Not Found" page (live probe via
+# Byparr, 2026-11-24).
+search_url: https://www.cclonline.com/search?query={query}
 selectors:
-  card: article, .product, .product-item, .search-result
-  title: a[href] h3, a[href] .title, h3, .product-title
-  price: .price, .product-price, [data-testid="price"]
-  url: a[href]
-  stock: .stock, .availability, .product-stock, [data-testid="stock"]
+  card: div.product-preview-card
+  title: a.h5[href]
+  # Pence sit in a nested span ("£795.<span>99</span>"); parse_price rejoins them.
+  price: div.bg-gray-800 > span.h5
+  url: a.h5[href]
+  # The card footer holds either "ADD TO BASKET" or "NOTIFY ME".
+  stock: div.bg-gray-800
   image: img
-  id: a[href]
 # CCL returns a Cloudflare challenge to direct HTTP; use the bounded browser
 # recovery lane rather than silently treating the source as unavailable.
 use_flare_solverr: true
