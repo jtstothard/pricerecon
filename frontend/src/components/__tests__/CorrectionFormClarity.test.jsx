@@ -1,6 +1,7 @@
+// @vitest-environment jsdom
 import { createRequire } from 'node:module'
 import React, { act } from 'react'
-import { Simulate } from 'react-dom/test-utils'
+import { Simulate } from './simulate'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { IdentityCorrection } from '../discovery/IdentityCorrection'
