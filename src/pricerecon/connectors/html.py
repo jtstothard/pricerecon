@@ -34,8 +34,12 @@ class SelectorConfig:
     )
 
 
+# Pence rendered in a nested element come back from _text() as "£795. 99".
+_SPLIT_PENCE_RE = re.compile(r"(\d)\.\s+(\d{2})(?!\d)")
+
+
 def parse_price(text: str) -> Decimal | None:
-    match = _PRICE_RE.search(text.replace("\xa0", " "))
+    match = _PRICE_RE.search(_SPLIT_PENCE_RE.sub(r"\1.\2", text.replace("\xa0", " ")))
     if not match:
         return None
     try:
