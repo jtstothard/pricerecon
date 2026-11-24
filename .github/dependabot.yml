@@ -1,7 +1,8 @@
 version: 2
-# Each ecosystem gets one patch/minor group and one major group, so Dependabot
-# opens at most two PRs per ecosystem a week. When a major breaks the build,
-# add an ignore for it instead of leaving the major group red.
+# Each ecosystem gets one patch/minor group and one major group (pip gets a
+# single group, see below), so Dependabot opens at most two PRs per
+# ecosystem a week. When a major breaks the build, add an ignore for it
+# instead of leaving the major group red.
 updates:
   - package-ecosystem: npm
     directory: /frontend
@@ -32,18 +33,14 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    # One group with no update-types filter. These requirements are ranges
+    # with no lockfile, so Dependabot can't tell a patch from a major
+    # ("update X requirement to permit the latest version"). An update-types
+    # filter matches none of them, and each one opens its own PR.
     groups:
-      pip-patch-minor:
+      pip:
         patterns:
           - "*"
-        update-types:
-          - patch
-          - minor
-      pip-major:
-        patterns:
-          - "*"
-        update-types:
-          - major
     ignore:
       # selectolax 1.0 removed the `selectolax.parser` backend the connectors
       # import; pyproject.toml caps it below 1.0 (closed #160).
