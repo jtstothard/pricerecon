@@ -9,8 +9,12 @@ from pricerecon.connectors.aliexpress import AliExpressConnector
 
 
 @pytest.mark.asyncio
-async def test_aliexpress_uses_searxng_when_affiliate_and_brave_fail():
-    """Test that SearXNG is used as fallback when affiliate and Brave both fail."""
+async def test_searxng_lane_extracts_pids_and_marks_source_lane():
+    """_searxng_search() alone: PID extraction and lane tagging.
+
+    Fallback routing through search() is covered by
+    test_search_routes_affiliate_then_brave_then_searxng.
+    """
     calls: list[tuple[str, str]] = []
 
     class DummyResponse:
@@ -261,3 +265,112 @@ async def test_aliexpress_searxng_respects_max_results():
 
     # Should only get 3 listings due to max_results limit
     assert len(listings) == 3
+
+
+_AFFILIATE_HOST = "api-sg.aliexpress.com"
+_BRAVE_HOST = "search.brave.com"
+_SEARXNG_HOST = "searxng.test"
+_BRAVE_PLACEHOLDER_PID = "1005000000000001"
+
+
+def _brave_response(mode: str) -> httpx.Response:
+    if mode == "http_error":
+        return httpx.Response(503, text="Service Unavailable")
+    if mode == "no_results":
+        return httpx.Response(200, text="<html><body>No results found</body></html>")
+    # Brave finds a product URL but its snippet carries no price: the connector
+    # makes a price-less placeholder, which must not suppress the SearXNG lane.
+    return httpx.Response(
+        200,
+        text=(
+            "<html><body><a href='https://www.aliexpress.com/item/"
+            f"{_BRAVE_PLACEHOLDER_PID}.html'>RTX 4090</a></body></html>"
+        ),
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("brave_mode", ["http_error", "no_results", "priceless_placeholder"])
+async def test_search_routes_affiliate_then_brave_then_searxng(
+    monkeypatch: pytest.MonkeyPatch, brave_mode: str
+) -> None:
+    """search() falls through affiliate -> Brave -> SearXNG over real HTTP routing.
+
+    Unlike the direct ``_searxng_search`` unit tests, this drives the public
+    ``search()`` pipeline with an httpx MockTransport, so each lane makes its
+    real request and a routing regression (lane skipped, wrong order, early
+    return, Brave placeholders suppressing SearXNG) fails here.
+    """
+    monkeypatch.delenv("SEARXNG_URL", raising=False)
+    requests: list[tuple[str, str]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        host = request.url.host
+        requests.append((request.method, host))
+        if host == _AFFILIATE_HOST and request.method == "POST":
+            body = request.content.decode()
+            assert "aliexpress.affiliate.product.query" in body
+            return httpx.Response(403, json={"error_response": {"code": "InvalidApiKey"}})
+        if host == _BRAVE_HOST:
+            assert "site%3Aaliexpress.com" in str(request.url) or "site:aliexpress.com" in str(
+                request.url
+            )
+            return _brave_response(brave_mode)
+        if host == _SEARXNG_HOST:
+            assert request.url.path == "/search"
+            assert request.url.params["format"] == "json"
+            assert "RTX 4090" in request.url.params["q"]
+            return httpx.Response(
+                200,
+                json={
+                    "results": [
+                        {
+                            "url": "https://www.aliexpress.com/item/1005001234567890.html",
+                            "title": "NVIDIA RTX 4090 24GB Graphics Card £899.99",
+                        },
+                        {
+                            "url": "https://www.aliexpress.com/item/1005009876543210.html",
+                            "title": "RTX 4090 Founders Edition GPU £949.00",
+                        },
+                    ]
+                },
+            )
+        raise AssertionError(f"Unexpected {request.method} request to {request.url}")
+
+    client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    connector = AliExpressConnector(
+        {
+            "app_key": "fixture-app-key",
+            "app_secret": "fixture-app-secret",
+            "searxng_url": f"http://{_SEARXNG_HOST}:8080",
+        },
+        http_client=client,
+    )
+
+    async def no_brave_delay() -> None:
+        return None
+
+    monkeypatch.setattr(connector, "_rate_limit_brave", no_brave_delay)
+
+    try:
+        listings = await connector.search("RTX 4090", {})
+    finally:
+        await client.aclose()
+
+    # Each lane was attempted exactly once, in fallback order, and the direct
+    # site-search fallback was not needed because SearXNG produced candidates.
+    assert requests == [
+        ("POST", _AFFILIATE_HOST),
+        ("GET", _BRAVE_HOST),
+        ("GET", _SEARXNG_HOST),
+    ]
+    assert {listing.source_listing_id for listing in listings} == {
+        "1005001234567890",
+        "1005009876543210",
+    }
+    assert _BRAVE_PLACEHOLDER_PID not in {listing.source_listing_id for listing in listings}
+    for listing in listings:
+        assert listing.source == "aliexpress"
+        assert listing.price is not None
+        assert listing.variant_normalized is not None
+        assert listing.variant_normalized["aliexpress_source_lane"] == "searxng_discovery"
