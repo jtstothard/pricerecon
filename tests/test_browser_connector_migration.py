@@ -133,7 +133,12 @@ async def test_flaresolverr_template_connector_uses_shared_adapter_when_selected
             200,
             json={
                 "solution": {
-                    "response": "<article class='product'><a href='/product/1'><h3>RTX 5090</h3></a><span class='price'>£1999.99</span></article>"
+                    "response": (
+                        "<div class='product-preview-card'>"
+                        "<a class='h5' href='/product-1/'>RTX 5090</a>"
+                        "<div class='bg-gray-800'><span class='h5'>£1999.<span>99</span></span>"
+                        "ADD TO BASKET</div></div>"
+                    )
                 }
             },
         )
