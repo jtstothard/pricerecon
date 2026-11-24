@@ -1,4 +1,7 @@
 version: 2
+# Each ecosystem gets one patch/minor group and one major group, so Dependabot
+# opens at most two PRs per ecosystem a week. When a major breaks the build,
+# add an ignore for it instead of leaving the major group red.
 updates:
   - package-ecosystem: npm
     directory: /frontend
@@ -7,9 +10,22 @@ updates:
       day: monday
     groups:
       npm-patch-minor:
+        patterns:
+          - "*"
         update-types:
           - patch
           - minor
+      npm-major:
+        patterns:
+          - "*"
+        update-types:
+          - major
+    ignore:
+      # typescript-eslint 8 supports TypeScript >=4.8.4 <6.1.0, so the
+      # frontend stays on TypeScript 6 (pinned back from 7 in 3746bc4).
+      - dependency-name: typescript
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: pip
     directory: /
@@ -18,9 +34,22 @@ updates:
       day: monday
     groups:
       pip-patch-minor:
+        patterns:
+          - "*"
         update-types:
           - patch
           - minor
+      pip-major:
+        patterns:
+          - "*"
+        update-types:
+          - major
+    ignore:
+      # selectolax 1.0 removed the `selectolax.parser` backend the connectors
+      # import; pyproject.toml caps it below 1.0 (closed #160).
+      - dependency-name: selectolax
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: github-actions
     directory: /
@@ -29,9 +58,16 @@ updates:
       day: monday
     groups:
       github-actions-patch-minor:
+        patterns:
+          - "*"
         update-types:
           - patch
           - minor
+      github-actions-major:
+        patterns:
+          - "*"
+        update-types:
+          - major
 
   - package-ecosystem: docker
     directory: /
@@ -40,6 +76,19 @@ updates:
       day: monday
     groups:
       docker-patch-minor:
+        patterns:
+          - "*"
         update-types:
           - patch
           - minor
+      docker-major:
+        patterns:
+          - "*"
+        update-types:
+          - major
+    ignore:
+      # Stay on python:3.14-slim until selectolax (capped <1.0) ships cp315
+      # wheels; on 3.15 the image would compile it from sdist (see #176).
+      - dependency-name: python
+        versions:
+          - ">= 3.15"
