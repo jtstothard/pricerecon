@@ -86,3 +86,9 @@ updates:
           - "*"
         update-types:
           - major
+    ignore:
+      # Stay on python:3.14-slim until selectolax (capped <1.0) ships cp315
+      # wheels; on 3.15 the image would compile it from sdist (see #176).
+      - dependency-name: python
+        versions:
+          - ">= 3.15"
